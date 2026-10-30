@@ -96,6 +96,10 @@ artifact when `--out` is given, otherwise print it to stdout.
 6. **Re-run `geo_audit` and compare.** The score is deterministic for a given
    page, so a diff is meaningful evidence, not a vibe.
 
+A worked report with real numbers — 78/100 for `stripe.com`, the 8-category
+breakdown and the returned fix order — is in the README, section 8,
+[“Example GEO report”](../README.md#example-geo-report).
+
 ---
 
 ## 5. Scope and limits

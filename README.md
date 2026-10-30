@@ -370,6 +370,36 @@ Each priority includes implementation steps, an owner/role, dependencies, a succ
 
 `geo_audit` (homepage) → `geo_audit_sitemap` (≤10 pages) → generate only what is missing (`geo_generate_llms_txt`, `geo_generate_schema`, `geo_generate_robots`) → re-run `geo_audit` and compare the breakdown. Readiness only: the server never queries ChatGPT, Claude or Perplexity, so it cannot claim an engine cites the site.
 
+### Example GEO report
+
+Real `geo_audit` output for `https://stripe.com` (run 2026-10-30, redirected to `/en-fr`). The tool returns the full JSON — score, breakdown, all 42 checks with their evidence, and 12 recommendations; this is how an agent reports it:
+
+**78/100 · good** — 29 of 42 checks pass, 1 partial, 12 fail.
+
+| Category | Points | Max | Finding |
+|---|---:|---:|---|
+| robots.txt | 15 | 18 | File present; the five citation bots are allowed only through `User-agent: *` → partial credit |
+| llms.txt | 16 | 18 | 8,032 words, 31 H2 sections, 308 links; no `/llms-full.txt` |
+| Schema JSON-LD | 10 | 16 | WebSite + Organization at 5.5 attributes per object (rich); no FAQPage, no Article |
+| Meta tags | 14 | 14 | Title 54 chars, description 148, canonical, full Open Graph |
+| Content | 12 | 12 | 1,890 words, 5 H2 / 25 H3, 5 lists, figures in the first 30% |
+| Brand & Entity | 8 | 10 | 3/4 Knowledge Graph pillars; schema and meta descriptions disagree; no dated articles |
+| Signals | 3 | 6 | `lang="en-FR"`; no RSS link; no `dateModified` |
+| AI discovery | 0 | 6 | `/.well-known/ai.txt`, `/ai/summary.json`, `/ai/faq.json`, `/ai/service.json` all 404 |
+
+**Prioritized fixes** — returned in this order (priority first, then points recovered):
+
+| # | Priority | Check | +Pts | Action |
+|---|---|---|---:|---|
+| 1 | high | `robots.citation_bots` | 3 | Add explicit `User-agent` rules for OAI-SearchBot, Claude-SearchBot, PerplexityBot, Googlebot, Applebot instead of relying on `*` |
+| 2 | medium | `schema.faq` | 3 | Mark up the site FAQ as FAQPage |
+| 3 | medium | `schema.article` | 3 | Add Article/BlogPosting with author and `dateModified` |
+| 4 | medium | `llms.full` | 2 | Publish `/llms-full.txt` and link it from `llms.txt` |
+| 5 | low | `signals.rss` | 2 | Link the RSS feed in `<head>` |
+| 6 | low | `ai_discovery.summary` | 2 | Publish `/ai/summary.json` with name and description |
+
+No blockers: no `noindex`, no `noai`. One zero-point finding is still reported — 25 of 29 images lack alt text. `geo_audit_sitemap --max-urls 2` on the same site averaged 68/100 across the homepage (78) and `/legal` (57).
+
 ### Server-side tracking / cutover
 
 See [docs/SERVER_SIDE_TRACKING_ARCHITECTURE.md](docs/SERVER_SIDE_TRACKING_ARCHITECTURE.md).

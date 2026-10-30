@@ -67,4 +67,4 @@ All five are read-only. None needs a write flag or `confirm=true`.
 
 ## Reference
 
-Full rubric, CLI examples and limits: `docs/GEO.md` in the repository.
+Full rubric, CLI examples and limits: `docs/GEO.md` in the repository. A worked audit with real numbers (78/100, 8-category breakdown, prioritized fixes) is in the README, section 8 — "Example GEO report".

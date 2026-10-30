@@ -74,6 +74,27 @@ If a category has no evidence, label it “à vérifier / hypothèse” and list
 
 For ecommerce, a scenario may use `eligible sessions × tested conversion-rate change × average order value`. For lead generation, use `eligible sessions × tested conversion-rate change`; do not estimate revenue without lead-to-sale and value data. For SEO CTR, use `impressions × (site-specific target CTR − current CTR)`. Show estimates as scenarios, never guarantees, and do not add overlapping opportunities.
 
+## 4. GEO / AI search readiness audit
+
+Report the score and band first, then only the categories losing points, then the fix order exactly as returned. Never re-sort recommendations by opinion — priority and recoverable points are already computed.
+
+| Category | Points | Max | Finding |
+|---|---:|---:|---|
+| robots.txt | `[x]` | 18 | `[citation bots explicit or wildcard-only; any blocked bots]` |
+| llms.txt | `[x]` | 18 | `[words, sections, links, /llms-full.txt]` |
+| Schema JSON-LD | `[x]` | 16 | `[types found, richness, incomplete types]` |
+| Meta tags | `[x]` | 14 | `[title/description length, canonical, OG]` |
+| Content | `[x]` | 12 | `[words, H2/H3, lists, front-loading, numbers]` |
+| Brand & Entity | `[x]` | 10 | `[KG pillars, about/contact, name coherence]` |
+| Signals | `[x]` | 6 | `[lang, RSS, freshness]` |
+| AI discovery | `[x]` | 6 | `[which endpoints 404]` |
+
+| # | Priority | Check | +Pts | Action |
+|---|---|---|---:|---|
+| 1 | `[priority]` | `[check id]` | `[points]` | `[action returned by the tool]` |
+
+Rules: blockers first (`meta.x_robots_noindex`, `meta.noai`); quote the check evidence instead of restating it; say "readiness", never "citations". A worked example with real numbers (78/100 for stripe.com, 8 categories, 6 fixes) is in the repository README, section 8 — "Example GEO report".
+
 ## Thresholds to mention
 
 | Metric | Good | Needs work | Poor |
