@@ -12,6 +12,17 @@ import type {
 
 const PRIMARY_SCHEMA_TYPES = ["WebSite", "WebApplication", "SoftwareApplication"];
 
+/**
+ * A hero H1 is often a sentence ("Financial infrastructure to grow your
+ * revenue. Accept payments…"), not a brand. Treat sentence-length headings as
+ * no candidate instead of feeding them into the name comparison.
+ */
+function looksLikeBrand(text: string): boolean {
+  const trimmed = text.trim();
+  if (!trimmed || trimmed.length > 60) return false;
+  return !/[.!?]\s/.test(trimmed);
+}
+
 function typesOf(value: unknown): string[] {
   if (typeof value === "string") return [value];
   if (Array.isArray(value)) return value.filter((v): v is string => typeof v === "string");
@@ -29,7 +40,7 @@ export function auditBrand(
   meta: MetaAudit,
   content: ContentAudit
 ): CategoryResult<BrandAudit> {
-  const h1Name = content.h1 ? cutAtFirstSeparator(content.h1) : "";
+  const h1Name = content.h1 && looksLikeBrand(content.h1) ? cutAtFirstSeparator(content.h1) : "";
   const titleName = meta.title ? cutAtFirstSeparator(meta.title) : "";
   const ogTitle = doc.metaByProperty("og:title")?.attrs.content?.trim() || "";
   const ogName = ogTitle ? cutAtFirstSeparator(ogTitle) : "";

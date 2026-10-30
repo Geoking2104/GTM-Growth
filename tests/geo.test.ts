@@ -208,6 +208,23 @@ describe("brand & signals", () => {
     expect(signals.lang).toBe("en");
     expect(signals.rssUrl).toBe("/feed.xml");
   });
+
+  it("does not read a sentence-length H1 as the brand name", () => {
+    const html = `<html><head><title>Stripe | Payments</title>
+      <meta property="og:title" content="Stripe | Payments">
+      <meta name="description" content="Stripe builds financial infrastructure for the internet.">
+      </head><body><h1>Financial infrastructure to grow your revenue. Accept payments today.</h1>
+      <script type="application/ld+json">{"@type":"WebSite","name":"Stripe","url":"https://stripe.com"}</script>
+      </body></html>`;
+    const doc = HtmlDoc.parse(html);
+    const schema = auditSchema(doc).data;
+    const meta = auditMeta(doc, {}).data;
+    const content = auditContent(doc, "https://stripe.com").data;
+    const brand = auditBrand(doc, schema, meta, content).data;
+
+    expect(brand.primaryName).toBe("Stripe");
+    expect(brand.namesFound).not.toContain("Financial infrastructure to grow your revenue");
+  });
 });
 
 describe("ai discovery", () => {
