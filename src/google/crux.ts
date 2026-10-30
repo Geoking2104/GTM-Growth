@@ -16,6 +16,20 @@ export interface QueryCruxArgs {
   metrics?: string[];
 }
 
+/** Subset of the CrUX response this tool reads. */
+interface CruxMetric {
+  percentiles?: { p75?: number };
+}
+
+interface CruxResponse {
+  record?: {
+    key?: unknown;
+    metrics?: Record<string, CruxMetric>;
+    collectionPeriod?: unknown;
+  };
+  collectionPeriod?: unknown;
+}
+
 export async function queryCrux(args: QueryCruxArgs) {
   if (!args.origin && !args.url) {
     throw new Error("Provide either origin or url");
@@ -44,21 +58,21 @@ export async function queryCrux(args: QueryCruxArgs) {
     throw new Error(`CrUX API error ${res.status}: ${text.slice(0, 500)}`);
   }
 
-  const data = await res.json();
-  const record = data.record || {};
-  const metrics = record.metrics || {};
+  const data = (await res.json()) as CruxResponse;
+  const record = data.record ?? {};
+  const metrics = record.metrics ?? {};
 
   // Compact p75 summary
-  const summary: Record<string, { p75?: number; category?: string }> = {};
-  for (const [name, metric] of Object.entries(metrics) as any) {
+  const summary: Record<string, { p75?: number }> = {};
+  for (const [name, metric] of Object.entries(metrics)) {
     summary[name] = {
-      p75: metric?.percentiles?.p75,
+      p75: metric.percentiles?.p75,
     };
   }
 
   return {
     key: record.key,
-    collectionPeriod: data.record?.collectionPeriod || data.collectionPeriod,
+    collectionPeriod: record.collectionPeriod || data.collectionPeriod,
     metrics: summary,
     rawMetrics: metrics,
   };

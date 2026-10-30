@@ -1,4 +1,5 @@
 import { google } from "googleapis";
+import type { webmasters_v3 } from "googleapis";
 import { getAuthClient } from "../auth/service-account.js";
 
 async function getWebmasters() {
@@ -65,23 +66,34 @@ export interface SearchAnalyticsArgs {
 }
 
 /**
+ * The Search Analytics REST docs name this field `type` and mark `searchType`
+ * as deprecated; the generated googleapis schema still only exposes
+ * `searchType`. The intersection keeps the call typed while sending the field
+ * the API actually documents.
+ */
+type SearchAnalyticsRequestBody = webmasters_v3.Schema$SearchAnalyticsQueryRequest & {
+  type?: string | null;
+};
+
+/**
  * Run a Search Analytics query (clicks, impressions, CTR, position).
  * Uses webmasters v3 searchanalytics.query.
  */
 export async function querySearchAnalytics(args: SearchAnalyticsArgs) {
   const wm = await getWebmasters();
+  const requestBody: SearchAnalyticsRequestBody = {
+    startDate: args.startDate,
+    endDate: args.endDate,
+    dimensions: args.dimensions,
+    type: args.type,
+    aggregationType: args.aggregationType,
+    rowLimit: args.rowLimit,
+    startRow: args.startRow,
+    dimensionFilterGroups: args.dimensionFilterGroups,
+  };
   const res = await wm.searchanalytics.query({
     siteUrl: args.siteUrl,
-    requestBody: {
-      startDate: args.startDate,
-      endDate: args.endDate,
-      dimensions: args.dimensions,
-      type: args.type,
-      aggregationType: args.aggregationType,
-      rowLimit: args.rowLimit,
-      startRow: args.startRow,
-      dimensionFilterGroups: args.dimensionFilterGroups,
-    },
+    requestBody,
   });
   return {
     rows: res.data.rows || [],
