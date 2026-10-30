@@ -31,6 +31,7 @@
     "cli:geo-llms": "tsx src/cli.ts geo-llms",
     "cli:geo-schema": "tsx src/cli.ts geo-schema",
     "cli:geo-robots": "tsx src/cli.ts geo-robots",
+    "demo:geo": "node scripts/geo-demo.mjs",
     "validate:ci": "bash scripts/ci-validate.sh",
     "test": "vitest run",
     "lint": "eslint src --ext .ts",

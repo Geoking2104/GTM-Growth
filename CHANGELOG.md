@@ -8,6 +8,7 @@
 - `geo_audit_sitemap` samples up to 25 sitemap pages and reports the site average, weakest pages and the checks failing across the site
 - Generators: `geo_generate_llms_txt`, `geo_generate_schema` (website/organization/faq/article/product/localbusiness) and `geo_generate_robots` (append-only; blocked bots are reported, never overridden)
 - CLI: `geo-audit`, `geo-sitemap`, `geo-llms`, `geo-schema`, `geo-robots`
+- `npm run demo:geo` — offline before/after demo (9 → 96) used by the README example
 - `docs/GEO.md` and `skills/google-growth/references/geo.md`
 
 ### Fixed

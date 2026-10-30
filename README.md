@@ -400,6 +400,24 @@ Real `geo_audit` output for `https://stripe.com` (run 2026-10-30, redirected to 
 
 No blockers: no `noindex`, no `noai`. One zero-point finding is still reported — 25 of 29 images lack alt text. `geo_audit_sitemap --max-urls 2` on the same site averaged 68/100 across the homepage (78) and `/legal` (57).
 
+### Before / after
+
+The same audit on a fixture site — a normal day-one page (title, H1, one sentence), no robots.txt, no llms.txt, no structured data — and then after applying what this server generates (robots.txt, llms.txt, JSON-LD) plus the editorial fixes the audit asks for (meta tags, an answer with figures in the first 30%, H2/H3, a list, an FAQ). Reproduce offline with `npm run build && npm run demo:geo`:
+
+| Category | Before | After | Max |
+|---|---:|---:|---:|
+| robots.txt | 0 | 18 | 18 |
+| llms.txt | 0 | 14 | 18 |
+| Schema JSON-LD | 0 | 16 | 16 |
+| Meta tags | 5 | 14 | 14 |
+| Content | 2 | 12 | 12 |
+| Brand & Entity | 2 | 10 | 10 |
+| Signals | 0 | 6 | 6 |
+| AI discovery | 0 | 6 | 6 |
+| **Total** | **9** | **96** | **100** |
+
+Bands: critical → excellent. The 4 points still missing are llms.txt depth: a file under 1,000 words cannot earn `llms.depth` and `llms.depth_high`. Nothing else is left on the table, which is the point — the rubric tells you when to stop.
+
 ### Server-side tracking / cutover
 
 See [docs/SERVER_SIDE_TRACKING_ARCHITECTURE.md](docs/SERVER_SIDE_TRACKING_ARCHITECTURE.md).

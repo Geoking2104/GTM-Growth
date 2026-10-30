@@ -100,6 +100,10 @@ A worked report with real numbers — 78/100 for `stripe.com`, the 8-category
 breakdown and the returned fix order — is in the README, section 8,
 [“Example GEO report”](../README.md#example-geo-report).
 
+A reproducible before/after — a day-one page at 9/100, then 96/100 after the
+generated artifacts and editorial fixes — is printed by
+`npm run build && npm run demo:geo` (offline, no credentials).
+
 ---
 
 ## 5. Scope and limits
