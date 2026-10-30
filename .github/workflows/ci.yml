@@ -12,7 +12,7 @@ concurrency:
 
 jobs:
   build:
-    name: Install · Typecheck · Build
+    name: Install · Typecheck · Lint · Test · Build · Smoke
     runs-on: ubuntu-latest
     timeout-minutes: 15
 
@@ -32,11 +32,20 @@ jobs:
       - name: Typecheck
         run: npm run typecheck
 
+      - name: Lint
+        run: npm run lint
+
+      - name: Test
+        run: npm test
+
       - name: Build
         run: npm run build
 
       - name: CLI help (smoke)
         run: node dist/cli.js help
+
+      - name: CLI smoke — GEO engine
+        run: node scripts/smoke-geo.mjs
 
       - name: Upload dist artifact
         uses: actions/upload-artifact@v4

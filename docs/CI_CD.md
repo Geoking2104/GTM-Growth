@@ -4,12 +4,12 @@
 
 | Workflow | Fichier | Déclencheur | Rôle |
 |----------|---------|-------------|------|
-| **CI** | `.github/workflows/ci.yml` | push / PR | `npm ci` · typecheck · build · smoke CLI |
+| **CI** | `.github/workflows/ci.yml` | push / PR | `npm ci` · typecheck · lint · test · build · smoke CLI (dont GEO) |
 | **Validate** | `.github/workflows/validate.yml` | manual + schedule optionnel | Pipeline live audit → cutover → health |
 
 ## CI (toujours on)
 
-Aucune credential Google requise. Vérifie que le projet compile.
+Aucune credential Google requise. Vérifie que le projet compile, que lint et tests passent, et que les générateurs GEO répondent hors ligne (`scripts/smoke-geo.mjs`).
 
 ## Validate (live)
 
