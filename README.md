@@ -49,6 +49,7 @@ The agent-facing method lives in [`skills/google-growth/`](skills/google-growth/
 | **Indexing API** | Notify Google of URL updates/deletes (gated); read notification metadata |
 | **PageSpeed & CrUX** | Lighthouse lab scores and real-user Core Web Vitals |
 | **Growth dashboards** | Cross-channel KPI summaries, data-confidence checks, 10+ watch points, and 3 horizon-based priorities with implementation and measurement plans |
+| **GEO / AEO** | 0–100 AI-search-readiness audit across robots.txt, llms.txt, schema, meta, content, brand, signals and AI discovery; llms.txt / JSON-LD / robots.txt generators |
 | **Custom events** | Discover, analyze, suggest GTM config; Phase 3 write (trigger + tag) |
 | **Ops** | CLI per step, Redis cache, Docker, GitHub Actions CI + live validation |
 
@@ -333,6 +334,18 @@ Full reference: [docs/CLI.md](docs/CLI.md)
 | `run_pagespeed` / `run_pagespeed_batch` | Lighthouse lab scores |
 | `query_crux` / `query_crux_batch` | Real-user Core Web Vitals |
 
+### GEO — AI search readiness
+
+| Tool | Description |
+|------|-------------|
+| `geo_audit` | Score one URL 0–100 across 8 categories, with evidence per check and prioritized fixes |
+| `geo_audit_sitemap` | Sample the sitemap (≤25 pages): site average, weakest pages, checks failing across the site |
+| `geo_generate_llms_txt` | Generate `/llms.txt` from the sitemap |
+| `geo_generate_schema` | Generate rich JSON-LD (website, organization, faq, article, product, localbusiness) |
+| `geo_generate_robots` | Append-only robots.txt fix; blocked bots are reported, never overridden |
+
+All GEO tools are read-only. Rubric, bands and limits: [docs/GEO.md](docs/GEO.md).
+
 Full catalog for agents: [`skills/google-growth/references/tools.md`](skills/google-growth/references/tools.md)
 
 ---
@@ -352,6 +365,10 @@ Full catalog for agents: [`skills/google-growth/references/tools.md`](skills/goo
 For a full cross-channel audit, the skill compares the last 28 complete days with the previous 28 days by default. It combines GA4, Search Console, CrUX/PageSpeed, and tracking-quality evidence when those sources are available. The report includes an executive readout, KPI scorecard, channel/page/funnel breakdowns, at least 10 distinct watch points, and exactly 3 priorities: short term (0–30 days), medium term (1–3 months), and long term (3–12 months).
 
 Each priority includes implementation steps, an owner/role, dependencies, a success metric, and an expected effect. Impact estimates are ranges or scenarios based on explicit data and assumptions (for example, eligible sessions × tested conversion-rate change × average order value). If the inputs are missing, the report gives a measurable target and explains what data or experiment is needed; it does not invent a revenue forecast. The connected assistant performs the LLM synthesis over MCP results; the server does not make a separate LLM API call.
+
+### GEO / AI search readiness audit
+
+`geo_audit` (homepage) → `geo_audit_sitemap` (≤10 pages) → generate only what is missing (`geo_generate_llms_txt`, `geo_generate_schema`, `geo_generate_robots`) → re-run `geo_audit` and compare the breakdown. Readiness only: the server never queries ChatGPT, Claude or Perplexity, so it cannot claim an engine cites the site.
 
 ### Server-side tracking / cutover
 
@@ -391,6 +408,7 @@ npm run typecheck
 | [GROK_BUILD.md](docs/GROK_BUILD.md) | Grok Build packaging |
 | [DEPLOYMENT.md](docs/DEPLOYMENT.md) | Docker / Fly / Railway |
 | [CLI.md](docs/CLI.md) | All CLI commands |
+| [GEO.md](docs/GEO.md) | GEO rubric, tools, limits |
 | [CI_CD.md](docs/CI_CD.md) | GitHub Actions |
 | [GTM_INTEGRATION.md](docs/GTM_INTEGRATION.md) | GTM ↔ GA4 specs |
 | [PHASE3_WRITE.md](docs/PHASE3_WRITE.md) | Controlled GTM writes |
@@ -411,6 +429,7 @@ skills/ga-to-grok/             # redirect to google-growth
 scripts/install-skill.sh       # copies skill into .claude / .codex
 src/
   google/                      # data-api, gtm, search-console, indexing, pagespeed, crux
+  geo/                         # GEO engine: html, robots, sitemap, audit/*, score, generate/*
   tools/                       # tool definitions + zod schemas
   auth/ cache/ utils/
 docs/

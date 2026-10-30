@@ -1,11 +1,11 @@
 ---
 name: google-growth
-description: Use live Google Analytics 4, Tag Manager, Search Console, PageSpeed, and CrUX for growth briefings, detailed KPI dashboards, cross-channel audits, and SEO recommendations. Trigger on GA4, GTM, Search Console, PageSpeed, CrUX, ecommerce, dashboards, traffic reports, SEO audits, or when the user mentions Google Growth.
+description: Use live Google Analytics 4, Tag Manager, Search Console, PageSpeed, and CrUX for growth briefings, detailed KPI dashboards, cross-channel audits, and SEO recommendations, plus GEO/AEO audits that score whether AI answer engines can read and cite a site. Trigger on GA4, GTM, Search Console, PageSpeed, CrUX, ecommerce, dashboards, traffic reports, SEO audits, GEO, AEO, AI search readiness, llms.txt, or when the user mentions Google Growth.
 license: Apache-2.0
 compatibility: Requires the google-growth MCP server (stdio or HTTPS). Works with Grok, Claude, and Codex.
 metadata:
   source: https://github.com/Geoking2104/Google-Growth
-  version: "0.9.0"
+  version: "0.10.0"
   display_name: Google Growth
 external_urls:
   - https://github.com/Geoking2104/Google-Growth
@@ -21,7 +21,7 @@ external_urls:
 
 # Google Growth
 
-Work with **GA4 + GTM + Search Console + PageSpeed + CrUX** via the **google-growth** MCP server.
+Work with **GA4 + GTM + Search Console + PageSpeed + CrUX + GEO** via the **google-growth** MCP server.
 
 Source: https://github.com/Geoking2104/Google-Growth
 
@@ -69,6 +69,8 @@ This skill is for marketers, growth teams, and agencies who want answers from li
 | Page speed (lab) | `run_pagespeed` |
 | Real-user vitals | `query_crux` |
 | Submit a sitemap (write) | `submit_sitemap` (gated) |
+| AI search readiness (GEO) | `geo_audit`, `geo_audit_sitemap` |
+| Missing `llms.txt` / JSON-LD / AI bot rules | `geo_generate_llms_txt`, `geo_generate_schema`, `geo_generate_robots` |
 
 Full catalog — `references/tools.md`.
 
@@ -161,6 +163,15 @@ Follow order in `references/sgtm.md`. Do not skip steps.
 2. `suggest_custom_event_config`
 3. Write only after explicit confirmation — `dryRun=true` then `confirm=true`
 
+### G. GEO / AI search readiness
+
+1. `geo_audit` on the homepage — report score, band, and the categories with the most recoverable points
+2. `geo_audit_sitemap` (maxUrls ≤ 10) when the user wants a site-wide view; lead with `missingAcrossSite`
+3. Generate only what the audit flags: `geo_generate_llms_txt`, `geo_generate_schema`, `geo_generate_robots`
+4. Re-run `geo_audit` after deployment and compare the breakdown
+
+Readiness only — never claim an engine cites the site. Details — `references/geo.md`.
+
 ## Optimal operation (for marketers)
 
 | Solution | Best for | What you need |
@@ -218,3 +229,4 @@ Skill name and MCP server name: `google-growth`.
 - Tool catalog — `references/tools.md`
 - sGTM — `references/sgtm.md`
 - Example reports — `references/examples.md`
+- GEO / AI search readiness — `references/geo.md`

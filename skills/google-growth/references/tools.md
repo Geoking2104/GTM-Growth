@@ -145,6 +145,18 @@ Officially intended for job postings and livestream structured data; other uses 
 
 `strategy` is `mobile` or `desktop`. `formFactor` is `PHONE`, `DESKTOP`, `TABLET`, or `ALL_FORM_FACTORS`.
 
+## GEO — AI search readiness
+
+| Tool | Typical args | Notes |
+|---|---|---|
+| `geo_audit` | url, includeAiDiscovery? | Score 0–100, 8 categories, per-check evidence, prioritized fixes |
+| `geo_audit_sitemap` | url, sitemapUrl?, maxUrls? | Site sample (max 25, default 10) + `missingAcrossSite` |
+| `geo_generate_llms_txt` | url, sitemapUrl?, siteName?, description?, maxLinksPerSection? | Returns the file content for `/llms.txt` |
+| `geo_generate_schema` | kind, name, url, description?, logo?, sameAs?, faqs?, … | Returns JSON-LD + `<script>` tag |
+| `geo_generate_robots` | url, sitemapUrl? | Append-only fix; blocked bots are reported, not overridden |
+
+All five are read-only and need no `confirm`. `kind` is `website`, `organization`, `faq`, `article`, `product`, or `localbusiness`; `kind: "faq"` requires real `faqs[]`. Score bands: 86–100 excellent, 68–85 good, 36–67 foundation, 0–35 critical. Rubric and limits — `references/geo.md`.
+
 ## Common error patterns
 
 - **403** — Service Account not invited.
@@ -153,3 +165,4 @@ Officially intended for job postings and livestream structured data; other uses 
 - **Empty results** — widen the date range.
 - **siteUrl mismatch** — use the exact string from `list_search_console_sites`.
 - **PageSpeed / CrUX 429** — add an API key and reduce batch size.
+- **GEO audit HTTP error** — the page returned 403/5xx or timed out; fix the response before auditing content. A WAF that blocks non-browser user agents will also block AI crawlers.

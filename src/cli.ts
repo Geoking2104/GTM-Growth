@@ -10,6 +10,8 @@
 import { config } from "dotenv";
 config();
 
+import { readFileSync, writeFileSync } from "fs";
+
 import { initRedis } from "./cache/redis.js";
 
 initRedis();
@@ -115,6 +117,16 @@ Usage:
 ── Analytics ────────────────────────────────────────
   analyze-ecommerce         --property <id> [--start <date>] [--end <date>]
   traffic                   --property <id> [--start <date>] [--end <date>]
+
+── GEO / AEO · AI search readiness ──────────────────
+  geo-audit                 --url <url> [--no-ai-discovery]
+  geo-sitemap               --url <url> [--sitemap <url>] [--max-urls <n>]
+  geo-llms                  --url <url> [--sitemap <url>] [--name <site>]
+                            [--description <text>] [--out <file>]
+  geo-schema                --kind website|organization|faq|article|product|localbusiness
+                            --name <name> --url <url> [--description <text>] [--logo <url>]
+                            [--same-as <url,url>] [--author <name>] [--faq-file <json>] [--out <file>]
+  geo-robots                --url <url> [--sitemap <url>] [--out <file>]
 
 ── Server ───────────────────────────────────────────
   serve-http                Start MCP HTTP/SSE server
@@ -408,6 +420,117 @@ async function main() {
           console.log(result.content[0].text);
         } else {
           print(result);
+        }
+        break;
+      }
+      case "geo-audit": {
+        const { runGeoAudit } = await import("./geo/audit.js");
+        const { summarizeAudit } = await import("./geo/report.js");
+        const result = await runGeoAudit({
+          url: req(args, "url"),
+          includeAiDiscovery: !bool(args, "no-ai-discovery"),
+        });
+        print(summarizeAudit(result));
+        break;
+      }
+      case "geo-sitemap": {
+        const { runSiteGeoAudit } = await import("./geo/site.js");
+        print(
+          await runSiteGeoAudit({
+            url: req(args, "url"),
+            sitemapUrl: str(args, "sitemap"),
+            maxUrls: str(args, "max-urls")
+              ? parseInt(String(str(args, "max-urls")), 10)
+              : undefined,
+          })
+        );
+        break;
+      }
+      case "geo-llms": {
+        const { collectSitemapEntries } = await import("./geo/site.js");
+        const { generateLlmsTxt } = await import("./geo/generate/llms.js");
+        const url = req(args, "url");
+        const origin = new URL(/^https?:\/\//i.test(url) ? url : `https://${url}`).origin;
+        const collected = await collectSitemapEntries({
+          url,
+          sitemapUrl: str(args, "sitemap"),
+        });
+        const content = generateLlmsTxt({
+          baseUrl: origin,
+          entries: collected.entries,
+          siteName: str(args, "name"),
+          description: str(args, "description"),
+          maxLinksPerSection: str(args, "max-links")
+            ? parseInt(String(str(args, "max-links")), 10)
+            : undefined,
+        });
+        const out = str(args, "out");
+        if (out) {
+          writeFileSync(out, content, "utf8");
+          print({
+            output: out,
+            sitemapUrl: collected.sitemapUrl,
+            entriesFound: collected.entries.length,
+            bytes: Buffer.byteLength(content, "utf8"),
+          });
+        } else {
+          console.log(content);
+        }
+        break;
+      }
+      case "geo-schema": {
+        const { generateJsonLd, renderJsonLdScript } = await import(
+          "./geo/generate/schema.js"
+        );
+        const schema = generateJsonLd({
+          kind: req(args, "kind") as any,
+          name: req(args, "name"),
+          url: req(args, "url"),
+          description: str(args, "description"),
+          logo: str(args, "logo"),
+          author: str(args, "author"),
+          headline: str(args, "headline"),
+          datePublished: str(args, "published"),
+          dateModified: str(args, "modified"),
+          faqs: str(args, "faq-file")
+            ? JSON.parse(readFileSync(String(str(args, "faq-file")), "utf8"))
+            : undefined,
+          sameAs: str(args, "same-as")
+            ?.split(",")
+            .map((value) => value.trim())
+            .filter(Boolean),
+        });
+        const script = renderJsonLdScript(schema);
+        const out = str(args, "out");
+        if (out) {
+          writeFileSync(out, script, "utf8");
+          print({ output: out, script });
+        } else {
+          console.log(script);
+        }
+        break;
+      }
+      case "geo-robots": {
+        const { generateRobotsFix } = await import("./geo/generate/robots.js");
+        const { fetchText } = await import("./geo/http.js");
+        const url = req(args, "url");
+        const origin = new URL(/^https?:\/\//i.test(url) ? url : `https://${url}`).origin;
+        const robotsUrl = new URL("/robots.txt", origin).toString();
+        const response = await fetchText(robotsUrl, { accept: "text/plain,*/*" }).catch(
+          () => null
+        );
+        const existing = response && response.status === 200 ? response.body : null;
+        const fix = generateRobotsFix({
+          baseUrl: origin,
+          existing,
+          sitemaps: str(args, "sitemap") ? [String(str(args, "sitemap"))] : undefined,
+        });
+        const out = str(args, "out");
+        if (out) {
+          writeFileSync(out, fix.content, "utf8");
+          print({ output: out, ...fix });
+        } else {
+          console.log(fix.content);
         }
         break;
       }

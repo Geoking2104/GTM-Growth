@@ -1,5 +1,22 @@
 # Changelog
 
+## 0.10.0 — 2026-10-30
+
+### Added
+
+- GEO / AEO capability: `geo_audit` scores a URL 0–100 across 8 categories (robots.txt 18, llms.txt 18, schema 16, meta 14, content 12, brand & entity 10, signals 6, AI discovery 6) and returns per-check evidence plus fixes ordered by recoverable points
+- `geo_audit_sitemap` samples up to 25 sitemap pages and reports the site average, weakest pages and the checks failing across the site
+- Generators: `geo_generate_llms_txt`, `geo_generate_schema` (website/organization/faq/article/product/localbusiness) and `geo_generate_robots` (append-only; blocked bots are reported, never overridden)
+- CLI: `geo-audit`, `geo-sitemap`, `geo-llms`, `geo-schema`, `geo-robots`
+- `docs/GEO.md` and `skills/google-growth/references/geo.md`
+
+### Notes
+
+- All GEO tools are read-only: they fetch the same public URLs an AI crawler reads and compute locally, so no write flag or `confirm=true` is required
+- The rubric is adapted from the open-source geo-optimizer-skill model (MIT). It is an independent TypeScript implementation inside this server, not a fork, and ships the published v1 rubric (the 20-point Google AI readiness category of v2 is not implemented)
+- No LLM provider is called, so the audit measures readiness and never claims an engine cites the site
+- `package.json` now matches the skill version (it was still 0.8.0 while the skill was 0.9.0)
+
 ## 0.9.0 — 2026-10-21
 
 ### Added

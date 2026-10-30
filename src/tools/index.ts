@@ -18,6 +18,7 @@ import { mpSecretsTools } from "./mp-secrets.js";
 import { searchConsoleTools } from "./search-console.js";
 import { indexingTools } from "./indexing.js";
 import { performanceTools } from "./performance.js";
+import { geoTools } from "./geo.js";
 import { success, fail } from "./response.js";
 import {
   accountId,
@@ -199,6 +200,7 @@ export const tools: ToolDefinition[] = [
   ...searchConsoleTools,
   ...indexingTools,
   ...performanceTools,
+  ...geoTools,
 ];
 
 export async function handleToolCall(name: string, args: Record<string, any>) {
