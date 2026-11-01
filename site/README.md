@@ -19,11 +19,20 @@ site/
 ## Publish
 
 1. Push to `main` — `.github/workflows/pages.yml` uploads `site/` and deploys.
-2. If the first run cannot enable Pages, open **Settings → Pages** and set
-   **Source** to **GitHub Actions**, then re-run the workflow.
+2. **Settings → Pages → Build and deployment → Source** must be **GitHub Actions**.
+   If it is set to *Deploy from a branch*, the workflow stops at **Configure Pages**
+   and the URL keeps serving the repository README through the default theme.
 3. Expected URL: `https://geoking2104.github.io/Google-Growth/` — if the
    repository is renamed, update the canonical URL, `og:url`, `sitemap.xml`,
    `robots.txt` and `llms.txt`.
+
+### Troubleshooting
+
+| Symptom | Cause | Fix |
+|---|---|---|
+| Workflow fails at **Configure Pages** | Pages is disabled, or set to *Deploy from a branch* | Set Source to **GitHub Actions**, then re-run the workflow |
+| URL shows the README with the default theme | Same as above — the branch build wins | Same fix; the Actions deploy replaces it |
+| Page loads unstyled | Assets 404 because a branch build is serving the repo root | Same fix |
 
 ## Lead capture
 
