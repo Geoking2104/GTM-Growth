@@ -2,9 +2,9 @@
 
 **Cahier des charges & Spécifications techniques**  
 Projet : **Google Growth**  
-Version : 1.1  
-Date : 14 août 2026  
-Statut : Phase 1 implémentée · Phase 2 spécifiée en détail
+Version : 1.2  
+Date : 1 novembre 2026  
+Statut : Phase 1 et Phase 2 implémentées (v0.11.0)
 
 ---
 
@@ -318,14 +318,15 @@ interface Ga4TagDetailed {
 
 ### 3.6 Critères d’acceptation – Phase 2
 
-- [ ] Tous les tools Must (GTM-09 à GTM-14, GTM-17, GTM-18) sont implémentés
-- [ ] `get_tag_details` résout les noms des triggers liés
-- [ ] `analyze_event_parameters` détecte correctement les paramètres critiques e-commerce
-- [ ] `audit_ga4_setup_v2` produit un score cohérent et des recommandations actionnables
-- [ ] `compare_gtm_vs_ga4_events` croise correctement GTM et les données GA4 existantes
-- [ ] Gestion propre des edge cases listés ci-dessus
-- [ ] Compatible cache Redis
-- [ ] Documentation mise à jour
+- [x] Tous les tools Must (GTM-09 à GTM-14, GTM-17, GTM-18) sont implémentés
+- [x] `get_tag_details` résout les noms des triggers liés
+- [x] `analyze_event_parameters` détecte correctement les paramètres critiques e-commerce
+- [x] `audit_ga4_setup_v2` produit un score cohérent et des recommandations actionnables
+- [x] `compare_gtm_vs_ga4_events` croise correctement GTM et les données GA4 existantes
+- [x] Tous les tools Should (GTM-15, GTM-16, GTM-19, GTM-20) sont implémentés depuis la v0.11.0 — logique pure dans `src/utils/gtm-helpers.ts`, couverte par `tests/gtm.test.ts`
+- [x] Compatible cache Redis (listes de triggers, variables et built-in variables mises en cache)
+- [x] Documentation mise à jour
+- [ ] Edge cases : workspace vide, permissions insuffisantes, tag sans `eventName` et multi-workspaces sont gérés ; la détection `usageContext: ["SERVER"]` et l'avertissement `UA-` legacy ne sont pas encore implémentés
 
 ---
 

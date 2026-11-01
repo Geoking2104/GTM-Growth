@@ -11,6 +11,10 @@ import {
   listGtmVariables,
   getVariableDetails,
   getTagDetails,
+  findTagsByTrigger,
+  findTagsUsingVariable,
+  detectDuplicateTags,
+  getBuiltInVariables,
 } from "../google/tagmanager-api.js";
 import {
   analyzeEventParameters,
@@ -183,6 +187,70 @@ export const gtmTools = [
     handler: async (args: any) => {
       try {
         return success(await auditGa4SetupV2(args));
+      } catch (err) { return fail(err); }
+    },
+  },
+
+  // ─── Reverse lookups & diagnostics ───────────────────────────
+  {
+    name: "find_tags_by_trigger",
+    description:
+      "Find every tag a trigger fires or blocks — answers 'what runs when this trigger fires?'.",
+    schema: strict({ accountId, containerId, workspaceId, triggerId: z.string() }),
+    handler: async (args: any) => {
+      try {
+        return success(
+          await findTagsByTrigger(
+            args.accountId,
+            args.containerId,
+            args.workspaceId,
+            args.triggerId
+          )
+        );
+      } catch (err) { return fail(err); }
+    },
+  },
+  {
+    name: "find_tags_using_variable",
+    description:
+      "Find every tag that references a variable ({{name}}), and flag the variable as unused when none do.",
+    schema: strict({ accountId, containerId, workspaceId, variableId: z.string() }),
+    handler: async (args: any) => {
+      try {
+        return success(
+          await findTagsUsingVariable(
+            args.accountId,
+            args.containerId,
+            args.workspaceId,
+            args.variableId
+          )
+        );
+      } catch (err) { return fail(err); }
+    },
+  },
+  {
+    name: "detect_duplicate_tags",
+    description:
+      "Detect duplicate GA4 tags: the same event name fired by several tags, or several configuration tags sharing a Measurement ID.",
+    schema: strict({ accountId, containerId, workspaceId }),
+    handler: async (args: any) => {
+      try {
+        return success(
+          await detectDuplicateTags(args.accountId, args.containerId, args.workspaceId)
+        );
+      } catch (err) { return fail(err); }
+    },
+  },
+  {
+    name: "get_built_in_variables",
+    description:
+      "List the built-in variables enabled in a GTM workspace (Page URL, Click Text, Form ID…).",
+    schema: strict({ accountId, containerId, workspaceId }),
+    handler: async (args: any) => {
+      try {
+        return success(
+          await getBuiltInVariables(args.accountId, args.containerId, args.workspaceId)
+        );
       } catch (err) { return fail(err); }
     },
   },

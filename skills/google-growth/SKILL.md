@@ -5,7 +5,7 @@ license: Apache-2.0
 compatibility: Requires the google-growth MCP server (stdio or HTTPS). Works with Grok, Claude, and Codex.
 metadata:
   source: https://github.com/Geoking2104/Google-Growth
-  version: "0.10.0"
+  version: "0.11.0"
   display_name: Google Growth
 external_urls:
   - https://github.com/Geoking2104/Google-Growth

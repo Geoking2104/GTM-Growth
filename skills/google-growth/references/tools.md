@@ -44,6 +44,10 @@ Common ids
 | `compare_gtm_vs_ga4_events` | + propertyId, dates? |
 | `audit_ga4_setup` | legacy — prefer v2 |
 | `audit_ga4_setup_v2` | accountId, containerId, workspaceId?, propertyId?, dates? |
+| `find_tags_by_trigger` | + triggerId — tags fired and blocked |
+| `find_tags_using_variable` | + variableId — tags referencing it; `unused` flag |
+| `detect_duplicate_tags` | accountId, containerId, workspaceId |
+| `get_built_in_variables` | accountId, containerId, workspaceId |
 | `validate_ecommerce_events` | accountId, containerId, workspaceId, propertyId?, dates? |
 
 ## Custom events (read)

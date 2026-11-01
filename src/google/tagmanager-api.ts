@@ -1,6 +1,14 @@
 import { google } from "googleapis";
 import { getAuthClient } from "../auth/service-account.js";
 import { cacheGet, cacheSet, cacheKey, TTL } from "../cache/redis.js";
+import {
+  extractEventName,
+  extractMeasurementIds,
+  findDuplicateTags,
+  simplifyParameters,
+  tagsForTrigger,
+  tagsUsingVariable,
+} from "../utils/gtm-helpers.js";
 
 let tagmanagerClient: ReturnType<typeof google.tagmanager> | null = null;
 
@@ -211,52 +219,8 @@ export async function getVariableDetails(
 }
 
 // ─── Helpers ──────────────────────────────────────────────────────────────
-
-/** Extract Measurement IDs from tag parameters */
-function extractMeasurementIds(parameters: any[] = []): string[] {
-  const ids: string[] = [];
-  for (const p of parameters) {
-    if (
-      (p.key === "measurementId" || p.key === "trackingId" || p.key === "tagId") &&
-      typeof p.value === "string" &&
-      p.value.startsWith("G-")
-    ) {
-      ids.push(p.value);
-    }
-    if (p.list) {
-      for (const item of p.list) {
-        if (item.map) {
-          for (const m of item.map) {
-            if (
-              (m.key === "measurementId" || m.key === "value") &&
-              typeof m.value === "string" &&
-              m.value.startsWith("G-")
-            ) {
-              ids.push(m.value);
-            }
-          }
-        }
-      }
-    }
-  }
-  return [...new Set(ids)];
-}
-
-function extractEventName(parameters: any[] = []): string | null {
-  const p = parameters.find((x: any) => x.key === "eventName");
-  return p?.value || null;
-}
-
-function simplifyParameters(parameters: any[] = []) {
-  return parameters.map((p: any) => ({
-    key: p.key,
-    type: p.type,
-    value: p.value ?? null,
-    // Keep nested structures readable
-    list: p.list || undefined,
-    map: p.map || undefined,
-  }));
-}
+// Parameter extraction and tag matching live in `utils/gtm-helpers.ts` so they
+// are unit-testable without a live container.
 
 /** Get only GA4-related tags (googtag + gaawe + gaawc) */
 export async function getGa4Tags(
@@ -370,6 +334,123 @@ export async function getGtmContainerSummary(
     ga4EventTagsCount: eventTags.length,
     ga4ConfigTags: configTags,
     ga4EventTags: eventTags,
+  };
+}
+
+// ─── Phase 2 : Reverse lookups & duplicate diagnostics ────────────────────
+
+/** GTM-20 — List the built-in variables enabled in a workspace. */
+export async function getBuiltInVariables(
+  accountId: string,
+  containerId: string,
+  workspaceId: string
+) {
+  const key = cacheKey("gtm-built-in-variables", { accountId, containerId, workspaceId });
+  const cached = await cacheGet(key);
+  if (cached) return { ...cached, _cached: true };
+
+  const client = await getTagManagerClient();
+  const parent = workspacePath(accountId, containerId, workspaceId);
+  const res = await client.accounts.containers.workspaces.built_in_variables.list({ parent });
+
+  const builtInVariables = (res.data.builtInVariable || []).map((v: any) => ({
+    name: v.name,
+    type: v.type,
+    path: v.path,
+  }));
+
+  const result = {
+    accountId,
+    containerId,
+    workspaceId,
+    count: builtInVariables.length,
+    builtInVariables,
+  };
+  await cacheSet(key, result, TTL.properties);
+  return result;
+}
+
+/** GTM-15 — Find the tags a trigger fires (and the tags it blocks). */
+export async function findTagsByTrigger(
+  accountId: string,
+  containerId: string,
+  workspaceId: string,
+  triggerId: string
+) {
+  const [tagsResult, triggersResult] = await Promise.all([
+    listGtmTags(accountId, containerId, workspaceId),
+    listGtmTriggers(accountId, containerId, workspaceId),
+  ]);
+
+  const trigger = triggersResult.triggers.find((t: any) => t.triggerId === triggerId);
+  if (!trigger) {
+    throw new Error(`Trigger ${triggerId} not found in workspace ${workspaceId}`);
+  }
+
+  const { firing, blocking } = tagsForTrigger(tagsResult.tags, triggerId);
+
+  return {
+    accountId,
+    containerId,
+    workspaceId,
+    triggerId,
+    triggerName: trigger.name,
+    triggerType: trigger.type,
+    firingCount: firing.length,
+    firing,
+    blockingCount: blocking.length,
+    blocking,
+  };
+}
+
+/** GTM-16 — Find the tags that reference a user-defined variable. */
+export async function findTagsUsingVariable(
+  accountId: string,
+  containerId: string,
+  workspaceId: string,
+  variableId: string
+) {
+  const [variablesResult, tagsResult] = await Promise.all([
+    listGtmVariables(accountId, containerId, workspaceId),
+    listGtmTags(accountId, containerId, workspaceId),
+  ]);
+
+  const variable = variablesResult.variables.find((v: any) => v.variableId === variableId);
+  if (!variable) {
+    throw new Error(`Variable ${variableId} not found in workspace ${workspaceId}`);
+  }
+
+  const usedBy = tagsUsingVariable(tagsResult.tags, variable.name);
+
+  return {
+    accountId,
+    containerId,
+    workspaceId,
+    variableId,
+    variableName: variable.name,
+    variableType: variable.type,
+    count: usedBy.length,
+    tags: usedBy,
+    unused: usedBy.length === 0,
+  };
+}
+
+/** GTM-19 — Detect duplicate GA4 event tags and duplicate configuration tags. */
+export async function detectDuplicateTags(
+  accountId: string,
+  containerId: string,
+  workspaceId: string
+) {
+  const tagsResult = await listGtmTags(accountId, containerId, workspaceId);
+  const report = findDuplicateTags(tagsResult.tags);
+
+  return {
+    accountId,
+    containerId,
+    workspaceId,
+    totalTags: tagsResult.count,
+    hasDuplicates: report.duplicateGroupCount > 0,
+    ...report,
   };
 }
 

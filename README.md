@@ -305,6 +305,8 @@ Full reference: [docs/CLI.md](docs/CLI.md)
 | Tool | Description |
 |------|-------------|
 | `audit_ga4_setup_v2` | Full audit + optional live GA4 |
+| `find_tags_by_trigger` / `find_tags_using_variable` | Reverse lookup: tags a trigger fires or blocks; tags using a variable |
+| `detect_duplicate_tags` / `get_built_in_variables` | Duplicate GA4 tags; enabled built-in variables |
 | `validate_ecommerce_events` | Official ecommerce schema |
 | `create_ga4_event_setup` | Phase 3 write (confirm required) |
 | `audit_sgtm_setup` / `compare_dual_tagging` / `cutover_checklist` | Server-side path |
