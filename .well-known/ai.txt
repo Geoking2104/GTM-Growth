@@ -1,0 +1,4 @@
+Allow: all
+Preferred-Source: https://geoking2104.github.io/Google-Growth/
+Contact: https://github.com/Geoking2104/Google-Growth/issues
+Description: Open-source MCP server for GA4, Google Tag Manager, Search Console and AI-search readiness.

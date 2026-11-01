@@ -1,0 +1,444 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Google Growth — AI-search readiness and GTM measurement, in one MCP server</title>
+<meta name="description" content="Enter your URL for a free readiness read, then get the full GEO audit, llms.txt and schema fixes, AI crawler access, and a Google Tag Manager plan for measuring what happens next.">
+<link rel="canonical" href="https://geoking2104.github.io/Google-Growth/">
+<link rel="alternate" hreflang="en" href="https://geoking2104.github.io/Google-Growth/">
+<meta name="theme-color" content="#0b1220">
+<meta property="og:type" content="website">
+<meta property="og:title" content="Google Growth — make your site readable, quotable and measurable">
+<meta property="og:description" content="Free URL read, then the full GEO audit and GTM measurement plan. Open source, Apache-2.0.">
+<meta property="og:url" content="https://geoking2104.github.io/Google-Growth/">
+<meta property="og:image" content="https://geoking2104.github.io/Google-Growth/assets/logo.svg">
+<meta name="twitter:card" content="summary">
+<link rel="icon" href="assets/logo.svg" type="image/svg+xml">
+<link rel="stylesheet" href="styles.css">
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@graph": [
+    {
+      "@type": "WebSite",
+      "name": "Google Growth",
+      "url": "https://geoking2104.github.io/Google-Growth/",
+      "description": "Open-source MCP server for GA4, Google Tag Manager, Search Console and AI-search readiness."
+    },
+    {
+      "@type": "SoftwareApplication",
+      "name": "Google Growth",
+      "applicationCategory": "DeveloperApplication",
+      "operatingSystem": "Node.js 20+",
+      "url": "https://geoking2104.github.io/Google-Growth/",
+      "codeRepository": "https://github.com/Geoking2104/Google-Growth",
+      "license": "https://www.apache.org/licenses/LICENSE-2.0",
+      "offers": { "@type": "Offer", "price": "0", "priceCurrency": "USD" }
+    },
+    {
+      "@type": "Organization",
+      "name": "Google Growth",
+      "url": "https://geoking2104.github.io/Google-Growth/",
+      "logo": "https://geoking2104.github.io/Google-Growth/assets/logo.svg",
+      "description": "Enter your URL for a free readiness read, then get the full GEO audit, llms.txt and schema fixes, AI crawler access, and a Google Tag Manager plan for measuring what happens next.",
+      "sameAs": ["https://github.com/Geoking2104/Google-Growth"]
+    },
+    {
+      "@type": "WebPage",
+      "name": "Google Growth",
+      "url": "https://geoking2104.github.io/Google-Growth/",
+      "description": "Free URL read, then the full GEO audit and GTM measurement plan.",
+      "dateModified": "2026-11-01",
+      "inLanguage": "en"
+    },
+    {
+      "@type": "FAQPage",
+      "mainEntity": [
+        {
+          "@type": "Question",
+          "name": "Is the free read a real audit?",
+          "acceptedAnswer": {
+            "@type": "Answer",
+            "text": "No. The free read inspects the URL you type — HTTPS, hostname shape, path depth, tracking parameters and similar address-level issues. It runs in your browser and never fetches the page."
+          }
+        },
+        {
+          "@type": "Question",
+          "name": "Does Google Growth guarantee AI citations?",
+          "acceptedAnswer": {
+            "@type": "Answer",
+            "text": "No. It measures readiness: crawler access, llms.txt, structured data, citability, entity signals and discovery endpoints. It never queries ChatGPT, Claude or Perplexity, so it cannot claim an engine cites you."
+          }
+        },
+        {
+          "@type": "Question",
+          "name": "Do you need access to my Google account?",
+          "acceptedAnswer": {
+            "@type": "Answer",
+            "text": "Only if you want the GA4 and Tag Manager audits. Those use a service account invited to your properties, and every write stays disabled unless a flag and confirm=true are both set. The GEO tools read public pages only."
+          }
+        }
+      ]
+    }
+  ]
+}
+</script>
+</head>
+<body>
+<a class="skip-link" href="#main">Skip to content</a>
+
+<header class="site-header">
+  <div class="wrap header-inner">
+    <a class="brand" href="#top" aria-label="Google Growth home">
+      <img src="assets/logo.svg" alt="" width="32" height="32">
+      <span>Google&nbsp;Growth</span>
+    </a>
+    <nav class="nav" aria-label="Primary">
+      <a href="#solutions">Solutions</a>
+      <a href="#measurement">Measurement</a>
+      <a href="#how">How it works</a>
+      <a href="#plans">Plans</a>
+      <a href="#faq">FAQ</a>
+      <a class="nav-gh" href="https://github.com/Geoking2104/Google-Growth">GitHub</a>
+    </nav>
+    <a class="btn btn-small" href="#free-read">Free read</a>
+  </div>
+</header>
+
+<main id="main">
+  <!-- ── Hero ─────────────────────────────────────────────── -->
+  <section class="hero" id="top">
+    <div class="wrap hero-inner">
+      <p class="eyebrow"><span class="dot"></span> Open source · Apache-2.0 · MCP</p>
+      <h1>Make your site readable,<br>quotable — and measurable.</h1>
+      <p class="lede">
+        Google Growth connects GA4, Google Tag Manager, Search Console and AI-search
+        readiness in one MCP server. Start with a free read of your address; get the
+        full audit, the fixes and the measurement plan when you want them done.
+      </p>
+
+      <form class="check-form" id="check-form" novalidate>
+        <label class="sr-only" for="site-url">Your website URL</label>
+        <input id="site-url" name="url" type="text" inputmode="url" autocomplete="url"
+               placeholder="yourcompany.com" aria-describedby="check-hint" required>
+        <button class="btn" type="submit">Run the free read</button>
+      </form>
+      <p class="hint" id="check-hint">No signup. This first read inspects the URL only — nothing is fetched.</p>
+      <p class="form-error" id="check-error" role="alert" hidden></p>
+
+      <ul class="hero-stats" aria-label="What ships in the repository">
+        <li><strong>86</strong><span>MCP tools</span></li>
+        <li><strong>10</strong><span>GEO checks</span></li>
+        <li><strong>22</strong><span>GTM tools</span></li>
+        <li><strong>0</strong><span>vendor lock-in</span></li>
+      </ul>
+    </div>
+  </section>
+
+  <!-- ── Free read result ─────────────────────────────────── -->
+  <section class="section result-section" id="free-read" aria-labelledby="result-heading" hidden>
+    <div class="wrap">
+      <div class="result-card">
+        <div class="result-head">
+          <div>
+            <p class="eyebrow eyebrow-dark">Free read</p>
+            <h2 id="result-heading" tabindex="-1">First read for <span id="result-host">your site</span></h2>
+            <p class="result-verdict" id="result-verdict"></p>
+          </div>
+          <div class="score" id="score" aria-hidden="true">
+            <span class="score-value" id="score-value">0</span>
+            <span class="score-label">URL hygiene</span>
+          </div>
+        </div>
+
+        <ul class="check-list" id="check-list" aria-live="polite"></ul>
+
+        <div class="result-next">
+          <h3>What the full audit adds</h3>
+          <ul class="tick-list">
+            <li>AI crawler access in <code>robots.txt</code>, per bot and tier</li>
+            <li><code>llms.txt</code> presence, structure and sitemap drift</li>
+            <li>JSON-LD coverage: WebSite, Organization, FAQ, Article</li>
+            <li>Content citability: 12 methods with per-method evidence</li>
+            <li>Brand and entity signals, Knowledge Graph links</li>
+            <li>AI discovery endpoints (<code>/.well-known/ai.txt</code>, <code>/ai/*.json</code>)</li>
+            <li>GTM installation: head loader, noscript, dataLayer order, consent</li>
+            <li>Container audit: duplicate tags, missing ecommerce parameters</li>
+          </ul>
+          <a class="btn" href="#talk">Get the full report</a>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ── Solutions ────────────────────────────────────────── -->
+  <section class="section" id="solutions" aria-labelledby="solutions-heading">
+    <div class="wrap">
+      <header class="section-head">
+        <p class="eyebrow eyebrow-dark">Solutions</p>
+        <h2 id="solutions-heading">One server, six jobs that usually need six tools</h2>
+        <p class="section-sub">Read-only by default, deterministic, and covered by tests. Every answer comes with the evidence behind it.</p>
+      </header>
+
+      <div class="grid cards">
+        <article class="card">
+          <span class="icon" aria-hidden="true"><svg viewBox="0 0 24 24"><circle cx="11" cy="11" r="7"/><path d="M16.5 16.5 21 21"/></svg></span>
+          <h3>GEO audit</h3>
+          <p>Score a page 0–100 across eight categories — robots, llms.txt, schema, meta, content, brand, signals, discovery — with the fix order computed from recoverable points.</p>
+          <p class="tag">geo_audit</p>
+        </article>
+
+        <article class="card">
+          <span class="icon" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M7 7h4v10H7zM13 7h4v6h-4z"/></svg></span>
+          <h3>Citability</h3>
+          <p>A second score that asks whether a passage would be quoted: statistics, quotations, structure, question headings, answer-first writing, authorship, freshness.</p>
+          <p class="tag">geo_citability</p>
+        </article>
+
+        <article class="card">
+          <span class="icon" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M6 4h9l4 4v12H6z"/><path d="M15 4v5h4"/></svg></span>
+          <h3>llms.txt, generated and checked</h3>
+          <p>Build the file from your sitemap, then catch drift after every deploy: links that left the sitemap, pages never added, and how many links still resolve.</p>
+          <p class="tag">geo_generate_llms_txt · geo_llms_drift</p>
+        </article>
+
+        <article class="card">
+          <span class="icon" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M9 7 5 12l4 5M15 7l4 5-4 5"/></svg></span>
+          <h3>Structured data</h3>
+          <p>Rich JSON-LD templates for WebSite, Organization, FAQ, Article, Product and LocalBusiness — five-plus attributes, not generic name-and-url markup.</p>
+          <p class="tag">geo_generate_schema</p>
+        </article>
+
+        <article class="card">
+          <span class="icon" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M4 8h16M4 16h16"/><circle cx="9" cy="8" r="2"/><circle cx="15" cy="16" r="2"/></svg></span>
+          <h3>GTM installation</h3>
+          <p>Verify the head loader, the noscript fallback, dataLayer order, default consent and duplicate containers — on staging before it reaches production.</p>
+          <p class="tag">gtm_audit_installation</p>
+        </article>
+
+        <article class="card">
+          <span class="icon" aria-hidden="true"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="8"/><circle cx="12" cy="12" r="3"/><path d="M12 4v3M12 17v3M4 12h3M17 12h3"/></svg></span>
+          <h3>Positioning</h3>
+          <p>Compare your page with named competitors: the vocabulary everyone shares, themes only you own, themes only they cover. Copy only — no traffic or ranking data.</p>
+          <p class="tag">geo_positioning</p>
+        </article>
+      </div>
+    </div>
+  </section>
+
+  <!-- ── Measurement ──────────────────────────────────────── -->
+  <section class="section section-alt" id="measurement" aria-labelledby="measurement-heading">
+    <div class="wrap measurement">
+      <div>
+        <p class="eyebrow eyebrow-dark">Measurement</p>
+        <h2 id="measurement-heading">GTM, measured end to end</h2>
+        <p class="section-sub">Traffic you cannot see is traffic you cannot defend. The same server audits the container that produces the numbers.</p>
+
+        <div class="steps-mini">
+          <div>
+            <h3>Install</h3>
+            <p>Page-level checks for the loader, noscript, dataLayer order and consent — plus a snippet generator that refuses malformed container IDs.</p>
+          </div>
+          <div>
+            <h3>Inspect</h3>
+            <p>GA4 configuration and event tags, triggers, variables, event parameters, duplicate tags and reverse lookups: what fires on a trigger, what uses a variable.</p>
+          </div>
+          <div>
+            <h3>Prove</h3>
+            <p>Cross-reference GTM events against events actually received in GA4, validate ecommerce payloads against the official schema, and gate the deploy on drift.</p>
+          </div>
+        </div>
+      </div>
+
+      <div class="terminal" aria-label="Example commands">
+        <div class="terminal-bar"><span></span><span></span><span></span><em>terminal</em></div>
+        <pre><code>npm run cli -- gtm-audit --url https://acme.com
+npm run cli -- geo-audit --url https://acme.com
+npm run cli -- geo-drift --url https://acme.com
+npm run cli -- geo-positioning --url https://acme.com \
+  --competitors https://a.com,https://b.com</code></pre>
+        <button class="copy" type="button" data-copy="npm run cli -- geo-audit --url https://acme.com">Copy command</button>
+      </div>
+    </div>
+  </section>
+
+  <!-- ── How it works ─────────────────────────────────────── -->
+  <section class="section" id="how" aria-labelledby="how-heading">
+    <div class="wrap">
+      <header class="section-head">
+        <p class="eyebrow eyebrow-dark">How it works</p>
+        <h2 id="how-heading">From one URL to a plan you can ship</h2>
+      </header>
+      <ol class="steps">
+        <li>
+          <span class="step-num">1</span>
+          <h3>Free read</h3>
+          <p>Type your address. You get the URL-level hygiene score and the checklist of everything the full audit inspects. No account, no fetch, no guesswork.</p>
+        </li>
+        <li>
+          <span class="step-num">2</span>
+          <h3>Full audit</h3>
+          <p>Run the server yourself, or have us run it with you: GEO score, citability, crawler matrix, llms.txt drift, GTM installation and container audit — each with evidence.</p>
+        </li>
+        <li>
+          <span class="step-num">3</span>
+          <h3>Implementation</h3>
+          <p>A prioritized 90-day plan: what to fix now, what to instrument, what to re-measure. Then a before/after comparison on the same deterministic score.</p>
+        </li>
+      </ol>
+    </div>
+  </section>
+
+  <!-- ── Plans ────────────────────────────────────────────── -->
+  <section class="section section-alt" id="plans" aria-labelledby="plans-heading">
+    <div class="wrap">
+      <header class="section-head">
+        <p class="eyebrow eyebrow-dark">Plans</p>
+        <h2 id="plans-heading">Start free. Go deep when it pays.</h2>
+      </header>
+      <div class="grid plans">
+        <article class="card plan">
+          <h3>Free read</h3>
+          <p class="price">€0</p>
+          <ul class="tick-list">
+            <li>URL hygiene score, 10 checks</li>
+            <li>The full audit checklist</li>
+            <li>Open-source server you can run locally</li>
+            <li>CLI and MCP access, Apache-2.0</li>
+          </ul>
+          <a class="btn btn-ghost" href="#free-read">Run the read</a>
+        </article>
+
+        <article class="card plan plan-featured">
+          <h3>Assisted engagement</h3>
+          <p class="price">By scope</p>
+          <ul class="tick-list">
+            <li>Full GEO + GTM audit with evidence</li>
+            <li>llms.txt, schema, robots and consent fixes</li>
+            <li>Container clean-up and event plan</li>
+            <li>90-day roadmap and re-measurement</li>
+            <li>Handover to your team, not a black box</li>
+          </ul>
+          <a class="btn" href="#talk">Request the report</a>
+        </article>
+      </div>
+    </div>
+  </section>
+
+  <!-- ── Lead form ────────────────────────────────────────── -->
+  <section class="section" id="talk" aria-labelledby="talk-heading">
+    <div class="wrap talk">
+      <div>
+        <p class="eyebrow eyebrow-dark">Next step</p>
+        <h2 id="talk-heading">Get the full report</h2>
+        <p class="section-sub">Tell us where to send it. We reply with the audit, the three fixes that move the score most, and what the GTM side needs before you can trust the numbers.</p>
+
+        <form class="lead-form" id="lead-form">
+          <div class="field">
+            <label for="lead-name">Name</label>
+            <input id="lead-name" name="name" type="text" autocomplete="name" required>
+          </div>
+          <div class="field">
+            <label for="lead-email">Work email</label>
+            <input id="lead-email" name="email" type="email" autocomplete="email" required>
+          </div>
+          <div class="field">
+            <label for="lead-site">Website</label>
+            <input id="lead-site" name="website" type="text" inputmode="url" autocomplete="url" required>
+          </div>
+          <div class="field">
+            <label for="lead-goal">What do you need first?</label>
+            <select id="lead-goal" name="goal">
+              <option>Full GEO audit</option>
+              <option>GTM / GA4 measurement</option>
+              <option>llms.txt and schema implementation</option>
+              <option>Competitive positioning review</option>
+              <option>Not sure yet</option>
+            </select>
+          </div>
+          <button class="btn" type="submit">Request the report</button>
+          <p class="hint" id="lead-status" role="status" aria-live="polite"></p>
+        </form>
+      </div>
+
+      <aside class="self-serve">
+        <h3>Or run it yourself</h3>
+        <p>Everything the audit does is in the repository. No account, no call.</p>
+        <pre><code>git clone https://github.com/Geoking2104/Google-Growth.git
+cd Google-Growth &amp;&amp; npm install &amp;&amp; npm run build
+npm run cli -- geo-audit --url https://acme.com</code></pre>
+        <a class="link" href="https://github.com/Geoking2104/Google-Growth">Read the docs on GitHub →</a>
+        <p class="fineprint">The server never writes to your site, GA4 or GTM unless a write flag and <code>confirm=true</code> are both set.</p>
+      </aside>
+    </div>
+  </section>
+
+  <!-- ── FAQ ──────────────────────────────────────────────── -->
+  <section class="section section-alt" id="faq" aria-labelledby="faq-heading">
+    <div class="wrap narrow">
+      <header class="section-head">
+        <p class="eyebrow eyebrow-dark">FAQ</p>
+        <h2 id="faq-heading">The questions that decide the engagement</h2>
+      </header>
+
+      <details open>
+        <summary>Is the free read a real audit?</summary>
+        <p>No. It inspects the URL you type — HTTPS, hostname shape, path depth, tracking parameters, fragments, length, file extensions. It runs in your browser and never fetches the page, so it cannot see your content, schema or robots.txt. The full audit does that server-side.</p>
+      </details>
+      <details>
+        <summary>Does this guarantee AI engines will cite me?</summary>
+        <p>No, and any tool claiming that is guessing. The audit measures readiness: crawler access, llms.txt, structured data, citability, entity signals and discovery endpoints. It never queries ChatGPT, Claude or Perplexity, so it cannot claim an engine cites you.</p>
+      </details>
+      <details>
+        <summary>Do you need access to my Google account?</summary>
+        <p>Only for the GA4 and Tag Manager audits. Those use a service account invited to your properties with viewer access. Every write — tags, sitemaps, Indexing API, Measurement Protocol secrets — is disabled by default and requires a flag plus <code>confirm=true</code>.</p>
+      </details>
+      <details>
+        <summary>What happens after I submit the form?</summary>
+        <p>You get the full audit for the URL you entered, the three fixes with the highest recoverable points, and a short list of tracking gaps that would make the numbers unreliable. If it is not a fit, you still keep the audit.</p>
+      </details>
+      <details>
+        <summary>Is it really open source?</summary>
+        <p>Yes — Apache-2.0. The GEO rubric is adapted from the MIT-licensed geo-optimizer-skill model, credited in the docs. The server, CLI, site and tests are in the same repository.</p>
+      </details>
+    </div>
+  </section>
+
+  <!-- ── Closing ──────────────────────────────────────────── -->
+  <section class="closing">
+    <div class="wrap closing-inner">
+      <h2>Your next citation starts with a URL.</h2>
+      <p>Run the free read, or take the whole server and run it yourself.</p>
+      <div class="closing-actions">
+        <a class="btn" href="#free-read">Run the free read</a>
+        <a class="btn btn-ghost btn-on-dark" href="https://github.com/Geoking2104/Google-Growth">View on GitHub</a>
+      </div>
+    </div>
+  </section>
+</main>
+
+<footer class="site-footer">
+  <div class="wrap footer-inner">
+    <div class="footer-brand">
+      <img src="assets/logo.svg" alt="" width="28" height="28">
+      <div>
+        <strong>Google Growth</strong>
+        <p>Open-source MCP server for GA4, GTM, Search Console and AI-search readiness.</p>
+      </div>
+    </div>
+    <nav aria-label="Footer">
+      <a href="https://github.com/Geoking2104/Google-Growth">Repository</a>
+      <a href="https://github.com/Geoking2104/Google-Growth/blob/main/docs/GEO.md">GEO docs</a>
+      <a href="https://github.com/Geoking2104/Google-Growth/blob/main/docs/GTM_IMPLEMENTATION.md">GTM guide</a>
+      <a href="https://github.com/Geoking2104/Google-Growth/blob/main/LICENSE">Apache-2.0</a>
+    </nav>
+  </div>
+  <div class="wrap fineprint">
+    Not affiliated with Google. GEO rubric adapted from the MIT-licensed geo-optimizer-skill model.
+  </div>
+</footer>
+
+<script type="module" src="app.js"></script>
+</body>
+</html>

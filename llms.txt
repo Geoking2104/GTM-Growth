@@ -1,0 +1,20 @@
+# Google Growth
+
+> Open-source MCP server for GA4, Google Tag Manager, Search Console and AI-search readiness — free URL read, full GEO audit, GTM measurement plan.
+
+## Product
+
+- [Landing page](https://geoking2104.github.io/Google-Growth/): free URL read, then the full audit and assisted GTM engagement
+- [Repository](https://github.com/Geoking2104/Google-Growth): Apache-2.0, Node.js 20+
+- [GEO rubric](https://github.com/Geoking2104/Google-Growth/blob/main/docs/GEO.md): eight categories, 100 points, evidence per check
+- [GTM implementation guide](https://github.com/Geoking2104/Google-Growth/blob/main/docs/GTM_IMPLEMENTATION.md): snippets, dataLayer, consent, verification
+
+## Documentation
+
+- [CLI reference](https://github.com/Geoking2104/Google-Growth/blob/main/docs/CLI.md)
+- [Tool catalogue](https://github.com/Geoking2104/Google-Growth/blob/main/skills/google-growth/references/tools.md)
+- [Setup](https://github.com/Geoking2104/Google-Growth/blob/main/skills/google-growth/references/setup.md)
+
+## Optional
+
+- [llms-full.txt](https://geoking2104.github.io/Google-Growth/llms-full.txt): full reference for retrieval

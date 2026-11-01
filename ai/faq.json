@@ -1,0 +1,16 @@
+{
+  "faqs": [
+    {
+      "question": "Is the free read a real audit?",
+      "answer": "No. It inspects the URL you type — HTTPS, hostname shape, path depth, tracking parameters — and never fetches the page. The full audit runs server-side."
+    },
+    {
+      "question": "Does Google Growth guarantee AI citations?",
+      "answer": "No. It measures readiness: crawler access, llms.txt, structured data, citability and discovery endpoints. It never queries ChatGPT, Claude or Perplexity."
+    },
+    {
+      "question": "Is Google Growth open source?",
+      "answer": "Yes, under Apache-2.0. The GEO rubric is adapted from the MIT-licensed geo-optimizer-skill model, credited in the docs."
+    }
+  ]
+}

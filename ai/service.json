@@ -1,0 +1,15 @@
+{
+  "name": "Google Growth",
+  "description": "Audit AI-search readiness and Google Tag Manager configuration from one MCP server.",
+  "capabilities": [
+    "geo-audit",
+    "citability-score",
+    "llms-txt-generation",
+    "llms-txt-drift",
+    "crawler-access-matrix",
+    "structured-data-generation",
+    "gtm-installation-audit",
+    "gtm-container-audit"
+  ],
+  "documentation": "https://github.com/Geoking2104/Google-Growth"
+}
