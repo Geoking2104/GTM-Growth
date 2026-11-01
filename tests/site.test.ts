@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { auditUrlShape, normalizeTarget, verdict } from "../site/preview.js";
+import { dictFor, translations } from "../site/i18n.js";
 
 describe("landing free read — URL parsing", () => {
   it("accepts a bare domain and upgrades it to https", () => {
@@ -62,5 +63,33 @@ describe("landing free read — URL shape score", () => {
     const failed = auditUrlShape(url).checks.filter((check) => check.status === "fail").map((check) => check.id);
     expect(failed).toContain("url.ip");
     expect(failed).toContain("url.slashes");
+  });
+});
+
+describe("landing free read — French", () => {
+  const fr = dictFor("fr");
+
+  it("falls back to English for an unknown language", () => {
+    expect(dictFor("de")).toBe(translations.en);
+    expect(dictFor(undefined)).toBe(translations.en);
+  });
+
+  it("translates labels, verdicts and errors", () => {
+    const { url } = normalizeTarget("http://Example.com/Path", fr);
+    const report = auditUrlShape(url, fr);
+    const https = report.checks.find((check) => check.id === "url.https");
+    expect(https?.label).toBe("Servi en HTTPS");
+    expect(https?.fix).toMatch(/HTTPS/);
+    expect(verdict(report.score, fr)).toMatch(/URL|Adresse/);
+    expect(normalizeTarget("", fr).error).toMatch(/Saisissez/);
+    expect(normalizeTarget("ftp://example.com", fr).error).toMatch(/http/);
+  });
+
+  it("keeps the same checks and score as English", () => {
+    const input = "https://example.com/pricing";
+    const en = normalizeTarget(input);
+    const frResult = normalizeTarget(input, fr);
+    expect(auditUrlShape(frResult.url, fr).score).toBe(auditUrlShape(en.url).score);
+    expect(auditUrlShape(frResult.url, fr).checks).toHaveLength(10);
   });
 });

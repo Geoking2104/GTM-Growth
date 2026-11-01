@@ -4,7 +4,7 @@
  *
  * Catches the failures that a marketing page actually ships with: a missing
  * asset, a form hook renamed in the HTML but not in the JS, placeholder copy,
- * or a canonical URL that disagrees with the sitemap.
+ * a canonical URL that disagrees with the sitemap, or a broken language pair.
  */
 
 import fs from "node:fs";
@@ -24,9 +24,11 @@ function read(file) {
 
 const required = [
   "index.html",
+  "fr/index.html",
   "styles.css",
   "app.js",
   "preview.js",
+  "i18n.js",
   "robots.txt",
   "sitemap.xml",
   "llms.txt",
@@ -41,6 +43,7 @@ const required = [
 for (const file of required) read(file);
 
 const html = read("index.html");
+const frHtml = read("fr/index.html");
 const js = read("app.js");
 const sitemap = read("sitemap.xml");
 const llms = read("llms.txt");
@@ -48,6 +51,7 @@ const llms = read("llms.txt");
 const hooks = ['id="check-form"', 'id="site-url"', 'id="lead-form"', 'id="lead-site"', 'id="result-heading"'];
 for (const hook of hooks) {
   if (!html.includes(hook)) failures.push(`index.html lost hook ${hook}`);
+  if (!frHtml.includes(hook)) failures.push(`fr/index.html lost hook ${hook}`);
 }
 
 for (const needle of ['type="application/ld+json"', 'rel="canonical"', 'name="description"', "app.js", "styles.css"]) {
@@ -57,19 +61,37 @@ for (const needle of ['type="application/ld+json"', 'rel="canonical"', 'name="de
 for (const selector of ["#check-form", "#lead-form", "#site-url"]) {
   if (!js.includes(selector)) failures.push(`app.js no longer wires ${selector}`);
 }
+if (!js.includes("dictFor")) failures.push("app.js no longer loads the translation dictionary");
 
 const placeholders = /lorem ipsum|TODO|FIXME|your-domain\.example/i;
-if (placeholders.test(html) || placeholders.test(js)) failures.push("placeholder text found");
+if (placeholders.test(html) || placeholders.test(js) || placeholders.test(frHtml)) {
+  failures.push("placeholder text found");
+}
 
 const canonical = html.match(/<link rel="canonical" href="([^"]+)"/)?.[1] ?? "";
 if (!canonical) failures.push("canonical URL not found");
 if (canonical && !sitemap.includes(canonical)) failures.push(`sitemap does not list canonical ${canonical}`);
 if (!llms.startsWith("# ")) failures.push("llms.txt must start with an H1");
 
-// Local asset references must exist.
-for (const match of html.matchAll(/(?:src|href)="((?:assets\/|styles\.css|app\.js)[^"]*)"/g)) {
-  const target = match[1];
-  if (!fs.existsSync(path.join(root, target))) failures.push(`broken local reference: ${target}`);
+// Language pair
+const frCanonical = frHtml.match(/<link rel="canonical" href="([^"]+)"/)?.[1] ?? "";
+if (!frHtml.includes('<html lang="fr">')) failures.push("fr/index.html must declare lang=fr");
+if (!frCanonical.endsWith("/fr/")) failures.push("fr/index.html canonical must end with /fr/");
+if (!sitemap.includes(frCanonical)) failures.push(`sitemap does not list ${frCanonical}`);
+for (const page of [html, frHtml]) {
+  if (!page.includes('hreflang="en"')) failures.push("missing hreflang=en alternate");
+  if (!page.includes('hreflang="fr"')) failures.push("missing hreflang=fr alternate");
+}
+
+// Local asset references must exist (resolve relative to the page folder).
+for (const [page, base] of [
+  [html, ""],
+  [frHtml, "fr"],
+]) {
+  for (const match of page.matchAll(/(?:src|href)="((?:\.\.\/)?(?:assets\/|styles\.css|app\.js)[^"]*)"/g)) {
+    const target = path.normalize(path.join(base, match[1]));
+    if (!fs.existsSync(path.join(root, target))) failures.push(`broken local reference: ${match[1]} in ${base || "."}`);
+  }
 }
 
 if (failures.length) {
@@ -78,4 +100,4 @@ if (failures.length) {
   process.exit(1);
 }
 
-console.log("site check OK — files, hooks, JSON-LD, canonical, sitemap and llms.txt");
+console.log("site check OK — files, hooks, JSON-LD, canonical, sitemap, llms.txt and the en/fr pair");

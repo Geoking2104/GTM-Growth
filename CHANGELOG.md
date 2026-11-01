@@ -1,5 +1,19 @@
 # Changelog
 
+## 0.15.0 — 2026-11-01
+
+### Added
+
+- French version of the landing page at `/fr/`: translated copy, French metadata, JSON-LD and FAQ, its own canonical URL
+- Real `hreflang` pair (en / fr / x-default) on both pages, plus a header language switch that works without JavaScript
+- `site/i18n.js` — dictionary for the strings the browser generates (10 URL checks, verdicts, validation errors, lead-form messages); `app.js` selects it from `<html lang>` and `preview.js` accepts it as an argument
+- `sitemap.xml` lists both URLs with `xhtml:link` alternates; `llms.txt` links the French page
+- `scripts/check-site.mjs` now validates the language pair, hreflang links and `/fr/` relative assets; `tests/site.test.ts` covers the French dictionary
+
+### Changed
+
+- Site docs explain the two-page structure and how to add a language
+
 ## 0.14.0 — 2026-11-01
 
 ### Added
