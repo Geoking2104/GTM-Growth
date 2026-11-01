@@ -7,6 +7,9 @@
  */
 
 import { auditUrlShape, normalizeTarget, verdict } from "./preview.js";
+import { dictFor } from "./i18n.js";
+
+const dict = dictFor(document.documentElement.lang);
 
 /**
  * Set `leadEndpoint` to a form backend (Formspree, Basin, your own worker) that
@@ -80,7 +83,7 @@ function renderChecks(checks) {
 
 function renderResult(input) {
   clearError();
-  const parsed = normalizeTarget(input);
+  const parsed = normalizeTarget(input, dict);
   if (!parsed.ok) {
     showError(parsed.error);
     urlInput.focus();
@@ -91,10 +94,13 @@ function renderResult(input) {
   lastUrl = parsed.url.href;
 
   resultHost.textContent = report.host;
-  resultVerdict.textContent = `${verdict(report.score)} ${report.passed}/${report.total} checks pass.`;
+  resultVerdict.textContent = `${verdict(report.score, dict)} ${dict.summary(
+    report.passed,
+    report.total
+  )}`;
   scoreEl.style.setProperty("--score", String(report.score));
   scoreValue.textContent = String(report.score);
-  scoreEl.setAttribute("aria-label", `URL hygiene score: ${report.score} out of 100`);
+  scoreEl.setAttribute("aria-label", dict.scoreLabel(report.score));
   renderChecks(report.checks);
 
   if (leadSite && !leadSite.value) leadSite.value = parsed.url.href;
@@ -158,17 +164,14 @@ leadForm?.addEventListener("submit", async (event) => {
     source: "landing",
   };
 
-  leadStatus.textContent = "Sending…";
+  leadStatus.textContent = dict.lead.sending;
   try {
     const mode = await submitLead(payload);
-    leadStatus.textContent =
-      mode === "mailto"
-        ? "Your email client should open with the details filled in. If it does not, send the same information to the address in the footer."
-        : "Request sent. We reply with the audit and the three fixes that move the score most.";
+    leadStatus.textContent = mode === "mailto" ? dict.lead.mailto : dict.lead.sent;
     leadForm.reset();
     if (payload.website) leadSite.value = payload.website;
   } catch (error) {
-    leadStatus.textContent = `Could not send the request (${error.message}). You can still email us directly.`;
+    leadStatus.textContent = dict.lead.failed(error.message);
   }
 });
 

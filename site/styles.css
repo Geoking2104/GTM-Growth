@@ -95,6 +95,11 @@ code {
 .nav a { color: var(--muted); font-size: .94rem; font-weight: 500; }
 .nav a:hover { color: var(--ink); text-decoration: none; }
 .nav-gh { padding-left: 1.1rem; border-left: 1px solid var(--line-2); }
+.lang { display: inline-flex; align-items: center; gap: .15rem; border: 1px solid var(--line-2); border-radius: 999px; padding: .15rem; }
+.lang a { font-size: .78rem; font-weight: 600; color: var(--muted); padding: .25rem .5rem; border-radius: 999px; }
+.lang a[aria-current="true"] { background: var(--ink); color: #fff; }
+.lang a:hover { text-decoration: none; color: var(--ink); }
+.lang a[aria-current="true"]:hover { color: #fff; }
 
 /* ── Buttons ────────────────────────────────────────────── */
 .btn {
