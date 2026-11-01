@@ -1,5 +1,21 @@
 # Changelog
 
+## 0.13.0 — 2026-11-01
+
+### Added
+
+- `geo_citability` — a second 0–100 score over 12 content methods (statistics, quotations, lists/tables, question headings, answer-first, paragraph and sentence length, outbound citations, authorship, freshness, FAQ depth, entity clarity), each with its own evidence
+- `geo_crawler_access` — per-bot matrix grouped by training / search / user tier, with wildcard-only access and blocked citation bots called out
+- `geo_llms_drift` — compares the deployed `/llms.txt` with the sitemap (stale links, missing pages, share of links that resolve); `geo-drift` exits 1 when links are stale so it can gate a deploy
+- `geo_content_risks` — defensive scan for hidden text, LLM instructions in copy or comments, invisible Unicode, CTA overload, thin copy and keyword stuffing
+- `geo_positioning` — on-page competitive positioning against 1–5 URLs: shared vocabulary, themes unique to you, themes only competitors use, overlap score (public copy only)
+- CLI: `geo-citability`, `geo-crawlers`, `geo-drift`, `geo-risks`, `geo-positioning`
+
+### Changed
+
+- README, `docs/GEO.md`, `docs/CLI.md` and the skill references now document the ten GEO tools
+- `tests/geo-extras.test.ts` covers the five additions (12 tests)
+
 ## 0.12.0 — 2026-11-01
 
 ### Added

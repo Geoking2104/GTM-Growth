@@ -160,6 +160,11 @@ Officially intended for job postings and livestream structured data; other uses 
 | `geo_generate_llms_txt` | url, sitemapUrl?, siteName?, description?, maxLinksPerSection? | Returns the file content for `/llms.txt` |
 | `geo_generate_schema` | kind, name, url, description?, logo?, sameAs?, faqs?, … | Returns JSON-LD + `<script>` tag |
 | `geo_generate_robots` | url, sitemapUrl? | Append-only fix; blocked bots are reported, not overridden |
+| `geo_citability` | url | Second 0–100 score, 12 content methods |
+| `geo_crawler_access` | url | Per-bot matrix by tier |
+| `geo_llms_drift` | url, sitemapUrl?, maxUrls? | Stale/missing links + coverage |
+| `geo_content_risks` | url | Hidden text, LLM instructions, thin copy |
+| `geo_positioning` | url, competitors[1–5], maxTerms? | Vocabulary overlap, unique themes |
 
 All five are read-only and need no `confirm`. `kind` is `website`, `organization`, `faq`, `article`, `product`, or `localbusiness`; `kind: "faq"` requires real `faqs[]`. Score bands: 86–100 excellent, 68–85 good, 36–67 foundation, 0–35 critical. Rubric and limits — `references/geo.md`.
 

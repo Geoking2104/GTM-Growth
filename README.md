@@ -346,6 +346,11 @@ Full reference: [docs/CLI.md](docs/CLI.md)
 | `geo_generate_llms_txt` | Generate `/llms.txt` from the sitemap |
 | `geo_generate_schema` | Generate rich JSON-LD (website, organization, faq, article, product, localbusiness) |
 | `geo_generate_robots` | Append-only robots.txt fix; blocked bots are reported, never overridden |
+| `geo_citability` | Second 0–100 score over 12 content methods, each with evidence |
+| `geo_crawler_access` | Per-bot matrix grouped by training / search / user tier |
+| `geo_llms_drift` | llms.txt vs sitemap: stale links, missing pages, link validity |
+| `geo_content_risks` | Hidden text, LLM instructions, invisible Unicode, CTA overload, thin copy |
+| `geo_positioning` | On-page vocabulary overlap against 1–5 competitor URLs |
 
 All GEO tools are read-only. Rubric, bands and limits: [docs/GEO.md](docs/GEO.md).
 
@@ -372,6 +377,8 @@ Each priority includes implementation steps, an owner/role, dependencies, a succ
 ### GEO / AI search readiness audit
 
 `geo_audit` (homepage) → `geo_audit_sitemap` (≤10 pages) → generate only what is missing (`geo_generate_llms_txt`, `geo_generate_schema`, `geo_generate_robots`) → re-run `geo_audit` and compare the breakdown. Readiness only: the server never queries ChatGPT, Claude or Perplexity, so it cannot claim an engine cites the site.
+
+Follow-ups: `geo_citability` (would this passage be quoted), `geo_crawler_access` (which bot is shut out), `geo_llms_drift` (did llms.txt go stale), `geo_content_risks` (hidden text, prompt-like copy), `geo_positioning` (how you differ from named competitors).
 
 ### Example GEO report
 

@@ -127,6 +127,11 @@ Usage:
                             --name <name> --url <url> [--description <text>] [--logo <url>]
                             [--same-as <url,url>] [--author <name>] [--faq-file <json>] [--out <file>]
   geo-robots                --url <url> [--sitemap <url>] [--out <file>]
+  geo-citability            --url <url>
+  geo-crawlers              --url <url>
+  geo-drift                 --url <url> [--sitemap <url>] [--max-urls <n>]   (exit 1 when stale)
+  geo-risks                 --url <url>
+  geo-positioning           --url <url> --competitors <url,url,…> [--max-terms <n>]
 
 ── Server ───────────────────────────────────────────
   serve-http                Start MCP HTTP/SSE server
@@ -532,6 +537,51 @@ async function main() {
         } else {
           console.log(fix.content);
         }
+        break;
+      }
+      case "geo-citability": {
+        const { runCitability } = await import("./geo/citability.js");
+        print(await runCitability({ url: req(args, "url") }));
+        break;
+      }
+      case "geo-crawlers": {
+        const { getCrawlerAccess } = await import("./geo/crawlers.js");
+        print(await getCrawlerAccess({ url: req(args, "url") }));
+        break;
+      }
+      case "geo-drift": {
+        const { checkLlmsDrift } = await import("./geo/drift.js");
+        const drift = await checkLlmsDrift({
+          url: req(args, "url"),
+          sitemapUrl: str(args, "sitemap"),
+          maxUrls: str(args, "max-urls")
+            ? parseInt(String(str(args, "max-urls")), 10)
+            : undefined,
+        });
+        print(drift);
+        if (!drift.inSync) process.exitCode = 1;
+        break;
+      }
+      case "geo-risks": {
+        const { runContentRiskScan } = await import("./geo/risks.js");
+        print(await runContentRiskScan({ url: req(args, "url") }));
+        break;
+      }
+      case "geo-positioning": {
+        const { analyzePositioning } = await import("./geo/positioning.js");
+        const competitors = String(str(args, "competitors") ?? "")
+          .split(",")
+          .map((value) => value.trim())
+          .filter(Boolean);
+        print(
+          await analyzePositioning({
+            url: req(args, "url"),
+            competitors,
+            maxTerms: str(args, "max-terms")
+              ? parseInt(String(str(args, "max-terms")), 10)
+              : undefined,
+          })
+        );
         break;
       }
       case "serve-http": {

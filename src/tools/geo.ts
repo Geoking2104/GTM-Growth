@@ -6,6 +6,11 @@ import { generateJsonLd, renderJsonLdScript } from "../geo/generate/schema.js";
 import { generateRobotsFix } from "../geo/generate/robots.js";
 import { fetchText } from "../geo/http.js";
 import { summarizeAudit } from "../geo/report.js";
+import { runCitability } from "../geo/citability.js";
+import { getCrawlerAccess } from "../geo/crawlers.js";
+import { checkLlmsDrift } from "../geo/drift.js";
+import { runContentRiskScan } from "../geo/risks.js";
+import { analyzePositioning } from "../geo/positioning.js";
 import { success, fail } from "./response.js";
 import { strict } from "./schema.js";
 
@@ -157,6 +162,81 @@ export const geoTools = [
       } catch (err) {
         return fail(err);
       }
+    },
+  },
+  {
+    name: "geo_citability",
+    description:
+      "Content citability score (0-100) over 12 methods: statistics, quotations, lists/tables, question headings, answer-first, paragraph and sentence length, outbound citations, authorship, freshness, FAQ depth, entity clarity. Separate from the 8-category GEO score; each method returns its own evidence.",
+    schema: strict({ url: z.string() }),
+    handler: async (args: any) => {
+      try {
+        return success(await runCitability({ url: args.url }));
+      } catch (err) { return fail(err); }
+    },
+  },
+  {
+    name: "geo_crawler_access",
+    description:
+      "Per-bot AI crawler matrix from robots.txt, grouped by tier (training, search, user): allowed, partial, blocked or missing, plus wildcard-only access and blocked citation bots.",
+    schema: strict({ url: z.string() }),
+    handler: async (args: any) => {
+      try {
+        return success(await getCrawlerAccess({ url: args.url }));
+      } catch (err) { return fail(err); }
+    },
+  },
+  {
+    name: "geo_llms_drift",
+    description:
+      "Compare the deployed /llms.txt against the current sitemap: same-host links that are no longer in the sitemap (stale) and sitemap pages never linked (missing), with a coverage percentage. No per-link HTTP requests, so it is cheap enough to gate a deploy.",
+    schema: strict({
+      url: z.string(),
+      sitemapUrl: z.string().optional(),
+      maxUrls: z.number().optional(),
+    }),
+    handler: async (args: any) => {
+      try {
+        return success(
+          await checkLlmsDrift({
+            url: args.url,
+            sitemapUrl: args.sitemapUrl,
+            maxUrls: args.maxUrls,
+          })
+        );
+      } catch (err) { return fail(err); }
+    },
+  },
+  {
+    name: "geo_content_risks",
+    description:
+      "Defensive scan of your own page for patterns that suppress citation: hidden text, LLM instructions in copy or comments, invisible Unicode, CTA overload, thin content and keyword stuffing. Findings carry a severity and a fix; nothing is executed.",
+    schema: strict({ url: z.string() }),
+    handler: async (args: any) => {
+      try {
+        return success(await runContentRiskScan({ url: args.url }));
+      } catch (err) { return fail(err); }
+    },
+  },
+  {
+    name: "geo_positioning",
+    description:
+      "On-page competitive positioning: compare your page against 1-5 competitor URLs and report shared vocabulary (undifferentiated), themes unique to you, themes only competitors cover, and a 0-100 overlap score. Uses public page copy only — no rankings, traffic or SERP data.",
+    schema: strict({
+      url: z.string(),
+      competitors: z.array(z.string()).min(1).max(5),
+      maxTerms: z.number().optional(),
+    }),
+    handler: async (args: any) => {
+      try {
+        return success(
+          await analyzePositioning({
+            url: args.url,
+            competitors: args.competitors,
+            maxTerms: args.maxTerms,
+          })
+        );
+      } catch (err) { return fail(err); }
     },
   },
 ];

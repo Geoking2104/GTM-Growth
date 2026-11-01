@@ -47,6 +47,11 @@ npm run cli -- geo-llms --url "https://example.com" --out ./public/llms.txt
 npm run cli -- geo-schema --kind organization --name "Acme" --url "https://acme.com" --out ./schema.html
 npm run cli -- geo-schema --kind faq --name "Acme" --url "https://acme.com/faq" --faq-file ./faqs.json
 npm run cli -- geo-robots --url "https://example.com" --out ./public/robots.txt
+npm run cli -- geo-citability --url "https://example.com"
+npm run cli -- geo-crawlers --url "https://example.com"
+npm run cli -- geo-drift --url "https://example.com"        # exits 1 when llms.txt is stale
+npm run cli -- geo-risks --url "https://example.com"
+npm run cli -- geo-positioning --url "https://acme.com" --competitors "https://a.com,https://b.com"
 ```
 
 `geo-audit` prints the score, per-category breakdown, every check with evidence, and the

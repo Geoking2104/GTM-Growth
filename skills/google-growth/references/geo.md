@@ -12,6 +12,11 @@ Perplexity, Gemini, Google AI Overviews) can read, understand or cite their site
 | `geo_generate_llms_txt` | Produce `/llms.txt` from the sitemap | `url`, `sitemapUrl?`, `siteName?`, `description?`, `maxLinksPerSection?` |
 | `geo_generate_schema` | Produce JSON-LD + `<script>` tag | `kind`, `name`, `url`, `description?`, `logo?`, `sameAs?`, `faqs?`, … |
 | `geo_generate_robots` | Append-only robots.txt fix for AI crawlers | `url`, `sitemapUrl?` |
+| `geo_citability` | Second 0–100 score over 12 content methods | `url` |
+| `geo_crawler_access` | Per-bot matrix by training / search / user tier | `url` |
+| `geo_llms_drift` | llms.txt vs sitemap: stale, missing, coverage | `url`, `sitemapUrl?`, `maxUrls?` |
+| `geo_content_risks` | Hidden text, LLM instructions, thin copy, stuffing | `url` |
+| `geo_positioning` | On-page differentiation against competitors | `url`, `competitors[1–5]`, `maxTerms?` |
 
 All five are read-only. None needs a write flag or `confirm=true`.
 
@@ -39,6 +44,16 @@ All five are read-only. None needs a write flag or `confirm=true`.
 - **Evidence is literal.** Quote the check evidence (bot names, word counts, schema
   types) instead of restating it as an estimate.
 
+## Second pass (when the score is already good)
+
+A high GEO score does not mean an assistant will quote the page. Use these after `geo_audit`:
+
+1. `geo_citability` — if the score is under ~70, fix the named gaps in order (statistics, answer-first, FAQ depth usually move it most).
+2. `geo_llms_drift` — run after every deploy; `inSync: false` means llms.txt links to pages that left the sitemap.
+3. `geo_crawler_access` — use when a specific engine never cites the site; name the blocked bot rather than guessing.
+4. `geo_content_risks` — run before a big content push; any `high` finding is a blocker, not a nice-to-have.
+5. `geo_positioning` — only with competitor URLs the user names. Report vocabulary overlap and unique themes; never present it as market share.
+
 ## Hard rules
 
 - Do not claim an AI engine cites the site. This server measures **readiness**; it
@@ -46,6 +61,8 @@ All five are read-only. None needs a write flag or `confirm=true`.
 - Do not overwrite a deliberate `Disallow` for an AI bot. `geo_generate_robots`
   reports blocked bots (`blocked`) and leaves the existing rules intact; tell the
   user which rule blocks which bot and let them decide.
+- `geo_positioning` reads public copy only. Do not describe its overlap score as
+  visibility, market share or ranking; it measures wording, not performance.
 - Do not invent `geo_audit` numbers. If the page returns 403 or times out, report
   the HTTP status and stop.
 - Generated `llms.txt` and JSON-LD are **content**, not deployments. Say where to
