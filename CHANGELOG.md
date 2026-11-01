@@ -1,5 +1,19 @@
 # Changelog
 
+## 0.14.0 — 2026-11-01
+
+### Added
+
+- Static landing page in `site/`, published to GitHub Pages by `.github/workflows/pages.yml`: hero, URL-first free read, six solution cards, GTM measurement section, plans, lead form, FAQ and JSON-LD
+- Free read: 10 URL-shape checks computed in the browser (`site/preview.js`), with copy that states plainly it never fetches the page
+- Lead capture in two modes: JSON POST to a configurable endpoint, or a prefilled `mailto:` fallback — no backend is bundled
+- The site ships its own `robots.txt`, `sitemap.xml` and `llms.txt`
+- `scripts/check-site.mjs` (hooks, JSON-LD, canonical, sitemap, local assets) and `tests/site.test.ts` (7 tests); CI now runs the site check
+
+### Changed
+
+- README links the site, its docs index and the project layout
+
 ## 0.13.0 — 2026-11-01
 
 ### Added

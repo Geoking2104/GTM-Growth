@@ -5,6 +5,7 @@
 | Workflow | Fichier | Déclencheur | Rôle |
 |----------|---------|-------------|------|
 | **CI** | `.github/workflows/ci.yml` | push / PR | `npm ci` · typecheck · lint · test · build · smoke CLI (dont GEO) |
+| **Deploy site** | `.github/workflows/pages.yml` | push sur `site/**` | Publie la landing page sur GitHub Pages |
 | **Validate** | `.github/workflows/validate.yml` | manual + schedule optionnel | Pipeline live audit → cutover → health |
 
 ## CI (toujours on)

@@ -1,0 +1,47 @@
+# Google Growth — full reference
+
+> Open-source MCP server for GA4, Google Tag Manager, Search Console and AI-search readiness.
+
+## What it is
+
+Google Growth is a Model Context Protocol server, a CLI and an agent skill. It reads
+public pages and Google APIs, computes deterministic scores, and returns the evidence
+behind every finding. Writes are disabled by default and require both an environment
+flag and `confirm=true`.
+
+## GEO — AI search readiness
+
+The audit scores a page 0–100 across eight categories: robots.txt (18), llms.txt (18),
+JSON-LD (16), meta tags (14), content (12), brand and entity (10), signals (6) and AI
+discovery (6). Each check reports its own evidence, and recommendations are ordered by
+recoverable points rather than opinion.
+
+Additional tools: citability (12 content methods), crawler access matrix by tier,
+llms.txt drift against the sitemap, content-risk scanning and on-page competitive
+positioning.
+
+## GTM and GA4
+
+Twenty-two Tag Manager tools cover accounts, containers, workspaces, tags, triggers,
+variables, event parameters, duplicate tags, reverse lookups, built-in variables and
+container audits. Page-level installation checks verify the head loader, the noscript
+fallback, dataLayer order, default consent and duplicate containers.
+
+## Interfaces
+
+- MCP over stdio or HTTPS (`/mcp`)
+- CLI: `geo-audit`, `geo-citability`, `geo-drift`, `geo-robots`, `gtm-audit`, among others
+- Agent skill packaged for Claude, Codex and Agora-style skill registries
+
+## Limits
+
+Readiness is measured, not citations: the server never queries ChatGPT, Claude or
+Perplexity. Positioning compares public copy only, with no ranking or traffic data.
+The GEO rubric is adapted from the MIT-licensed geo-optimizer-skill model.
+
+## Links
+
+- [Repository](https://github.com/Geoking2104/Google-Growth)
+- [GEO rubric](https://github.com/Geoking2104/Google-Growth/blob/main/docs/GEO.md)
+- [GTM implementation guide](https://github.com/Geoking2104/Google-Growth/blob/main/docs/GTM_IMPLEMENTATION.md)
+- [CLI reference](https://github.com/Geoking2104/Google-Growth/blob/main/docs/CLI.md)

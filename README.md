@@ -4,6 +4,8 @@
 
 The agent reads live Google data, audits setups, crosses organic search with site speed, and (when explicitly enabled) submits sitemaps or notifies the Indexing API — via **MCP tools** or a **CLI**. Skill, MCP server, and GitHub repo are all named **google-growth**.
 
+**Website:** https://geoking2104.github.io/Google-Growth/ — a free URL read, then the full audit and assisted GTM engagement.
+
 | Client | How to connect | Skill install |
 |--------|----------------|---------------|
 | **Grok** (xAI) | [grok.com/connectors](https://grok.com/connectors) or Grok Build | Agensi zip of `skills/google-growth/` |
@@ -471,6 +473,7 @@ npm run typecheck
 | [DEPLOYMENT.md](docs/DEPLOYMENT.md) | Docker / Fly / Railway |
 | [CLI.md](docs/CLI.md) | All CLI commands |
 | [GEO.md](docs/GEO.md) | GEO rubric, tools, limits |
+| [site/README.md](site/README.md) | Landing site: publish, lead capture, local preview |
 | [CI_CD.md](docs/CI_CD.md) | GitHub Actions |
 | [GTM_INTEGRATION.md](docs/GTM_INTEGRATION.md) | GTM ↔ GA4 specs |
 | [GTM_IMPLEMENTATION.md](docs/GTM_IMPLEMENTATION.md) | Install GTM on a site, step by step, with the tool that verifies each step |
@@ -494,6 +497,7 @@ src/
   google/                      # data-api, gtm, search-console, indexing, pagespeed, crux
   geo/                         # GEO engine: html, robots, sitemap, audit/*, score, generate/*
   tools/                       # tool definitions + zod schemas
+site/                          # static landing page deployed with GitHub Pages
   auth/ cache/ utils/
 docs/
   CLAUDE_SETUP.md

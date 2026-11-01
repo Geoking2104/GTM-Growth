@@ -47,6 +47,9 @@ jobs:
       - name: CLI smoke — GEO engine
         run: node scripts/smoke-geo.mjs
 
+      - name: Landing site check
+        run: node scripts/check-site.mjs
+
       - name: Upload dist artifact
         uses: actions/upload-artifact@v4
         with:

@@ -1,6 +1,6 @@
 {
   "name": "google-growth",
-  "version": "0.13.0",
+  "version": "0.14.0",
   "description": "Open-source MCP server connecting GA4, GTM/sGTM, Search Console, Indexing API, PageSpeed, CrUX and GEO/AEO audits to Grok, Claude, and Codex",
   "type": "module",
   "main": "dist/index.js",
