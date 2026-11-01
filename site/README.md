@@ -34,6 +34,29 @@ site/
 | URL shows the README with the default theme | Same as above — the branch build wins | Same fix; the Actions deploy replaces it |
 | Page loads unstyled | Assets 404 because a branch build is serving the repo root | Same fix |
 
+## Languages
+
+The site ships as two static pages, not a runtime toggle:
+
+| URL | File | `lang` | Canonical |
+|---|---|---|---|
+| `/` | `index.html` | `en` | `/Google-Growth/` |
+| `/fr/` | `fr/index.html` | `fr` | `/Google-Growth/fr/` |
+
+Both pages cross-link with `hreflang` (en, fr, x-default) and share
+`styles.css`, `app.js`, `preview.js`. The header has an EN/FR switch that points
+at the other page, so the choice survives without JavaScript or storage.
+
+Static copy lives in each HTML file. Strings the browser generates after a
+submit — the 10 URL checks, verdicts, errors and lead-form messages — live in
+`i18n.js`, keyed by language. `app.js` reads `<html lang>` and picks the
+dictionary; `preview.js` takes it as an argument, so it stays testable.
+
+To add a language: copy `fr/index.html` to the new locale folder, translate it,
+add a `translations.<lang>` entry in `i18n.js`, add the `hreflang` links on every
+page, and list the URL in `sitemap.xml` and `llms.txt`. `node
+scripts/check-site.mjs` fails if the pair is incomplete.
+
 ## Lead capture
 
 `app.js` has one config block:

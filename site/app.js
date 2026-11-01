@@ -90,7 +90,7 @@ function renderResult(input) {
     return;
   }
 
-  const report = auditUrlShape(parsed.url);
+  const report = auditUrlShape(parsed.url, dict);
   lastUrl = parsed.url.href;
 
   resultHost.textContent = report.host;
