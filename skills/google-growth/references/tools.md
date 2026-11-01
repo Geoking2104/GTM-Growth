@@ -48,6 +48,8 @@ Common ids
 | `find_tags_using_variable` | + variableId — tags referencing it; `unused` flag |
 | `detect_duplicate_tags` | accountId, containerId, workspaceId |
 | `get_built_in_variables` | accountId, containerId, workspaceId |
+| `gtm_audit_installation` | url — page-level install audit, no credentials |
+| `gtm_generate_snippet` | containerId, includeDataLayer?, consentDefault? |
 | `validate_ecommerce_events` | accountId, containerId, workspaceId, propertyId?, dates? |
 
 ## Custom events (read)

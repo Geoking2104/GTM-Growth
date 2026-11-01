@@ -21,6 +21,10 @@ import {
   compareGtmVsGa4Events,
 } from "../google/gtm-ga4-bridge.js";
 import { auditGa4SetupV2 } from "../google/gtm-audit-v2.js";
+import {
+  auditGtmInstallation,
+  generateGtmSnippet,
+} from "../google/gtm-installation.js";
 import { validateEcommerceEvents } from "../google/ecommerce-validation.js";
 import { success, fail } from "./response.js";
 import { z } from "zod";
@@ -251,6 +255,39 @@ export const gtmTools = [
         return success(
           await getBuiltInVariables(args.accountId, args.containerId, args.workspaceId)
         );
+      } catch (err) { return fail(err); }
+    },
+  },
+
+  // ─── Installation (page level) ───────────────────────────────
+  {
+    name: "gtm_audit_installation",
+    description:
+      "Audit a live page's GTM installation: container id, loader in <head>, noscript fallback, dataLayer order, consent default and duplicate containers. Page-level only; container contents are audited by the other GTM tools.",
+    schema: strict({ url: z.string() }),
+    handler: async (args: any) => {
+      try {
+        return success(await auditGtmInstallation({ url: args.url }));
+      } catch (err) { return fail(err); }
+    },
+  },
+  {
+    name: "gtm_generate_snippet",
+    description:
+      "Generate deployable GTM snippets for a container id: optional dataLayer init, optional default consent state, the <head> loader and the <noscript> body fallback.",
+    schema: strict({
+      containerId: z.string(),
+      includeDataLayer: z.boolean().optional(),
+      consentDefault: z
+        .object({
+          ad_storage: z.enum(["granted", "denied"]).optional(),
+          analytics_storage: z.enum(["granted", "denied"]).optional(),
+        })
+        .optional(),
+    }),
+    handler: async (args: any) => {
+      try {
+        return success(generateGtmSnippet(args));
       } catch (err) { return fail(err); }
     },
   },

@@ -307,6 +307,7 @@ Full reference: [docs/CLI.md](docs/CLI.md)
 | `audit_ga4_setup_v2` | Full audit + optional live GA4 |
 | `find_tags_by_trigger` / `find_tags_using_variable` | Reverse lookup: tags a trigger fires or blocks; tags using a variable |
 | `detect_duplicate_tags` / `get_built_in_variables` | Duplicate GA4 tags; enabled built-in variables |
+| `gtm_audit_installation` / `gtm_generate_snippet` | Page-level installation audit (head loader, noscript, dataLayer order, consent, duplicate containers); snippet generator |
 | `validate_ecommerce_events` | Official ecommerce schema |
 | `create_ga4_event_setup` | Phase 3 write (confirm required) |
 | `audit_sgtm_setup` / `compare_dual_tagging` / `cutover_checklist` | Server-side path |
@@ -420,6 +421,10 @@ The same audit on a fixture site — a normal day-one page (title, H1, one sente
 
 Bands: critical → excellent. The 4 points still missing are llms.txt depth: a file under 1,000 words cannot earn `llms.depth` and `llms.depth_high`. Nothing else is left on the table, which is the point — the rubric tells you when to stop.
 
+### GTM installation check
+
+`gtm_audit_installation` on the page (staging then production) → fix any failing check → `gtm_generate_snippet` when the snippet itself is missing or malformed. Page-level checks are container-id presence, loader in `<head>`, `<noscript>` fallback, dataLayer order, single container, and consent default. Container contents stay with `audit_ga4_setup_v2`.
+
 ### Server-side tracking / cutover
 
 See [docs/SERVER_SIDE_TRACKING_ARCHITECTURE.md](docs/SERVER_SIDE_TRACKING_ARCHITECTURE.md).
@@ -461,6 +466,7 @@ npm run typecheck
 | [GEO.md](docs/GEO.md) | GEO rubric, tools, limits |
 | [CI_CD.md](docs/CI_CD.md) | GitHub Actions |
 | [GTM_INTEGRATION.md](docs/GTM_INTEGRATION.md) | GTM ↔ GA4 specs |
+| [GTM_IMPLEMENTATION.md](docs/GTM_IMPLEMENTATION.md) | Install GTM on a site, step by step, with the tool that verifies each step |
 | [PHASE3_WRITE.md](docs/PHASE3_WRITE.md) | Controlled GTM writes |
 | [MEASUREMENT_PROTOCOL.md](docs/MEASUREMENT_PROTOCOL.md) | MP setup |
 | [SERVER_SIDE_TRACKING_ARCHITECTURE.md](docs/SERVER_SIDE_TRACKING_ARCHITECTURE.md) | sGTM architecture |
