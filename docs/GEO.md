@@ -99,11 +99,25 @@ npm run cli -- geo-drift --url https://example.com          # exit 1 when stale
 npm run cli -- geo-risks --url https://example.com
 npm run cli -- geo-positioning --url https://acme.com --competitors https://a.com,https://b.com
 npm run cli -- geo-platforms --url https://acme.com
+npm run cli -- geo-report --url https://acme.com --out ./report.pdf
 ```
 
 `geo-audit` prints the same JSON an agent receives: score, breakdown, checks and
 recommendations. `geo-llms`, `geo-schema` and `geo-robots` write the generated
 artifact when `--out` is given, otherwise print it to stdout.
+
+### PDF report
+
+`geo-report` renders a client-ready A4 PDF with no browser dependency: cover with
+score and projection, executive summary, category table with coloured bars, the
+five-platform readiness table, the 12 citability methods, the ordered action plan
+and a method/limits page. Colour follows the band (green ≥80, amber ≥60, red
+below); pictograms are drawn as vectors, so the file stays around 25 kB and uses
+standard PDF fonts.
+
+```bash
+npm run cli -- geo-report --url https://example.com --out ./report.pdf --contact https://your-site
+```
 
 ---
 

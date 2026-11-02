@@ -133,6 +133,7 @@ Usage:
   geo-risks                 --url <url>
   geo-positioning           --url <url> --competitors <url,url,…> [--max-terms <n>]
   geo-platforms             --url <url>
+  geo-report                --url <url> [--out <file.pdf>] [--contact <url>]
 
 ── Server ───────────────────────────────────────────
   serve-http                Start MCP HTTP/SSE server
@@ -594,6 +595,36 @@ async function main() {
           score: audit.score,
           projectedScore: audit.projectedScore,
           platforms: buildPlatformReadiness(audit),
+        });
+        break;
+      }
+      case "geo-report": {
+        const { runGeoAudit } = await import("./geo/audit.js");
+        const { buildPlatformReadiness } = await import("./geo/platforms.js");
+        const { runCitability } = await import("./geo/citability.js");
+        const { writeGeoReportPdf } = await import("./report/pdf.js");
+        const url = req(args, "url");
+        const audit = await runGeoAudit({ url });
+        const platforms = buildPlatformReadiness(audit);
+        let citability;
+        try {
+          citability = await runCitability({ url });
+        } catch {
+          citability = undefined;
+        }
+        const outPath = str(args, "out") ?? "geo-report.pdf";
+        const result = await writeGeoReportPdf({
+          audit,
+          platforms,
+          citability,
+          outPath,
+          contactUrl: str(args, "contact"),
+        });
+        print({
+          ...result,
+          url: audit.url,
+          score: audit.score,
+          projectedScore: audit.projectedScore,
         });
         break;
       }

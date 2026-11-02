@@ -1,5 +1,19 @@
 # Changelog
 
+## 0.17.0 — 2026-11-02
+
+### Added
+
+- `geo-report` CLI — a client-ready A4 PDF generated with pdfkit, no headless browser: cover with score and projection, executive summary, colour-coded category bars, five-platform table, the 12 citability methods, the ordered action plan and a method/limits page
+- Colour language shared by HTML and PDF: green at 80+, amber at 60+, red below; pictograms drawn as vectors (search, bars, layers, list, shield, spark, check, alert, target, bot) so no icon font is shipped
+- Sample PDF at `site/reports/opendpe.pdf` (7 pages, ~23 kB), linked from the HTML report and `llms.txt`
+- HTML sample report: coloured score pills and mini-bars per category, a full citability panel with bars and evidence, pictograms on each finding, and a “Download PDF” action
+- `tests/pdf.test.ts` — asserts a multi-page `%PDF` file with and without platform/citability data
+
+### Changed
+
+- README, `docs/GEO.md` and the GEO skill document the PDF deliverable and `geo-report`
+
 ## 0.16.0 — 2026-11-02
 
 ### Added

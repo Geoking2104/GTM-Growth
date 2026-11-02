@@ -18,6 +18,26 @@
   .report-hero { background: linear-gradient(160deg,#0a1120,#0d1830 55%,#0a1426); color:#eaf0ff; padding: 2.2rem 0 2.6rem; }
   .report-hero a { color:#a9c3ff; }
   .report-top { display:flex; justify-content:space-between; gap:1rem; flex-wrap:wrap; align-items:center; font-size:.88rem; margin-bottom:1.6rem; }
+  .report-actions { display:flex; gap:.6rem; align-items:center; flex-wrap:wrap; }
+  .report-actions .btn { box-shadow:none; }
+  .score-pill { display:inline-block; font-size:.72rem; font-weight:700; padding:.12rem .4rem; border-radius:6px; margin-right:.35rem; }
+  .score-pill.complete { background:#e7f7ef; color:#0f6b4a; }
+  .score-pill.partial { background:#fff4e5; color:#93500e; }
+  .score-pill.missing { background:#ffeceb; color:#a5241a; }
+  .mini { display:inline-block; vertical-align:middle; width:54px; height:5px; border-radius:999px; background:var(--bg-2); overflow:hidden; }
+  .mini span { display:block; height:100%; }
+  .mini .complete { background:#12B76A; }
+  .mini .partial { background:#F79009; }
+  .mini .missing { background:#D92D20; }
+  .f-icon { display:inline-flex; width:30px; height:30px; border-radius:9px; background:var(--brand-soft); color:var(--brand); align-items:center; justify-content:center; margin-bottom:.45rem; }
+  .f-icon svg { width:18px; height:18px; fill:none; stroke:currentColor; stroke-width:1.8; stroke-linecap:round; stroke-linejoin:round; }
+  .cit-row { display:grid; grid-template-columns: 190px 1fr 54px; gap:.8rem; align-items:center; padding:.5rem 0; border-bottom:1px solid var(--line); }
+  .cit-row .cit-label { font-size:.85rem; font-weight:600; }
+  .cit-row .bar2 { height:7px; border-radius:999px; background:var(--bg-2); overflow:hidden; }
+  .cit-row .bar2 span { display:block; height:100%; }
+  .cit-row .pts { text-align:right; font-size:.8rem; font-weight:700; }
+  .cit-evidence { grid-column: 1 / -1; color:var(--muted-2); font-size:.74rem; margin:-.15rem 0 .1rem; }
+  @media (max-width: 620px) { .cit-row { grid-template-columns: 1fr 54px; } .cit-row .bar2 { grid-column: 1 / -1; } }
   .report-top .pill { border:1px solid rgba(255,255,255,.2); border-radius:999px; padding:.25rem .7rem; letter-spacing:.06em; text-transform:uppercase; font-size:.7rem; }
   .report-head { display:flex; gap:2.5rem; justify-content:space-between; align-items:flex-start; flex-wrap:wrap; }
   .report-head h1 { color:#fff; font-size: clamp(1.7rem, 3.6vw, 2.6rem); margin-bottom:.35rem; }
@@ -91,7 +111,10 @@
   <div class="wrap">
     <div class="report-top">
       <a href="../index.html">← Back to Google Growth</a>
-      <span class="pill">Sample report · public data</span>
+      <div class="report-actions">
+        <a class="btn btn-small" href="opendpe.pdf">Download PDF</a>
+        <span class="pill">Sample report · public data</span>
+      </div>
     </div>
     <div class="report-head">
       <div>
@@ -119,14 +142,14 @@
         <table class="report">
           <thead><tr><th>Category</th><th class="num">Points</th><th>Finding</th></tr></thead>
           <tbody>
-            <tr><td>robots.txt</td><td class="num">15 / 18</td><td>All 27 AI crawlers allowed — but only through <code>User-agent: *</code>; the five citation bots have no explicit rule.</td></tr>
-            <tr><td>llms.txt</td><td class="num">12 / 18</td><td>File present with 20 links, all resolving against the sitemap. Too thin for depth points, no <code>llms-full.txt</code>.</td></tr>
-            <tr><td>Schema JSON-LD</td><td class="num">13 / 16</td><td>Organization, WebSite, WebApplication and FAQPage — no Article, so editorial pages cannot carry dates or authors.</td></tr>
-            <tr><td>Meta tags</td><td class="num">14 / 14</td><td>Title, description, canonical and Open Graph complete.</td></tr>
-            <tr><td>Content</td><td class="num">11 / 12</td><td>906 words, H2/H3 structure and lists. No outbound citation.</td></tr>
-            <tr><td>Brand &amp; entity</td><td class="num">3 / 10</td><td>Name differs across title, H1 and schema; no <code>sameAs</code>; no about link; schema and meta descriptions disagree.</td></tr>
-            <tr><td>Signals</td><td class="num">3 / 6</td><td><code>lang</code> present; no RSS link; no <code>dateModified</code>.</td></tr>
-            <tr><td>AI discovery</td><td class="num">0 / 6</td><td><code>/.well-known/ai.txt</code>, <code>/ai/summary.json</code>, <code>/ai/faq.json</code> and <code>/ai/service.json</code> all absent.</td></tr>
+            <tr><td>robots.txt</td><td class="num"><span class="score-pill partial">15/18</span><span class="mini"><span class="partial" style="width:83%"></span></span></td><td>All 27 AI crawlers allowed — but only through <code>User-agent: *</code>; the five citation bots have no explicit rule.</td></tr>
+            <tr><td>llms.txt</td><td class="num"><span class="score-pill partial">12/18</span><span class="mini"><span class="partial" style="width:67%"></span></span></td><td>File present with 20 links, all resolving against the sitemap. Too thin for depth points, no <code>llms-full.txt</code>.</td></tr>
+            <tr><td>Schema JSON-LD</td><td class="num"><span class="score-pill partial">13/16</span><span class="mini"><span class="partial" style="width:81%"></span></span></td><td>Organization, WebSite, WebApplication and FAQPage — no Article, so editorial pages cannot carry dates or authors.</td></tr>
+            <tr><td>Meta tags</td><td class="num"><span class="score-pill complete">14/14</span><span class="mini"><span class="complete" style="width:100%"></span></span></td><td>Title, description, canonical and Open Graph complete.</td></tr>
+            <tr><td>Content</td><td class="num"><span class="score-pill partial">11/12</span><span class="mini"><span class="partial" style="width:92%"></span></span></td><td>906 words, H2/H3 structure and lists. No outbound citation.</td></tr>
+            <tr><td>Brand &amp; entity</td><td class="num"><span class="score-pill missing">3/10</span><span class="mini"><span class="missing" style="width:30%"></span></span></td><td>Name differs across title, H1 and schema; no <code>sameAs</code>; no about link; schema and meta descriptions disagree.</td></tr>
+            <tr><td>Signals</td><td class="num"><span class="score-pill partial">3/6</span><span class="mini"><span class="partial" style="width:50%"></span></span></td><td><code>lang</code> present; no RSS link; no <code>dateModified</code>.</td></tr>
+            <tr><td>AI discovery</td><td class="num"><span class="score-pill missing">0/6</span><span class="mini"><span class="missing" style="width:0%"></span></span></td><td><code>/.well-known/ai.txt</code>, <code>/ai/summary.json</code>, <code>/ai/faq.json</code> and <code>/ai/service.json</code> all absent.</td></tr>
           </tbody>
         </table>
       </section>
@@ -148,9 +171,28 @@
       </section>
 
       <section class="panel">
+        <h2>Citability — would the passage be quoted?</h2>
+        <p class="sub">12 methods, each scored 0–3. Green is full credit, amber partial, red missing. Evidence is taken from the page itself.</p>
+        <div class="cit-row"><span class="cit-label">Concrete statistics</span><span class="bar2"><span class="complete" style="width:100%"></span></span><span class="pts" style="color:#0f6b4a">3/3</span><span class="cit-evidence">17 numeric token(s), 1.88 per 100 words</span></div>
+        <div class="cit-row"><span class="cit-label">Quotable passages</span><span class="bar2"><span class="missing" style="width:0%"></span></span><span class="pts" style="color:#a5241a">0/3</span><span class="cit-evidence">0 blockquote(s) over 20 characters</span></div>
+        <div class="cit-row"><span class="cit-label">Lists and tables</span><span class="bar2"><span class="partial" style="width:67%"></span></span><span class="pts" style="color:#93500e">2/3</span><span class="cit-evidence">0 table(s), 23 list item(s)</span></div>
+        <div class="cit-row"><span class="cit-label">Question-shaped headings</span><span class="bar2"><span class="partial" style="width:67%"></span></span><span class="pts" style="color:#93500e">2/3</span><span class="cit-evidence">1 heading ending in “?”</span></div>
+        <div class="cit-row"><span class="cit-label">Answer in the first 30%</span><span class="bar2"><span class="complete" style="width:100%"></span></span><span class="pts" style="color:#0f6b4a">3/3</span><span class="cit-evidence">First 30% carries a figure in 50+ words</span></div>
+        <div class="cit-row"><span class="cit-label">Short paragraphs</span><span class="bar2"><span class="complete" style="width:100%"></span></span><span class="pts" style="color:#0f6b4a">3/3</span><span class="cit-evidence">37 paragraphs, 12 words on average</span></div>
+        <div class="cit-row"><span class="cit-label">Short sentences</span><span class="bar2"><span class="complete" style="width:100%"></span></span><span class="pts" style="color:#0f6b4a">3/3</span><span class="cit-evidence">51 sentences, 17.8 words on average</span></div>
+        <div class="cit-row"><span class="cit-label">Outbound citations</span><span class="bar2"><span class="missing" style="width:0%"></span></span><span class="pts" style="color:#a5241a">0/3</span><span class="cit-evidence">0 external link(s)</span></div>
+        <div class="cit-row"><span class="cit-label">Named authorship</span><span class="bar2"><span class="missing" style="width:0%"></span></span><span class="pts" style="color:#a5241a">0/3</span><span class="cit-evidence">No author in schema or meta</span></div>
+        <div class="cit-row"><span class="cit-label">Freshness</span><span class="bar2"><span class="missing" style="width:0%"></span></span><span class="pts" style="color:#a5241a">0/3</span><span class="cit-evidence">No dateModified or datePublished</span></div>
+        <div class="cit-row"><span class="cit-label">FAQ depth</span><span class="bar2"><span class="complete" style="width:100%"></span></span><span class="pts" style="color:#0f6b4a">3/3</span><span class="cit-evidence">5 FAQ items in schema, 1 question heading</span></div>
+        <div class="cit-row"><span class="cit-label">Entity clarity</span><span class="bar2"><span class="missing" style="width:0%"></span></span><span class="pts" style="color:#a5241a">0/3</span><span class="cit-evidence">Brand name not in H1, not in the opening</span></div>
+        <p class="note" style="margin-top:1rem">Citability 53/100. The four zeroes — quotations, outbound citations, authorship, freshness — are the fastest to fix and the most quoted by assistants.</p>
+      </section>
+
+      <section class="panel">
         <h2>Critical findings</h2>
 
         <div class="finding">
+          <span class="f-icon"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="7"/><circle cx="12" cy="12" r="2.5"/></svg></span>
           <h3>1. The entity layer is the weakest category: 3/10</h3>
           <p>An AI engine has to decide that “OpenDPE”, the title, the H1 and the Organization record are the same thing. Today they are not aligned.</p>
           <code class="evidence">name: “DPE d'un bien a vendre…” (title/H1) vs Organization schema · sameAs: 0/4 · about link: none</code>
@@ -158,6 +200,7 @@
         </div>
 
         <div class="finding">
+          <span class="f-icon"><svg viewBox="0 0 24 24"><path d="M12 4l8 15H4z"/><path d="M12 10v4"/><circle cx="12" cy="17" r=".7"/></svg></span>
           <h3>2. No AI discovery endpoints: 0/6</h3>
           <p>None of the four discovery files exist, so an agent has no machine-readable summary, FAQ or capability statement to route on.</p>
           <code class="evidence">GET /.well-known/ai.txt → 404 · /ai/summary.json → 404 · /ai/faq.json → 404 · /ai/service.json → 404</code>
@@ -165,6 +208,7 @@
         </div>
 
         <div class="finding">
+          <span class="f-icon"><svg viewBox="0 0 24 24"><path d="M7 4h7l4 4v12H7z"/><path d="M14 4v5h4"/></svg></span>
           <h3>3. llms.txt is valid but thin: 12/18</h3>
           <p>Twenty links all resolve, so drift is clean — but the file carries fewer than 1,000 words and has no expanded companion.</p>
           <code class="evidence">20 links · 100% resolve · 11 sitemap pages never linked · no /llms-full.txt</code>
@@ -172,6 +216,7 @@
         </div>
 
         <div class="finding">
+          <span class="f-icon"><svg viewBox="0 0 24 24"><rect x="5" y="9" width="14" height="10" rx="3"/><path d="M12 9V6"/><circle cx="12" cy="5" r="1"/><circle cx="9" cy="14" r=".8"/><circle cx="15" cy="14" r=".8"/></svg></span>
           <h3>4. Crawler access is one wildcard edit away</h3>
           <p>All 27 bots are allowed — via <code>*</code>. A single change to that block would silently remove every AI crawler, and the citation bots have no rule of their own.</p>
           <code class="evidence">robots.txt: 1 group (`*`), 0 explicit citation-bot rules · crawl-delay: none</code>
@@ -179,6 +224,7 @@
         </div>
 
         <div class="finding">
+          <span class="f-icon"><svg viewBox="0 0 24 24"><path d="M9 7H5v6h4v4H5"/><path d="M19 7h-4v6h4v4h-4"/></svg></span>
           <h3>5. Citability 53/100: the copy is not quotable yet</h3>
           <p>No quotations, no lists or tables in the inspected page, no question-shaped headings, no outbound citations, no author and no freshness date.</p>
           <code class="evidence">methods passed: 5/12 · weakest: quotations, structure, question headings, citations, authorship, freshness</code>

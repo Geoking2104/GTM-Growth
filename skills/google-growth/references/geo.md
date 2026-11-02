@@ -58,6 +58,8 @@ A high GEO score does not mean an assistant will quote the page. Use these after
 
 ## Hard rules
 
+- Deliver the client deliverable with `npm run cli -- geo-report --url <url> --out report.pdf` — a 7-page PDF with score, platforms, citability and the plan.
+
 - Do not claim an AI engine cites the site. This server measures **readiness**; it
   never queries ChatGPT, Perplexity or Gemini, so citation claims would be invented.
 - Do not overwrite a deliberate `Disallow` for an AI bot. `geo_generate_robots`

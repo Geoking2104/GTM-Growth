@@ -51,7 +51,7 @@ The agent-facing method lives in [`skills/google-growth/`](skills/google-growth/
 | **Indexing API** | Notify Google of URL updates/deletes (gated); read notification metadata |
 | **PageSpeed & CrUX** | Lighthouse lab scores and real-user Core Web Vitals |
 | **Growth dashboards** | Cross-channel KPI summaries, data-confidence checks, 10+ watch points, and 3 horizon-based priorities with implementation and measurement plans |
-| **GEO / AEO** | 0–100 AI-search-readiness audit across robots.txt, llms.txt, schema, meta, content, brand, signals and AI discovery; llms.txt / JSON-LD / robots.txt generators |
+| **GEO / AEO** | 0–100 AI-search-readiness audit across robots.txt, llms.txt, schema, meta, content, brand, signals and AI discovery; llms.txt / JSON-LD / robots.txt generators; client-ready PDF report |
 | **Custom events** | Discover, analyze, suggest GTM config; Phase 3 write (trigger + tag) |
 | **Ops** | CLI per step, Redis cache, Docker, GitHub Actions CI + live validation |
 
@@ -284,6 +284,7 @@ npm run cli -- list-properties
 npm run cli -- list-search-sites
 npm run cli -- pagespeed --url https://example.com/
 npm run cli -- audit-web --account WEB --container WEB --property 123
+npm run cli -- geo-report --url https://example.com --out ./report.pdf
 ```
 
 Full reference: [docs/CLI.md](docs/CLI.md)

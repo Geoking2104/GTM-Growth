@@ -41,6 +41,7 @@ const required = [
   "assets/logo.svg",
   "reports/opendpe.html",
   "reports/opendpe.json",
+  "reports/opendpe.pdf",
 ];
 for (const file of required) read(file);
 
@@ -65,6 +66,8 @@ for (const selector of ["#check-form", "#lead-form", "#site-url"]) {
 }
 if (!js.includes("dictFor")) failures.push("app.js no longer loads the translation dictionary");
 if (!html.includes("reports/opendpe.html")) failures.push("index.html no longer links the sample report");
+const reportHtml = read("reports/opendpe.html");
+if (!reportHtml.includes("opendpe.pdf")) failures.push("sample report no longer links its PDF");
 
 const placeholders = /lorem ipsum|TODO|FIXME|your-domain\.example/i;
 if (placeholders.test(html) || placeholders.test(js) || placeholders.test(frHtml)) {
