@@ -12,6 +12,7 @@
 
 ### Changed
 
+- New brand mark across the site, favicon, sample report and PDF cover: PNG at 512/128/64 px, white tile on dark surfaces, embedded in the PDF cover
 - README, `docs/GEO.md` and the GEO skill document the PDF deliverable and `geo-report`
 
 ## 0.16.0 — 2026-11-02

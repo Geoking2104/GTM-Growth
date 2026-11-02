@@ -10,6 +10,7 @@
 
 import fs from "node:fs";
 import path from "node:path";
+import { fileURLToPath } from "node:url";
 import PDFDocument from "pdfkit";
 import type { GeoAuditResult } from "../geo/types.js";
 import type { PlatformReadiness } from "../geo/platforms.js";
@@ -23,6 +24,8 @@ export interface PdfReportInput {
   generatedAt?: Date;
   brandName?: string;
   contactUrl?: string;
+  /** PNG mark embedded on the cover; falls back to a drawn monogram. */
+  logoPath?: string;
 }
 
 export interface PdfReportResult {
@@ -219,11 +222,20 @@ function cover(doc: Doc, input: PdfReportInput, generatedAt: Date): void {
   doc.circle(PAGE.width - 20, 210, 70).fill(C.teal);
   doc.restore();
 
-  // Logo mark
-  doc.save();
-  doc.roundedRect(M, 44, 30, 30, 8).fill(C.brand);
-  doc.fillColor(C.white).font("Helvetica-Bold").fontSize(16).text("G", M + 8, 52);
-  doc.restore();
+  // Logo mark: the shipped PNG when available, otherwise a drawn monogram.
+  const defaultLogo = path.join(path.dirname(fileURLToPath(import.meta.url)), "../../assets/logo-128.png");
+  const logoPath = input.logoPath ?? defaultLogo;
+  if (fs.existsSync(logoPath)) {
+    doc.save();
+    doc.roundedRect(M, 40, 42, 42, 10).fill(C.white);
+    doc.image(logoPath, M + 5, 45, { fit: [32, 32] });
+    doc.restore();
+  } else {
+    doc.save();
+    doc.roundedRect(M, 44, 30, 30, 8).fill(C.brand);
+    doc.fillColor(C.white).font("Helvetica-Bold").fontSize(16).text("G", M + 8, 52);
+    doc.restore();
+  }
 
   doc.fillColor(C.white).font("Helvetica-Bold").fontSize(28).text("GEO readiness report", M, 110, { width: 420 });
   doc.fillColor("#B9C8E6").font("Helvetica").fontSize(11).text(host, M, 150, { width: 420 });

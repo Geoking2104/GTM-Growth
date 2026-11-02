@@ -13,7 +13,9 @@ site/
   sitemap.xml     one canonical URL
   llms.txt        dogfooding: the site describes itself for AI agents
   404.html
-  assets/logo.svg
+  assets/logo.png
+  assets/logo-128.png
+  assets/logo-64.png
 ```
 
 ## Publish
