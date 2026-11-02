@@ -32,6 +32,14 @@ const audit = {
   },
   recoverablePoints: 29,
   projectedScore: 100,
+  details: {
+    schema: {
+      foundTypes: ["Organization", "WebSite", "FAQPage"],
+      hasArticle: false,
+      hasSameAs: false,
+      hasDateModified: false,
+    },
+  },
   recommendations: [
     { priority: "high", category: "robots", checkId: "robots.citation_bots", points: 3, action: "Add explicit User-agent rules for the citation bots." },
     { priority: "medium", category: "schema", checkId: "schema.article", points: 3, action: "Add Article schema with author and dates." },
@@ -81,7 +89,8 @@ describe("PDF report", () => {
       contactUrl: "https://example.com/contact",
     });
 
-    expect(result.pages).toBeGreaterThanOrEqual(6);
+    // cover, dashboard, summary, categories, platforms, entity graph, citability, plan, limits
+    expect(result.pages).toBe(9);
     expect(result.bytes).toBeGreaterThan(8000);
     const bytes = fs.readFileSync(out);
     expect(bytes.subarray(0, 5).toString()).toBe("%PDF-");
@@ -92,7 +101,8 @@ describe("PDF report", () => {
   it("still produces a report without platforms or citability", async () => {
     const out = path.join(os.tmpdir(), `geo-report-min-${Date.now()}.pdf`);
     const result = await writeGeoReportPdf({ audit, outPath: out });
-    expect(result.pages).toBeGreaterThanOrEqual(5);
+    // cover, dashboard, summary, categories, plan, limits — no schema, no platforms
+    expect(result.pages).toBeGreaterThanOrEqual(6);
     expect(fs.existsSync(out)).toBe(true);
     fs.unlinkSync(out);
   });

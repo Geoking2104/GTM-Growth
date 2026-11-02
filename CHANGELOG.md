@@ -10,6 +10,13 @@
 - HTML sample report: coloured score pills and mini-bars per category, a full citability panel with bars and evidence, pictograms on each finding, and a “Download PDF” action
 - `tests/pdf.test.ts` — asserts a multi-page `%PDF` file with and without platform/citability data
 
+### Added
+
+- PDF dashboard page: score trajectory (cumulative points, one step per fix), category bars, five-engine radar, citability grid and a band ladder — all vector, all read from the audit
+- PDF entity-graph page: present and missing schema nodes, the `sameAs` block to paste, and a four-step path to a resolved entity
+- Report site: six data-driven SVG figures generated from the audit snapshot (`npm run figures`), plus a download band linking the PDF
+- `tests/charts.test.ts`: the trajectory reaches `score + recoverablePoints` exactly and the band colours follow the published thresholds
+
 ### Changed
 
 - New brand mark across the site, favicon, sample report and PDF cover: PNG at 512/128/64 px, white tile on dark surfaces, embedded in the PDF cover

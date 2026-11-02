@@ -36,7 +36,8 @@
     "test": "vitest run",
     "lint": "eslint src --ext .ts",
     "typecheck": "tsc --noEmit",
-    "prepublishOnly": "npm run build && npm test"
+    "prepublishOnly": "npm run build && npm test",
+    "figures": "node scripts/render-figures.mjs"
   },
   "keywords": [
     "mcp",

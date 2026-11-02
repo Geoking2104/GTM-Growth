@@ -15,6 +15,16 @@ import PDFDocument from "pdfkit";
 import type { GeoAuditResult } from "../geo/types.js";
 import type { PlatformReadiness } from "../geo/platforms.js";
 import type { CitabilityResult } from "../geo/citability.js";
+import {
+  citabilityHeight,
+  drawBandLadder,
+  drawCategoryBars,
+  drawCitability,
+  drawEntityGraph,
+  drawRadar,
+  drawTrajectory,
+  trajectorySeries,
+} from "./charts.js";
 
 export interface PdfReportInput {
   audit: GeoAuditResult;
@@ -143,12 +153,12 @@ function icon(doc: Doc, name: string, x: number, y: number, size: number, color:
 }
 
 function heading(doc: Doc, y: number, eyebrow: string, title: string, iconName: string): number {
-  icon(doc, iconName, M, y, 18, C.brand);
-  doc.fillColor(C.brand).font("Helvetica-Bold").fontSize(8).text(eyebrow.toUpperCase(), M + 26, y + 1, {
+  icon(doc, iconName, M, y - 2, 16, C.brand);
+  doc.fillColor(C.brand).font("Helvetica-Bold").fontSize(8).text(eyebrow.toUpperCase(), M + 24, y + 1, {
     characterSpacing: 1.1,
   });
-  doc.fillColor(C.ink).font("Helvetica-Bold").fontSize(19).text(title, M, y + 16, { width: CONTENT });
-  return y + 22 + doc.heightOfString(title, { width: CONTENT }) + 10;
+  doc.fillColor(C.ink).font("Helvetica-Bold").fontSize(19).text(title, M, y + 24, { width: CONTENT });
+  return y + 30 + doc.heightOfString(title, { width: CONTENT }) + 10;
 }
 
 function paragraph(doc: Doc, text: string, y: number, options: { size?: number; color?: string; width?: number } = {}): number {
@@ -305,6 +315,151 @@ function cover(doc: Doc, input: PdfReportInput, generatedAt: Date): void {
 
   doc.fillColor(C.ink).font("Helvetica-Bold").fontSize(10).text(brand, M, 760);
   doc.fillColor(C.muted2).font("Helvetica").fontSize(8).text(input.contactUrl ?? "", M, 774, { width: CONTENT });
+}
+
+function dashboardPage(doc: Doc, input: PdfReportInput): void {
+  doc.addPage();
+  const audit = input.audit;
+  let y = M;
+
+  y = heading(doc, y, "Dashboard", "The numbers, on one page", "bars");
+
+  const series = trajectorySeries(audit);
+  const fixes = series.length - 1;
+  y = paragraph(
+    doc,
+    `${audit.score}/100 today, ${audit.projectedScore}/100 once all ${fixes} fixes ship. The curve below adds them in the order the engine ranks them; the bars show which categories hold the ${audit.recoverablePoints} recoverable points.`,
+    y
+  );
+
+  const top = [
+    { label: "Today", value: `${audit.score}`, color: C.brand },
+    { label: "Projected", value: `${audit.projectedScore}`, color: C.green },
+    { label: "Recoverable", value: `${audit.recoverablePoints}`, color: C.violet },
+  ];
+  const cardW = (CONTENT - 20) / 3;
+  top.forEach((item, index) => {
+    metricCard(doc, M + index * (cardW + 10), y, cardW, item.label, item.value, item.color);
+  });
+  y += 68;
+
+  drawTrajectory(doc, { x: M, y, width: CONTENT, height: 146 }, audit);
+  y += 158;
+
+  const halfW = (CONTENT - 12) / 2;
+  drawCategoryBars(doc, { x: M, y, width: halfW, height: 172 }, audit);
+  if (input.platforms?.length) {
+    drawRadar(doc, { x: M + halfW + 12, y, width: halfW, height: 172 }, input.platforms);
+  }
+  y += 184;
+
+  if (input.citability) {
+    const extra = citabilityHeight(input.citability);
+    drawCitability(doc, { x: M, y, width: CONTENT, height: extra }, input.citability);
+    y += extra + 14;
+  }
+
+  if (y + 96 < 780) {
+    drawBandLadder(doc, { x: M, y, width: CONTENT, height: 92 }, audit);
+  }
+}
+
+function entityPage(doc: Doc, input: PdfReportInput): void {
+  const schema = input.audit.details?.schema;
+  if (!schema) return;
+  doc.addPage();
+  let y = M;
+
+  y = heading(doc, y, "Ontology", "Entity graph — what an engine can resolve", "target");
+  y = paragraph(
+    doc,
+    "A model answers with entities, not pages. This graph is what the JSON-LD on the audited page lets an engine connect: the organisation, its site, the app and the FAQ on the left; the identities that disambiguate it on the right.",
+    y
+  );
+
+  drawEntityGraph(
+    doc,
+    { x: M, y, width: CONTENT, height: 150 },
+    {
+      foundTypes: schema.foundTypes,
+      hasArticle: schema.hasArticle,
+      hasSameAs: schema.hasSameAs,
+      hasDateModified: schema.hasDateModified,
+    }
+  );
+  y += 162;
+
+  if (!schema.hasSameAs) {
+    const snippet = [
+      '{',
+      '  "@type": "Organization",',
+      '  "name": "Your brand",',
+      '  "url": "https://example.com",',
+      '  "sameAs": [',
+      '    "https://www.wikidata.org/wiki/Q000000",',
+      '    "https://en.wikipedia.org/wiki/Your_brand",',
+      '    "https://www.linkedin.com/company/your-brand"',
+      '  ]',
+      '}',
+    ].join("\n");
+    card(doc, M, y, CONTENT, 106, "#0B1220", "#0B1220");
+    doc
+      .fillColor("#93C5FD")
+      .font("Helvetica-Bold")
+      .fontSize(6.5)
+      .text("THE ONE BLOCK THAT UNLOCKS THE RIGHT COLUMN", M + 14, y + 10, {
+        width: CONTENT - 28,
+        characterSpacing: 0.8,
+      });
+    doc
+      .fillColor("#E5EDFF")
+      .font("Courier")
+      .fontSize(6.6)
+      .text(snippet, M + 14, y + 24, { width: CONTENT - 28, lineGap: 0.6 });
+    y += 118;
+  }
+
+  const gaps: [string, string, number][] = [
+    ["sameAs links", "Wikipedia, Wikidata, LinkedIn, Crunchbase — the pillars that tie the name to a Knowledge Graph node.", 3],
+    ["Article schema", "headline, author, datePublished, dateModified on editorial pages.", 3],
+    ["Named author", "A Person node with a URL, so a passage has a who behind it.", 1],
+  ];
+  for (const [name, why, points] of gaps) {
+    card(doc, M, y, CONTENT, 44);
+    doc.fillColor(C.ink).font("Helvetica-Bold").fontSize(9).text(name, M + 14, y + 10, { width: 120 });
+    doc.fillColor(C.muted).font("Helvetica").fontSize(8).text(why, M + 138, y + 10, { width: CONTENT - 200, lineGap: 1.2 });
+    chip(doc, `+${points} pts`, M + CONTENT - 66, y + 12, C.brand);
+    y += 52;
+  }
+
+  y += 4;
+  card(doc, M, y, CONTENT, 62, C.bg, C.line);
+  doc.fillColor(C.ink).font("Helvetica-Bold").fontSize(8.5).text("Why this matters commercially", M + 14, y + 12);
+  doc.fillColor(C.muted).font("Helvetica").fontSize(8).text(
+    "Without a resolved entity, an assistant has to guess which company a passage belongs to — and it usually guesses by omitting the name. Entity work is what turns a quotable passage into an attributed one.",
+    M + 14,
+    y + 26,
+    { width: CONTENT - 28, lineGap: 1.4 }
+  );
+  y += 74;
+
+  doc.fillColor(C.brand).font("Helvetica-Bold").fontSize(7).text("PATH TO A RESOLVED ENTITY", M, y, {
+    characterSpacing: 0.9,
+  });
+  y += 16;
+
+  const steps: [string, string][] = [
+    ["1", "Add sameAs to Organization — Wikipedia, Wikidata, LinkedIn, Crunchbase. One block, four URLs."],
+    ["2", "Publish Article or BlogPosting on editorial pages, with headline and dateModified."],
+    ["3", "Name a Person author with a URL, and link it from the Article."],
+    ["4", "Re-run the audit: sameAs and Article move brand & entity and schema, worth up to 7 points."],
+  ];
+  for (const [number, step] of steps) {
+    doc.circle(M + 7, y + 5, 7).fill(C.brand);
+    doc.fillColor(C.white).font("Helvetica-Bold").fontSize(6.5).text(number, M + 2, y + 2.5, { width: 10, align: "center" });
+    doc.fillColor(C.ink2).font("Helvetica").fontSize(8).text(safe(step), M + 22, y, { width: CONTENT - 32, lineGap: 1.2 });
+    y += doc.heightOfString(safe(step), { width: CONTENT - 32, lineGap: 1.2 }) + 9;
+  }
 }
 
 function summaryPage(doc: Doc, input: PdfReportInput): void {
@@ -620,9 +775,11 @@ export async function writeGeoReportPdf(input: PdfReportInput): Promise<PdfRepor
   doc.pipe(stream);
 
   cover(doc, input, generatedAt);
+  dashboardPage(doc, input);
   summaryPage(doc, input);
   categoriesPage(doc, input);
   if (input.platforms?.length) platformsPage(doc, input);
+  entityPage(doc, input);
   if (input.citability) citabilityPage(doc, input);
   actionsPage(doc, input);
   closingPage(doc, input);

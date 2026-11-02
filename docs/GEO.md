@@ -108,12 +108,16 @@ artifact when `--out` is given, otherwise print it to stdout.
 
 ### PDF report
 
-`geo-report` renders a client-ready A4 PDF with no browser dependency: cover with
-score and projection, executive summary, category table with coloured bars, the
-five-platform readiness table, the 12 citability methods, the ordered action plan
-and a method/limits page. Colour follows the band (green ≥80, amber ≥60, red
-below); pictograms are drawn as vectors, so the file stays around 25 kB and uses
-standard PDF fonts.
+`geo-report` renders a client-ready A4 PDF with no browser dependency, in nine
+pages: cover with logo, score and projection; a **dashboard page** with the score
+trajectory (cumulative points as the fixes ship), category bars, the five-engine
+radar, the 12 citability methods and a band ladder; executive summary; category
+table; platform table; an **entity-graph page** (present nodes, missing nodes,
+the exact `sameAs` block to paste, and a four-step path); citability; the ordered
+action plan; method and limits. Every chart value comes from the audit: the
+trajectory is the summed point value of the recommendations, never an estimate.
+Colour follows the band (green ≥80, amber ≥60, red below); charts and pictograms
+are drawn as vectors, so the file stays around 43 kB and uses standard PDF fonts.
 
 ```bash
 npm run cli -- geo-report --url https://example.com --out ./report.pdf --contact https://your-site
