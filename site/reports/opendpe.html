@@ -1,0 +1,257 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Sample GEO report — opendpe.net (71/100) · Google Growth</title>
+<meta name="description" content="A full, real GEO audit of www.opendpe.net: 71/100, category breakdown, platform readiness for five AI engines, critical findings and the prioritized fix plan with projected score.">
+<link rel="canonical" href="https://geoking2104.github.io/Google-Growth/reports/opendpe.html">
+<link rel="alternate" hreflang="en" href="https://geoking2104.github.io/Google-Growth/reports/opendpe.html">
+<meta name="theme-color" content="#0b1220">
+<meta property="og:type" content="article">
+<meta property="og:title" content="Sample GEO report — opendpe.net scores 71/100">
+<meta property="og:description" content="Category breakdown, five-platform readiness, critical findings and the fix plan that projects 71 → 100.">
+<meta property="og:url" content="https://geoking2104.github.io/Google-Growth/reports/opendpe.html">
+<link rel="icon" href="../assets/logo.svg" type="image/svg+xml">
+<link rel="stylesheet" href="../styles.css">
+<style>
+  .report-hero { background: linear-gradient(160deg,#0a1120,#0d1830 55%,#0a1426); color:#eaf0ff; padding: 2.2rem 0 2.6rem; }
+  .report-hero a { color:#a9c3ff; }
+  .report-top { display:flex; justify-content:space-between; gap:1rem; flex-wrap:wrap; align-items:center; font-size:.88rem; margin-bottom:1.6rem; }
+  .report-top .pill { border:1px solid rgba(255,255,255,.2); border-radius:999px; padding:.25rem .7rem; letter-spacing:.06em; text-transform:uppercase; font-size:.7rem; }
+  .report-head { display:flex; gap:2.5rem; justify-content:space-between; align-items:flex-start; flex-wrap:wrap; }
+  .report-head h1 { color:#fff; font-size: clamp(1.7rem, 3.6vw, 2.6rem); margin-bottom:.35rem; }
+  .report-url { color:#9db2d6; font-family: var(--mono); font-size:.9rem; word-break: break-all; }
+  .report-meta { color:#8fa4c8; font-size:.85rem; margin-top:.6rem; }
+  .report-score { display:flex; gap:1.6rem; align-items:center; }
+  .report-score .score { width:132px; height:132px; }
+  .report-score .score::before { background:#0d1830; }
+  .report-score .score-value { color:#fff; }
+  .report-score .score-label { color:#93a6c9; }
+  .delta { font-size:.85rem; color:#b9c8e6; max-width: 12rem; }
+  .delta strong { color:#4ade80; font-size:1.1rem; }
+
+  .report-body { padding: 2.6rem 0 4rem; }
+  .report-grid { display:grid; grid-template-columns: 2fr 1fr; gap:2rem; align-items:start; }
+  .report-grid > * { min-width: 0; }
+  .panel { min-width: 0; }
+  .panel { background:#fff; border:1px solid var(--line); border-radius:var(--radius); padding:1.5rem; box-shadow:var(--shadow); margin-bottom:1.5rem; }
+  .panel h2 { font-size:1.25rem; margin-bottom:.35rem; }
+  .panel .sub { color:var(--muted); font-size:.9rem; margin-bottom:1.1rem; }
+  table.report { width:100%; border-collapse:collapse; font-size:.9rem; table-layout: fixed; }
+  table.report th, table.report td { overflow-wrap: anywhere; }
+  table.report th, table.report td { text-align:left; padding:.55rem .5rem; border-bottom:1px solid var(--line); vertical-align:top; }
+  table.report th { font-size:.75rem; text-transform:uppercase; letter-spacing:.08em; color:var(--muted-2); font-weight:600; }
+  table.report td.num { text-align:right; font-variant-numeric: tabular-nums; white-space:nowrap; }
+  .bar { height:6px; border-radius:999px; background:var(--bg-2); overflow:hidden; min-width:70px; }
+  .bar span { display:block; height:100%; background:linear-gradient(90deg,var(--brand),var(--brand-2)); }
+  .band { font-size:.72rem; font-weight:700; letter-spacing:.04em; text-transform:uppercase; padding:.15rem .45rem; border-radius:999px; white-space:nowrap; }
+  .band.ready { background:#e7f7ef; color:#0f6b4a; }
+  .band.partial { background:#fff4e5; color:#93500e; }
+  .band.weak { background:#ffeceb; color:#a5241a; }
+  .band.blocked { background:#ffe1df; color:#8f1d15; }
+  .finding { border-left:3px solid var(--brand); padding-left:1rem; margin-bottom:1.2rem; }
+  .finding h3 { font-size:1rem; margin-bottom:.25rem; }
+  .finding p { color:var(--muted); font-size:.9rem; margin-bottom:.35rem; }
+  .finding .evidence { font-family:var(--mono); font-size:.8rem; color:#334a6b; background:var(--bg); border:1px solid var(--line); border-radius:8px; padding:.5rem .65rem; display:block; overflow-wrap: anywhere; }
+  .finding .fix { font-size:.88rem; color:var(--ink-2); margin-top:.45rem; }
+  .kpis { display:grid; grid-template-columns:repeat(2,1fr); gap:.8rem; }
+  .kpi { border:1px solid var(--line); border-radius:12px; padding:.9rem; background:var(--bg); }
+  .kpi strong { display:block; font-size:1.4rem; letter-spacing:-.02em; }
+  .kpi span { font-size:.75rem; color:var(--muted); text-transform:uppercase; letter-spacing:.06em; }
+  .note { font-size:.8rem; color:var(--muted-2); }
+  .report-cta { background:var(--bg-2); border:1px solid var(--line); border-radius:var(--radius); padding:1.4rem; }
+  @media (max-width: 900px) { .report-grid { grid-template-columns: 1fr; } }
+  @media print {
+    .site-header, .site-footer, .report-cta, .report-top a { display:none !important; }
+    .report-hero { background:#fff !important; color:#000 !important; padding:0 0 1rem; }
+    .report-head h1 { color:#000; }
+    .report-score .score-value { color:#000; }
+    .report-score .score::before { background:#fff; }
+    .panel { box-shadow:none; break-inside:avoid; }
+    body { background:#fff; }
+  }
+</style>
+</head>
+<body>
+<header class="site-header">
+  <div class="wrap header-inner">
+    <a class="brand" href="../index.html"><img src="../assets/logo.svg" alt="" width="32" height="32"><span>Google&nbsp;Growth</span></a>
+    <nav class="nav" aria-label="Primary">
+      <a href="../index.html#solutions">Solutions</a>
+      <a href="../index.html#plans">Plans</a>
+      <a href="../index.html#talk">Get the report</a>
+      <a class="nav-gh" href="https://github.com/Geoking2104/Google-Growth">GitHub</a>
+    </nav>
+    <a class="btn btn-small" href="../index.html#free-read">Free read</a>
+  </div>
+</header>
+
+<section class="report-hero">
+  <div class="wrap">
+    <div class="report-top">
+      <a href="../index.html">← Back to Google Growth</a>
+      <span class="pill">Sample report · public data</span>
+    </div>
+    <div class="report-head">
+      <div>
+        <h1>opendpe.net — GEO audit</h1>
+        <p class="report-url">https://www.opendpe.net</p>
+        <p class="report-meta">Snapshot 2 November 2026 · engine v0.16.0 · 8 categories, 100 points · page audited in French, report in English</p>
+      </div>
+      <div class="report-score">
+        <div class="score" id="score" style="--score:71" aria-label="GEO score 71 out of 100">
+          <span class="score-value">71</span>
+          <span class="score-label">GEO score</span>
+        </div>
+        <p class="delta">Projected after all fixes<br><strong>100</strong><br>29 points recoverable</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<main class="report-body">
+  <div class="wrap report-grid">
+    <div>
+      <section class="panel">
+        <h2>What the audit found</h2>
+        <p class="sub">A French DPE-verification tool with a clear offer and solid on-page basics. The losses are concentrated in entity signals, AI discovery and llms.txt depth — not in the page copy.</p>
+        <table class="report">
+          <thead><tr><th>Category</th><th class="num">Points</th><th>Finding</th></tr></thead>
+          <tbody>
+            <tr><td>robots.txt</td><td class="num">15 / 18</td><td>All 27 AI crawlers allowed — but only through <code>User-agent: *</code>; the five citation bots have no explicit rule.</td></tr>
+            <tr><td>llms.txt</td><td class="num">12 / 18</td><td>File present with 20 links, all resolving against the sitemap. Too thin for depth points, no <code>llms-full.txt</code>.</td></tr>
+            <tr><td>Schema JSON-LD</td><td class="num">13 / 16</td><td>Organization, WebSite, WebApplication and FAQPage — no Article, so editorial pages cannot carry dates or authors.</td></tr>
+            <tr><td>Meta tags</td><td class="num">14 / 14</td><td>Title, description, canonical and Open Graph complete.</td></tr>
+            <tr><td>Content</td><td class="num">11 / 12</td><td>906 words, H2/H3 structure and lists. No outbound citation.</td></tr>
+            <tr><td>Brand &amp; entity</td><td class="num">3 / 10</td><td>Name differs across title, H1 and schema; no <code>sameAs</code>; no about link; schema and meta descriptions disagree.</td></tr>
+            <tr><td>Signals</td><td class="num">3 / 6</td><td><code>lang</code> present; no RSS link; no <code>dateModified</code>.</td></tr>
+            <tr><td>AI discovery</td><td class="num">0 / 6</td><td><code>/.well-known/ai.txt</code>, <code>/ai/summary.json</code>, <code>/ai/faq.json</code> and <code>/ai/service.json</code> all absent.</td></tr>
+          </tbody>
+        </table>
+      </section>
+
+      <section class="panel">
+        <h2>Platform readiness</h2>
+        <p class="sub">The same evidence, mapped to the five engines buyers ask about. A platform score weighs only the signals that engine actually uses — it is not a second opinion on the overall score.</p>
+        <table class="report">
+          <thead><tr><th>Platform</th><th class="num">Score</th><th>Band</th><th>Main gap</th></tr></thead>
+          <tbody>
+            <tr><td>Google AI Overviews</td><td class="num">100</td><td><span class="band ready">ready</span></td><td>No blocking gap: Googlebot allowed, Organization + FAQ, extractable structure.</td></tr>
+            <tr><td>ChatGPT</td><td class="num">100</td><td><span class="band ready">ready</span></td><td>No blocking gap: OAI-SearchBot allowed, llms.txt present, FAQ page.</td></tr>
+            <tr><td>Perplexity</td><td class="num">65</td><td><span class="band partial">partial</span></td><td>No outbound citations; no freshness date.</td></tr>
+            <tr><td>Gemini</td><td class="num">60</td><td><span class="band partial">partial</span></td><td>No Knowledge Graph links; brand name inconsistent across sources.</td></tr>
+            <tr><td>Microsoft Copilot</td><td class="num">80</td><td><span class="band ready">ready</span></td><td>Bingbot allowed and schema present; no <code>dateModified</code>.</td></tr>
+          </tbody>
+        </table>
+        <p class="note">Scores derive from robots rules, llms.txt, schema types, structure and freshness — the signals each engine relies on. They do not claim the engine cites the page.</p>
+      </section>
+
+      <section class="panel">
+        <h2>Critical findings</h2>
+
+        <div class="finding">
+          <h3>1. The entity layer is the weakest category: 3/10</h3>
+          <p>An AI engine has to decide that “OpenDPE”, the title, the H1 and the Organization record are the same thing. Today they are not aligned.</p>
+          <code class="evidence">name: “DPE d'un bien a vendre…” (title/H1) vs Organization schema · sameAs: 0/4 · about link: none</code>
+          <p class="fix"><strong>Fix:</strong> one brand name across title, og:title, H1 and schema; add <code>sameAs</code> to LinkedIn/Wikidata; link a real about page; reuse the meta description as the Organization description.</p>
+        </div>
+
+        <div class="finding">
+          <h3>2. No AI discovery endpoints: 0/6</h3>
+          <p>None of the four discovery files exist, so an agent has no machine-readable summary, FAQ or capability statement to route on.</p>
+          <code class="evidence">GET /.well-known/ai.txt → 404 · /ai/summary.json → 404 · /ai/faq.json → 404 · /ai/service.json → 404</code>
+          <p class="fix"><strong>Fix:</strong> publish the four files (the generator emits valid shapes); they are static JSON and take minutes.</p>
+        </div>
+
+        <div class="finding">
+          <h3>3. llms.txt is valid but thin: 12/18</h3>
+          <p>Twenty links all resolve, so drift is clean — but the file carries fewer than 1,000 words and has no expanded companion.</p>
+          <code class="evidence">20 links · 100% resolve · 11 sitemap pages never linked · no /llms-full.txt</code>
+          <p class="fix"><strong>Fix:</strong> generate with the sitemap, then add product, documentation and company sections; ship <code>/llms-full.txt</code> for depth.</p>
+        </div>
+
+        <div class="finding">
+          <h3>4. Crawler access is one wildcard edit away</h3>
+          <p>All 27 bots are allowed — via <code>*</code>. A single change to that block would silently remove every AI crawler, and the citation bots have no rule of their own.</p>
+          <code class="evidence">robots.txt: 1 group (`*`), 0 explicit citation-bot rules · crawl-delay: none</code>
+          <p class="fix"><strong>Fix:</strong> add explicit <code>Allow</code> groups for OAI-SearchBot, Claude-SearchBot, PerplexityBot, Googlebot and Applebot.</p>
+        </div>
+
+        <div class="finding">
+          <h3>5. Citability 53/100: the copy is not quotable yet</h3>
+          <p>No quotations, no lists or tables in the inspected page, no question-shaped headings, no outbound citations, no author and no freshness date.</p>
+          <code class="evidence">methods passed: 5/12 · weakest: quotations, structure, question headings, citations, authorship, freshness</code>
+          <p class="fix"><strong>Fix:</strong> add a sourced pull-quote, convert one comparison into a table, phrase two H2s as questions, cite three sources, add an author and <code>dateModified</code>.</p>
+        </div>
+      </section>
+
+      <section class="panel">
+        <h2>Action plan</h2>
+        <p class="sub">Ordered by the server's own logic: priority bucket, then recoverable points. Points are exact — they are the difference between what a check awards today and its maximum.</p>
+        <table class="report">
+          <thead><tr><th>#</th><th>Priority</th><th>Check</th><th class="num">+Points</th><th>Action</th></tr></thead>
+          <tbody>
+            <tr><td>1</td><td>high</td><td><code>robots.citation_bots</code></td><td class="num">3</td><td>Explicit Allow rules for the five citation bots.</td></tr>
+            <tr><td>2</td><td>medium</td><td><code>schema.article</code></td><td class="num">3</td><td>Add Article markup with author and dates.</td></tr>
+            <tr><td>3</td><td>medium</td><td><code>brand.kg_readiness</code></td><td class="num">3</td><td>Add <code>sameAs</code> to Wikipedia, Wikidata, LinkedIn, Crunchbase.</td></tr>
+            <tr><td>4</td><td>medium</td><td><code>llms.depth</code></td><td class="num">2</td><td>Expand llms.txt past 1,000 words with real sections.</td></tr>
+            <tr><td>5</td><td>medium</td><td><code>llms.depth_high</code></td><td class="num">2</td><td>Ship <code>/llms-full.txt</code> for the 5,000-word tier.</td></tr>
+            <tr><td>6</td><td>medium</td><td><code>llms.full</code></td><td class="num">2</td><td>Link the full reference from llms.txt.</td></tr>
+            <tr><td>7</td><td>medium</td><td><code>brand.name_coherence</code></td><td class="num">2</td><td>One brand name in title, og:title, H1 and schema.</td></tr>
+            <tr><td>8</td><td>medium</td><td><code>brand.desc_coherence</code></td><td class="num">1</td><td>Reuse the meta description as the schema description.</td></tr>
+            <tr><td>9</td><td>medium</td><td><code>brand.about_link</code></td><td class="num">1</td><td>Link a visible about/company page.</td></tr>
+            <tr><td>10</td><td>low</td><td><code>signals.rss</code></td><td class="num">2</td><td>Link an RSS/Atom feed in the head.</td></tr>
+          </tbody>
+        </table>
+        <p class="note" style="margin-top:.9rem">Top six fixes → <strong>86/100</strong>. Every failing check → <strong>100/100</strong> (29 points, capped). Scores are deterministic: re-running the same snapshot reproduces them exactly.</p>
+      </section>
+    </div>
+
+    <aside>
+      <section class="panel">
+        <h2>At a glance</h2>
+        <div class="kpis">
+          <div class="kpi"><strong>71</strong><span>GEO score</span></div>
+          <div class="kpi"><strong>100</strong><span>Projected</span></div>
+          <div class="kpi"><strong>53</strong><span>Citability</span></div>
+          <div class="kpi"><strong>27/27</strong><span>AI bots allowed</span></div>
+          <div class="kpi"><strong>20</strong><span>llms.txt links</span></div>
+          <div class="kpi"><strong>0</strong><span>Content risks</span></div>
+        </div>
+      </section>
+
+      <section class="panel">
+        <h2>What was checked</h2>
+        <ul class="tick-list">
+          <li>Homepage HTML, metadata and JSON-LD</li>
+          <li>robots.txt against 27 AI crawlers</li>
+          <li>llms.txt links vs the sitemap</li>
+          <li>12 citability methods</li>
+          <li>Hidden text, instructions, thin copy</li>
+          <li>Five-platform readiness mapping</li>
+        </ul>
+        <p class="note">Read-only: public URLs only, no credentials, nothing written to the site.</p>
+      </section>
+
+      <section class="report-cta">
+        <h2>Run it on your site</h2>
+        <p class="sub">The same engine, the same evidence, your URL.</p>
+        <p><a class="btn" href="../index.html#talk">Get the full report</a></p>
+        <p class="note" style="margin-top:.8rem"><a href="opendpe.json">Download the raw snapshot (JSON)</a></p>
+      </section>
+    </aside>
+  </div>
+</main>
+
+<footer class="site-footer">
+  <div class="wrap footer-inner">
+    <div class="footer-brand">
+      <img src="../assets/logo.svg" alt="" width="28" height="28">
+      <div><strong>Google Growth</strong><p>Sample report generated from public data on 2 November 2026.</p></div>
+    </div>
+    <nav aria-label="Footer"><a href="../index.html">Home</a><a href="../index.html#faq">FAQ</a><a href="https://github.com/Geoking2104/Google-Growth">GitHub</a></nav>
+  </div>
+</footer>
+</body>
+</html>
