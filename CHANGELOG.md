@@ -1,5 +1,20 @@
 # Changelog
 
+## 0.16.0 — 2026-11-02
+
+### Added
+
+- `geo_platform_readiness` — per-engine readiness for Google AI Overviews, ChatGPT, Perplexity, Gemini and Microsoft Copilot, derived from the same audit evidence; each platform returns a 0–100 score, a band, its signals and the main gap. CLI: `geo-platforms`
+- `projectedScore` and `recoverablePoints` on every audit result and in the compact summary — an audit now states what the page would score if every failing check were fixed (capped at 100)
+- Full sample report at `/reports/opendpe.html` with the raw JSON snapshot beside it, produced by `scripts/collect-sample.mjs` from a live audit of www.opendpe.net (71/100, projected 100)
+- Proof section on both homepages with repository numbers (87 tools, 103 tests, 11 GEO checks, 22 GTM tools, 5 platforms, Apache-2.0)
+- npm packaging: `files` whitelist, `prepublishOnly` (build + tests), public publish config, 0.16.0 tarball validated with `npm pack --dry-run` (228 kB, 316 files).
+
+### Notes
+
+- Publishing to npm requires the owner's registry credentials; until then `npx` instructions point at the repository build.
+- Site copy and docs now say 87 tools / 11 GEO checks.
+
 ## 0.15.0 — 2026-11-01
 
 ### Added

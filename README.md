@@ -353,6 +353,7 @@ Full reference: [docs/CLI.md](docs/CLI.md)
 | `geo_llms_drift` | llms.txt vs sitemap: stale links, missing pages, link validity |
 | `geo_content_risks` | Hidden text, LLM instructions, invisible Unicode, CTA overload, thin copy |
 | `geo_positioning` | On-page vocabulary overlap against 1–5 competitor URLs |
+| `geo_platform_readiness` | Per-engine readiness (Google AIO, ChatGPT, Perplexity, Gemini, Copilot) with each engine's main gap |
 
 All GEO tools are read-only. Rubric, bands and limits: [docs/GEO.md](docs/GEO.md).
 
@@ -473,6 +474,7 @@ npm run typecheck
 | [DEPLOYMENT.md](docs/DEPLOYMENT.md) | Docker / Fly / Railway |
 | [CLI.md](docs/CLI.md) | All CLI commands |
 | [GEO.md](docs/GEO.md) | GEO rubric, tools, limits |
+| [Sample report](site/reports/opendpe.html) | Full audit of opendpe.net: 71/100, platform readiness, fix plan |
 | [site/README.md](site/README.md) | Landing site: publish, lead capture, local preview |
 | [CI_CD.md](docs/CI_CD.md) | GitHub Actions |
 | [GTM_INTEGRATION.md](docs/GTM_INTEGRATION.md) | GTM ↔ GA4 specs |

@@ -17,6 +17,7 @@ Perplexity, Gemini, Google AI Overviews) can read, understand or cite their site
 | `geo_llms_drift` | llms.txt vs sitemap: stale, missing, coverage | `url`, `sitemapUrl?`, `maxUrls?` |
 | `geo_content_risks` | Hidden text, LLM instructions, thin copy, stuffing | `url` |
 | `geo_positioning` | On-page differentiation against competitors | `url`, `competitors[1–5]`, `maxTerms?` |
+| `geo_platform_readiness` | Per-engine readiness + main gap | `url` |
 
 All five are read-only. None needs a write flag or `confirm=true`.
 
@@ -53,6 +54,7 @@ A high GEO score does not mean an assistant will quote the page. Use these after
 3. `geo_crawler_access` — use when a specific engine never cites the site; name the blocked bot rather than guessing.
 4. `geo_content_risks` — run before a big content push; any `high` finding is a blocker, not a nice-to-have.
 5. `geo_positioning` — only with competitor URLs the user names. Report vocabulary overlap and unique themes; never present it as market share.
+6. `geo_platform_readiness` — run it when the user asks about a specific engine. Report each platform's score, band and main gap; do not average them into a single “AI visibility” number.
 
 ## Hard rules
 

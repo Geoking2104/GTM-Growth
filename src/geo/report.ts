@@ -13,6 +13,8 @@ export function summarizeAudit(result: GeoAuditResult) {
     durationMs: result.durationMs,
     score: result.score,
     band: result.band,
+    recoverablePoints: result.recoverablePoints,
+    projectedScore: result.projectedScore,
     scoreBreakdown: result.scoreBreakdown,
     scoreMax: result.scoreMax,
     error: result.error,

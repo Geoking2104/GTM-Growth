@@ -1,6 +1,6 @@
 {
   "name": "google-growth",
-  "version": "0.15.0",
+  "version": "0.16.0",
   "description": "Open-source MCP server connecting GA4, GTM/sGTM, Search Console, Indexing API, PageSpeed, CrUX and GEO/AEO audits to Grok, Claude, and Codex",
   "type": "module",
   "main": "dist/index.js",
@@ -35,7 +35,8 @@
     "validate:ci": "bash scripts/ci-validate.sh",
     "test": "vitest run",
     "lint": "eslint src --ext .ts",
-    "typecheck": "tsc --noEmit"
+    "typecheck": "tsc --noEmit",
+    "prepublishOnly": "npm run build && npm test"
   },
   "keywords": [
     "mcp",
@@ -91,5 +92,15 @@
     "tsx": "^4.19.2",
     "typescript": "^5.7.2",
     "vitest": "^2.1.8"
+  },
+  "files": [
+    "dist",
+    "skills",
+    "README.md",
+    "LICENSE",
+    "CHANGELOG.md"
+  ],
+  "publishConfig": {
+    "access": "public"
   }
 }

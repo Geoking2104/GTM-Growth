@@ -192,6 +192,12 @@ code {
 .hero-stats span { font-size: .82rem; color: #93a6c9; letter-spacing: .04em; text-transform: uppercase; }
 
 /* ── Sections ───────────────────────────────────────────── */
+.proof-grid { list-style: none; padding: 0; margin: 0; display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 1rem; }
+.proof-grid li { background: var(--card); border: 1px solid var(--line); border-radius: var(--radius-sm); padding: 1.1rem 1.2rem; }
+.proof-grid strong { display: block; font-size: 1.55rem; letter-spacing: -.02em; }
+.proof-grid span { font-size: .78rem; text-transform: uppercase; letter-spacing: .06em; color: var(--muted); }
+.proof-note { color: var(--muted-2); font-size: .82rem; margin-top: 1.2rem; }
+
 .section { padding: clamp(3rem, 6vw, 5rem) 0; }
 .section-alt { background: var(--bg-2); border-block: 1px solid var(--line); }
 .section-head { max-width: 640px; margin-bottom: 2.5rem; }

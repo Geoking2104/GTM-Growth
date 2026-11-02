@@ -514,6 +514,8 @@ describe("full audit", () => {
     expect(failing.map((check) => check.id)).toEqual([]);
     expect(result.score).toBe(100);
     expect(result.band).toBe("excellent");
+    expect(result.recoverablePoints).toBe(0);
+    expect(result.projectedScore).toBe(100);
     expect(result.scoreBreakdown).toEqual(CATEGORY_MAX);
   });
 
@@ -539,5 +541,6 @@ describe("full audit", () => {
     expect(result.httpStatus).toBe(403);
     expect(result.score).toBe(0);
     expect(result.checks).toHaveLength(0);
+    expect(result.projectedScore).toBe(0);
   });
 });

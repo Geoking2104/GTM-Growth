@@ -85,6 +85,22 @@ npx serve site
 python -m http.server 8080 --directory site
 ```
 
+## Sample report
+
+`reports/opendpe.html` is a real audit of www.opendpe.net (71/100), with the raw
+snapshot in `reports/opendpe.json`. It is the page linked from the hero as a
+worked example.
+
+Regenerate after engine changes:
+
+```bash
+npm run build
+node scripts/collect-sample.mjs https://www.opendpe.net site/reports/opendpe.json
+```
+
+The HTML is written by hand from that JSON; update the numbers and the snapshot
+date together, otherwise the report lies.
+
 ## The free read is URL-only by design
 
 `preview.js` never fetches the visitor's site. GitHub Pages is static and most

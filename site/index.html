@@ -133,11 +133,12 @@
         <button class="btn" type="submit">Run the free read</button>
       </form>
       <p class="hint" id="check-hint">No signup. This first read inspects the URL only — nothing is fetched.</p>
+      <p class="hint"><a href="reports/opendpe.html">See a full sample report — opendpe.net, 71/100 →</a></p>
       <p class="form-error" id="check-error" role="alert" hidden></p>
 
       <ul class="hero-stats" aria-label="What ships in the repository">
-        <li><strong>86</strong><span>MCP tools</span></li>
-        <li><strong>10</strong><span>GEO checks</span></li>
+        <li><strong>87</strong><span>MCP tools</span></li>
+        <li><strong>11</strong><span>GEO checks</span></li>
         <li><strong>22</strong><span>GTM tools</span></li>
         <li><strong>0</strong><span>vendor lock-in</span></li>
       </ul>
@@ -414,6 +415,25 @@ npm run cli -- geo-audit --url https://acme.com</code></pre>
   </section>
 
   <!-- ── Closing ──────────────────────────────────────────── -->
+  <section class="section" id="proof" aria-labelledby="proof-heading">
+    <div class="wrap">
+      <header class="section-head">
+        <p class="eyebrow eyebrow-dark">Proof</p>
+        <h2 id="proof-heading">Built in the open, measured in public</h2>
+        <p class="section-sub">Every number below comes from the repository you can run yourself — and from a live audit you can re-run.</p>
+      </header>
+      <ul class="proof-grid">
+        <li><strong>87</strong><span>MCP tools</span></li>
+        <li><strong>103</strong><span>tests passing</span></li>
+        <li><strong>11</strong><span>GEO checks</span></li>
+        <li><strong>22</strong><span>GTM tools</span></li>
+        <li><strong>5</strong><span>AI platforms mapped</span></li>
+        <li><strong>Apache-2.0</strong><span>licence</span></li>
+      </ul>
+      <p class="proof-note">Read-only by default · CI runs typecheck, lint, 103 tests, build, CLI smoke and site checks on every push · <a href="https://github.com/Geoking2104/Google-Growth/actions">see the runs</a></p>
+    </div>
+  </section>
+
   <section class="closing">
     <div class="wrap closing-inner">
       <h2>Your next citation starts with a URL.</h2>

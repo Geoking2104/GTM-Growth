@@ -83,6 +83,8 @@ export async function runGeoAudit(options: GeoAuditOptions): Promise<GeoAuditRes
       durationMs: Date.now() - started,
       score: 0,
       band: "critical",
+      recoverablePoints: 0,
+      projectedScore: 0,
       scoreBreakdown: Object.fromEntries(
         Object.keys(CATEGORY_MAX).map((category) => [category, 0])
       ) as Record<GeoCategory, number>,
@@ -111,6 +113,8 @@ export async function runGeoAudit(options: GeoAuditOptions): Promise<GeoAuditRes
       durationMs: Date.now() - started,
       score: 0,
       band: "critical",
+      recoverablePoints: 0,
+      projectedScore: 0,
       scoreBreakdown: Object.fromEntries(
         Object.keys(CATEGORY_MAX).map((category) => [category, 0])
       ) as Record<GeoCategory, number>,
@@ -203,6 +207,10 @@ export async function runGeoAudit(options: GeoAuditOptions): Promise<GeoAuditRes
 
   const scoreBreakdown = computeBreakdown(checks);
   const score = scoreOf(scoreBreakdown);
+  const recoverablePoints = checks
+    .filter((check) => check.max > check.earned)
+    .reduce((sum, check) => sum + (check.max - check.earned), 0);
+  const projectedScore = Math.min(100, score + recoverablePoints);
 
   return {
     url: baseUrl,
@@ -212,6 +220,8 @@ export async function runGeoAudit(options: GeoAuditOptions): Promise<GeoAuditRes
     durationMs: Date.now() - started,
     score,
     band: bandOf(score),
+    recoverablePoints,
+    projectedScore,
     scoreBreakdown,
     scoreMax: { ...CATEGORY_MAX },
     checks,

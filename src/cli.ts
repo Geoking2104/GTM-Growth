@@ -132,6 +132,7 @@ Usage:
   geo-drift                 --url <url> [--sitemap <url>] [--max-urls <n>]   (exit 1 when stale)
   geo-risks                 --url <url>
   geo-positioning           --url <url> --competitors <url,url,…> [--max-terms <n>]
+  geo-platforms             --url <url>
 
 ── Server ───────────────────────────────────────────
   serve-http                Start MCP HTTP/SSE server
@@ -582,6 +583,18 @@ async function main() {
               : undefined,
           })
         );
+        break;
+      }
+      case "geo-platforms": {
+        const { runGeoAudit } = await import("./geo/audit.js");
+        const { buildPlatformReadiness } = await import("./geo/platforms.js");
+        const audit = await runGeoAudit({ url: req(args, "url") });
+        print({
+          url: audit.url,
+          score: audit.score,
+          projectedScore: audit.projectedScore,
+          platforms: buildPlatformReadiness(audit),
+        });
         break;
       }
       case "serve-http": {

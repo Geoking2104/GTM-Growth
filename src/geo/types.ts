@@ -154,6 +154,10 @@ export interface GeoAuditResult {
   band: ScoreBand;
   scoreBreakdown: Record<GeoCategory, number>;
   scoreMax: Record<GeoCategory, number>;
+  /** Points still on the table across every failing check. */
+  recoverablePoints: number;
+  /** Score if every failing check were fixed, capped at 100. */
+  projectedScore: number;
   checks: GeoCheck[];
   recommendations: Recommendation[];
   details: {

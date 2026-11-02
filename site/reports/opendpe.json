@@ -1,0 +1,1413 @@
+{
+  "generatedAt": "2026-11-02T09:13:03.105Z",
+  "url": "https://www.opendpe.net",
+  "audit": {
+    "url": "https://www.opendpe.net/",
+    "finalUrl": "https://www.opendpe.net/",
+    "httpStatus": 200,
+    "pageSize": 60277,
+    "durationMs": 279,
+    "score": 71,
+    "band": "good",
+    "recoverablePoints": 29,
+    "projectedScore": 100,
+    "scoreBreakdown": {
+      "robots": 15,
+      "llms": 12,
+      "schema": 13,
+      "meta": 14,
+      "content": 11,
+      "brand_entity": 3,
+      "signals": 3,
+      "ai_discovery": 0
+    },
+    "scoreMax": {
+      "robots": 18,
+      "llms": 18,
+      "schema": 16,
+      "meta": 14,
+      "content": 12,
+      "brand_entity": 10,
+      "signals": 6,
+      "ai_discovery": 6
+    },
+    "checks": [
+      {
+        "id": "robots.found",
+        "category": "robots",
+        "label": "robots.txt is reachable",
+        "earned": 5,
+        "max": 5,
+        "status": "pass",
+        "evidence": "HTTP 200, 16 user-agent group(s) parsed"
+      },
+      {
+        "id": "robots.citation_bots",
+        "category": "robots",
+        "label": "AI citation crawlers are allowed",
+        "earned": 10,
+        "max": 13,
+        "status": "partial",
+        "evidence": "Citation bots are allowed only through the wildcard group — an explicit rule is safer",
+        "fix": "Add explicit User-agent rules for OAI-SearchBot, Claude-SearchBot, PerplexityBot, Googlebot, Applebot instead of relying on \"*\"."
+      },
+      {
+        "id": "llms.found",
+        "category": "llms",
+        "label": "/llms.txt exists",
+        "earned": 5,
+        "max": 5,
+        "status": "pass",
+        "evidence": "HTTP 200, 818 words"
+      },
+      {
+        "id": "llms.h1",
+        "category": "llms",
+        "label": "H1 title present",
+        "earned": 2,
+        "max": 2,
+        "status": "pass",
+        "evidence": "File starts with an H1 heading"
+      },
+      {
+        "id": "llms.blockquote",
+        "category": "llms",
+        "label": "Blockquote summary present",
+        "earned": 1,
+        "max": 1,
+        "status": "pass",
+        "evidence": "A `>` summary line was found"
+      },
+      {
+        "id": "llms.sections",
+        "category": "llms",
+        "label": "H2 topic sections",
+        "earned": 2,
+        "max": 2,
+        "status": "pass",
+        "evidence": "9 H2 section(s)"
+      },
+      {
+        "id": "llms.links",
+        "category": "llms",
+        "label": "Markdown links to key pages",
+        "earned": 2,
+        "max": 2,
+        "status": "pass",
+        "evidence": "20 markdown link(s)"
+      },
+      {
+        "id": "llms.depth",
+        "category": "llms",
+        "label": "Content depth ≥ 1000 words",
+        "earned": 0,
+        "max": 2,
+        "status": "fail",
+        "evidence": "818 words",
+        "fix": "Expand llms.txt with product, documentation and company sections — thin files carry little signal."
+      },
+      {
+        "id": "llms.depth_high",
+        "category": "llms",
+        "label": "Content depth ≥ 5000 words",
+        "earned": 0,
+        "max": 2,
+        "status": "fail",
+        "evidence": "818 words",
+        "fix": "For a full reference, ship /llms-full.txt and link it from llms.txt."
+      },
+      {
+        "id": "llms.full",
+        "category": "llms",
+        "label": "/llms-full.txt companion",
+        "earned": 0,
+        "max": 2,
+        "status": "fail",
+        "evidence": "No /llms-full.txt",
+        "fix": "Publish /llms-full.txt with the expanded corpus and link it from llms.txt."
+      },
+      {
+        "id": "schema.any_valid",
+        "category": "schema",
+        "label": "Valid JSON-LD is present",
+        "earned": 2,
+        "max": 2,
+        "status": "pass",
+        "evidence": "1 script tag(s), types: Organization, WebSite, WebApplication, FAQPage"
+      },
+      {
+        "id": "schema.richness",
+        "category": "schema",
+        "label": "Schema objects are rich (≥5 attributes)",
+        "earned": 3,
+        "max": 3,
+        "status": "pass",
+        "evidence": "Average 5.8 non-generic attribute(s) per object"
+      },
+      {
+        "id": "schema.website",
+        "category": "schema",
+        "label": "WebSite schema",
+        "earned": 2,
+        "max": 2,
+        "status": "pass",
+        "evidence": "WebSite"
+      },
+      {
+        "id": "schema.organization",
+        "category": "schema",
+        "label": "Organization schema",
+        "earned": 3,
+        "max": 3,
+        "status": "pass",
+        "evidence": "Organization"
+      },
+      {
+        "id": "schema.faq",
+        "category": "schema",
+        "label": "FAQPage schema",
+        "earned": 3,
+        "max": 3,
+        "status": "pass",
+        "evidence": "FAQPage"
+      },
+      {
+        "id": "schema.article",
+        "category": "schema",
+        "label": "Article schema",
+        "earned": 0,
+        "max": 3,
+        "status": "fail",
+        "evidence": "No Article/BlogPosting schema",
+        "fix": "Add Article or BlogPosting schema (headline, author, datePublished, dateModified) to editorial pages."
+      },
+      {
+        "id": "meta.title",
+        "category": "meta",
+        "label": "Title tag",
+        "earned": 5,
+        "max": 5,
+        "status": "pass",
+        "evidence": "62 characters: \"DPE d'un bien a vendre : le verifier avant le mandat | OpenDPE\""
+      },
+      {
+        "id": "meta.description",
+        "category": "meta",
+        "label": "Meta description",
+        "earned": 2,
+        "max": 2,
+        "status": "pass",
+        "evidence": "160 characters"
+      },
+      {
+        "id": "meta.canonical",
+        "category": "meta",
+        "label": "Canonical URL",
+        "earned": 3,
+        "max": 3,
+        "status": "pass",
+        "evidence": "https://www.opendpe.net/"
+      },
+      {
+        "id": "meta.og",
+        "category": "meta",
+        "label": "Open Graph tags",
+        "earned": 4,
+        "max": 4,
+        "status": "pass",
+        "evidence": "og:title ✓ · og:description ✓ · og:image ✓"
+      },
+      {
+        "id": "content.h1",
+        "category": "content",
+        "label": "Single H1 states the topic",
+        "earned": 2,
+        "max": 2,
+        "status": "pass",
+        "evidence": "H1: \"Ne laissez plus le DPE faire décoter vos mandats\""
+      },
+      {
+        "id": "content.word_count",
+        "category": "content",
+        "label": "At least 300 words",
+        "earned": 2,
+        "max": 2,
+        "status": "pass",
+        "evidence": "906 words"
+      },
+      {
+        "id": "content.heading_hierarchy",
+        "category": "content",
+        "label": "H2 + H3 hierarchy",
+        "earned": 2,
+        "max": 2,
+        "status": "pass",
+        "evidence": "6 H2 · 10 H3"
+      },
+      {
+        "id": "content.lists_or_tables",
+        "category": "content",
+        "label": "Lists or tables present",
+        "earned": 2,
+        "max": 2,
+        "status": "pass",
+        "evidence": "6 list(s), 0 table(s)"
+      },
+      {
+        "id": "content.front_loading",
+        "category": "content",
+        "label": "Key facts in the first 30%",
+        "earned": 2,
+        "max": 2,
+        "status": "pass",
+        "evidence": "First 30% of the copy contains concrete figures"
+      },
+      {
+        "id": "content.numbers",
+        "category": "content",
+        "label": "Concrete statistics",
+        "earned": 1,
+        "max": 1,
+        "status": "pass",
+        "evidence": "17 numeric token(s)"
+      },
+      {
+        "id": "content.links",
+        "category": "content",
+        "label": "Outbound citations",
+        "earned": 0,
+        "max": 1,
+        "status": "fail",
+        "evidence": "0 external link(s)",
+        "fix": "Cite authoritative external sources — it raises perceived credibility."
+      },
+      {
+        "id": "signals.lang",
+        "category": "signals",
+        "label": "<html lang> declared",
+        "earned": 3,
+        "max": 3,
+        "status": "pass",
+        "evidence": "lang=\"fr\""
+      },
+      {
+        "id": "signals.rss",
+        "category": "signals",
+        "label": "RSS/Atom feed linked",
+        "earned": 0,
+        "max": 2,
+        "status": "fail",
+        "evidence": "No feed link in <head>",
+        "fix": "Add <link rel=\"alternate\" type=\"application/rss+xml\" href=\"/feed.xml\"> so agents can discover new pages."
+      },
+      {
+        "id": "signals.freshness",
+        "category": "signals",
+        "label": "Freshness date is valid",
+        "earned": 0,
+        "max": 1,
+        "status": "fail",
+        "evidence": "No dateModified, datePublished or article:modified_time",
+        "fix": "Publish dateModified in Article/WebPage schema — AI search favors recently updated content."
+      },
+      {
+        "id": "brand.name_coherence",
+        "category": "brand_entity",
+        "label": "Brand name is consistent",
+        "earned": 0,
+        "max": 2,
+        "status": "fail",
+        "evidence": "Names found: Ne laissez plus le DPE faire décoter vos mandats · DPE d'un bien a vendre : le verifier avant le mandat · OpenDPE · OpenDPE — Simulateur DPE 3CL & recherche ADEME",
+        "fix": "Use one brand name across <title>, og:title, H1 and Organization schema so the entity resolves cleanly."
+      },
+      {
+        "id": "brand.desc_coherence",
+        "category": "brand_entity",
+        "label": "Schema and meta descriptions agree",
+        "earned": 0,
+        "max": 1,
+        "status": "fail",
+        "evidence": "Schema and meta descriptions do not overlap",
+        "fix": "Reuse the same positioning sentence in Organization schema description and the meta description."
+      },
+      {
+        "id": "brand.kg_readiness",
+        "category": "brand_entity",
+        "label": "Knowledge Graph links (sameAs)",
+        "earned": 0,
+        "max": 3,
+        "status": "fail",
+        "evidence": "0/4 pillars linked",
+        "fix": "Add sameAs URLs to Wikipedia, Wikidata, LinkedIn and Crunchbase in Organization schema."
+      },
+      {
+        "id": "brand.about_link",
+        "category": "brand_entity",
+        "label": "About page linked",
+        "earned": 0,
+        "max": 1,
+        "status": "fail",
+        "evidence": "No about/company link found",
+        "fix": "Link a visible /about or /company page from the homepage."
+      },
+      {
+        "id": "brand.contact_info",
+        "category": "brand_entity",
+        "label": "Contact details in schema",
+        "earned": 1,
+        "max": 1,
+        "status": "pass",
+        "evidence": "Organization/Person schema exposes contact details"
+      },
+      {
+        "id": "brand.geo_identity",
+        "category": "brand_entity",
+        "label": "Geographic identity",
+        "earned": 1,
+        "max": 1,
+        "status": "pass",
+        "evidence": "Geo schema or hreflang present"
+      },
+      {
+        "id": "brand.topic_authority",
+        "category": "brand_entity",
+        "label": "Topic authority signals",
+        "earned": 1,
+        "max": 1,
+        "status": "pass",
+        "evidence": "FAQ items: 5 · dated articles: no"
+      },
+      {
+        "id": "ai_discovery.well_known",
+        "category": "ai_discovery",
+        "label": "/.well-known/ai.txt exists",
+        "earned": 0,
+        "max": 2,
+        "status": "fail",
+        "evidence": "HTTP 404",
+        "fix": "Publish /.well-known/ai.txt describing crawler permissions and key resources."
+      },
+      {
+        "id": "ai_discovery.summary",
+        "category": "ai_discovery",
+        "label": "/ai/summary.json is valid",
+        "earned": 0,
+        "max": 2,
+        "status": "fail",
+        "evidence": "HTTP 404",
+        "fix": "Publish /ai/summary.json with {\"name\": \"...\", \"description\": \"...\"} (description ≥ 20 chars)."
+      },
+      {
+        "id": "ai_discovery.faq",
+        "category": "ai_discovery",
+        "label": "/ai/faq.json exists",
+        "earned": 0,
+        "max": 1,
+        "status": "fail",
+        "evidence": "HTTP 404",
+        "fix": "Publish /ai/faq.json with question/answer pairs an assistant can quote."
+      },
+      {
+        "id": "ai_discovery.service",
+        "category": "ai_discovery",
+        "label": "/ai/service.json describes capabilities",
+        "earned": 0,
+        "max": 1,
+        "status": "fail",
+        "evidence": "HTTP 404",
+        "fix": "Publish /ai/service.json with {\"name\": \"...\", \"capabilities\": [...]} for agent discovery."
+      }
+    ],
+    "recommendations": [
+      {
+        "priority": "high",
+        "category": "robots",
+        "checkId": "robots.citation_bots",
+        "points": 3,
+        "action": "Add explicit User-agent rules for OAI-SearchBot, Claude-SearchBot, PerplexityBot, Googlebot, Applebot instead of relying on \"*\"."
+      },
+      {
+        "priority": "medium",
+        "category": "schema",
+        "checkId": "schema.article",
+        "points": 3,
+        "action": "Add Article or BlogPosting schema (headline, author, datePublished, dateModified) to editorial pages."
+      },
+      {
+        "priority": "medium",
+        "category": "brand_entity",
+        "checkId": "brand.kg_readiness",
+        "points": 3,
+        "action": "Add sameAs URLs to Wikipedia, Wikidata, LinkedIn and Crunchbase in Organization schema."
+      },
+      {
+        "priority": "medium",
+        "category": "llms",
+        "checkId": "llms.depth",
+        "points": 2,
+        "action": "Expand llms.txt with product, documentation and company sections — thin files carry little signal."
+      },
+      {
+        "priority": "medium",
+        "category": "llms",
+        "checkId": "llms.depth_high",
+        "points": 2,
+        "action": "For a full reference, ship /llms-full.txt and link it from llms.txt."
+      },
+      {
+        "priority": "medium",
+        "category": "llms",
+        "checkId": "llms.full",
+        "points": 2,
+        "action": "Publish /llms-full.txt with the expanded corpus and link it from llms.txt."
+      },
+      {
+        "priority": "medium",
+        "category": "brand_entity",
+        "checkId": "brand.name_coherence",
+        "points": 2,
+        "action": "Use one brand name across <title>, og:title, H1 and Organization schema so the entity resolves cleanly."
+      },
+      {
+        "priority": "medium",
+        "category": "brand_entity",
+        "checkId": "brand.desc_coherence",
+        "points": 1,
+        "action": "Reuse the same positioning sentence in Organization schema description and the meta description."
+      },
+      {
+        "priority": "medium",
+        "category": "brand_entity",
+        "checkId": "brand.about_link",
+        "points": 1,
+        "action": "Link a visible /about or /company page from the homepage."
+      },
+      {
+        "priority": "low",
+        "category": "signals",
+        "checkId": "signals.rss",
+        "points": 2,
+        "action": "Add <link rel=\"alternate\" type=\"application/rss+xml\" href=\"/feed.xml\"> so agents can discover new pages."
+      },
+      {
+        "priority": "low",
+        "category": "ai_discovery",
+        "checkId": "ai_discovery.well_known",
+        "points": 2,
+        "action": "Publish /.well-known/ai.txt describing crawler permissions and key resources."
+      },
+      {
+        "priority": "low",
+        "category": "ai_discovery",
+        "checkId": "ai_discovery.summary",
+        "points": 2,
+        "action": "Publish /ai/summary.json with {\"name\": \"...\", \"description\": \"...\"} (description ≥ 20 chars)."
+      },
+      {
+        "priority": "low",
+        "category": "content",
+        "checkId": "content.links",
+        "points": 1,
+        "action": "Cite authoritative external sources — it raises perceived credibility."
+      },
+      {
+        "priority": "low",
+        "category": "signals",
+        "checkId": "signals.freshness",
+        "points": 1,
+        "action": "Publish dateModified in Article/WebPage schema — AI search favors recently updated content."
+      },
+      {
+        "priority": "low",
+        "category": "ai_discovery",
+        "checkId": "ai_discovery.faq",
+        "points": 1,
+        "action": "Publish /ai/faq.json with question/answer pairs an assistant can quote."
+      },
+      {
+        "priority": "low",
+        "category": "ai_discovery",
+        "checkId": "ai_discovery.service",
+        "points": 1,
+        "action": "Publish /ai/service.json with {\"name\": \"...\", \"capabilities\": [...]} for agent discovery."
+      }
+    ],
+    "details": {
+      "robots": {
+        "found": true,
+        "status": 200,
+        "crawlDelay": null,
+        "sitemaps": [
+          "https://www.opendpe.net/sitemap.xml"
+        ],
+        "botsAllowed": [
+          "GPTBot",
+          "OAI-SearchBot",
+          "ChatGPT-User",
+          "ClaudeBot",
+          "Claude-SearchBot",
+          "Claude-User",
+          "PerplexityBot",
+          "Perplexity-User",
+          "Googlebot",
+          "Google-Extended",
+          "Google-CloudVertexBot",
+          "Bingbot",
+          "Applebot-Extended",
+          "cohere-ai",
+          "DuckAssistBot",
+          "Bytespider",
+          "meta-externalagent",
+          "Meta-ExternalFetcher",
+          "facebookexternalhit",
+          "Amazonbot",
+          "AI2Bot",
+          "AI2Bot-Dolma",
+          "xAI-Bot",
+          "Applebot",
+          "PetalBot",
+          "YouBot",
+          "CCBot"
+        ],
+        "botsBlocked": [],
+        "botsMissing": [],
+        "botsPartial": [],
+        "citationBotsOk": true,
+        "citationBotsExplicit": false,
+        "groups": {
+          "*": {
+            "allow": [
+              "/"
+            ],
+            "disallow": [
+              "/app-shell.html"
+            ],
+            "crawlDelay": null,
+            "explicit": false
+          },
+          "GPTBot": {
+            "allow": [
+              "/"
+            ],
+            "disallow": [],
+            "crawlDelay": null,
+            "explicit": true
+          },
+          "OAI-SearchBot": {
+            "allow": [
+              "/"
+            ],
+            "disallow": [],
+            "crawlDelay": null,
+            "explicit": true
+          },
+          "ChatGPT-User": {
+            "allow": [
+              "/"
+            ],
+            "disallow": [],
+            "crawlDelay": null,
+            "explicit": true
+          },
+          "ClaudeBot": {
+            "allow": [
+              "/"
+            ],
+            "disallow": [],
+            "crawlDelay": null,
+            "explicit": true
+          },
+          "Claude-Web": {
+            "allow": [
+              "/"
+            ],
+            "disallow": [],
+            "crawlDelay": null,
+            "explicit": true
+          },
+          "anthropic-ai": {
+            "allow": [
+              "/"
+            ],
+            "disallow": [],
+            "crawlDelay": null,
+            "explicit": true
+          },
+          "PerplexityBot": {
+            "allow": [
+              "/"
+            ],
+            "disallow": [],
+            "crawlDelay": null,
+            "explicit": true
+          },
+          "Perplexity-User": {
+            "allow": [
+              "/"
+            ],
+            "disallow": [],
+            "crawlDelay": null,
+            "explicit": true
+          },
+          "Google-Extended": {
+            "allow": [
+              "/"
+            ],
+            "disallow": [],
+            "crawlDelay": null,
+            "explicit": true
+          },
+          "Applebot": {
+            "allow": [
+              "/"
+            ],
+            "disallow": [],
+            "crawlDelay": null,
+            "explicit": true
+          },
+          "Applebot-Extended": {
+            "allow": [
+              "/"
+            ],
+            "disallow": [],
+            "crawlDelay": null,
+            "explicit": true
+          },
+          "Bingbot": {
+            "allow": [
+              "/"
+            ],
+            "disallow": [],
+            "crawlDelay": null,
+            "explicit": true
+          },
+          "CCBot": {
+            "allow": [
+              "/"
+            ],
+            "disallow": [],
+            "crawlDelay": null,
+            "explicit": true
+          },
+          "meta-externalagent": {
+            "allow": [
+              "/"
+            ],
+            "disallow": [],
+            "crawlDelay": null,
+            "explicit": true
+          },
+          "Amazonbot": {
+            "allow": [
+              "/"
+            ],
+            "disallow": [],
+            "crawlDelay": null,
+            "explicit": true
+          }
+        }
+      },
+      "llms": {
+        "found": true,
+        "status": 200,
+        "hasH1": true,
+        "hasBlockquote": true,
+        "hasSections": true,
+        "sectionsCount": 9,
+        "hasLinks": true,
+        "linksCount": 20,
+        "wordCount": 818,
+        "hasFull": false,
+        "warnings": [],
+        "excerpt": "# OpenDPE\n\n> OpenDPE est le seul outil en ligne gratuit qui combine trois fonctions sur le Diagnostic de Performance Énergétique (DPE) en France : retrouver le DPE réel d'un logement dans la base publique ADEME (par adresse ou numéro), simuler l'impact de travaux de rénovation avec le moteur de calcul 3CL officiel (méthode du Cerema, arrêté du 31 mars 2021), et exporter un dossier PDF chiffré prêt"
+      },
+      "schema": {
+        "scriptCount": 1,
+        "parseErrors": 0,
+        "objects": [],
+        "foundTypes": [
+          "Organization",
+          "WebSite",
+          "WebApplication",
+          "FAQPage"
+        ],
+        "hasWebsite": true,
+        "hasOrganization": true,
+        "hasFaq": true,
+        "hasArticle": false,
+        "hasProduct": false,
+        "hasHowTo": false,
+        "hasSameAs": false,
+        "sameAsUrls": [],
+        "hasDateModified": false,
+        "avgAttributes": 5.8,
+        "richnessScore": 3,
+        "incompleteTypes": [],
+        "missingFields": {},
+        "visibleMatch": true
+      },
+      "meta": {
+        "title": "DPE d'un bien a vendre : le verifier avant le mandat | OpenDPE",
+        "titleLength": 62,
+        "description": "Agents immobiliers : retrouvez le DPE officiel ADEME d'une adresse, recalculez-le a la methode 2026 et remettez 3 scenarios de travaux chiffres a votre vendeur.",
+        "descriptionLength": 160,
+        "canonical": "https://www.opendpe.net/",
+        "hasOgTitle": true,
+        "hasOgDescription": true,
+        "hasOgImage": true,
+        "robotsMeta": null,
+        "hasNoai": false,
+        "xRobotsTag": null,
+        "xRobotsNoindex": false
+      },
+      "content": {
+        "h1": "Ne laissez plus le DPE faire décoter vos mandats",
+        "headingCount": 17,
+        "wordCount": 906,
+        "numbersCount": 17,
+        "externalLinksCount": 0,
+        "hasHeadingHierarchy": true,
+        "hasListsOrTables": true,
+        "hasFrontLoading": true,
+        "imagesTotal": 0,
+        "imagesWithAlt": 0
+      },
+      "signals": {
+        "lang": "fr",
+        "rssUrl": null,
+        "freshnessDate": null
+      },
+      "brand_entity": {
+        "namesFound": [
+          "Ne laissez plus le DPE faire décoter vos mandats",
+          "DPE d'un bien a vendre : le verifier avant le mandat",
+          "OpenDPE",
+          "OpenDPE — Simulateur DPE 3CL & recherche ADEME"
+        ],
+        "primaryName": "OpenDPE",
+        "brandNameConsistent": false,
+        "schemaDescMatchesMeta": false,
+        "kgPillarUrls": [],
+        "kgPillarCount": 0,
+        "hasAboutLink": false,
+        "hasContactInfo": true,
+        "hasGeoSignal": true,
+        "faqDepth": 5,
+        "hasRecentArticles": false
+      },
+      "ai_discovery": {
+        "hasWellKnownAi": false,
+        "hasSummary": false,
+        "summaryValid": false,
+        "hasFaq": false,
+        "faqCount": 0,
+        "hasService": false
+      }
+    }
+  },
+  "platforms": [
+    {
+      "id": "google_aio",
+      "label": "Google AI Overviews",
+      "score": 100,
+      "band": "ready",
+      "signals": [
+        {
+          "id": "googlebot",
+          "label": "Googlebot allowed in robots.txt",
+          "points": 25,
+          "max": 25,
+          "evidence": "Googlebot is allowed"
+        },
+        {
+          "id": "schema_core",
+          "label": "Organization + WebSite schema",
+          "points": 20,
+          "max": 20,
+          "evidence": "Both types present"
+        },
+        {
+          "id": "schema_qa",
+          "label": "FAQ or Article schema",
+          "points": 15,
+          "max": 15,
+          "evidence": "FAQPage present"
+        },
+        {
+          "id": "structure",
+          "label": "Extractable structure (H2/H3 + lists)",
+          "points": 20,
+          "max": 20,
+          "evidence": "17 headings, lists/tables: yes"
+        },
+        {
+          "id": "answer_first",
+          "label": "Answer-first with concrete figures",
+          "points": 20,
+          "max": 20,
+          "evidence": "17 numeric token(s), front-loading: yes"
+        }
+      ],
+      "mainGap": "No blocking gap found"
+    },
+    {
+      "id": "chatgpt",
+      "label": "ChatGPT",
+      "score": 100,
+      "band": "ready",
+      "signals": [
+        {
+          "id": "oai_search",
+          "label": "OAI-SearchBot allowed",
+          "points": 25,
+          "max": 25,
+          "evidence": "Allowed"
+        },
+        {
+          "id": "llms",
+          "label": "llms.txt published",
+          "points": 20,
+          "max": 20,
+          "evidence": "818 words, 20 links"
+        },
+        {
+          "id": "schema_core",
+          "label": "Organization schema",
+          "points": 20,
+          "max": 20,
+          "evidence": "Present"
+        },
+        {
+          "id": "answer_first",
+          "label": "Answer-first content",
+          "points": 20,
+          "max": 20,
+          "evidence": "Figures in the first 30%"
+        },
+        {
+          "id": "faq",
+          "label": "FAQ content",
+          "points": 15,
+          "max": 15,
+          "evidence": "FAQPage present"
+        }
+      ],
+      "mainGap": "No blocking gap found"
+    },
+    {
+      "id": "perplexity",
+      "label": "Perplexity",
+      "score": 65,
+      "band": "partial",
+      "signals": [
+        {
+          "id": "perplexitybot",
+          "label": "PerplexityBot allowed",
+          "points": 25,
+          "max": 25,
+          "evidence": "Allowed"
+        },
+        {
+          "id": "llms",
+          "label": "llms.txt published",
+          "points": 20,
+          "max": 20,
+          "evidence": "Present"
+        },
+        {
+          "id": "citations",
+          "label": "Outbound citations",
+          "points": 0,
+          "max": 20,
+          "evidence": "0 external link(s)",
+          "fix": "Cite at least three primary sources — Perplexity favours sourced pages."
+        },
+        {
+          "id": "structure",
+          "label": "Lists and tables",
+          "points": 20,
+          "max": 20,
+          "evidence": "Present"
+        },
+        {
+          "id": "freshness",
+          "label": "Freshness date",
+          "points": 0,
+          "max": 15,
+          "evidence": "No dateModified",
+          "fix": "Publish dateModified and keep it current."
+        }
+      ],
+      "mainGap": "Outbound citations"
+    },
+    {
+      "id": "gemini",
+      "label": "Gemini",
+      "score": 60,
+      "band": "partial",
+      "signals": [
+        {
+          "id": "googlebot",
+          "label": "Googlebot allowed",
+          "points": 25,
+          "max": 25,
+          "evidence": "Allowed"
+        },
+        {
+          "id": "entity",
+          "label": "Knowledge Graph links (sameAs)",
+          "points": 0,
+          "max": 25,
+          "evidence": "0/4 pillars linked",
+          "fix": "Add sameAs to Wikipedia, Wikidata, LinkedIn and Crunchbase."
+        },
+        {
+          "id": "schema_core",
+          "label": "Organization schema",
+          "points": 20,
+          "max": 20,
+          "evidence": "Present"
+        },
+        {
+          "id": "brand",
+          "label": "Consistent brand name",
+          "points": 0,
+          "max": 15,
+          "evidence": "Inconsistent naming",
+          "fix": "Use one brand name across title, H1, og:title and schema."
+        },
+        {
+          "id": "structure",
+          "label": "Extractable structure",
+          "points": 15,
+          "max": 15,
+          "evidence": "Present"
+        }
+      ],
+      "mainGap": "Knowledge Graph links (sameAs)"
+    },
+    {
+      "id": "copilot",
+      "label": "Microsoft Copilot",
+      "score": 80,
+      "band": "ready",
+      "signals": [
+        {
+          "id": "bingbot",
+          "label": "Bingbot allowed",
+          "points": 25,
+          "max": 25,
+          "evidence": "Allowed"
+        },
+        {
+          "id": "schema_core",
+          "label": "Organization + WebSite schema",
+          "points": 20,
+          "max": 20,
+          "evidence": "Both present"
+        },
+        {
+          "id": "llms",
+          "label": "llms.txt published",
+          "points": 15,
+          "max": 15,
+          "evidence": "Present"
+        },
+        {
+          "id": "structure",
+          "label": "Lists and tables",
+          "points": 20,
+          "max": 20,
+          "evidence": "Present"
+        },
+        {
+          "id": "freshness",
+          "label": "Freshness date",
+          "points": 0,
+          "max": 20,
+          "evidence": "No dateModified",
+          "fix": "Publish dateModified."
+        }
+      ],
+      "mainGap": "Freshness date"
+    }
+  ],
+  "citability": {
+    "url": "https://www.opendpe.net/",
+    "score": 53,
+    "points": 19,
+    "max": 36,
+    "methods": [
+      {
+        "id": "citability.statistics",
+        "label": "Concrete statistics",
+        "points": 3,
+        "max": 3,
+        "evidence": "17 numeric token(s), 1.88 per 100 words",
+        "fix": "Quantify claims (prices, percentages, dates) — numbers are what an answer engine can quote as fact."
+      },
+      {
+        "id": "citability.quotations",
+        "label": "Quotable passages",
+        "points": 0,
+        "max": 3,
+        "evidence": "0 blockquote(s) over 20 characters",
+        "fix": "Add a pull-quote or a sourced statement — extractable sentences travel further than paraphrases."
+      },
+      {
+        "id": "citability.structure",
+        "label": "Lists and tables",
+        "points": 2,
+        "max": 3,
+        "evidence": "0 table(s), 23 list item(s)",
+        "fix": "Turn comparisons and steps into a table or list — the format answers are assembled from."
+      },
+      {
+        "id": "citability.question_headings",
+        "label": "Question-shaped headings",
+        "points": 2,
+        "max": 3,
+        "evidence": "1 heading(s) ending in \"?\"",
+        "fix": "Phrase H2s as the questions buyers ask (\"How much does X cost?\") so the passage maps to a query."
+      },
+      {
+        "id": "citability.answer_first",
+        "label": "Answer in the first 30%",
+        "points": 3,
+        "max": 3,
+        "evidence": "First 30% carries a figure in 50+ words",
+        "fix": "Lead with the direct answer and one figure before the background."
+      },
+      {
+        "id": "citability.paragraph_brevity",
+        "label": "Short paragraphs",
+        "points": 3,
+        "max": 3,
+        "evidence": "37 paragraph(s), 12 words on average",
+        "fix": "Split paragraphs over 60 words — dense blocks are skipped when a passage is selected."
+      },
+      {
+        "id": "citability.sentence_brevity",
+        "label": "Short sentences",
+        "points": 3,
+        "max": 3,
+        "evidence": "51 sentence(s), 17.8 words on average",
+        "fix": "Keep sentences under ~20 words; long clauses lose the subject an engine needs to attribute."
+      },
+      {
+        "id": "citability.outbound_citations",
+        "label": "Outbound citations",
+        "points": 0,
+        "max": 3,
+        "evidence": "0 external link(s)",
+        "fix": "Cite primary sources; pages that reference others are cited more often themselves."
+      },
+      {
+        "id": "citability.author",
+        "label": "Named authorship",
+        "points": 0,
+        "max": 3,
+        "evidence": "No author in schema or meta",
+        "fix": "Add an author (Person in Article schema or meta author) — unattributed pages are harder to trust."
+      },
+      {
+        "id": "citability.freshness",
+        "label": "Freshness",
+        "points": 0,
+        "max": 3,
+        "evidence": "No dateModified/datePublished",
+        "fix": "Publish dateModified and keep it current — stale pages lose selection to fresher ones."
+      },
+      {
+        "id": "citability.faq",
+        "label": "FAQ depth",
+        "points": 3,
+        "max": 3,
+        "evidence": "5 FAQ item(s) in schema, 1 question heading(s)",
+        "fix": "Mark up 3+ real FAQs; question/answer pairs are the easiest unit for an assistant to lift."
+      },
+      {
+        "id": "citability.entity_clarity",
+        "label": "Entity clarity",
+        "points": 0,
+        "max": 3,
+        "evidence": "Brand \"DPE d'un bien a vendre : le verifier avant le mandat\" not in H1, not in opening",
+        "fix": "Name the entity in the H1 and again in the first 100 words — ambiguity costs the citation."
+      }
+    ],
+    "strengths": [
+      "Concrete statistics",
+      "Answer in the first 30%",
+      "Short paragraphs",
+      "Short sentences",
+      "FAQ depth"
+    ],
+    "gaps": [
+      "Quotable passages",
+      "Lists and tables",
+      "Question-shaped headings",
+      "Outbound citations",
+      "Named authorship",
+      "Freshness",
+      "Entity clarity"
+    ]
+  },
+  "crawlers": {
+    "url": "https://www.opendpe.net",
+    "robotsUrl": "https://www.opendpe.net/robots.txt",
+    "robotsFound": true,
+    "robotsStatus": 200,
+    "rows": [
+      {
+        "bot": "GPTBot",
+        "tier": "training",
+        "status": "allowed",
+        "viaWildcard": false,
+        "matchedAgent": "GPTBot"
+      },
+      {
+        "bot": "OAI-SearchBot",
+        "tier": "search",
+        "status": "allowed",
+        "viaWildcard": false,
+        "matchedAgent": "OAI-SearchBot"
+      },
+      {
+        "bot": "ChatGPT-User",
+        "tier": "user",
+        "status": "allowed",
+        "viaWildcard": false,
+        "matchedAgent": "ChatGPT-User"
+      },
+      {
+        "bot": "ClaudeBot",
+        "tier": "training",
+        "status": "allowed",
+        "viaWildcard": false,
+        "matchedAgent": "ClaudeBot"
+      },
+      {
+        "bot": "Claude-SearchBot",
+        "tier": "search",
+        "status": "allowed",
+        "viaWildcard": true,
+        "matchedAgent": "*"
+      },
+      {
+        "bot": "Claude-User",
+        "tier": "user",
+        "status": "allowed",
+        "viaWildcard": true,
+        "matchedAgent": "*"
+      },
+      {
+        "bot": "PerplexityBot",
+        "tier": "search",
+        "status": "allowed",
+        "viaWildcard": false,
+        "matchedAgent": "PerplexityBot"
+      },
+      {
+        "bot": "Perplexity-User",
+        "tier": "user",
+        "status": "allowed",
+        "viaWildcard": false,
+        "matchedAgent": "Perplexity-User"
+      },
+      {
+        "bot": "Googlebot",
+        "tier": "search",
+        "status": "allowed",
+        "viaWildcard": true,
+        "matchedAgent": "*"
+      },
+      {
+        "bot": "Google-Extended",
+        "tier": "training",
+        "status": "allowed",
+        "viaWildcard": false,
+        "matchedAgent": "Google-Extended"
+      },
+      {
+        "bot": "Google-CloudVertexBot",
+        "tier": "training",
+        "status": "allowed",
+        "viaWildcard": true,
+        "matchedAgent": "*"
+      },
+      {
+        "bot": "Bingbot",
+        "tier": "search",
+        "status": "allowed",
+        "viaWildcard": false,
+        "matchedAgent": "Bingbot"
+      },
+      {
+        "bot": "Applebot-Extended",
+        "tier": "training",
+        "status": "allowed",
+        "viaWildcard": false,
+        "matchedAgent": "Applebot-Extended"
+      },
+      {
+        "bot": "cohere-ai",
+        "tier": "training",
+        "status": "allowed",
+        "viaWildcard": true,
+        "matchedAgent": "*"
+      },
+      {
+        "bot": "DuckAssistBot",
+        "tier": "search",
+        "status": "allowed",
+        "viaWildcard": true,
+        "matchedAgent": "*"
+      },
+      {
+        "bot": "Bytespider",
+        "tier": "training",
+        "status": "allowed",
+        "viaWildcard": true,
+        "matchedAgent": "*"
+      },
+      {
+        "bot": "meta-externalagent",
+        "tier": "training",
+        "status": "allowed",
+        "viaWildcard": false,
+        "matchedAgent": "meta-externalagent"
+      },
+      {
+        "bot": "Meta-ExternalFetcher",
+        "tier": "user",
+        "status": "allowed",
+        "viaWildcard": true,
+        "matchedAgent": "*"
+      },
+      {
+        "bot": "facebookexternalhit",
+        "tier": "user",
+        "status": "allowed",
+        "viaWildcard": true,
+        "matchedAgent": "*"
+      },
+      {
+        "bot": "Amazonbot",
+        "tier": "search",
+        "status": "allowed",
+        "viaWildcard": false,
+        "matchedAgent": "Amazonbot"
+      },
+      {
+        "bot": "AI2Bot",
+        "tier": "training",
+        "status": "allowed",
+        "viaWildcard": true,
+        "matchedAgent": "*"
+      },
+      {
+        "bot": "AI2Bot-Dolma",
+        "tier": "training",
+        "status": "allowed",
+        "viaWildcard": true,
+        "matchedAgent": "*"
+      },
+      {
+        "bot": "xAI-Bot",
+        "tier": "search",
+        "status": "allowed",
+        "viaWildcard": true,
+        "matchedAgent": "*"
+      },
+      {
+        "bot": "Applebot",
+        "tier": "search",
+        "status": "allowed",
+        "viaWildcard": false,
+        "matchedAgent": "Applebot"
+      },
+      {
+        "bot": "PetalBot",
+        "tier": "training",
+        "status": "allowed",
+        "viaWildcard": true,
+        "matchedAgent": "*"
+      },
+      {
+        "bot": "YouBot",
+        "tier": "search",
+        "status": "allowed",
+        "viaWildcard": true,
+        "matchedAgent": "*"
+      },
+      {
+        "bot": "CCBot",
+        "tier": "training",
+        "status": "allowed",
+        "viaWildcard": false,
+        "matchedAgent": "CCBot"
+      }
+    ],
+    "summary": {
+      "total": 27,
+      "allowed": 27,
+      "partial": 0,
+      "blocked": 0,
+      "missing": 0,
+      "citationBotsOk": true,
+      "blockedCitationBots": [],
+      "tierTotals": {
+        "training": {
+          "allowed": 12,
+          "blocked": 0,
+          "missing": 0
+        },
+        "search": {
+          "allowed": 10,
+          "blocked": 0,
+          "missing": 0
+        },
+        "user": {
+          "allowed": 5,
+          "blocked": 0,
+          "missing": 0
+        }
+      }
+    }
+  },
+  "drift": {
+    "baseUrl": "https://www.opendpe.net",
+    "llmsUrl": "https://www.opendpe.net/llms.txt",
+    "llmsFound": true,
+    "sitemapUrl": "https://www.opendpe.net/sitemap.xml",
+    "sitemapEntries": 32,
+    "sitemapUrls": 30,
+    "llmsLinks": 20,
+    "missingFromLlms": [
+      "https://www.opendpe.net/Copilote",
+      "https://www.opendpe.net/AuditParc",
+      "https://www.opendpe.net/Upload",
+      "https://www.opendpe.net/ServicesImmobiliers",
+      "https://www.opendpe.net/AidesFinancieres",
+      "https://www.opendpe.net/metiers/",
+      "https://www.opendpe.net/solution-complete/",
+      "https://www.opendpe.net/Recommendations",
+      "https://www.opendpe.net/RapportSpecimen",
+      "https://www.opendpe.net/guide/glossaire-dpe-visuel.html",
+      "https://www.opendpe.net/guide/optimisation-energetique-petites-surfaces-combles.html"
+    ],
+    "staleInLlms": [],
+    "coverage": 100,
+    "inSync": true
+  },
+  "risks": {
+    "url": "https://www.opendpe.net/",
+    "findings": [],
+    "counts": {
+      "high": 0,
+      "medium": 0,
+      "low": 0
+    },
+    "clean": true
+  }
+}

@@ -165,6 +165,7 @@ Officially intended for job postings and livestream structured data; other uses 
 | `geo_llms_drift` | url, sitemapUrl?, maxUrls? | Stale/missing links + coverage |
 | `geo_content_risks` | url | Hidden text, LLM instructions, thin copy |
 | `geo_positioning` | url, competitors[1–5], maxTerms? | Vocabulary overlap, unique themes |
+| `geo_platform_readiness` | url | Per-engine score, band, main gap |
 
 All five are read-only and need no `confirm`. `kind` is `website`, `organization`, `faq`, `article`, `product`, or `localbusiness`; `kind: "faq"` requires real `faqs[]`. Score bands: 86–100 excellent, 68–85 good, 36–67 foundation, 0–35 critical. Rubric and limits — `references/geo.md`.
 

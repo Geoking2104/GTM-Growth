@@ -11,6 +11,7 @@ import { getCrawlerAccess } from "../geo/crawlers.js";
 import { checkLlmsDrift } from "../geo/drift.js";
 import { runContentRiskScan } from "../geo/risks.js";
 import { analyzePositioning } from "../geo/positioning.js";
+import { buildPlatformReadiness } from "../geo/platforms.js";
 import { success, fail } from "./response.js";
 import { strict } from "./schema.js";
 
@@ -236,6 +237,23 @@ export const geoTools = [
             maxTerms: args.maxTerms,
           })
         );
+      } catch (err) { return fail(err); }
+    },
+  },
+  {
+    name: "geo_platform_readiness",
+    description:
+      "Per-platform readiness for Google AI Overviews, ChatGPT, Perplexity, Gemini and Microsoft Copilot, derived from the GEO audit: score, band, the signals behind it and each engine's main gap.",
+    schema: strict({ url: z.string() }),
+    handler: async (args: any) => {
+      try {
+        const audit = await runGeoAudit({ url: args.url });
+        return success({
+          url: audit.url,
+          score: audit.score,
+          projectedScore: audit.projectedScore,
+          platforms: buildPlatformReadiness(audit),
+        });
       } catch (err) { return fail(err); }
     },
   },

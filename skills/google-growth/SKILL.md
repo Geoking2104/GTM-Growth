@@ -5,7 +5,7 @@ license: Apache-2.0
 compatibility: Requires the google-growth MCP server (stdio or HTTPS). Works with Grok, Claude, and Codex.
 metadata:
   source: https://github.com/Geoking2104/Google-Growth
-  version: "0.15.0"
+  version: "0.16.0"
   display_name: Google Growth
 external_urls:
   - https://github.com/Geoking2104/Google-Growth
@@ -71,6 +71,7 @@ This skill is for marketers, growth teams, and agencies who want answers from li
 | Submit a sitemap (write) | `submit_sitemap` (gated) |
 | AI search readiness (GEO) | `geo_audit`, `geo_audit_sitemap` |
 | GTM installed correctly? | `gtm_audit_installation` (page-level), `audit_ga4_setup_v2` (container) |
+| Which AI engine is blocking us? | `geo_platform_readiness`, `geo_crawler_access` |
 | Missing `llms.txt` / JSON-LD / AI bot rules | `geo_generate_llms_txt`, `geo_generate_schema`, `geo_generate_robots` |
 
 Full catalog — `references/tools.md`.
