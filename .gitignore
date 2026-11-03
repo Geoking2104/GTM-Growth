@@ -39,3 +39,8 @@ coverage/
 data/
 leads*.jsonl
 
+
+# Cloudflare Worker
+.worker-build/
+.wrangler/
+

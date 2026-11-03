@@ -9,6 +9,19 @@
 
 import { ROBOTS_MAX_BYTES } from "./config.js";
 
+const encoder = new TextEncoder();
+const decoder = new TextDecoder("utf-8");
+
+/** Byte length of a string — Buffer-free, so this runs on Workers too. */
+function byteLength(text: string): number {
+  return encoder.encode(text).byteLength;
+}
+
+/** Truncate to a byte budget without splitting a code point. */
+function sliceBytes(text: string, maxBytes: number): string {
+  return decoder.decode(encoder.encode(text).subarray(0, maxBytes)).replace(/\uFFFD$/, "");
+}
+
 export interface AgentRules {
   allow: string[];
   disallow: string[];
@@ -28,8 +41,8 @@ export interface BotClassification {
 
 export function parseRobots(content: string): Record<string, AgentRules> {
   let text = content.replace(/^\uFEFF/, "");
-  if (Buffer.byteLength(text, "utf8") > ROBOTS_MAX_BYTES) {
-    text = Buffer.from(text, "utf8").subarray(0, ROBOTS_MAX_BYTES).toString("utf8");
+  if (byteLength(text) > ROBOTS_MAX_BYTES) {
+    text = sliceBytes(text, ROBOTS_MAX_BYTES);
   }
 
   const groups: Record<string, AgentRules> = {};

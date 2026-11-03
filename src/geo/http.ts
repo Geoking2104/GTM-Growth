@@ -77,7 +77,14 @@ async function readCapped(response: Response, maxBytes: number): Promise<string>
     }
     chunks.push(value);
   }
-  return Buffer.concat(chunks.map((c) => Buffer.from(c))).toString("utf8");
+  // TextDecoder instead of Buffer so the same module runs on Node and Workers.
+  const merged = new Uint8Array(chunks.reduce((sum, chunk) => sum + chunk.byteLength, 0));
+  let offset = 0;
+  for (const chunk of chunks) {
+    merged.set(chunk, offset);
+    offset += chunk.byteLength;
+  }
+  return new TextDecoder("utf-8").decode(merged);
 }
 
 /** Fetch that never throws: returns `null` for network errors. */

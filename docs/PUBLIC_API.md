@@ -1,8 +1,13 @@
 # Public API — free read and lead capture
 
-Two endpoints, served by the same Express app as the MCP transports. They exist so
-the landing page can do two things a static site cannot do alone: read a page
-server-side, and send a contact request without opening a mail client.
+Two endpoints, served either by the Express app (Node, same process as the MCP
+transports) or by a Cloudflare Worker — same routes, same shared modules:
+
+- **Node server:** `npm run cli -- serve-http` (below)
+- **Cloudflare Worker:** `npm run worker:deploy` — see [WORKER.md](WORKER.md)
+
+They exist so the landing page can do two things a static site cannot do alone:
+read a page server-side, and send a contact request without opening a mail client.
 
 ```bash
 npm run build

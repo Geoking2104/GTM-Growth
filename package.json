@@ -1,6 +1,6 @@
 {
   "name": "google-growth",
-  "version": "0.18.0",
+  "version": "0.19.0",
   "description": "Open-source MCP server connecting GA4, GTM/sGTM, Search Console, Indexing API, PageSpeed, CrUX and GEO/AEO audits to Grok, Claude, and Codex",
   "type": "module",
   "main": "dist/index.js",
@@ -35,9 +35,13 @@
     "validate:ci": "bash scripts/ci-validate.sh",
     "test": "vitest run",
     "lint": "eslint src --ext .ts",
-    "typecheck": "tsc --noEmit",
+    "typecheck": "tsc --noEmit && tsc -p tsconfig.worker.json",
     "prepublishOnly": "npm run build && npm test",
-    "figures": "node scripts/render-figures.mjs"
+    "figures": "node scripts/render-figures.mjs",
+    "worker:dev": "wrangler dev",
+    "worker:deploy": "wrangler deploy",
+    "worker:dry-run": "wrangler deploy --dry-run --outdir=.worker-build",
+    "site:api": "node scripts/set-api.mjs"
   },
   "keywords": [
     "mcp",
@@ -85,6 +89,7 @@
     "zod-to-json-schema": "^3.25.2"
   },
   "devDependencies": {
+    "@cloudflare/workers-types": "^5.20261103.1",
     "@types/cors": "^2.8.17",
     "@types/express": "^5.0.0",
     "@types/node": "^22.10.0",
@@ -94,7 +99,8 @@
     "eslint": "^9.16.0",
     "tsx": "^4.19.2",
     "typescript": "^5.7.2",
-    "vitest": "^2.1.8"
+    "vitest": "^2.1.8",
+    "wrangler": "^4.157.0"
   },
   "files": [
     "dist",

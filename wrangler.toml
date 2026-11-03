@@ -1,0 +1,34 @@
+# Cloudflare Worker — public website API (free read + lead capture).
+#
+#   npx wrangler login          # once, in your browser
+#   npm run worker:dev          # local, http://localhost:8787
+#   npm run worker:deploy       # publishes to https://google-growth-api.<subdomain>.workers.dev
+#
+# Then put that URL in site/index.html and site/fr/index.html:
+#   <meta name="gg-api" content="https://google-growth-api.<subdomain>.workers.dev">
+
+name = "google-growth-api"
+main = "src/worker/index.ts"
+compatibility_date = "2026-11-03"
+
+# Serve the API on its own workers.dev hostname; no custom domain needed.
+workers_dev = true
+
+[vars]
+# Only these origins may call the API from a browser. Add your own domain if you
+# front the site with one.
+SITE_ORIGINS = "https://geoking2104.github.io,http://localhost:8099,http://localhost:8787"
+# Where validated leads are forwarded (Formspree today). Set as a secret instead
+# if you prefer: `npx wrangler secret put LEAD_FORWARD_URL`.
+LEAD_FORWARD_URL = "https://formspree.io/f/meaavjpa"
+
+# Optional: keep a copy of every lead for 180 days.
+# [[kv_namespaces]]
+# binding = "LEADS"
+# id = "<wrangler kv namespace create LEADS>"
+
+# Optional: per-IP rate limiting. Without it, Cloudflare's WAF rate-limiting rule
+# is the only throttle — see docs/WORKER.md.
+# [[kv_namespaces]]
+# binding = "RATE"
+# id = "<wrangler kv namespace create RATE>"

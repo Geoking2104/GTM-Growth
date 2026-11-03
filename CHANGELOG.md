@@ -1,5 +1,24 @@
 # Changelog
 
+## 0.19.0 — 2026-11-03
+
+### Added
+
+- **Cloudflare Worker** (`src/worker/index.ts`, `wrangler.toml`): the same two public routes as the Node server — `POST /api/free-read`, `POST /api/lead`, `GET /health` — from the same shared modules. 96 KiB bundle, no Node built-in in the graph.
+- `docs/WORKER.md`: deploy, KV bindings, CORS allowlist, rate-limit rule, guard table and the differences from the Node server.
+- `npm run site:api -- <url>`: writes the `gg-api` meta tag in both language pages, so pointing the site at a deployed Worker is one command.
+- `tests/worker.test.ts` (13 tests): private-host guard, CORS echo, rate windows, 201/400/202 paths, oversized bodies, free-read tables, metadata-address refusal.
+
+### Changed
+
+- `src/geo/http.ts` and `src/geo/robots.ts` are Buffer-free (`TextEncoder`/`TextDecoder`), so the audit runs unchanged on `workerd`.
+- Lead validation moved to `src/leads/validate.ts` (no `node:` imports); `store.ts` keeps the filesystem append and re-exports for existing callers.
+- `npm run typecheck` now checks two projects: the Node build and `tsconfig.worker.json`.
+
+### Fixed
+
+- The Worker no longer 500s when the local runtime exposes `caches` without a usable `default` cache; caching is strictly optional and failures are logged.
+
 ## 0.18.0 — 2026-11-03
 
 ### Added

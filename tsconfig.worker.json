@@ -1,0 +1,14 @@
+{
+  "extends": "./tsconfig.json",
+  "compilerOptions": {
+    "module": "ESNext",
+    "moduleResolution": "Bundler",
+    "lib": ["ES2022"],
+    "types": ["@cloudflare/workers-types"],
+    "declaration": false,
+    "declarationMap": false,
+    "noEmit": true
+  },
+  "include": ["src/worker/**/*.ts", "src/geo/**/*.ts", "src/freeread/**/*.ts", "src/leads/validate.ts"],
+  "exclude": ["node_modules", "dist", "tests"]
+}
