@@ -75,6 +75,10 @@ Two meta tags in `index.html` and `fr/index.html` configure it:
 | --- | --- | --- |
 | `gg-api` | measured on the page, robots.txt and sitemap | POST `/api/lead` |
 | `gg-form` only | sample rows, badged | POST to that endpoint |
+
+**Current deployment:** `gg-form` is set to `https://formspree.io/f/meaavjpa`, so the form
+sends through Formspree and no mail client opens. `gg-api` is empty, so the free-read
+tables stay badged as samples until the read API is hosted.
 | neither | sample rows, badged | request kept on the device, nothing pretends to be sent |
 
 The API itself ships in this repository — see [`docs/PUBLIC_API.md`](../docs/PUBLIC_API.md):

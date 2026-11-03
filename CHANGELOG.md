@@ -18,6 +18,7 @@
 
 - Free plan now advertises the SEO, GA4 and Search Console tables; the hero hint no longer claims the read only inspects the URL.
 - `site/app.js` lost its `mailto` fallback entirely; `scripts/check-site.mjs` fails the build if one comes back.
+- Lead form wired to Formspree (`gg-form` meta) so the published static site sends requests without a mail client; form-backend error payloads are surfaced instead of a bare status code.
 
 ## 0.17.0 — 2026-11-02
 

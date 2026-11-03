@@ -216,7 +216,10 @@ async function postLead(payload) {
   });
   if (!response.ok) {
     const detail = await response.json().catch(() => ({}));
-    throw new Error(detail.error || `HTTP ${response.status}`);
+    const fields = Array.isArray(detail.errors)
+      ? detail.errors.map((item) => item?.message).filter(Boolean).join("; ")
+      : "";
+    throw new Error(fields || detail.error || `HTTP ${response.status}`);
   }
   return response.status;
 }
@@ -249,6 +252,8 @@ leadForm?.addEventListener("submit", async (event) => {
     source: "landing",
     company: $("#lead-company")?.value ?? "",
     elapsedMs: Date.now() - leadStartedAt,
+    // Form backends use this as the notification subject; our own API ignores it.
+    _subject: `GEO report request — ${($("#lead-site").value || lastUrl || "no website").trim()}`,
   };
 
   if (!CONFIG.apiBase && !CONFIG.formEndpoint) {
