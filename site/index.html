@@ -2,6 +2,8 @@
 <html lang="en">
 <head>
 <meta charset="utf-8">
+  <meta name="gg-api" content="">
+  <meta name="gg-form" content="">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Google Growth — AI-search readiness and GTM measurement, in one MCP server</title>
 <meta name="description" content="Enter your URL for a free readiness read, then get the full GEO audit, llms.txt and schema fixes, AI crawler access, and a Google Tag Manager plan for measuring what happens next.">
@@ -132,7 +134,7 @@
                placeholder="yourcompany.com" aria-describedby="check-hint" required>
         <button class="btn" type="submit">Run the free read</button>
       </form>
-      <p class="hint" id="check-hint">No signup. This first read inspects the URL only — nothing is fetched.</p>
+      <p class="hint" id="check-hint">No signup. The first read scores your URL instantly, then renders the SEO, GA4 and Search Console tables.</p>
       <p class="hint"><a href="reports/opendpe.html">See a full sample report — opendpe.net, 71/100 →</a> · <a href="reports/opendpe.pdf" download>Download it as a PDF (43 kB)</a></p>
       <p class="form-error" id="check-error" role="alert" hidden></p>
 
@@ -162,6 +164,11 @@
         </div>
 
         <ul class="check-list" id="check-list" aria-live="polite"></ul>
+
+        <div class="result-tables" id="result-tables-host">
+          <p class="tables-note" id="result-tables-note" role="status" aria-live="polite" hidden></p>
+          <div id="result-tables"></div>
+        </div>
 
         <div class="result-next">
           <h3>What the full audit adds</h3>
@@ -313,6 +320,9 @@ npm run cli -- geo-report --url https://acme.com --out report.pdf</code></pre>
           <p class="price">€0</p>
           <ul class="tick-list">
             <li>URL hygiene score, 10 checks</li>
+            <li><strong>SEO tables</strong> — metadata, headings, links, images, JSON-LD</li>
+            <li><strong>GA4 report</strong> — tag IDs, loaders, dataLayer, consent mode</li>
+            <li><strong>Search Console report</strong> — verification, sitemap coverage, indexability</li>
             <li>The full audit checklist</li>
             <li>Open-source server you can run locally</li>
             <li>CLI and MCP access, Apache-2.0</li>
@@ -367,8 +377,13 @@ npm run cli -- geo-report --url https://acme.com --out report.pdf</code></pre>
               <option>Not sure yet</option>
             </select>
           </div>
+          <div class="hp" aria-hidden="true">
+            <label for="lead-company">Company</label>
+            <input id="lead-company" name="company" type="text" tabindex="-1" autocomplete="off">
+          </div>
           <button class="btn" type="submit">Request the report</button>
           <p class="hint" id="lead-status" role="status" aria-live="polite"></p>
+          <p class="fineprint">Sent directly from this page — no mail client opens. We reply within one business day.</p>
         </form>
       </div>
 
@@ -425,13 +440,13 @@ npm run cli -- geo-audit --url https://acme.com</code></pre>
       </header>
       <ul class="proof-grid">
         <li><strong>87</strong><span>MCP tools</span></li>
-        <li><strong>111</strong><span>tests passing</span></li>
+        <li><strong>136</strong><span>tests passing</span></li>
         <li><strong>11</strong><span>GEO checks</span></li>
         <li><strong>22</strong><span>GTM tools</span></li>
         <li><strong>5</strong><span>AI platforms mapped</span></li>
         <li><strong>Apache-2.0</strong><span>licence</span></li>
       </ul>
-      <p class="proof-note">Read-only by default · CI runs typecheck, lint, 111 tests, build, CLI smoke and site checks on every push · <a href="https://github.com/Geoking2104/Google-Growth/actions">see the runs</a></p>
+      <p class="proof-note">Read-only by default · CI runs typecheck, lint, 136 tests, build, CLI smoke and site checks on every push · <a href="https://github.com/Geoking2104/Google-Growth/actions">see the runs</a></p>
     </div>
   </section>
 

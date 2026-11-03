@@ -34,3 +34,8 @@ coverage/
 # Misc
 *.tgz
 .cache/
+
+# Captured leads — personal data, never committed
+data/
+leads*.jsonl
+

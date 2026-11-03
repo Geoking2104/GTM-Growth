@@ -106,6 +106,29 @@ npm run cli -- geo-report --url https://acme.com --out ./report.pdf
 recommendations. `geo-llms`, `geo-schema` and `geo-robots` write the generated
 artifact when `--out` is given, otherwise print it to stdout.
 
+### Free read (server-side)
+
+`geo-free-read` returns the same payload the landing page consumes:
+
+```bash
+npm run cli -- geo-free-read --url https://example.com
+```
+
+It fetches the page, `robots.txt` and one sitemap once, injects them into the GEO
+audit (no double requests), and returns four groups:
+
+| Group | Source | Sample? |
+| --- | --- | --- |
+| GEO score, projected score, top fixes | the existing 8-category rubric | no |
+| SEO tables — meta, structure, links/media/schema | the parsed HTML | no |
+| GA4 readiness — IDs, loaders, dataLayer, consent | the served HTML | no |
+| GSC readiness — verification, sitemap, indexability | HTML + robots.txt + sitemap | no |
+| Traffic reports (sessions, clicks) | a connected property | **yes**, unless `traffic.connected` |
+
+The traffic rows carry `sample: true` and the UI badges them; they are replaced by
+measured rows only when a Google credential is supplied. The HTTP endpoints are
+documented in [PUBLIC_API.md](PUBLIC_API.md).
+
 ### PDF report
 
 `geo-report` renders a client-ready A4 PDF with no browser dependency, in nine

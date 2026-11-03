@@ -134,6 +134,8 @@ Usage:
   geo-positioning           --url <url> --competitors <url,url,…> [--max-terms <n>]
   geo-platforms             --url <url>
   geo-report                --url <url> [--out <file.pdf>] [--contact <url>]
+  geo-free-read             --url <url> [--json]   SEO tables + GA4/GSC readiness
+  leads                     [--file <jsonl>] [--limit <n>]   read captured leads
 
 ── Server ───────────────────────────────────────────
   serve-http                Start MCP HTTP/SSE server
@@ -626,6 +628,20 @@ async function main() {
           score: audit.score,
           projectedScore: audit.projectedScore,
         });
+        break;
+      }
+      case "geo-free-read": {
+        const { runFreeRead } = await import("./freeread/index.js");
+        const result = await runFreeRead({ url: req(args, "url") });
+        print(result);
+        break;
+      }
+      case "leads": {
+        const { readLeads } = await import("./leads/store.js");
+        const file = str(args, "file") ?? process.env.LEADS_PATH ?? "data/leads.jsonl";
+        const limit = Number(str(args, "limit") ?? 50);
+        const rows = readLeads(file, Number.isFinite(limit) ? limit : 50);
+        print({ file, count: rows.length, leads: rows });
         break;
       }
       case "serve-http": {

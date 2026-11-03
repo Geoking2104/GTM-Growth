@@ -2,6 +2,8 @@
 <html lang="fr">
 <head>
 <meta charset="utf-8">
+  <meta name="gg-api" content="">
+  <meta name="gg-form" content="">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Google Growth — lisibilité par les moteurs IA et mesure GTM, dans un seul serveur MCP</title>
 <meta name="description" content="Saisissez votre URL pour une lecture gratuite, puis obtenez l’audit GEO complet, les correctifs llms.txt et schema, l’accès des robots IA et un plan Google Tag Manager pour mesurer la suite.">
@@ -134,7 +136,7 @@
                placeholder="votreentreprise.com" aria-describedby="check-hint" required>
         <button class="btn" type="submit">Lancer la lecture gratuite</button>
       </form>
-      <p class="hint" id="check-hint">Sans inscription. Cette première lecture inspecte uniquement l’URL — rien n’est chargé.</p>
+      <p class="hint" id="check-hint">Sans inscription. La première lecture note votre URL immédiatement, puis affiche les tables SEO, GA4 et Search Console.</p>
       <p class="hint"><a href="../reports/opendpe.html">Voir un rapport complet d’exemple — opendpe.net, 71/100 →</a> · <a href="../reports/opendpe.pdf" download>Télécharger le PDF (43 ko)</a></p>
       <p class="form-error" id="check-error" role="alert" hidden></p>
 
@@ -164,6 +166,11 @@
         </div>
 
         <ul class="check-list" id="check-list" aria-live="polite"></ul>
+
+        <div class="result-tables" id="result-tables-host">
+          <p class="tables-note" id="result-tables-note" role="status" aria-live="polite" hidden></p>
+          <div id="result-tables"></div>
+        </div>
 
         <div class="result-next">
           <h3>Ce que l’audit complet ajoute</h3>
@@ -315,6 +322,9 @@ npm run cli -- geo-report --url https://acme.com --out rapport.pdf</code></pre>
           <p class="price">0 €</p>
           <ul class="tick-list">
             <li>Note d’hygiène d’URL, 10 contrôles</li>
+            <li><strong>Tables SEO</strong> — métadonnées, titres, liens, images, JSON-LD</li>
+            <li><strong>Rapport GA4</strong> — IDs de mesure, chargeurs, dataLayer, consentement</li>
+            <li><strong>Rapport Search Console</strong> — vérification, couverture du sitemap, indexabilité</li>
             <li>La liste complète de l’audit</li>
             <li>Serveur open source exécutable en local</li>
             <li>Accès CLI et MCP, Apache-2.0</li>
@@ -369,8 +379,13 @@ npm run cli -- geo-report --url https://acme.com --out rapport.pdf</code></pre>
               <option>Je ne sais pas encore</option>
             </select>
           </div>
+          <div class="hp" aria-hidden="true">
+            <label for="lead-company">Société</label>
+            <input id="lead-company" name="company" type="text" tabindex="-1" autocomplete="off">
+          </div>
           <button class="btn" type="submit">Demander le rapport</button>
           <p class="hint" id="lead-status" role="status" aria-live="polite"></p>
+          <p class="fineprint">Envoyé directement depuis cette page — aucun client mail ne s’ouvre. Réponse sous un jour ouvré.</p>
         </form>
       </div>
 
@@ -427,13 +442,13 @@ npm run cli -- geo-audit --url https://acme.com</code></pre>
       </header>
       <ul class="proof-grid">
         <li><strong>87</strong><span>outils MCP</span></li>
-        <li><strong>111</strong><span>tests au vert</span></li>
+        <li><strong>136</strong><span>tests au vert</span></li>
         <li><strong>11</strong><span>contrôles GEO</span></li>
         <li><strong>22</strong><span>outils GTM</span></li>
         <li><strong>5</strong><span>plateformes IA couvertes</span></li>
         <li><strong>Apache-2.0</strong><span>licence</span></li>
       </ul>
-      <p class="proof-note">Lecture seule par défaut · la CI exécute typecheck, lint, 111 tests, build, smoke CLI et contrôles du site à chaque push · <a href="https://github.com/Geoking2104/Google-Growth/actions">voir les exécutions</a></p>
+      <p class="proof-note">Lecture seule par défaut · la CI exécute typecheck, lint, 136 tests, build, smoke CLI et contrôles du site à chaque push · <a href="https://github.com/Geoking2104/Google-Growth/actions">voir les exécutions</a></p>
     </div>
   </section>
 

@@ -12,6 +12,7 @@ import { readFileSync } from "fs";
 import { fileURLToPath } from "url";
 import { dirname, join } from "path";
 import { logger } from "./utils/logger.js";
+import { mountPublicApi } from "./http/public-api.js";
 
 function getVersion(): string {
   try {
@@ -114,6 +115,9 @@ export async function startServer(transportType: "stdio" | "http" = "stdio") {
   app.get("/health", (_req, res) => {
     res.json({ status: "ok", sessions: sessions.size });
   });
+
+  // Public website API — free read and lead capture (no MCP session needed).
+  mountPublicApi(app);
 
   // ── Modern: Streamable HTTP transport at /mcp (stateless) ───────────
   app.post("/mcp", requireToken, async (req: Request, res: Response) => {

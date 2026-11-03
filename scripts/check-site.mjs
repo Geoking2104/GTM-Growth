@@ -29,6 +29,7 @@ const required = [
   "app.js",
   "preview.js",
   "i18n.js",
+  "tables.js",
   "robots.txt",
   "sitemap.xml",
   "llms.txt",
@@ -53,7 +54,15 @@ const js = read("app.js");
 const sitemap = read("sitemap.xml");
 const llms = read("llms.txt");
 
-const hooks = ['id="check-form"', 'id="site-url"', 'id="lead-form"', 'id="lead-site"', 'id="result-heading"'];
+const hooks = [
+  'id="check-form"',
+  'id="site-url"',
+  'id="lead-form"',
+  'id="lead-site"',
+  'id="lead-company"',
+  'id="result-heading"',
+  'id="result-tables"',
+];
 for (const hook of hooks) {
   if (!html.includes(hook)) failures.push(`index.html lost hook ${hook}`);
   if (!frHtml.includes(hook)) failures.push(`fr/index.html lost hook ${hook}`);
@@ -67,6 +76,16 @@ for (const selector of ["#check-form", "#lead-form", "#site-url"]) {
   if (!js.includes(selector)) failures.push(`app.js no longer wires ${selector}`);
 }
 if (!js.includes("dictFor")) failures.push("app.js no longer loads the translation dictionary");
+
+// The form must never hand the visitor to a mail client.
+if (/mailto:/.test(js) || /mailto:/.test(html)) failures.push("the lead form still opens a mail client");
+if (!js.includes("/api/lead")) failures.push("app.js no longer posts to /api/lead");
+if (!js.includes("/api/free-read")) failures.push("app.js no longer calls /api/free-read");
+for (const meta of ["gg-api", "gg-form"]) {
+  if (!html.includes(`name="${meta}"`)) failures.push(`index.html missing the ${meta} meta`);
+  if (!frHtml.includes(`name="${meta}"`)) failures.push(`fr/index.html missing the ${meta} meta`);
+}
+if (!js.includes("result-tables")) failures.push("app.js no longer renders the tables");
 if (!html.includes("reports/opendpe.html")) failures.push("index.html no longer links the sample report");
 const reportHtml = read("reports/opendpe.html");
 if (!reportHtml.includes("opendpe.pdf")) failures.push("sample report no longer links its PDF");

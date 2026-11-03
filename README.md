@@ -52,6 +52,7 @@ The agent-facing method lives in [`skills/google-growth/`](skills/google-growth/
 | **PageSpeed & CrUX** | Lighthouse lab scores and real-user Core Web Vitals |
 | **Growth dashboards** | Cross-channel KPI summaries, data-confidence checks, 10+ watch points, and 3 horizon-based priorities with implementation and measurement plans |
 | **GEO / AEO** | 0–100 AI-search-readiness audit across robots.txt, llms.txt, schema, meta, content, brand, signals and AI discovery; llms.txt / JSON-LD / robots.txt generators; client-ready PDF report |
+| **Public API** | `POST /api/free-read` (GEO score + SEO tables + GA4/GSC blocks) and `POST /api/lead` (contact request, JSONL, no mail client) — see `docs/PUBLIC_API.md` |
 | **Custom events** | Discover, analyze, suggest GTM config; Phase 3 write (trigger + tag) |
 | **Ops** | CLI per step, Redis cache, Docker, GitHub Actions CI + live validation |
 

@@ -1,5 +1,24 @@
 # Changelog
 
+## 0.18.0 — 2026-11-03
+
+### Added
+
+- **Contact form without a mail client**: `POST /api/lead` validates, normalises and appends the request to JSONL (`LEADS_PATH`), with an optional webhook forward. The page posts in-place and only shows “sent” after a 2xx; a failed post is queued on the device (`localStorage`) and flushed on the next visit. Honeypot, 1.2 s minimum, 5 posts/min per IP.
+- **Enriched free read**: `POST /api/free-read` returns the GEO score, the three fixes that move it most, three SEO tables (metadata, content structure, links/media/structured data), a GA4 measurement-readiness table and a Search Console indexation table — all measured on the fetched HTML, `robots.txt` and sitemap.
+- **Traffic report previews**: GA4 and GSC performance tables ship with `sample: true` and a visible badge until a property is connected; the same code path serves measured rows.
+- `geo-free-read` and `leads` CLI commands; `docs/PUBLIC_API.md` documents both routes, the guards and the environment.
+- Free-read page: seven data tables rendered from the API payload, `gg-api` / `gg-form` meta switches so a static deploy can still send the form.
+
+### Security
+
+- The public read refuses non-`http(s)`, credentials in the URL, and any host resolving to a private, loopback, link-local or metadata address (IPv4 and IPv6, `::ffff:` mapped included); 12 s timeout, capped bodies, per-IP token buckets and a 10-minute response cache.
+
+### Changed
+
+- Free plan now advertises the SEO, GA4 and Search Console tables; the hero hint no longer claims the read only inspects the URL.
+- `site/app.js` lost its `mailto` fallback entirely; `scripts/check-site.mjs` fails the build if one comes back.
+
 ## 0.17.0 — 2026-11-02
 
 ### Added
