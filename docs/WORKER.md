@@ -16,6 +16,36 @@ Bundle size is about 96 KiB (26 KiB gzipped), well under the 1 MiB free-plan
 limit, and there is no Node built-in in the graph — the audit runs unchanged on
 `workerd`.
 
+## Three ways to deploy — pick one
+
+### 1. One click, from the repository
+
+[![Deploy to Cloudflare Workers](https://deploy.workers.cloudflare.com/button)](https://deploy.workers.cloudflare.com/?url=https://github.com/Geoking2104/Google-Growth)
+
+Cloudflare clones the repo, reads `wrangler.toml`, builds and publishes. No CLI,
+no token in a terminal. At the end it shows the `*.workers.dev` URL.
+
+### 2. From GitHub Actions (no CLI, deploys on every push)
+
+`.github/workflows/worker.yml` is ready. Add two repository secrets once:
+
+| Secret | Where to get it |
+| --- | --- |
+| `CLOUDFLARE_API_TOKEN` | Cloudflare dashboard → My Profile → API Tokens → *Edit Cloudflare Workers* template |
+| `CLOUDFLARE_ACCOUNT_ID` | Cloudflare dashboard → Workers & Pages → right-hand sidebar |
+
+Then every push that touches `src/worker`, `src/freeread`, `src/geo` or
+`wrangler.toml` redeploys, runs a health check and a CORS preflight, and commits the
+published URL to `.github/worker-url.txt`. Without the secrets the job skips
+instead of failing.
+
+### 3. From your machine
+
+```bash
+npx wrangler login
+npm run worker:deploy
+```
+
 ## Deploy (one command, your account)
 
 ```bash

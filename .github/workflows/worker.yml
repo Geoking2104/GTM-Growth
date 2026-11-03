@@ -1,0 +1,121 @@
+name: Deploy worker
+
+# Publishes the public API (src/worker) to Cloudflare Workers.
+#
+# Requires two repository secrets, set once in
+# Settings → Secrets and variables → Actions:
+#   CLOUDFLARE_API_TOKEN   token with "Edit Cloudflare Workers" permission
+#   CLOUDFLARE_ACCOUNT_ID  the account id shown in the Workers dashboard
+#
+# When they are absent the job is skipped — never failed — so forks and PRs stay
+# green. On success the deployed URL is committed to .github/worker-url.txt, so the
+# site can be pointed at it without anyone copying a URL by hand.
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - "src/worker/**"
+      - "src/freeread/**"
+      - "src/geo/**"
+      - "src/leads/validate.ts"
+      - "wrangler.toml"
+      - "package.json"
+      - "package-lock.json"
+      - ".github/workflows/worker.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+concurrency:
+  group: worker-deploy
+  cancel-in-progress: true
+
+jobs:
+  deploy:
+    name: Deploy to Cloudflare Workers
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    if: ${{ github.repository_owner == 'Geoking2104' }}
+
+    steps:
+      - name: Check secrets
+        id: secrets
+        run: |
+          if [ -n "${{ secrets.CLOUDFLARE_API_TOKEN }}" ] && [ -n "${{ secrets.CLOUDFLARE_ACCOUNT_ID }}" ]; then
+            echo "ready=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "ready=false" >> "$GITHUB_OUTPUT"
+            echo "::notice::CLOUDFLARE_API_TOKEN or CLOUDFLARE_ACCOUNT_ID missing — skipping the deploy."
+          fi
+
+      - name: Checkout
+        if: steps.secrets.outputs.ready == 'true'
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        if: steps.secrets.outputs.ready == 'true'
+        uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+          cache: npm
+
+      - name: Install dependencies
+        if: steps.secrets.outputs.ready == 'true'
+        run: npm ci
+
+      - name: Typecheck the worker
+        if: steps.secrets.outputs.ready == 'true'
+        run: npx tsc -p tsconfig.worker.json
+
+      - name: Deploy with wrangler
+        id: deploy
+        if: steps.secrets.outputs.ready == 'true'
+        uses: cloudflare/wrangler-action@v3
+        with:
+          apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+          command: deploy
+          gitHubToken: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Record the deployed URL
+        if: steps.secrets.outputs.ready == 'true'
+        run: |
+          url="${{ steps.deploy.outputs.deployment-url }}"
+          if [ -z "$url" ]; then
+            url="${{ steps.deploy.outputs.command-output }}"
+          fi
+          mkdir -p .github
+          url=$(printf '%s' "$url" | tr -d '\r' | grep -Eo 'https://[^ ]+' | tail -n 1)
+          if [ -z "$url" ]; then
+            echo "::error::could not read the deployment URL from wrangler"
+            exit 1
+          fi
+          printf '%s\n' "$url" > .github/worker-url.txt
+          cat .github/worker-url.txt
+
+      - name: Commit the URL when it changed
+        if: steps.secrets.outputs.ready == 'true'
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add .github/worker-url.txt
+          # Stage first: an untracked file would otherwise look unchanged to git diff.
+          if git diff --cached --quiet -- .github/worker-url.txt; then
+            echo "URL unchanged"
+            exit 0
+          fi
+          git commit -m "chore(worker): record the deployment URL"
+          git push
+
+      - name: Smoke test the deployment
+        if: steps.secrets.outputs.ready == 'true'
+        run: |
+          url=$(cat .github/worker-url.txt)
+          echo "health:"
+          curl -fsS --max-time 20 "$url/health"
+          echo
+          echo "cors preflight:"
+          curl -sS -o /dev/null -D - -X OPTIONS "$url/api/lead" \
+            -H "Origin: https://geoking2104.github.io" | grep -i "access-control-allow-origin"

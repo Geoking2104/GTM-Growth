@@ -78,7 +78,8 @@ export const translations = {
     tables: {
       loading: "Reading the page, robots.txt and sitemap…",
       noApi: "Illustrative rows: this preview is not connected to the read API. Run the CLI to see your own numbers.",
-      serverNote: "Measured just now on the served HTML, robots.txt and sitemap.",
+      serverNote: ({ at, seconds }) =>
+        `Measured at ${at}${seconds ? ` in ${seconds} s` : ""} on the served HTML, robots.txt and sitemap — your site, not a sample.`,
       unavailable: (message) => `Server read unavailable (${message}). Illustrative rows shown instead.`,
       sampleBadge: "sample",
       liveBadge: "measured",
@@ -208,7 +209,8 @@ export const translations = {
     tables: {
       loading: "Lecture de la page, du robots.txt et du sitemap…",
       noApi: "Lignes illustratives : cet aperçu n’est pas relié à l’API de lecture. Lancez le CLI pour voir vos propres chiffres.",
-      serverNote: "Mesuré à l’instant sur le HTML servi, le robots.txt et le sitemap.",
+      serverNote: ({ at, seconds }) =>
+        `Mesuré à ${at}${seconds ? ` en ${seconds} s` : ""} sur le HTML servi, le robots.txt et le sitemap — votre site, pas un exemple.`,
       unavailable: (message) => `Lecture serveur indisponible (${message}). Lignes illustratives affichées.`,
       sampleBadge: "exemple",
       liveBadge: "mesuré",
