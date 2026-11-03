@@ -193,11 +193,39 @@
     <div class="wrap">
       <header class="section-head">
         <p class="eyebrow eyebrow-dark">Solutions</p>
-        <h2 id="solutions-heading">One server, six jobs that usually need six tools</h2>
-        <p class="section-sub">Read-only by default, deterministic, and covered by tests. Every answer comes with the evidence behind it.</p>
+        <h2 id="solutions-heading">Three free tables — then six jobs that usually need six tools</h2>
+        <p class="section-sub">The free read now returns SEO tables, a GA4 report and a Search Console report, measured on your page, its robots.txt and its sitemap. The server adds the rest, each answer with the evidence behind it.</p>
       </header>
 
+            <div class="grid cards cards-free">
+        <article class="card">
+          <span class="icon" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M4 6h16M4 12h16M4 18h10"/></svg></span>
+          <h3>SEO tables</h3>
+          <p>Title and description lengths, canonical, robots meta, H1–H3 outline, word count, internal and external links, images without alt, JSON-LD blocks and types. Measured on the HTML you serve — never estimated.</p>
+          <p class="tag">free read · /api/free-read</p>
+        </article>
+
+        <article class="card">
+          <span class="icon" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M7 7h4v10H7zM13 7h4v6h-4z"/></svg></span>
+          <h3>GA4 report</h3>
+          <p>Measurement IDs, dead Universal Analytics tags, container count, duplicated loaders, <code>dataLayer</code> and consent mode — everything that decides whether the sessions you report actually exist.</p>
+          <p class="tag">free read · /api/free-read</p>
+        </article>
+
+        <article class="card">
+          <span class="icon" aria-hidden="true"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="8"/><path d="M4 12h16M12 4c3 3 3 13 0 16M12 4c-3 3-3 13 0 16"/></svg></span>
+          <h3>Search Console report</h3>
+          <p>Verification tag, robots.txt directives, sitemap coverage and <code>lastmod</code> share, indexability, canonical host — what Google needs before it can index the page at all.</p>
+          <p class="tag">free read · /api/free-read</p>
+        </article>
+      </div>
+
+      <p class="free-note">Sessions and clicks need a connected property. Until one is connected, those two reports are labelled <strong>sample</strong> — nothing on this page is estimated silently.</p>
+
+      <h3 class="group-head">The server <span>read-only by default, deterministic, covered by tests</span></h3>
+
       <div class="grid cards">
+
         <article class="card">
           <span class="icon" aria-hidden="true"><svg viewBox="0 0 24 24"><circle cx="11" cy="11" r="7"/><path d="M16.5 16.5 21 21"/></svg></span>
           <h3>GEO audit</h3>
@@ -409,7 +437,7 @@ npm run cli -- geo-audit --url https://acme.com</code></pre>
 
       <details open>
         <summary>Is the free read a real audit?</summary>
-        <p>No. It inspects the URL you type — HTTPS, hostname shape, path depth, tracking parameters, fragments, length, file extensions. It runs in your browser and never fetches the page, so it cannot see your content, schema or robots.txt. The full audit does that server-side.</p>
+        <p>Two layers. The URL score runs in your browser: HTTPS, hostname shape, path depth, tracking parameters, fragments, length, file extensions — that part never fetches anything. The SEO, GA4 and Search Console tables are measured server-side by <code>/api/free-read</code>, on the page, its <code>robots.txt</code> and its sitemap. When that API is not connected, the tables are labelled <strong>sample</strong>; <code>npm run cli -- geo-free-read --url …</code> gives the same rows locally.</p>
       </details>
       <details>
         <summary>Does this guarantee AI engines will cite me?</summary>

@@ -453,3 +453,38 @@ details p { color: var(--muted); margin: .75rem 0 0; font-size: .95rem; }
   .data-table { min-width: 0; font-size: .84rem; }
   .data-table tbody th { width: auto; }
 }
+
+/* ── Solutions: free read vs server ───────────────────────── */
+.cards-free .card {
+  border-color: #bcd0ff;
+  background: linear-gradient(180deg, #f7fbff, #ffffff);
+}
+.cards-free .card .tag {
+  background: #e7efff;
+  color: #1d4ed8;
+}
+.free-note {
+  margin: 1rem 0 0;
+  color: var(--muted);
+  font-size: .86rem;
+  max-width: 62ch;
+}
+.group-head {
+  display: flex;
+  align-items: baseline;
+  flex-wrap: wrap;
+  gap: .5rem;
+  margin: 2.6rem 0 1.1rem;
+  font-size: .8rem;
+  letter-spacing: .12em;
+  text-transform: uppercase;
+  color: var(--muted);
+  font-weight: 700;
+}
+.group-head span {
+  font-size: .85rem;
+  font-weight: 400;
+  letter-spacing: 0;
+  text-transform: none;
+  color: var(--muted);
+}
