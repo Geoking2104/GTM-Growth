@@ -1,7 +1,7 @@
 # Landing site
 
 Static page for `google-growth`, published with GitHub Pages from this folder.
-No build step: HTML, CSS, two ES modules.
+No build step: HTML, CSS, four ES modules.
 
 ```
 site/
@@ -59,25 +59,53 @@ add a `translations.<lang>` entry in `i18n.js`, add the `hreflang` links on ever
 page, and list the URL in `sitemap.xml` and `llms.txt`. `node
 scripts/check-site.mjs` fails if the pair is incomplete.
 
-## Lead capture
+## Lead capture — in the page, no mail client
 
-`app.js` has one config block:
+The form POSTs JSON. It never opens a mail client and never claims success it did
+not get: "sent" appears only after a 2xx from the endpoint.
 
-```js
-const CONFIG = {
-  leadEndpoint: "",                     // JSON POST target
-  contactEmail: "geoffroydelatournelle@gmail.com",
-};
+Two meta tags in `index.html` and `fr/index.html` configure it:
+
+```html
+<meta name="gg-api" content="https://api.example.com">   <!-- free read + lead -->
+<meta name="gg-form" content="https://formspree.io/f/xxxx">  <!-- lead only -->
 ```
 
-- **With a backend:** set `leadEndpoint` to a Formspree/Basin/Worker URL that
-  accepts `{ name, email, website, goal, source }` and answers 2xx.
-- **Without one:** the form opens a prefilled `mailto:` draft. It is honest but
-  depends on the visitor having a mail client; swap in an endpoint before
-  running paid traffic.
+| Configured | Free read tables | Lead form |
+| --- | --- | --- |
+| `gg-api` | measured on the page, robots.txt and sitemap | POST `/api/lead` |
+| `gg-form` only | sample rows, badged | POST to that endpoint |
+| neither | sample rows, badged | request kept on the device, nothing pretends to be sent |
 
-The page collects only what the form asks for. No analytics script is bundled;
-add one deliberately if you need it.
+The API itself ships in this repository — see [`docs/PUBLIC_API.md`](../docs/PUBLIC_API.md):
+
+```bash
+npm run build
+PORT=3111 LEADS_PATH=./data/leads.jsonl SITE_ORIGINS=https://geoking2104.github.io \
+  npm run cli -- serve-http
+```
+
+Leads land in `data/leads.jsonl`, one JSON object per line, readable with
+`npm run cli -- leads`. Set `LEAD_WEBHOOK_URL` to forward them to a CRM or a
+Slack webhook.
+
+**Offline behaviour.** If the POST fails, the payload is queued in
+`localStorage` (`gg.lead.queue.v1`) and flushed on the next visit. The visitor
+sees "saved on this device", not a fake confirmation.
+
+**Anti-abuse.** Honeypot field (`company`), a 1.2 s minimum on the form, 5 posts
+per minute per IP, and URL normalisation before storage.
+
+## Can I keep the site fully static?
+
+Yes, with one trade-off:
+
+- **Lead form:** set `gg-form` to any JSON endpoint (Formspree, Basin, your own
+  worker). No server needed.
+- **Free read tables:** they need a server that can fetch the visitor's page —
+  browsers cannot, because most sites do not send CORS headers. Without `gg-api`
+  the page shows clearly-badged sample rows and the exact CLI command to produce
+  the real ones.
 
 ## Local preview
 
@@ -103,16 +131,28 @@ node scripts/collect-sample.mjs https://www.opendpe.net site/reports/opendpe.jso
 The HTML is written by hand from that JSON; update the numbers and the snapshot
 date together, otherwise the report lies.
 
-## The free read is URL-only by design
+## What the free read measures
 
-`preview.js` never fetches the visitor's site. GitHub Pages is static and most
-sites do not send CORS headers, so a browser-side fetch would fail for most
-visitors — and inventing a score would be worse than a smaller true one. The
-free read inspects the address; the full audit runs server-side through the MCP
-server or the CLI.
+Two layers, and the page says which one ran:
 
-If you add a real backend later, keep the same contract: a number that came from
-a check, with the evidence attached.
+1. **In the browser, always** — ten checks on the URL itself (`preview.js`):
+   protocol, hostname shape, path depth, tracking parameters, fragments, length,
+   file extensions. No fetch, so it works for every visitor and cannot be wrong
+   about a page it never saw.
+2. **On the server, when `gg-api` is set** — one request each for the page,
+   `robots.txt` and the sitemap, then three things:
+   - **SEO tables**: title and description lengths, canonical, robots meta,
+     `lang`, H1/H2/H3 outline, word count, links, images without alt, JSON-LD
+     blocks and types;
+   - **GA4 table**: measurement IDs, dead UA tags, container count, loader
+     duplication, `dataLayer`, consent mode — all read from the HTML;
+   - **Search Console table**: verification meta, robots.txt directives, sitemap
+     coverage, lastmod share, indexability, canonical host.
+
+The two traffic reports (sessions, clicks, impressions) need a Google credential
+the visitor never shares. They are returned with `sample: true` and rendered with
+a **sample** badge. The moment a property is connected server-side, the same
+tables carry **measured** instead — the code path is identical.
 
 ## Check before publishing
 
