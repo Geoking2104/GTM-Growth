@@ -67,7 +67,7 @@
           "name": "La lecture gratuite est-elle un vrai audit ?",
           "acceptedAnswer": {
             "@type": "Answer",
-            "text": "Non. Elle inspecte l’URL saisie — HTTPS, forme du nom d’hôte, profondeur du chemin, paramètres de suivi — et ne charge jamais la page. L’audit complet s’exécute côté serveur."
+            "text": "Deux couches. La note d’URL tourne dans le navigateur et ne charge rien. Les tables SEO, GA4 et Search Console sont mesurées côté serveur par /api/free-read, sur la page, son robots.txt et son sitemap ; sans API connectée elles portent la mention exemple."
           }
         },
         {
@@ -195,11 +195,39 @@
     <div class="wrap">
       <header class="section-head">
         <p class="eyebrow eyebrow-dark">Solutions</p>
-        <h2 id="solutions-heading">Un seul serveur, six métiers qui demandent d’habitude six outils</h2>
-        <p class="section-sub">Lecture seule par défaut, déterministe, couverte par des tests. Chaque réponse arrive avec la preuve qui la soutient.</p>
+        <h2 id="solutions-heading">Trois tables gratuites — puis six métiers qui demandent d’habitude six outils</h2>
+        <p class="section-sub">La lecture gratuite renvoie désormais des tables SEO, un rapport GA4 et un rapport Search Console, mesurés sur votre page, son robots.txt et son sitemap. Le serveur ajoute le reste, chaque réponse avec sa preuve.</p>
       </header>
 
+            <div class="grid cards cards-free">
+        <article class="card">
+          <span class="icon" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M4 6h16M4 12h16M4 18h10"/></svg></span>
+          <h3>Tables SEO</h3>
+          <p>Longueur du titre et de la description, canonique, meta robots, plan H1–H3, nombre de mots, liens internes et externes, images sans alt, blocs et types JSON-LD. Mesuré sur le HTML que vous servez — jamais estimé.</p>
+          <p class="tag">lecture gratuite · /api/free-read</p>
+        </article>
+
+        <article class="card">
+          <span class="icon" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M7 7h4v10H7zM13 7h4v6h-4z"/></svg></span>
+          <h3>Rapport GA4</h3>
+          <p>IDs de mesure, balises Universal Analytics mortes, nombre de conteneurs, chargeurs en double, <code>dataLayer</code> et consentement — tout ce qui décide si les sessions que vous présentez existent vraiment.</p>
+          <p class="tag">lecture gratuite · /api/free-read</p>
+        </article>
+
+        <article class="card">
+          <span class="icon" aria-hidden="true"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="8"/><path d="M4 12h16M12 4c3 3 3 13 0 16M12 4c-3 3-3 13 0 16"/></svg></span>
+          <h3>Rapport Search Console</h3>
+          <p>Balise de vérification, directives robots.txt, couverture du sitemap et part de <code>lastmod</code>, indexabilité, hôte canonique — ce dont Google a besoin avant de pouvoir indexer la page.</p>
+          <p class="tag">lecture gratuite · /api/free-read</p>
+        </article>
+      </div>
+
+      <p class="free-note">Les sessions et les clics exigent une propriété connectée. Tant qu’aucune ne l’est, ces deux rapports portent la mention <strong>exemple</strong> — rien sur cette page n’est estimé en silence.</p>
+
+      <h3 class="group-head">Le serveur <span>lecture seule par défaut, déterministe, couvert par des tests</span></h3>
+
       <div class="grid cards">
+
         <article class="card">
           <span class="icon" aria-hidden="true"><svg viewBox="0 0 24 24"><circle cx="11" cy="11" r="7"/><path d="M16.5 16.5 21 21"/></svg></span>
           <h3>Audit GEO</h3>
@@ -411,7 +439,7 @@ npm run cli -- geo-audit --url https://acme.com</code></pre>
 
       <details open>
         <summary>La lecture gratuite est-elle un vrai audit ?</summary>
-        <p>Non. Elle inspecte l’URL saisie — HTTPS, forme du nom d’hôte, profondeur du chemin, paramètres de suivi, fragments, longueur, extensions. Elle s’exécute dans votre navigateur et ne charge jamais la page : elle ne voit donc ni le contenu, ni le schema, ni le robots.txt. L’audit complet, lui, le fait côté serveur.</p>
+        <p>Deux couches. La note d’URL s’exécute dans votre navigateur : HTTPS, forme du nom d’hôte, profondeur du chemin, paramètres de suivi, fragments, longueur, extensions — cette partie ne charge rien. Les tables SEO, GA4 et Search Console sont mesurées côté serveur par <code>/api/free-read</code>, sur la page, son <code>robots.txt</code> et son sitemap. Sans API connectée, ces tables portent la mention <strong>exemple</strong> ; <code>npm run cli -- geo-free-read --url …</code> donne les mêmes lignes en local.</p>
       </details>
       <details>
         <summary>Cela garantit-il que les moteurs IA me citeront ?</summary>
