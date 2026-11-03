@@ -131,7 +131,9 @@ async function loadServerTables(url) {
     }
 
     renderTables(tableHost, payload.tables ?? [], dict);
-    setTablesNote(dict.tables.serverNote, "live");
+    const measuredAt = new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit", second: "2-digit" });
+    const seconds = typeof payload.durationMs === "number" ? (payload.durationMs / 1000).toFixed(1) : null;
+    setTablesNote(dict.tables.serverNote({ at: measuredAt, seconds }), "live");
   } catch (error) {
     renderTables(tableHost, sampleTables(dict), dict);
     setTablesNote(dict.tables.unavailable(error.message), "sample");
