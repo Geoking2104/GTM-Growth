@@ -86,9 +86,10 @@ async function loginScreen() {
     event.preventDefault();
     const email = $("#c-login-email").value.trim();
     if (!tenant && email) {
+      // Domaine inconnu ou public (gmail.com…) : connexion au realm par défaut ;
+      // l'espace client est ensuite déduit des claims du jeton (organisation, groupes).
       tenant = await discover({ email });
-      if (!tenant) { $("#c-login-error").textContent = "Aucun espace client n'est associé à ce domaine e-mail. Contactez KayrosLab."; return; }
-      setTenant(tenant);
+      if (tenant) setTenant(tenant);
     }
     await login(email || undefined);
   };
@@ -109,9 +110,9 @@ async function start() {
     $("#c-user").textContent = `${me.username ?? ""}${me.tenant ? ` · ${me.tenant.name}` : ""}${me.platformAdmin ? " · super-admin" : ""}`;
     if (me.accountConsole) $("#c-account").href = me.accountConsole;
     applyBranding(me.tenant?.branding);
-    if (me.memberships?.length > 1 || me.platformAdmin) {
+    if ((me.memberships?.length ?? 0) > 1 || me.platformAdmin) {
       const select = $("#c-tenant"); $("#c-tenant-wrap").hidden = false;
-      for (const m of me.memberships) { const o = el("option", "", `${m.id} (${m.role})`); o.value = m.id; select.append(o); }
+      for (const m of me.memberships ?? []) { const o = el("option", "", `${m.id} (${m.role})`); o.value = m.id; select.append(o); }
       if (me.tenant && ![...select.options].some((o) => o.value === me.tenant.id)) { const o = el("option", "", me.tenant.id); o.value = me.tenant.id; select.append(o); }
       select.value = me.tenant?.id ?? "";
       select.onchange = () => { sessionStorage.setItem("gtm-console-selected", select.value); location.reload(); };
