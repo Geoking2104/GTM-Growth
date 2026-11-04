@@ -168,6 +168,19 @@ Champs communs : `url` (domaine ou page, passé par le même garde-fou anti-SSRF
 
 Code : `src/console/` (API, auth, modules), `site/console/` (interface), tests `tests/console-*.test.ts`.
 
+### Track : Search Console, GA4 et Bing en direct (FR)
+
+La barre latérale **Track** de la console regroupe désormais toutes les données de performance, sans API payante :
+
+| Section | Onglets | Données |
+|---|---|---|
+| **Search Console** | Performance · Requêtes × pages · Sitemaps envoyés | Clics, impressions, CTR, position (KPI + variation vs période précédente), courbe quotidienne, période 7 j → 16 mois, type (Web, Images, Vidéos, Actualités, Discover, Google News), ventilations **requêtes / pages / appareils / pays / apparence / jours** (filtre + export CSV), cannibalisation requête → plusieurs pages, état des sitemaps |
+| **Google Analytics 4** | Audience & acquisition · Temps réel | Sessions, utilisateurs, nouveaux utilisateurs, sessions engagées, taux d'engagement, durée moyenne, pages vues, conversions (événements clés) ; canaux, source/support, pages, pages de destination, **appareils, pays**, événements ; utilisateurs actifs en temps réel |
+| **Bing Webmaster** | Performance de recherche | Clics, impressions, CTR, tendance, **mots-clés et pages** (l'API Bing ne fournit ni appareil ni pays) |
+| **Tracking** (Act) | Statut des accès · Balises GA4/GTM · Paramètres | Ce que le compte de service voit réellement (propriétés GSC/GA4, sites Bing), e-mail à autoriser, audit des balises GTM/GA4 du HTML, réglages du client |
+
+Configuration par client (onglet **Tracking → Paramètres**, administrateur du client) : propriétés Search Console, identifiants GA4 (numériques), sites Bing et **clé API Bing** (stockée côté serveur, jamais renvoyée au navigateur ; à défaut `BING_WEBMASTER_API_KEY`). Le compte de service Google (`GOOGLE_APPLICATION_CREDENTIALS`) doit être ajouté en lecture dans Search Console (Utilisateurs et autorisations → « Restreint ») et dans GA4 (Gestion des accès à la propriété → « Lecteur »).
+
 ## Mises à jour récentes — novembre 2026 (FR)
 
 | Mise à jour | Détail |

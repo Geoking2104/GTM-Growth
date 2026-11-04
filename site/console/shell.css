@@ -55,3 +55,30 @@ a.app-side-foot { text-decoration: none; color: inherit; margin-top: auto; }
 @keyframes c-spin { to { transform: rotate(360deg); } }
 .c-panel .app-table { margin: 0; }
 .c-panel > .app-table, .c-panel > .c-table-wrap { padding: 0 1.2rem; }
+
+/* Track : Search Console, GA4, Bing */
+.c-pad { padding-left: 1.2rem; padding-right: 1.2rem; }
+.c-toolbar { display: flex; flex-wrap: wrap; gap: .7rem; padding: 1rem 1.2rem 0; }
+.c-toolbar .c-field { min-width: 160px; }
+.c-legend { display: inline-flex; flex-wrap: wrap; gap: .8rem; font-weight: 500; }
+.c-legend-item { display: inline-flex; align-items: center; gap: .3rem; }
+.c-dot { width: .6rem; height: .6rem; border-radius: 50%; display: inline-block; }
+.c-seg-wrap { padding: 0 1.2rem 1.2rem; display: grid; gap: .8rem; }
+.c-seg { display: flex; flex-wrap: wrap; gap: .35rem; border-bottom: 1px solid var(--app-line); padding-bottom: .5rem; }
+.c-seg-btn { font: inherit; font-size: .8rem; padding: .35rem .75rem; border-radius: 999px; border: 1px solid var(--app-line); background: #fff; color: var(--app-2); cursor: pointer; }
+.c-seg-btn.is-active { background: var(--app-accent); border-color: var(--app-accent); color: #fff; }
+.c-seg-out { display: grid; gap: .8rem; }
+.c-table-bar { display: flex; align-items: center; gap: .7rem; margin-bottom: .5rem; }
+.c-filter { font: inherit; font-size: .84rem; padding: .4rem .6rem; border: 1px solid var(--app-line); border-radius: 8px; min-width: 220px; }
+.c-table-bar .c-btn { margin-left: auto; }
+.c-bars { display: grid; gap: .4rem; }
+.c-bar { display: grid; grid-template-columns: minmax(120px, 200px) 1fr auto; gap: .6rem; align-items: center; font-size: .82rem; }
+.c-bar-track { height: .55rem; background: var(--app-line-soft, #eef0f4); border-radius: 999px; overflow: hidden; }
+.c-bar-fill { display: block; height: 100%; background: var(--app-accent); border-radius: 999px; }
+.c-bar-value { color: var(--app-muted); font-variant-numeric: tabular-nums; }
+.c-problem { margin: 1rem 1.2rem 0; padding: .9rem 1rem; border: 1px solid #f3d19c; background: #fff8ec; border-radius: 10px; font-size: .86rem; display: grid; gap: .35rem; }
+.c-problem p { margin: 0; }
+.c-problem code { background: #fff; border: 1px solid var(--app-line); padding: .1rem .35rem; border-radius: 6px; font-size: .82rem; }
+.c-st-ok { color: #0f9d58; font-weight: 600; } .c-st-bad { color: var(--app-red); font-weight: 600; } .c-st-warn { color: #e37400; font-weight: 600; }
+.c-panel .kpi-row { margin: 1rem 1.2rem 0; }
+.c-panel .app-chart { margin: 1rem 1.2rem; }

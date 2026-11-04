@@ -1,18 +1,19 @@
 /* Rendu générique des résultats : métriques, tableaux, blocs de code. */
-const el = (tag, cls, text) => { const n = document.createElement(tag); if (cls) n.className = cls; if (text !== undefined) n.textContent = text; return n; };
+import { tr } from "./i18n.js";
+const el = (tag, cls, text) => { const n = document.createElement(tag); if (cls) n.className = cls; if (text !== undefined) n.textContent = tag === "h4" || tag === "p" ? tr(text) : text; return n; };
 export { el };
 
 export function metrics(pairs) {
   const box = el("div", "c-metrics");
-  for (const [label, value] of pairs) { const m = el("div", "c-metric"); m.append(el("strong", "", value === null || value === undefined ? "—" : String(value)), el("span", "", label)); box.append(m); }
+  for (const [label, value] of pairs) { const m = el("div", "c-metric"); m.append(el("strong", "", value === null || value === undefined ? "—" : String(value)), el("span", "", tr(label))); box.append(m); }
   return box;
 }
 
 export function table(rows, columns) {
-  if (!rows?.length) return el("p", "c-note", "Aucune donnée.");
+  if (!rows?.length) return el("p", "c-note", tr("Aucune donnée."));
   const cols = columns ?? Object.keys(rows[0]).filter((k) => typeof rows[0][k] !== "object");
   const t = el("table", "c-table app-table"); const head = el("tr");
-  for (const c of cols) head.append(el("th", "", Array.isArray(c) ? c[1] : c));
+  for (const c of cols) head.append(el("th", "", tr(Array.isArray(c) ? c[1] : c)));
   t.append(head);
   for (const row of rows) {
     const tr = el("tr");
@@ -25,15 +26,15 @@ export function table(rows, columns) {
 export function code(text, filename) {
   const wrap = el("div", "c-code");
   const bar = el("div", "c-code-bar"); bar.append(el("span", "", filename ?? ""));
-  const copy = el("button", "c-btn c-btn-ghost", "Copier"); copy.type = "button";
+  const copy = el("button", "c-btn c-btn-ghost", tr("Copier")); copy.type = "button";
   copy.onclick = () => navigator.clipboard?.writeText(text);
   bar.append(copy);
-  if (filename) { const dl = el("a", "c-btn c-btn-ghost", "Télécharger"); dl.href = URL.createObjectURL(new Blob([text], { type: "text/plain" })); dl.download = filename; bar.append(dl); }
+  if (filename) { const dl = el("a", "c-btn c-btn-ghost", tr("Télécharger")); dl.href = URL.createObjectURL(new Blob([text], { type: "text/plain" })); dl.download = filename; bar.append(dl); }
   const pre = el("pre"); pre.textContent = text; wrap.append(bar, pre); return wrap;
 }
 
 export function raw(data) {
-  const d = el("details", "c-raw"); d.append(el("summary", "", "Données brutes (JSON)"));
+  const d = el("details", "c-raw"); d.append(el("summary", "", tr("Données brutes (JSON)")));
   const pre = el("pre"); pre.textContent = JSON.stringify(data, null, 2); d.append(pre); return d;
 }
 

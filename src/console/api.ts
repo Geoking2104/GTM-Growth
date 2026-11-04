@@ -10,7 +10,7 @@
 import express, { type Express, type Request, type Response, type Router } from "express";
 import { checkTarget } from "../http/public-api.js";
 import { requireOidc, oidcConfigFromEnv, type JwksLoader, type OidcConfig, type TokenClaims } from "./auth.js";
-import { TenantStore, normalizeHost, tenantOwnsProperty, tenantOwnsUrl, type Tenant } from "../tenants/store.js";
+import { TenantStore, normalizeHost, tenantOwnsProperty, tenantOwnsUrl, tenantOwnsGa4, tenantOwnsBingSite, type Tenant } from "../tenants/store.js";
 import { resolveTenant, TenantAccessError, type TenantContext } from "../tenants/context.js";
 import { tenantLeads, listTenantReports, readTenantReport } from "../tenants/data.js";
 import { KeycloakAdmin, keycloakAdminFromEnv } from "../tenants/keycloak-admin.js";
@@ -38,6 +38,7 @@ import { buildPlatformReadiness } from "../geo/platforms.js";
 import { auditIndexNow } from "../indexnow/readiness.js";
 import { buildAnalysisBoard } from "../analysis/board.js";
 import { phase3Routes } from "./phase3.js";
+import { analyticsRoutes } from "./analytics.js";
 
 import { str, num, type Body, type ConsoleRoute } from "./util.js";
 export type { ConsoleRoute, Handler } from "./util.js";
@@ -183,10 +184,22 @@ async function scopeRequest(route: ConsoleRoute, body: Body, tenancy: TenantCont
   } else if (tenant?.gscProperties.length) {
     body.property = tenant.gscProperties[0];
   }
+  const ga4 = str(body.ga4Property);
+  if (ga4) {
+    if (tenant && !platformAdmin && !tenantOwnsGa4(tenant, ga4)) return { status: 403, error: `La propriété GA4 ${ga4} n'appartient pas au tenant ${tenant.id}.` };
+  } else if (tenant?.ga4Properties?.length) {
+    body.ga4Property = tenant.ga4Properties[0];
+  }
+  const bingSite = str(body.bingSite);
+  if (bingSite) {
+    if (tenant && !platformAdmin && !tenantOwnsBingSite(tenant, bingSite)) return { status: 403, error: `Le site Bing ${bingSite} n'appartient pas au tenant ${tenant.id}.` };
+  } else if (tenant?.bingSites?.length) {
+    body.bingSite = tenant.bingSites[0];
+  }
   return { url };
 }
 
-const publicTenant = (t: Tenant) => ({ id: t.id, name: t.name, mode: t.mode, domains: t.domains, gscProperties: t.gscProperties, emailDomains: t.emailDomains, branding: t.branding, identityProviders: t.identityProviders, status: t.status });
+const publicTenant = (t: Tenant) => ({ id: t.id, name: t.name, mode: t.mode, domains: t.domains, gscProperties: t.gscProperties, ga4Properties: t.ga4Properties ?? [], bingSites: t.bingSites ?? [], bingKeyConfigured: Boolean(t.bingApiKey), emailDomains: t.emailDomains, branding: t.branding, identityProviders: t.identityProviders, status: t.status });
 
 export function buildConsoleRouter(routes: ConsoleRoute[], options: ConsoleOptions = {}): Router {
   const router = express.Router();
@@ -237,7 +250,13 @@ export function buildConsoleRouter(routes: ConsoleRoute[], options: ConsoleOptio
     if (color && !/^#[0-9a-f]{6}$/i.test(color)) return fail(res, 400, "Couleur invalide (#rrggbb).");
     if (logo && !/^https:\/\//.test(logo)) return fail(res, 400, "Le logo doit être une URL https.");
     const t = tenancy.tenant;
-    const updated = store.upsert({ ...t, domains: list(body.domains) ?? t.domains, gscProperties: list(body.gscProperties) ?? t.gscProperties, branding: { ...t.branding, ...(color ? { primaryColor: color } : {}), ...(logo ? { logoUrl: logo } : {}), ...(str(branding.displayName) ? { displayName: str(branding.displayName) } : {}) } });
+    const ga4List = list(body.ga4Properties)?.map((x) => x.replace(/^properties\//, ""));
+    if (ga4List?.some((x) => !/^\d{5,15}$/.test(x))) return fail(res, 400, "Propriété GA4 invalide (identifiant numérique).");
+    const bingList = list(body.bingSites);
+    if (bingList?.some((x) => !/^https?:\/\//.test(x))) return fail(res, 400, "Site Bing invalide (URL https://…/).");
+    const bingKey = typeof body.bingApiKey === "string" ? body.bingApiKey.trim() : undefined;
+    if (bingKey && !/^[A-Za-z0-9]{16,64}$/.test(bingKey)) return fail(res, 400, "Clé API Bing invalide.");
+    const updated = store.upsert({ ...t, ga4Properties: ga4List ?? t.ga4Properties, bingSites: bingList ?? t.bingSites, bingApiKey: bingKey === undefined ? t.bingApiKey : bingKey || undefined, domains: list(body.domains) ?? t.domains, gscProperties: list(body.gscProperties) ?? t.gscProperties, branding: { ...t.branding, ...(color ? { primaryColor: color } : {}), ...(logo ? { logoUrl: logo } : {}), ...(str(branding.displayName) ? { displayName: str(branding.displayName) } : {}) } });
     return res.json({ tenant: publicTenant(updated) });
   });
   router.post("/tenant/users", async (req, res) => {
@@ -315,7 +334,7 @@ export function discoverTenant(store: TenantStore, query: { email?: string; host
 }
 
 export function allConsoleRoutes(): ConsoleRoute[] {
-  return [...phase1Routes, ...phase2Routes, ...phase3Routes];
+  return [...phase1Routes, ...phase2Routes, ...phase3Routes, ...analyticsRoutes];
 }
 
 export function mountConsoleApi(app: Express, options: ConsoleOptions = {}): void {
