@@ -167,3 +167,4 @@ node scripts/check-site.mjs
 Validates that the required files exist, the page keeps its hooks (`check-form`,
 `lead-form`, JSON-LD), local asset references resolve, and no placeholder text
 ships.
+
