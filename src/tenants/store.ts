@@ -24,6 +24,18 @@ export interface Tenant {
   emailDomains: string[];
   /** Search Console properties the tenant may query. */
   gscProperties: string[];
+  /** GA4 property ids (numeric) the tenant may query. */
+  ga4Properties?: string[];
+  /** Bing Webmaster Tools site URLs (https://…/) the tenant may query. */
+  bingSites?: string[];
+  /** Bing Webmaster API key of the tenant (free). Server-side only, never returned to the browser. */
+  bingApiKey?: string;
+  /** GTM containers (accounts/<id>/containers/<id>) the tenant may read/write. */
+  gtmContainers?: string[];
+  /** Microsoft Clarity project ids (free) used by the tenant sites. */
+  clarityProjects?: string[];
+  /** Google key file name (same folder as GOOGLE_APPLICATION_CREDENTIALS) to use for this tenant. Never sent to the browser. */
+  googleCredential?: string;
   branding: TenantBranding;
   /** Identity providers brokered for this tenant (aliases only, never secrets). */
   identityProviders: string[];
@@ -87,4 +99,17 @@ export function tenantOwnsUrl(tenant: Tenant, url: string): boolean {
 
 export function tenantOwnsProperty(tenant: Tenant, property: string): boolean {
   return tenant.gscProperties.includes(property.trim());
+}
+
+export function tenantOwnsGa4(tenant: Tenant, propertyId: string): boolean {
+  return (tenant.ga4Properties ?? []).includes(propertyId.trim().replace(/^properties\//, ""));
+}
+
+/** Bing site: explicitly listed, or on one of the tenant's domains. */
+export function tenantOwnsBingSite(tenant: Tenant, site: string): boolean {
+  return (tenant.bingSites ?? []).includes(site.trim()) || tenantOwnsUrl(tenant, site);
+}
+
+export function tenantOwnsGtmContainer(tenant: Tenant, container: string): boolean {
+  return (tenant.gtmContainers ?? []).some((c) => container === c || container.startsWith(`${c}/`));
 }

@@ -79,6 +79,17 @@ describe("isolation stricte entre tenants", () => {
   it("refuse une propriété GSC d'un autre tenant et applique la propriété par défaut", async () => {
     expect((await call("/c/echo", acmeUser, { property: "sc-domain:globex" })).status).toBe(403);
   });
+  it("refuse une propriété GA4 ou un site Bing d'un autre tenant ; la clé Bing n'est jamais exposée", async () => {
+    expect((await call("/c/echo", acmeUser, { ga4Property: "999999" })).status).toBe(403);
+    expect((await call("/c/echo", acmeUser, { bingSite: "https://globex.com/" })).status).toBe(403);
+    const r = await call("/c/tenant/settings", acmeAdmin, { ga4Properties: ["123456"], bingSites: ["https://www.acme.fr/"], bingApiKey: "ABCDEF0123456789ABCDEF" });
+    const body = await r.json();
+    expect(r.status).toBe(200);
+    expect(body.tenant).toMatchObject({ ga4Properties: ["123456"], bingSites: ["https://www.acme.fr/"], bingKeyConfigured: true });
+    expect(JSON.stringify(body)).not.toContain("ABCDEF0123456789ABCDEF");
+    expect((await call("/c/echo", acmeUser, { ga4Property: "123456" })).status).toBe(200);
+    expect((await call("/c/tenant/settings", acmeAdmin, { ga4Properties: ["abc"] })).status).toBe(400);
+  });
   it("refuse un en-tête X-Tenant usurpé", async () => {
     expect((await call("/c/me", acmeUser, undefined, { "X-Tenant": "globex" })).status).toBe(403);
   });

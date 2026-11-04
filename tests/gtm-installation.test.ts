@@ -149,3 +149,15 @@ describe("GTM installation tools", () => {
     expect(JSON.stringify(result)).toMatch(/Invalid GTM container id/);
   });
 });
+
+import { extractClarityIds, auditGtmHtml as auditForClarity } from "../src/google/gtm-installation.js";
+describe("clarity detection", () => {
+  it("finds the standard snippet id", () => {
+    const html = `<head><script>(function(c,l,a,r,i,t,y){t.src="https://www.clarity.ms/tag/"+i;})(window, document, "clarity", "script", "z8ln1th2sn");</script></head>`;
+    expect(extractClarityIds(html)).toEqual(["z8ln1th2sn"]);
+    expect(auditForClarity(html).checks.find((c) => c.id === "clarity.tag")?.status).toBe("pass");
+  });
+  it("warns when absent", () => {
+    expect(auditForClarity("<head></head>").checks.find((c) => c.id === "clarity.tag")?.status).toBe("warn");
+  });
+});

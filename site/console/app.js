@@ -4,14 +4,21 @@ import { API_BASE, DISCOVER, CONSOLE_DOMAIN } from "./config.js";
 import { login, logout, handleRedirect, accessToken, currentTenant, setTenant, accountConsoleUrl } from "./auth.js";
 import { TABS, raw } from "./tools.js";
 import { el } from "./render.js";
-import { t, actionLabel, LANG } from "./i18n.js";
+import { t, tr, actionLabel, LANG } from "./i18n.js";
 import { icon } from "./icons.js";
 import { renderOverview, renderPlan, renderIndexNow } from "./overview.js";
+import { toolbar, renderSearchPerformance, renderQueryPages, renderSitemaps, renderGa4, renderRealtime, renderEcommerce, renderTechnology, renderGtm, renderBing, renderStatus, renderTags, renderSettings } from "./analytics.js";
 
 const $ = (s) => document.querySelector(s);
 const selectedTenant = () => sessionStorage.getItem("gtm-console-selected") || currentTenant()?.id || "";
 const headers = (token) => ({ Authorization: `Bearer ${token}`, ...(selectedTenant() ? { "X-Tenant": selectedTenant() } : {}) });
-const state = { url: localStorage.getItem("gtm-console-url") || "", property: localStorage.getItem("gtm-console-property") || "", overview: null, overviewFor: "" };
+const ls = (k) => localStorage.getItem(`gtm-console-${k}`) || "";
+const state = { url: ls("url"), property: ls("property"), ga4Property: ls("ga4Property"), bingSite: ls("bingSite"), days: Number(ls("days")) || 28, searchType: ls("searchType") || "web", overview: null, overviewFor: "", me: null };
+/** Corps commun des requêtes Track : domaine, propriétés, période. */
+const scope = (extra = {}) => ({ url: state.url || undefined, property: state.property || undefined, ga4Property: state.ga4Property || undefined, bingSite: state.bingSite || undefined, days: state.days, searchType: state.searchType, ...extra });
+const rerender = () => show(current.section, current.tab);
+/** Vue de données : barre de période + rendu ; ne demande pas de domaine. */
+const live = (route, render, opts = {}) => ({ needsDomain: false, async: async () => [toolbar(state, rerender, opts), ...[render(await api(route, scope()))].flat()] });
 const tool = (id) => TABS.find((x) => x.id === id);
 const host = (u) => { try { return new URL(u).hostname.replace(/^www\./, ""); } catch { return u || "—"; } };
 
@@ -31,12 +38,22 @@ async function overview() {
 
 /* ── Sections de la barre latérale : Track / Act, comme la démo publique ── */
 const custom = (id, tabs) => ({ id, tabs });
-const fromTool = (id, filter = () => true, intro) => () => { const x = tool(id); return { intro: intro ?? x.intro, tabs: x.actions.filter(filter).map((a) => ({ id: a.id, label: actionLabel(a), action: a })) }; };
+const fromTool = (id, filter = () => true, intro) => () => { const x = tool(id); return { intro: intro ?? tr(x.intro), tabs: x.actions.filter(filter).map((a) => ({ id: a.id, label: actionLabel(a), action: a })) }; };
 const SECTIONS = {
   track: [
     { id: "overview", icon: "overview", build: () => custom("overview", [
       { id: "board", label: t("s_overview"), async: async () => renderOverview(await overview()) },
       { id: "plan", label: t("t_plan"), async: async () => renderPlan(await overview()) }]) },
+    { id: "gsc", icon: "google", build: () => custom("gsc", [
+      { id: "performance", label: t("t_gscPerf"), ...live("/search/performance", renderSearchPerformance, { searchType: true }) },
+      { id: "query-pages", label: t("t_queryPages"), ...live("/search/query-pages", renderQueryPages) },
+      { id: "sitemaps", label: t("t_gscSitemaps"), needsDomain: false, async: async () => renderSitemaps(await api("/search/sitemaps", scope())) }]) },
+    { id: "ga4", icon: "ga4", build: () => custom("ga4", [
+      { id: "overview", label: t("t_ga4"), ...live("/ga4/overview", renderGa4) },
+      { id: "ecommerce", label: t("t_ecommerce"), ...live("/ga4/ecommerce", renderEcommerce) },
+      { id: "technology", label: t("t_technology"), ...live("/ga4/technology", renderTechnology) },
+      { id: "realtime", label: t("t_realtime"), needsDomain: false, async: async () => renderRealtime(await api("/ga4/realtime", scope())) }]) },
+    { id: "bing", icon: "bing", build: () => custom("bing", [{ id: "performance", label: t("t_bing"), ...live("/bing/performance", renderBing) }]) },
     { id: "geo", icon: "geo", build: fromTool("geo", (a) => a.id !== "citability") },
     { id: "citability", icon: "citability", build: fromTool("geo", (a) => a.id === "citability", t("citIntro")) },
     { id: "indexnow", icon: "indexnow", build: () => custom("indexnow", [{ id: "readiness", label: t("s_indexnow"), async: async () => renderIndexNow(await overview()) }]) },
@@ -46,7 +63,12 @@ const SECTIONS = {
   act: [
     { id: "search", icon: "search", build: fromTool("search") },
     { id: "keywords", icon: "keywords", build: fromTool("keywords") },
-    { id: "tracking", icon: "tracking", build: () => custom("tracking", [{ id: "ga4", label: "GA4 · Tag Manager", async: async () => [el("p", "c-intro", t("trackingNote"))] }]) },
+    { id: "tracking", icon: "tracking", build: () => custom("tracking", [
+      { id: "status", label: t("t_status"), needsDomain: false, async: async () => renderStatus(await api("/tracking/status", scope()), state) },
+      { id: "tags", label: t("t_tags"), async: async () => renderTags(await api("/tracking/status", scope())) },
+      { id: "settings", label: t("t_settings"), needsDomain: false, async: async () => renderSettings(state.me, saveSettings) }]) },
+    { id: "gtm", icon: "tracking", build: () => custom("gtm", [
+      { id: "workspace", label: t("t_gtm"), needsDomain: false, async: async () => renderGtm(await api("/gtm/inventory", scope({ container: state.gtmContainer || undefined })), api, rerender) }]) },
     { id: "audit", icon: "audit", build: fromTool("audit") },
     { id: "generators", icon: "generators", build: fromTool("generators") },
     { id: "calculators", icon: "calculators", build: fromTool("calculators") },
@@ -56,9 +78,9 @@ const SECTIONS = {
 const ALL = [...SECTIONS.track, ...SECTIONS.act];
 
 function paramField(p) {
-  const label = el("label", "c-field"); label.append(el("span", "", p.label));
+  const label = el("label", "c-field"); label.append(el("span", "", tr(p.label)));
   let input;
-  if (p.type === "select") { input = el("select"); for (const [v, txt] of p.options) { const o = el("option", "", txt); o.value = v; input.append(o); } }
+  if (p.type === "select") { input = el("select"); for (const [v, txt] of p.options) { const o = el("option", "", tr(txt)); o.value = v; input.append(o); } }
   else if (p.type === "textarea") { input = el("textarea"); input.rows = p.rows ?? 4; input.value = p.value ?? ""; }
   else { input = el("input"); input.type = p.type ?? "text"; if (p.value !== undefined) input.value = p.value; if (p.step) input.step = p.step; if (p.placeholder) input.placeholder = p.placeholder; }
   input.name = p.name; label.append(input); return label;
@@ -67,10 +89,10 @@ function paramField(p) {
 function renderAction(action) {
   const card = el("section", "c-card");
   card.append(el("h3", "", actionLabel(action)));
-  if (action.help) card.append(el("p", "c-note", action.help));
+  if (action.help) card.append(el("p", "c-note", tr(action.help)));
   const form = el("form", "c-form");
   for (const p of action.params ?? []) form.append(paramField(p));
-  const btn = el("button", "btn btn-small", action.button ?? t("run")); btn.type = "submit"; form.append(btn);
+  const btn = el("button", "btn btn-small", tr(action.button) ?? t("run")); btn.type = "submit"; form.append(btn);
   const out = el("div", "c-out");
   form.onsubmit = async (event) => {
     event.preventDefault();
@@ -90,6 +112,17 @@ function renderAction(action) {
 }
 
 let current = { section: "overview", tab: "" };
+async function saveSettings(body) {
+  const token = await accessToken();
+  const res = await fetch(`${API_BASE}/tenant/settings`, { method: "PUT", headers: { "Content-Type": "application/json", ...headers(token) }, body: JSON.stringify(body) });
+  const data = await res.json().catch(() => ({}));
+  if (!res.ok) throw new Error(data.error || `Erreur ${res.status}`);
+  state.me = { ...state.me, tenant: data.tenant };
+  if (!state.property && data.tenant.gscProperties[0]) state.property = data.tenant.gscProperties[0];
+  if (!state.ga4Property && data.tenant.ga4Properties?.[0]) state.ga4Property = data.tenant.ga4Properties[0];
+  if (!state.bingSite && data.tenant.bingSites?.[0]) state.bingSite = data.tenant.bingSites[0];
+  return data;
+}
 async function show(sectionId, tabId) {
   const section = ALL.find((s) => s.id === sectionId) ?? ALL[0];
   const def = section.build();
@@ -108,7 +141,7 @@ async function show(sectionId, tabId) {
   $("#c-panels").replaceChildren(panel);
   if (def.intro) panel.append(el("p", "c-intro", def.intro));
   if (tab.action) { panel.append(renderAction(tab.action)); return; }
-  if (!state.url) { panel.append(el("p", "c-intro", t("noDomain"))); return; }
+  if (!state.url && tab.needsDomain !== false) { panel.append(el("p", "c-intro", t("noDomain"))); return; }
   const loading = el("p", "c-loading", t("loadingOverview")); panel.append(loading);
   try { const nodes = await tab.async(); if (current.section === section.id && current.tab === tab.id) loading.replaceWith(...[nodes].flat()); }
   catch (error) { loading.replaceWith(el("p", "c-error", error.message)); }
@@ -197,6 +230,7 @@ async function start() {
     const res = await fetch(`${API_BASE}/me`, { headers: headers(token) });
     const me = await res.json();
     if (!res.ok) throw new Error(me.error || `Erreur ${res.status}`);
+    state.me = me;
     $("#c-user").textContent = `${me.username ?? ""}${me.tenant ? ` · ${me.tenant.name}` : ""}${me.platformAdmin ? ` · ${t("superAdmin")}` : ""}`;
     if (me.accountConsole) $("#c-account").href = me.accountConsole;
     applyBranding(me.tenant?.branding);
@@ -209,13 +243,15 @@ async function start() {
     }
     if (!state.url && me.tenant?.domains?.[0]) state.url = `https://${me.tenant.domains[0]}`;
     if (!state.property && me.tenant?.gscProperties?.[0]) state.property = me.tenant.gscProperties[0];
+    if (!state.ga4Property && me.tenant?.ga4Properties?.[0]) state.ga4Property = me.tenant.ga4Properties[0];
+    if (!state.bingSite && me.tenant?.bingSites?.[0]) state.bingSite = me.tenant.bingSites[0];
   } catch (error) { $("#c-user").textContent = error.message; }
-  $("#c-url").value = state.url; $("#c-property").value = state.property;
+  $("#c-url").value = state.url; $("#c-property").value = state.property; $("#c-ga4").value = state.ga4Property; $("#c-bing").value = state.bingSite;
   picker.onsubmit = (e) => {
     e.preventDefault();
     const tenantSel = $("#c-tenant");
-    state.url = $("#c-url").value.trim(); state.property = $("#c-property").value.trim();
-    localStorage.setItem("gtm-console-url", state.url); localStorage.setItem("gtm-console-property", state.property);
+    state.url = $("#c-url").value.trim(); state.property = $("#c-property").value.trim(); state.ga4Property = $("#c-ga4").value.trim(); state.bingSite = $("#c-bing").value.trim();
+    for (const k of ["url", "property", "ga4Property", "bingSite"]) localStorage.setItem(`gtm-console-${k}`, state[k]);
     if (!$("#c-tenant-wrap").hidden && tenantSel.value && tenantSel.value !== selectedTenant()) { sessionStorage.setItem("gtm-console-selected", tenantSel.value); location.reload(); return; }
     picker.hidden = true; sw.setAttribute("aria-expanded", "false"); refreshSite(); show(current.section, current.tab);
   };

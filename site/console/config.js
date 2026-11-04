@@ -7,7 +7,9 @@ export const OIDC = {
   clientId: "gtm-console",
   scope: "openid profile email",
 };
-export const API_BASE = "/api/console";
-export const DISCOVER = "/api/tenants/discover";
+/** Aperçu (/console-preview/) : API d'un conteneur séparé sous /api-preview/, la prod n'est pas touchée. */
+const API_ROOT = typeof location !== "undefined" && location.pathname.startsWith("/console-preview/") ? "/api-preview" : "/api";
+export const API_BASE = `${API_ROOT}/console`;
+export const DISCOVER = `${API_ROOT}/tenants/discover`;
 /** Domaine des espaces clients : <client>.gtm.kayroslab.com */
 export const CONSOLE_DOMAIN = "gtm.kayroslab.com";
