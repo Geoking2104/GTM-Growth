@@ -1,4 +1,4 @@
-# Google Growth
+# GTM Growth
 
 > Open-source MCP server for GA4, Google Tag Manager, Search Console and AI-search readiness — free read with SEO, GA4 and Search Console tables, full GEO audit, GTM measurement plan.
 

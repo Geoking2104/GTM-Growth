@@ -1,5 +1,5 @@
 {
-  "name": "Google Growth",
+  "name": "GTM Growth",
   "description": "Audit AI-search readiness and Google Tag Manager configuration from one MCP server.",
   "capabilities": [
     "geo-audit",
