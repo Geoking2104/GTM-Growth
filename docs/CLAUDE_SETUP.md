@@ -1,4 +1,4 @@
-# Install Google Growth for Claude Code
+# Install GTM Growth for Claude Code
 
 Skill folder: `google-growth`. MCP server name: `google-growth`.
 

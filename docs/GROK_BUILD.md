@@ -1,4 +1,4 @@
-# Package & use Google Growth with Grok Build
+# Package & use GTM Growth with Grok Build
 
 MCP server name: **google-growth**. Repo: https://github.com/Geoking2104/GTM-Growth
 
@@ -38,7 +38,7 @@ grok mcp add --scope project google-growth -- node dist/index.js --transport std
 ### User-level register
 
 ```bash
-grok mcp add google-growth -- node /ABS/PATH/Google Growth/dist/index.js --transport stdio
+grok mcp add google-growth -- node /ABS/PATH/GTM Growth/dist/index.js --transport stdio
 ```
 
 ---

@@ -1,4 +1,4 @@
-# Google Growth — GTM Pitch & Marketing Guide
+# GTM Growth — GTM Pitch & Marketing Guide
 
 > Turn GA4, Search Console, and Core Web Vitals into prioritized actions with Grok.
 
@@ -9,7 +9,7 @@
 
 ## Solution
 
-Google Growth connects live Google data to an agent. It reads GA4, GTM, Search Console, PageSpeed, and CrUX, then produces a short priority list instead of a raw dump.
+GTM Growth connects live Google data to an agent. It reads GA4, GTM, Search Console, PageSpeed, and CrUX, then produces a short priority list instead of a raw dump.
 
 ## Benefits
 

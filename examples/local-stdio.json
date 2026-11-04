@@ -2,7 +2,7 @@
   "mcpServers": {
     "ga-to-grok": {
       "command": "node",
-      "args": ["/absolute/path/to/Google Growth/dist/index.js", "--transport", "stdio"],
+      "args": ["/absolute/path/to/GTM Growth/dist/index.js", "--transport", "stdio"],
       "env": {
         "GOOGLE_APPLICATION_CREDENTIALS": "/absolute/path/to/service-account.json",
         "GA4_PROPERTY_ID": "123456789"

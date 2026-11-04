@@ -1,6 +1,6 @@
-# Google Growth MCP tools
+# GTM Growth MCP tools
 
-Unprefixed names as registered by the Google Growth server. Agents usually prefix them (examples: `ga-to-grok__…` or a custom connector name). Always discover tools in the current agent first.
+Unprefixed names as registered by the GTM Growth server. Agents usually prefix them (examples: `ga-to-grok__…` or a custom connector name). Always discover tools in the current agent first.
 
 Common ids
 

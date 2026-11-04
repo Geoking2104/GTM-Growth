@@ -1,11 +1,11 @@
 # Plugin: ga-to-grok
 
-Bundles the **Google Growth** MCP server for Grok Build.
+Bundles the **GTM Growth** MCP server for Grok Build.
 
 ## Install (from this repo)
 
 ```bash
-cd /path/to/Google Growth
+cd /path/to/GTM Growth
 npm install && npm run build
 
 # Project scope (recommended while developing in this repo)

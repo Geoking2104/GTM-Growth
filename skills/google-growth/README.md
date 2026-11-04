@@ -1,4 +1,4 @@
-# Google Growth
+# GTM Growth
 
 Agent skill for live **GA4**, **GTM**, **Search Console**, **PageSpeed**, and **CrUX**.
 

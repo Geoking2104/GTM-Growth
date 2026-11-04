@@ -1,6 +1,6 @@
 ---
 name: ga-to-grok
-description: Deprecated alias. Use the google-growth skill for GA4, GTM, Search Console, PageSpeed, and CrUX. Trigger when the user mentions Google Growth and redirect to google-growth.
+description: Deprecated alias. Use the google-growth skill for GA4, GTM, Search Console, PageSpeed, and CrUX. Trigger when the user mentions GTM Growth and redirect to google-growth.
 license: Apache-2.0
 metadata:
   source: https://github.com/Geoking2104/GTM-Growth
@@ -8,7 +8,7 @@ metadata:
   replaced_by: google-growth
 ---
 
-# Renamed to Google Growth
+# Renamed to GTM Growth
 
 This skill was renamed to **google-growth** so it is not Grok-specific.
 

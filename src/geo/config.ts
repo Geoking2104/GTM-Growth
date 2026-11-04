@@ -294,4 +294,4 @@ export const SCHEMA_REQUIRED: Record<string, string[]> = {
 };
 
 export const USER_AGENT =
-  "GoogleGrowthGEO/1.0 (+https://github.com/Geoking2104/GTM-Growth)";
+  "GTMGrowthGEO/1.0 (+https://github.com/Geoking2104/GTM-Growth)";

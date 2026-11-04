@@ -1,4 +1,4 @@
-# Google Growth CLI
+# GTM Growth CLI
 
 Commands aligned with the GA4 / GTM / Search Console / performance workflows.
 

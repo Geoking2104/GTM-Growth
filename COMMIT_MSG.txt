@@ -1,6 +1,6 @@
 feat: zod input validation, error enrichment, retry/pagination, LOG_LEVEL
 
-Implements the remaining hardening items for Google Growth:
+Implements the remaining hardening items for GTM Growth:
 
 #1 Runtime input validation
 - Every tool now carries a zod schema (`schema`) instead of a hand-written

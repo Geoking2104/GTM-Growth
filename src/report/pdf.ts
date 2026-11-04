@@ -223,7 +223,7 @@ function metricCard(doc: Doc, x: number, y: number, w: number, label: string, va
 
 function cover(doc: Doc, input: PdfReportInput, generatedAt: Date): void {
   const audit = input.audit;
-  const brand = input.brandName ?? "Google Growth";
+  const brand = input.brandName ?? "GTM Growth";
   const host = new URL(audit.url).hostname.replace(/^www\./, "");
 
   doc.rect(0, 0, PAGE.width, 318).fill(C.ink);
@@ -751,7 +751,7 @@ function closingPage(doc: Doc, input: PdfReportInput): void {
 
 export async function writeGeoReportPdf(input: PdfReportInput): Promise<PdfReportResult> {
   const generatedAt = input.generatedAt ?? new Date();
-  const brand = input.brandName ?? "Google Growth";
+  const brand = input.brandName ?? "GTM Growth";
 
   fs.mkdirSync(path.dirname(input.outPath), { recursive: true });
   const stream = fs.createWriteStream(input.outPath);

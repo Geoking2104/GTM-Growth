@@ -1,4 +1,4 @@
-# Connect Google Growth — practical guide
+# Connect GTM Growth — practical guide
 
 Source — https://github.com/Geoking2104/GTM-Growth
 
@@ -6,7 +6,7 @@ This guide is for marketers and the person who sets up the tools. You do not nee
 
 ## What “connected” means
 
-The skill is a method. Live data comes from the **Google Growth MCP server**. Until that server is running and linked to your agent, the skill can only explain setup — it cannot read your Analytics.
+The skill is a method. Live data comes from the **GTM Growth MCP server**. Until that server is running and linked to your agent, the skill can only explain setup — it cannot read your Analytics.
 
 ## Choose a solution
 

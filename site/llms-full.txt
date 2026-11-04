@@ -1,10 +1,10 @@
-# Google Growth — full reference
+# GTM Growth — full reference
 
 > Open-source MCP server for GA4, Google Tag Manager, Search Console and AI-search readiness.
 
 ## What it is
 
-Google Growth is a Model Context Protocol server, a CLI and an agent skill. It reads
+GTM Growth is a Model Context Protocol server, a CLI and an agent skill. It reads
 public pages and Google APIs, computes deterministic scores, and returns the evidence
 behind every finding. Writes are disabled by default and require both an environment
 flag and `confirm=true`.

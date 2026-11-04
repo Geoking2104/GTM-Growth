@@ -1,5 +1,5 @@
 interface:
-  display_name: "Google Growth"
+  display_name: "GTM Growth"
   short_description: "Detailed growth dashboards, evidence-based actions from live Google data, and GEO/AI-search-readiness audits."
   default_prompt: "Build a detailed growth dashboard for the last 28 complete days, compare it with the previous 28 days, surface at least 10 evidence-backed watch points, and give exactly 3 quantified priorities for short, medium, and long term."
 

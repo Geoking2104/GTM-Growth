@@ -1,4 +1,4 @@
-# Google Growth — project-scoped MCP for Grok Build
+# GTM Growth — project-scoped MCP for Grok Build
 # https://github.com/Geoking2104/GTM-Growth
 #
 # Load order: Grok walks from cwd up to git root and reads each .grok/config.toml

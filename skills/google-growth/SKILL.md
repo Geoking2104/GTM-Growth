@@ -1,12 +1,12 @@
 ---
 name: google-growth
-description: Use live Google Analytics 4, Tag Manager, Search Console, PageSpeed, and CrUX for growth briefings, detailed KPI dashboards, cross-channel audits, and SEO recommendations, plus GEO/AEO audits that score whether AI answer engines can read and cite a site. Trigger on GA4, GTM, Search Console, PageSpeed, CrUX, ecommerce, dashboards, traffic reports, SEO audits, GEO, AEO, AI search readiness, llms.txt, or when the user mentions Google Growth.
+description: Use live Google Analytics 4, Tag Manager, Search Console, PageSpeed, and CrUX for growth briefings, detailed KPI dashboards, cross-channel audits, and SEO recommendations, plus GEO/AEO audits that score whether AI answer engines can read and cite a site. Trigger on GA4, GTM, Search Console, PageSpeed, CrUX, ecommerce, dashboards, traffic reports, SEO audits, GEO, AEO, AI search readiness, llms.txt, or when the user mentions GTM Growth.
 license: Apache-2.0
 compatibility: Requires the google-growth MCP server (stdio or HTTPS). Works with Grok, Claude, and Codex.
 metadata:
   source: https://github.com/Geoking2104/GTM-Growth
   version: "0.17.0"
-  display_name: Google Growth
+  display_name: GTM Growth
 external_urls:
   - https://github.com/Geoking2104/GTM-Growth
   - https://grok.com/connectors
@@ -19,7 +19,7 @@ external_urls:
   - https://chromeuxreport.googleapis.com
 ---
 
-# Google Growth
+# GTM Growth
 
 Work with **GA4 + GTM + Search Console + PageSpeed + CrUX + GEO** via the **google-growth** MCP server.
 
@@ -31,7 +31,7 @@ This skill is for marketers, growth teams, and agencies who want answers from li
 
 ## Why use this skill (vs a classic LLM)
 
-| Classic LLM | Google Growth |
+| Classic LLM | GTM Growth |
 |---|---|
 | Works on what you paste (exports, screenshots) | Calls Google APIs directly |
 | Can invent numbers | Cites only tool results |

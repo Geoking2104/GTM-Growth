@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# Install the Google Growth skill for Claude Code and/or Codex.
+# Install the GTM Growth skill for Claude Code and/or Codex.
 # MCP server name is google-growth.
 # Usage:
 #   ./scripts/install-skill.sh claude

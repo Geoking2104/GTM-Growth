@@ -1,4 +1,4 @@
-# Connect Google Growth — practical guide
+# Connect GTM Growth — practical guide
 
 Source — https://github.com/Geoking2104/GTM-Growth
 

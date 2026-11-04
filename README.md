@@ -1,4 +1,4 @@
-# Google Growth
+# GTM Growth
 
 **Open-source MCP server** connecting **Google Analytics 4**, **Google Tag Manager** (web + **server-side**), **Measurement Protocol**, **Search Console**, the **Indexing API**, **PageSpeed Insights**, and **CrUX** to **Grok** (xAI), **Claude** (Anthropic), **Codex** (OpenAI), and any MCP-capable agent.
 
@@ -19,7 +19,7 @@ The agent reads live Google data, audits setups, crosses organic search with sit
 
 ## Why use it (vs a classic LLM)
 
-| Classic LLM | Google Growth |
+| Classic LLM | GTM Growth |
 |-------------|---------------|
 | Works on pasted exports and screenshots | Calls Google APIs directly |
 | Can invent numbers | Cites only tool results |

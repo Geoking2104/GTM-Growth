@@ -1,4 +1,4 @@
-# CI/CD — Validation Google Growth
+# CI/CD — Validation GTM Growth
 
 ## Workflows GitHub Actions
 

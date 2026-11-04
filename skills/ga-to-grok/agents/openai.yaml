@@ -1,5 +1,5 @@
 interface:
-  display_name: "Google Growth"
+  display_name: "GTM Growth"
   short_description: "Read GA4, GTM, Search Console, PageSpeed and CrUX through live MCP tools."
   default_prompt: "Give me a traffic briefing for the last 28 days."
 

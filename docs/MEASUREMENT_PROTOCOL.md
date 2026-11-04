@@ -1,6 +1,6 @@
 # Measurement Protocol — Configuration GA4
 
-## Tools Google Growth
+## Tools GTM Growth
 
 | Tool | Type | Description |
 |------|------|-------------|

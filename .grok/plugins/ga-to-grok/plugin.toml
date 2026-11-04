@@ -1,4 +1,4 @@
-# Google Growth plugin for Grok Build
+# GTM Growth plugin for Grok Build
 name = "ga-to-grok"
 version = "0.6.1"
 description = "Google Analytics 4 + GTM + sGTM + Measurement Protocol tools for Grok"

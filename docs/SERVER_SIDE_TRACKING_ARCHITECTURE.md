@@ -1,12 +1,12 @@
 # Server-Side Tracking Architecture
 
-**Référence technique** — Google Growth / KayrosLab  
+**Référence technique** — GTM Growth / KayrosLab  
 Version : 1.1 · Août 2026  
 Scope : Google Tag Manager Server-Side (sGTM) + Google Analytics 4
 
 ---
 
-## Support dans Google Growth (implémenté)
+## Support dans GTM Growth (implémenté)
 
 | Phase | Tool | Statut |
 |-------|------|--------|
@@ -69,4 +69,4 @@ Voir le détail complet dans l’historique du fichier (sections 1–13) : princ
 7. cutover client-side → server-only
 ```
 
-**Licence** : Apache-2.0 · [Google Growth](https://github.com/Geoking2104/GTM-Growth)
+**Licence** : Apache-2.0 · [GTM Growth](https://github.com/Geoking2104/GTM-Growth)

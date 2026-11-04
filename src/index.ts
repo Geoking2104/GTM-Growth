@@ -14,6 +14,6 @@ const transport = process.argv.includes("--transport")
   : process.env.TRANSPORT || "stdio";
 
 startServer(transport as "stdio" | "http").catch((err) => {
-  console.error("Failed to start Google Growth MCP server:", err);
+  console.error("Failed to start GTM Growth MCP server:", err);
   process.exit(1);
 });

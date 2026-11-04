@@ -1,4 +1,4 @@
-# Install Google Growth for Codex
+# Install GTM Growth for Codex
 
 Skill folder: `google-growth`. MCP server name: `google-growth`.
 

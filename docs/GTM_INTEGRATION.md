@@ -1,7 +1,7 @@
 # Google Tag Manager ↔ GA4 Integration
 
 **Cahier des charges & Spécifications techniques**  
-Projet : **Google Growth**  
+Projet : **GTM Growth**  
 Version : 1.2  
 Date : 1 novembre 2026  
 Statut : Phase 1 et Phase 2 implémentées (v0.11.0)

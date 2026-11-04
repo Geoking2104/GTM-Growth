@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 /**
- * Google Growth CLI — one command per workflow step
+ * GTM Growth CLI — one command per workflow step
  *
  * Usage:
  *   npx ga-to-grok-cli <command> [options]
@@ -62,7 +62,7 @@ function print(data: unknown) {
 
 function help() {
   console.log(`
-Google Growth CLI — workflow commands
+GTM Growth CLI — workflow commands
 
 Usage:
   ga-to-grok-cli <command> [options]

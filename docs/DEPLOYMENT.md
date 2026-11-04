@@ -1,4 +1,4 @@
-# Deployment Guide — Google Growth
+# Deployment Guide — GTM Growth
 
 This document covers production deployment with Docker, Fly.io and Railway, including Redis caching.
 
