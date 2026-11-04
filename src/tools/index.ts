@@ -20,6 +20,7 @@ import { indexingTools } from "./indexing.js";
 import { performanceTools } from "./performance.js";
 import { geoTools } from "./geo.js";
 import { indexNowTools } from "./indexnow.js";
+import { geoSuiteTools } from "./geosuite.js";
 import { success, fail } from "./response.js";
 import {
   accountId,
@@ -203,6 +204,7 @@ export const tools: ToolDefinition[] = [
   ...performanceTools,
   ...geoTools,
   ...indexNowTools,
+  ...geoSuiteTools,
 ];
 
 export async function handleToolCall(name: string, args: Record<string, any>) {

@@ -139,6 +139,9 @@ Usage:
   indexnow-verify           --host <host> --key <key>
   indexnow-submit           --host <host> --key <key> --urls <a,b> --confirm=true
   indexnow-explain          --status <code>       decode an IndexNow response
+  poppy-check               --url <url>            well-known/poppy.json check
+  poppy-generate            --name <n> --domain <d> [--issuer <url>] [--mcp <url>]
+  sitemap-build             --url <url> [--max-urls <n>] [--out <file>]
   analysis-board            --url <url> [--indexnow-key <key>]
   leads                     [--file <jsonl>] [--limit <n>]   read captured leads
 
@@ -676,6 +679,41 @@ async function main() {
         });
         print(result);
         if (!result.submitted) process.exitCode = 1;
+        break;
+      }
+      case "poppy-check": {
+        const { probePoppy } = await import("./geosuite/poppy.js");
+        const host = new URL(/^[a-z][a-z0-9+.-]*:\/\//i.test(req(args, "url")) ? req(args, "url") : `https://${req(args, "url")}`).hostname;
+        const report = await probePoppy(host);
+        print(report);
+        if (!report.valid) process.exitCode = 1;
+        break;
+      }
+      case "poppy-generate": {
+        const { generatePoppy } = await import("./geosuite/poppy.js");
+        print(
+          generatePoppy({
+            name: req(args, "name"),
+            domain: req(args, "domain"),
+            issuer: str(args, "issuer"),
+            mcp: str(args, "mcp") ? [str(args, "mcp") as string] : undefined,
+            agent: str(args, "agent"),
+          })
+        );
+        break;
+      }
+      case "sitemap-build": {
+        const { buildSitemap } = await import("./geosuite/sitemap-builder.js");
+        const maxUrls = Number(str(args, "maxUrls") ?? 50);
+        const result = await buildSitemap({ url: req(args, "url"), maxUrls: Number.isFinite(maxUrls) ? maxUrls : 50 });
+        const out = str(args, "out");
+        if (out) {
+          const { writeFileSync } = await import("node:fs");
+          writeFileSync(out, result.xml, "utf8");
+          print({ ...result, xml: undefined, written: out });
+        } else {
+          print(result);
+        }
         break;
       }
       case "indexnow-explain": {

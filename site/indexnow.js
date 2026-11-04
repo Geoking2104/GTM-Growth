@@ -1,14 +1,13 @@
 /**
- * IndexNow key generator for the landing page.
+ * IndexNow key generator — compact form, inside the Solutions card.
  *
- * Runs entirely in the browser: crypto.randomUUID() → 32 hex characters, which
- * matches the protocol grammar ([A-Za-z0-9-], 8–128). Nothing is sent anywhere,
- * so a visitor can mint a key before deciding to trust the tool.
+ * Runs entirely in the browser: crypto.randomUUID() → 32 hex characters, inside
+ * the protocol grammar ([A-Za-z0-9-], 8–128). Nothing is sent anywhere.
  */
 
 const KEY_PATTERN = /^[A-Za-z0-9-]{8,128}$/;
 
-/** 32 hex characters — inside the grammar, and unambiguous in a filename. */
+/** 32 hex characters — inside the grammar, unambiguous in a filename. */
 export function makeKey() {
   if (typeof crypto.randomUUID === "function") return crypto.randomUUID().replace(/-/g, "");
   const bytes = new Uint8Array(16);
@@ -67,28 +66,13 @@ function download(name, content) {
   setTimeout(() => URL.revokeObjectURL(url), 1000);
 }
 
-async function copy(text, button) {
-  const original = button.textContent;
-  try {
-    await navigator.clipboard.writeText(text);
-    button.textContent = "Copied";
-  } catch {
-    button.textContent = "Copy failed";
-  }
-  setTimeout(() => (button.textContent = original), 1600);
-}
-
 export function initIndexNow() {
-  const hostInput = document.querySelector("#ink-host");
   const generate = document.querySelector("#ink-generate");
-  const downloadButton = document.querySelector("#ink-download");
   const output = document.querySelector("#ink-out");
   const keyEl = document.querySelector("#ink-key");
   const fileEl = document.querySelector("#ink-file");
-  const urlEl = document.querySelector("#ink-url");
-  const contentEl = document.querySelector("#ink-content");
-  const curlBlock = document.querySelector("#ink-curl");
-  const curlCode = curlBlock?.querySelector("code");
+  const downloadButton = document.querySelector("#ink-download");
+  const hostInput = document.querySelector("#ink-host");
 
   if (!generate || !output) return;
 
@@ -99,44 +83,29 @@ export function initIndexNow() {
     const host = normalizeHost(hostInput?.value ?? "");
     const material = keyFile(current, host);
     keyEl.textContent = current;
-    fileEl.textContent = material.name;
-    urlEl.textContent = material.url;
-    contentEl.textContent = current;
-    if (curlCode) curlCode.textContent = curlCommand(host, current);
+    fileEl.textContent = host ? `→ ${material.url}` : `→ ${material.name} at your site root`;
     output.hidden = false;
     if (downloadButton) downloadButton.hidden = false;
-    if (curlBlock) curlBlock.hidden = false;
   };
 
   generate.addEventListener("click", () => {
-    current = makeKey();
-    if (!KEY_PATTERN.test(current)) {
-      generate.textContent = "Generation failed — try again";
+    const candidate = makeKey();
+    if (!KEY_PATTERN.test(candidate)) {
+      generate.textContent = "Try again";
       return;
     }
+    current = candidate;
     render();
   });
 
-  hostInput?.addEventListener("change", render);
   hostInput?.addEventListener("input", () => {
     if (current) render();
   });
 
   downloadButton?.addEventListener("click", () => {
     if (!current) return;
-    const material = keyFile(current, normalizeHost(hostInput?.value ?? ""));
+    const host = normalizeHost(hostInput?.value ?? "");
+    const material = keyFile(current, host);
     download(material.name, material.content);
   });
-
-  for (const button of document.querySelectorAll("[data-ink-copy]")) {
-    button.addEventListener("click", () => {
-      if (!current) return;
-      const host = normalizeHost(hostInput?.value ?? "");
-      const material = keyFile(current, host);
-      const target = button.getAttribute("data-ink-copy");
-      const text =
-        target === "curl" ? curlCommand(host, current) : target === "content" ? material.content.trim() : current;
-      void copy(text, button);
-    });
-  }
 }

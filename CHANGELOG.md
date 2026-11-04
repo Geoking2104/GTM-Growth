@@ -1,5 +1,18 @@
 # Changelog
 
+## 0.22.0 — 2026-11-04
+
+### Added
+
+- **GeoSuite toolkit ports (MIT)**: poppy_check and poppy_generate for /.well-known/poppy.json (Personal Agent Protocol draft 0.3, including the RFC 9728 / RFC 8414 chain), and geo_sitemap_build to crawl a site and emit a sitemap.xml. CLI: poppy-check, poppy-generate, sitemap-build. Credited to Matteo Perino and GeoSuite.
+- **Analysis console** on the landing page: five tabs (Overview, GEO, Search, IndexNow, Tracking) combining the audit, citability, IndexNow and tracking signals in one surface, with the sample rows labelled.
+- **Toolkit section** mapping the five GeoSuite tools to what runs here.
+
+### Changed
+
+- IndexNow has no dedicated section or nav entry: it is a card in Solutions, with the key generator inline.
+- Tool count 93 → 96.
+
 ## 0.21.0 — 2026-11-04
 
 ### Changed

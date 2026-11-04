@@ -15,6 +15,7 @@ import { auditUrlShape, normalizeTarget, verdict } from "./preview.js";
 import { dictFor } from "./i18n.js";
 import { renderTables, sampleTables } from "./tables.js";
 import { initIndexNow } from "./indexnow.js";
+import { initConsole } from "./console.js";
 
 const dict = dictFor(document.documentElement.lang);
 
@@ -290,6 +291,7 @@ void flushQueue();
 
 // IndexNow key generator: local only, no network.
 initIndexNow();
+initConsole();
 
 // Copy-to-clipboard buttons
 for (const button of document.querySelectorAll("[data-copy]")) {
