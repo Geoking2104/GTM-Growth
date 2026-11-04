@@ -26,7 +26,7 @@ Best if several people will ask questions in Grok, Claude, or Codex.
 
 ```bash
 git clone https://github.com/Geoking2104/GTM-Growth.git
-cd google-growth
+cd GTM-Growth
 npm install && npm run build
 export GOOGLE_APPLICATION_CREDENTIALS=/absolute/path/to/sa.json
 ./scripts/install-skill.sh both

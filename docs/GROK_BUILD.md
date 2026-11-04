@@ -17,7 +17,7 @@ Tools appear as `google-growth__<tool_name>`.
 
 ```bash
 git clone https://github.com/Geoking2104/GTM-Growth.git
-cd google-growth
+cd GTM-Growth
 npm install && npm run build
 
 export GOOGLE_APPLICATION_CREDENTIALS=/path/to/sa.json
@@ -26,7 +26,7 @@ export GA4_PROPERTY_ID=123456789
 grok inspect
 grok mcp doctor google-growth
 
-cd google-growth && grok
+cd GTM-Growth && grok
 ```
 
 ### One-liner register (project scope)

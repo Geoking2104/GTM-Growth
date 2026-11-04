@@ -154,7 +154,7 @@ INDEXING_WRITE_ENABLED=true
 
 ```bash
 git clone https://github.com/Geoking2104/GTM-Growth.git
-cd google-growth
+cd GTM-Growth
 npm install
 cp .env.example .env
 ```

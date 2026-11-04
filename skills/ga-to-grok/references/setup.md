@@ -24,7 +24,7 @@ Best if several people will ask questions in Grok.
 
 ```bash
 git clone https://github.com/Geoking2104/GTM-Growth.git
-cd google-growth
+cd GTM-Growth
 npm install && npm run build
 # fill .env with credentials
 npm run start:http
@@ -38,7 +38,7 @@ Best if one person works inside the repo (Grok Build, Cursor, Claude Code).
 
 ```bash
 git clone https://github.com/Geoking2104/GTM-Growth.git
-cd google-growth
+cd GTM-Growth
 npm install && npm run build
 export GOOGLE_APPLICATION_CREDENTIALS=/absolute/path/to/sa.json
 grok mcp add --scope project ga-to-grok -- node dist/index.js --transport stdio
