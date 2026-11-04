@@ -190,6 +190,11 @@ pre code { background: none; border: 0; padding: 0; font-size: .86rem; }
   letter-spacing: -.035em; margin: 0 0 1.1rem; text-wrap: balance;
 }
 .lede { font-size: 1.1rem; line-height: 1.65; color: #c2d2e6; max-width: 60ch; }
+.ai-engine-strip { display: flex; align-items: center; gap: .8rem; flex-wrap: wrap; margin: 1.25rem 0; max-width: 720px; }
+.ai-engine-label { color: #9fb2ca; font-size: .8rem; font-weight: 650; }
+.ai-engines { display: flex; flex-wrap: wrap; gap: .45rem; list-style: none; margin: 0; padding: 0; }
+.ai-engines li { display: inline-flex; align-items: center; gap: .38rem; min-height: 2rem; padding: .34rem .58rem; border: 1px solid rgba(159, 190, 226, .25); border-radius: 999px; background: rgba(255,255,255,.06); color: #e8f1fb; font-size: .76rem; font-weight: 700; letter-spacing: -.01em; }
+.ai-engines img { width: 1rem; height: 1rem; object-fit: contain; }
 .check-form {
   display: flex; gap: .5rem; margin: 1.9rem 0 0; max-width: 620px;
   padding: .4rem; border-radius: 999px;
@@ -781,6 +786,7 @@ details[open] summary::after { content: "–"; }
   .data-table { min-width: 0; }
   .cit-row { grid-template-columns: 1fr; gap: .2rem; }
   .hero-stats { gap: 1.6rem; }
+  .ai-engine-strip { align-items: flex-start; }
 }
 @media (max-width: 420px) {
   .hero-proof-grid, .console-kpis { grid-template-columns: 1fr; }
