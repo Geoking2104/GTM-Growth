@@ -135,9 +135,11 @@ export async function ga4Overview(body: Body, report: Report = runReport) {
   const limit = num(body.rowLimit, 50, 1, 1000);
   const r = (metrics: string[], dimensions: string[] = [], start = p.start, end = p.end, lim = limit, order?: string) =>
     report({ propertyId, metrics, dimensions, startDate: start, endDate: end, limit: lim, orderBys: order ? [{ metric: { metricName: order }, desc: true }] : undefined }).then((x) => x.rows);
+  /** L'API Data GA4 accepte 10 métriques max par requête : on fusionne deux requêtes. */
+  const totals = async (start: string, end: string) => { const [a, b] = await Promise.all([r(GA4_TOTALS.slice(0, 10), [], start, end), r(GA4_TOTALS.slice(10), [], start, end)]); return [{ ...(a[0] ?? {}), ...(b[0] ?? {}) }]; };
   try {
     const [tot, prevTot, trend, channels, sources, pages, landing, devices, countries, events] = await Promise.all([
-      r(GA4_TOTALS), r(GA4_TOTALS, [], p.prevStart, p.prevEnd),
+      totals(p.start, p.end), totals(p.prevStart, p.prevEnd),
       r(["sessions", "totalUsers", "keyEvents"], ["date"], p.start, p.end, 500),
       r(["sessions", "totalUsers", "engagementRate", "keyEvents"], ["sessionDefaultChannelGroup"], p.start, p.end, limit, "sessions"),
       r(["sessions", "totalUsers", "keyEvents"], ["sessionSourceMedium"], p.start, p.end, limit, "sessions"),
@@ -254,7 +256,8 @@ export async function ga4Ecommerce(body: Body, report: Report = runReport) {
       report({ propertyId, metrics: ["eventCount", "totalUsers"], dimensions: ["eventName"], startDate: p.start, endDate: p.end, limit: 200, dimensionFilter: { filter: { fieldName: "eventName", inListFilter: { values: FUNNEL } } } } as any).then((x) => x.rows),
       r(["purchaseRevenue"], ["transactionId"], p.start, p.end, 50, "purchaseRevenue").catch(() => []),
     ]);
-    const cur = numify(tot)[0] ?? {}; const pv = numify(prev)[0] ?? {};
+    const zero = Object.fromEntries(ECOM_TOTALS.map((k) => [k, 0]));
+    const cur: Record<string, any> = { ...zero, ...(numify(tot)[0] ?? {}) }; const pv: Record<string, any> = { ...zero, ...(numify(prev)[0] ?? {}) };
     const ev = new Map(numify(events).map((e: any) => [e.eventName, e]));
     const funnel = FUNNEL.map((name) => ({ step: name, events: Number((ev.get(name) as any)?.eventCount ?? 0), users: Number((ev.get(name) as any)?.totalUsers ?? 0) }));
     const hasEcommerce = Number(cur.transactions ?? 0) > 0 || funnel.some((f) => f.events > 0);
