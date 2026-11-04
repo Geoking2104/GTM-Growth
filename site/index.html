@@ -102,11 +102,11 @@
     </a>
     <nav class="nav" aria-label="Primary">
       <a href="#solutions">Solutions</a>
+      <a href="#console">Console</a>
       <a href="#board">Board</a>
       <a href="#measurement">Measurement</a>
       <a href="#how">How it works</a>
       <a href="#plans">Plans</a>
-      <a href="#indexnow">IndexNow</a>
       <a href="#faq">FAQ</a>
       <a class="nav-gh" href="https://github.com/Geoking2104/GTM-Growth">GitHub</a>
     </nav>
@@ -150,7 +150,7 @@
       <p class="form-error" id="check-error" role="alert" hidden></p>
 
       <ul class="hero-stats" aria-label="What ships in the repository">
-        <li><strong>93</strong><span>MCP tools</span></li>
+        <li><strong>96</strong><span>MCP tools</span></li>
         <li><strong>11</strong><span>GEO checks</span></li>
         <li><strong>22</strong><span>GTM tools</span></li>
         <li><strong>0</strong><span>vendor lock-in</span></li>
@@ -204,7 +204,7 @@
     <div class="wrap">
       <header class="section-head">
         <p class="eyebrow eyebrow-dark">Solutions</p>
-        <h2 id="solutions-heading">Three free tables — then six jobs that usually need six tools</h2>
+        <h2 id="solutions-heading">Three free tables, and seven jobs behind them</h2>
         <p class="section-sub">The free read now returns SEO tables, a GA4 report and a Search Console report, measured on your page, its robots.txt and its sitemap. The server adds the rest, each answer with the evidence behind it.</p>
       </header>
 
@@ -270,6 +270,22 @@
           <h3>GTM installation</h3>
           <p>Verify the head loader, the noscript fallback, dataLayer order, default consent and duplicate containers — on staging before it reaches production.</p>
           <p class="tag">gtm_audit_installation</p>
+        </article>
+
+        <article class="card">
+          <span class="icon" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M13 3 5 14h6l-1 7 8-11h-6z"/></svg></span>
+          <h3>IndexNow &amp; Bing</h3>
+          <p>Announce a changed URL to Bing, Yandex, Seznam and Naver in one POST — key file verified first, every response code explained. Google does not take part.</p>
+          <div class="ink-mini">
+            <label class="sr-only" for="ink-host">Your host</label>
+            <input id="ink-host" name="ink-host" type="text" placeholder="example.com" inputmode="url" autocomplete="url">
+            <button class="btn btn-small" type="button" id="ink-generate">Generate a key</button>
+          </div>
+          <p class="ink-mini-out" id="ink-out" hidden><code id="ink-key"></code><span id="ink-file"></span></p>
+          <div class="ink-mini-row">
+            <button class="btn btn-ghost btn-small" type="button" id="ink-download" hidden>Download .txt</button>
+            <span class="tag">indexnow_submit · indexnow_verify</span>
+          </div>
         </article>
 
         <article class="card">
@@ -364,7 +380,145 @@
     </div>
   </section>
 
-  <!-- ── Measurement ──────────────────────────────────────── -->
+    <!-- ── Analysis console ─────────────────────────────────── -->
+  <section class="section section-console" id="console" aria-labelledby="console-heading">
+    <div class="wrap">
+      <header class="section-head">
+        <p class="eyebrow eyebrow-dark">Analysis console</p>
+        <h2 id="console-heading">Every source in one place, and one decision out of it</h2>
+        <p class="section-sub">Search Console, GA4, the GEO audit, citability and IndexNow, side by side. The console reads the sample audit of opendpe.net — the same payload the MCP tools return.</p>
+      </header>
+
+      <div class="console" role="region" aria-label="Analysis console demo">
+        <div class="console-bar">
+          <span class="console-dots" aria-hidden="true"><i></i><i></i><i></i></span>
+          <span class="console-title">gtm-growth · analysis board</span>
+          <span class="console-chip">sample audit · opendpe.net</span>
+        </div>
+
+        <div class="console-tabs" role="tablist" aria-label="Console views">
+          <button role="tab" id="tab-overview" aria-controls="panel-overview" aria-selected="true" class="is-active">Overview</button>
+          <button role="tab" id="tab-geo" aria-controls="panel-geo" aria-selected="false">GEO</button>
+          <button role="tab" id="tab-search" aria-controls="panel-search" aria-selected="false">Search</button>
+          <button role="tab" id="tab-indexnow" aria-controls="panel-indexnow" aria-selected="false">IndexNow</button>
+          <button role="tab" id="tab-tracking" aria-controls="panel-tracking" aria-selected="false">Tracking</button>
+        </div>
+
+        <div class="console-body">
+          <section role="tabpanel" id="panel-overview" aria-labelledby="tab-overview">
+            <div class="console-kpis">
+              <div class="kpi"><span>GEO score</span><strong>71</strong><em>/100</em></div>
+              <div class="kpi"><span>Projected</span><strong>100</strong><em>/100</em></div>
+              <div class="kpi"><span>Recoverable</span><strong>29</strong><em>pts</em></div>
+              <div class="kpi"><span>Citability</span><strong>53</strong><em>/100</em></div>
+            </div>
+            <div class="console-grid">
+              <div class="console-panel">
+                <h3>Score trajectory</h3>
+                <p class="console-sub">Cumulative, one step per recommended fix.</p>
+                <svg viewBox="0 0 320 120" role="img" aria-label="Score rises from 71 to 100 across 16 fixes" class="console-chart">
+                  <line x1="12" y1="100" x2="308" y2="100" stroke="#1e2b3d" />
+                  <polyline points="12,92.6 30.5,86.3 49,80 67.5,73.7 86,68.9 104.5,64.3 123,59.7 141.5,55.2 160,53 178.5,50.8 197,45.7 215.5,40.6 234,35.4 252.5,32.9 271,30.3 289.5,27.7 308,25" fill="none" stroke="#2dd4bf" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" />
+                  <circle cx="12" cy="92.6" r="3" fill="#0b1220" stroke="#2dd4bf" stroke-width="2" />
+                  <circle cx="308" cy="25" r="3" fill="#0b1220" stroke="#2dd4bf" stroke-width="2" />
+                  <text x="12" y="84" fill="#8fa3bd" font-size="9">71</text>
+                  <text x="308" y="16" fill="#e6eef8" font-size="10" font-weight="700" text-anchor="end">100</text>
+                </svg>
+              </div>
+              <div class="console-panel">
+                <h3>Actions, ranked</h3>
+                <p class="console-sub">Indexation blockers first, then recoverable points.</p>
+                <ol class="console-actions">
+                  <li><span class="rank">1</span><div><strong>Publish the IndexNow key file</strong><small>minutes · unlocks 45</small></div></li>
+                  <li><span class="rank">2</span><div><strong>Add explicit citation-bot rules</strong><small>minutes · +3</small></div></li>
+                  <li><span class="rank">3</span><div><strong>Add Article schema</strong><small>hours · +3</small></div></li>
+                  <li><span class="rank">4</span><div><strong>Link sameAs to four pillars</strong><small>minutes · +3</small></div></li>
+                </ol>
+              </div>
+            </div>
+          </section>
+
+          <section role="tabpanel" id="panel-geo" aria-labelledby="tab-geo" hidden>
+            <table class="console-table">
+              <caption>Eight categories, 100 points</caption>
+              <thead><tr><th scope="col">Category</th><th scope="col">Points</th><th scope="col">Bar</th></tr></thead>
+              <tbody>
+                <tr><th scope="row">robots.txt</th><td>15/18</td><td><span class="cbar"><i style="width:83%"></i></span></td></tr>
+                <tr><th scope="row">llms.txt</th><td>12/18</td><td><span class="cbar"><i style="width:67%"></i></span></td></tr>
+                <tr><th scope="row">Schema JSON-LD</th><td>13/16</td><td><span class="cbar"><i style="width:81%"></i></span></td></tr>
+                <tr><th scope="row">Meta tags</th><td>14/14</td><td><span class="cbar"><i style="width:100%"></i></span></td></tr>
+                <tr><th scope="row">Content</th><td>11/12</td><td><span class="cbar"><i style="width:92%"></i></span></td></tr>
+                <tr><th scope="row">Brand & entity</th><td>3/10</td><td><span class="cbar warn"><i style="width:30%"></i></span></td></tr>
+                <tr><th scope="row">Signals</th><td>3/6</td><td><span class="cbar warn"><i style="width:50%"></i></span></td></tr>
+                <tr><th scope="row">AI discovery</th><td>0/6</td><td><span class="cbar bad"><i style="width:2%"></i></span></td></tr>
+              </tbody>
+            </table>
+          </section>
+
+          <section role="tabpanel" id="panel-search" aria-labelledby="tab-search" hidden>
+            <div class="console-kpis">
+              <div class="kpi"><span>Clicks</span><strong>2,940</strong></div>
+              <div class="kpi"><span>Impressions</span><strong>184K</strong></div>
+              <div class="kpi"><span>CTR</span><strong>1.6</strong><em>%</em></div>
+              <div class="kpi"><span>Avg position</span><strong>14.2</strong></div>
+            </div>
+            <table class="console-table">
+              <caption>Illustrative rows — connect a Search Console property for yours</caption>
+              <thead><tr><th scope="col">Query</th><th scope="col">Clicks</th><th scope="col">Position</th></tr></thead>
+              <tbody>
+                <tr><th scope="row">dpe maison</th><td>610</td><td>8.4</td></tr>
+                <tr><th scope="row">diagnostic dpe en ligne</th><td>402</td><td>11.1</td></tr>
+                <tr><th scope="row">dpe appartement</th><td>318</td><td>9.7</td></tr>
+              </tbody>
+            </table>
+          </section>
+
+          <section role="tabpanel" id="panel-indexnow" aria-labelledby="tab-indexnow" hidden>
+            <div class="console-kpis">
+              <div class="kpi"><span>Readiness</span><strong>35</strong><em>/100</em></div>
+              <div class="kpi"><span>Key file</span><strong>missing</strong></div>
+              <div class="kpi"><span>Bingbot</span><strong>allowed</strong></div>
+              <div class="kpi"><span>Last submit</span><strong>—</strong></div>
+            </div>
+            <table class="console-table">
+              <caption>Seven checks, outside the GEO rubric</caption>
+              <thead><tr><th scope="col">Check</th><th scope="col">Verdict</th></tr></thead>
+              <tbody>
+                <tr><th scope="row">Key in the protocol grammar</th><td><span class="pill bad">missing</span></td></tr>
+                <tr><th scope="row">Key file published</th><td><span class="pill bad">missing</span></td></tr>
+                <tr><th scope="row">Bingbot allowed</th><td><span class="pill ok">pass</span></td></tr>
+                <tr><th scope="row">Sitemap declared</th><td><span class="pill ok">pass</span></td></tr>
+                <tr><th scope="row">HTTPS</th><td><span class="pill ok">pass</span></td></tr>
+              </tbody>
+            </table>
+          </section>
+
+          <section role="tabpanel" id="panel-tracking" aria-labelledby="tab-tracking" hidden>
+            <div class="console-kpis">
+              <div class="kpi"><span>GA4 stream</span><strong>G-EQY…</strong></div>
+              <div class="kpi"><span>Container</span><strong>GTM-WVQ…</strong></div>
+              <div class="kpi"><span>Loaders</span><strong>1 gtag</strong><em>2 gtm</em></div>
+              <div class="kpi"><span>Consent</span><strong>declared</strong></div>
+            </div>
+            <table class="console-table">
+              <caption>Read from the served HTML — duplicated loaders are the usual culprit</caption>
+              <thead><tr><th scope="col">Signal</th><th scope="col">Verdict</th></tr></thead>
+              <tbody>
+                <tr><th scope="row">Two GTM containers</th><td><span class="pill warn">watch</span></td></tr>
+                <tr><th scope="row">dataLayer</th><td><span class="pill ok">pass</span></td></tr>
+                <tr><th scope="row">Consent mode</th><td><span class="pill ok">pass</span></td></tr>
+                <tr><th scope="row">Universal Analytics</th><td><span class="pill ok">none</span></td></tr>
+              </tbody>
+            </table>
+          </section>
+        </div>
+
+        <p class="console-foot">GEO, citability and IndexNow values are measured on opendpe.net. Search rows are illustrative until a property is connected — the console never presents a sample as yours.</p>
+      </div>
+    </div>
+  </section>
+
+<!-- ── Measurement ──────────────────────────────────────── -->
   <section class="section section-alt" id="measurement" aria-labelledby="measurement-heading">
     <div class="wrap measurement">
       <div>
@@ -428,7 +582,48 @@ npm run cli -- geo-report --url https://acme.com --out report.pdf</code></pre>
     </div>
   </section>
 
-  <!-- ── Plans ────────────────────────────────────────────── -->
+    <!-- ── Toolkit credit ───────────────────────────────────── -->
+  <section class="section section-alt" id="toolkit" aria-labelledby="toolkit-heading">
+    <div class="wrap">
+      <header class="section-head">
+        <p class="eyebrow eyebrow-dark">Built on an MIT toolkit</p>
+        <h2 id="toolkit-heading">Five GEO tools, one server, no reinvention</h2>
+        <p class="section-sub">GeoSuite publishes a zero-dependency GEO toolkit under MIT. Three of its checks already existed here; the two missing ones are now native, so a single audit covers the whole set.</p>
+      </header>
+
+      <div class="grid cards toolkit-grid">
+        <article class="card">
+          <h3>AI Crawl Check</h3>
+          <p>Which AI crawlers robots.txt allows, per bot and tier.</p>
+          <p class="tag">native · geo_crawler_access</p>
+        </article>
+        <article class="card">
+          <h3>llms.txt Generator</h3>
+          <p>Build the index from a sitemap, then catch drift.</p>
+          <p class="tag">native · geo_generate_llms_txt</p>
+        </article>
+        <article class="card">
+          <h3>Schema Templates</h3>
+          <p>Copy-paste JSON-LD for six types, validated on the way out.</p>
+          <p class="tag">native · geo_generate_schema</p>
+        </article>
+        <article class="card">
+          <h3>Sitemap Builder</h3>
+          <p>Crawl a site that ships without one, honouring robots.txt.</p>
+          <p class="tag new">new · geo_sitemap_build</p>
+        </article>
+        <article class="card">
+          <h3>Poppy Check</h3>
+          <p><code>/.well-known/poppy.json</code> — the file a personal agent reads to find a company and sign in.</p>
+          <p class="tag new">new · poppy_check · poppy_generate</p>
+        </article>
+      </div>
+
+      <p class="board-note">Ported from <a href="https://github.com/TryGeoSuite/geo-toolkit">TryGeoSuite/geo-toolkit</a> and <a href="https://github.com/TryGeoSuite/poppy-json">poppy-json</a>, MIT © Matteo Perino and GeoSuite. The checks are theirs; the implementation here runs inside the same server as the rest of the audit.</p>
+    </div>
+  </section>
+
+<!-- ── Plans ────────────────────────────────────────────── -->
   <section class="section section-alt" id="plans" aria-labelledby="plans-heading">
     <div class="wrap">
       <header class="section-head">
@@ -520,64 +715,6 @@ npm run cli -- geo-audit --url https://acme.com</code></pre>
     </div>
   </section>
 
-  <!-- ── IndexNow ────────────────────────────────────────── -->
-  <section class="section section-alt" id="indexnow" aria-labelledby="indexnow-heading">
-    <div class="wrap">
-      <header class="section-head">
-        <p class="eyebrow eyebrow-dark">IndexNow · Bing</p>
-        <h2 id="indexnow-heading">Get re-crawled in minutes, not days</h2>
-        <p class="section-sub">IndexNow tells Bing, Yandex, Seznam and Naver that a URL changed. Google does not take part. Four steps, no account: generate a key, host one text file, submit the changed URLs, verify.</p>
-      </header>
-
-      <ol class="steps">
-        <li>
-          <span class="step-num">1</span>
-          <h3>Generate the key</h3>
-          <p>8–128 characters of a–z, A–Z, 0–9 or dash. Generated in your browser below — it never leaves the page.</p>
-        </li>
-        <li>
-          <span class="step-num">2</span>
-          <h3>Host the key file</h3>
-          <p>Publish <code>&lt;key&gt;.txt</code> at the site root: UTF-8, containing exactly the key. That file is the only proof of ownership the protocol accepts.</p>
-        </li>
-        <li>
-          <span class="step-num">3</span>
-          <h3>Submit the changed URLs</h3>
-          <p>One POST, up to 10 000 URLs. Send what changed since you wired IndexNow — not the whole archive.</p>
-        </li>
-        <li>
-          <span class="step-num">4</span>
-          <h3>Verify</h3>
-          <p>A <code>200</code> means received, never indexed. Confirm the crawl in Bing Webmaster Tools.</p>
-        </li>
-      </ol>
-
-      <div class="ink-card">
-        <div class="ink-head">
-          <h3>Key generator</h3>
-          <p>Runs locally. Nothing is sent anywhere.</p>
-        </div>
-        <div class="ink-body">
-          <label class="ink-label" for="ink-host">Your host</label>
-          <input id="ink-host" name="ink-host" type="text" placeholder="example.com" autocomplete="url" inputmode="url">
-          <div class="ink-row">
-            <button class="btn" type="button" id="ink-generate">Generate a key</button>
-            <button class="btn btn-ghost" type="button" id="ink-download" hidden>Download .txt</button>
-          </div>
-          <dl class="ink-out" id="ink-out" hidden>
-            <dt>Key</dt><dd><code id="ink-key"></code></dd>
-            <dt>File</dt><dd><code id="ink-file"></code></dd>
-            <dt>Serve at</dt><dd><code id="ink-url"></code></dd>
-            <dt>Content</dt><dd><code id="ink-content"></code></dd>
-          </dl>
-          <pre class="ink-curl" id="ink-curl" hidden><code></code></pre>
-          <p class="fineprint">Verify what you published: <code>npm run cli -- indexnow-verify --host example.com --key &lt;key&gt;</code> · then submit with <code>analysis_board</code> to see the panel move.</p>
-        </div>
-        <p class="fineprint">The analysis board ranks these first: a missing key file or a blocked Bingbot makes every GEO fix worthless.</p>
-      </div>
-    </div>
-  </section>
-
   <!-- ── FAQ ──────────────────────────────────────────────── -->
   <section class="section section-alt" id="faq" aria-labelledby="faq-heading">
     <div class="wrap narrow">
@@ -626,14 +763,14 @@ npm run cli -- geo-audit --url https://acme.com</code></pre>
         <p class="section-sub">Every number below comes from the repository you can run yourself — and from a live audit you can re-run.</p>
       </header>
       <ul class="proof-grid">
-        <li><strong>93</strong><span>MCP tools</span></li>
-        <li><strong>187</strong><span>tests passing</span></li>
+        <li><strong>96</strong><span>MCP tools</span></li>
+        <li><strong>205</strong><span>tests passing</span></li>
         <li><strong>11</strong><span>GEO checks</span></li>
         <li><strong>22</strong><span>GTM tools</span></li>
         <li><strong>5</strong><span>AI platforms mapped</span></li>
         <li><strong>Apache-2.0</strong><span>licence</span></li>
       </ul>
-      <p class="proof-note">Read-only by default · CI runs typecheck, lint, 187 tests, build, CLI smoke and site checks on every push · <a href="https://github.com/Geoking2104/GTM-Growth/actions">see the runs</a></p>
+      <p class="proof-note">Read-only by default · CI runs typecheck, lint, 205 tests, build, CLI smoke and site checks on every push · <a href="https://github.com/Geoking2104/GTM-Growth/actions">see the runs</a></p>
     </div>
   </section>
 

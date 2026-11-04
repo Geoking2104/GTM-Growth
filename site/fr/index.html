@@ -103,11 +103,11 @@
     </a>
     <nav class="nav" aria-label="Navigation principale">
       <a href="#solutions">Solutions</a>
+      <a href="#console">Console</a>
       <a href="#board">Tableau</a>
       <a href="#measurement">Mesure</a>
       <a href="#how">Fonctionnement</a>
       <a href="#plans">Offres</a>
-      <a href="#indexnow">IndexNow</a>
       <a href="#faq">FAQ</a>
       <a class="nav-gh" href="https://github.com/Geoking2104/GTM-Growth">GitHub</a>
     </nav>
@@ -152,7 +152,7 @@
       <p class="form-error" id="check-error" role="alert" hidden></p>
 
       <ul class="hero-stats" aria-label="Contenu du dépôt">
-        <li><strong>93</strong><span>outils MCP</span></li>
+        <li><strong>96</strong><span>outils MCP</span></li>
         <li><strong>11</strong><span>contrôles GEO</span></li>
         <li><strong>22</strong><span>outils GTM</span></li>
         <li><strong>0</strong><span>dépendance</span></li>
@@ -206,7 +206,7 @@
     <div class="wrap">
       <header class="section-head">
         <p class="eyebrow eyebrow-dark">Solutions</p>
-        <h2 id="solutions-heading">Trois tables gratuites — puis six métiers qui demandent d’habitude six outils</h2>
+        <h2 id="solutions-heading">Trois tables gratuites, et sept métiers derrière</h2>
         <p class="section-sub">La lecture gratuite renvoie désormais des tables SEO, un rapport GA4 et un rapport Search Console, mesurés sur votre page, son robots.txt et son sitemap. Le serveur ajoute le reste, chaque réponse avec sa preuve.</p>
       </header>
 
@@ -272,6 +272,22 @@
           <h3>Installation GTM</h3>
           <p>Vérifiez le loader, le repli noscript, l’ordre du dataLayer, le consentement par défaut et les conteneurs en double — sur la préproduction avant la production.</p>
           <p class="tag">gtm_audit_installation</p>
+        </article>
+
+        <article class="card">
+          <span class="icon" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M13 3 5 14h6l-1 7 8-11h-6z"/></svg></span>
+          <h3>IndexNow &amp; Bing</h3>
+          <p>Annoncez une URL modifiée à Bing, Yandex, Seznam et Naver en un seul POST — fichier de clé vérifié d’abord, chaque code de réponse expliqué. Google ne participe pas.</p>
+          <div class="ink-mini">
+            <label class="sr-only" for="ink-host">Votre hôte</label>
+            <input id="ink-host" name="ink-host" type="text" placeholder="exemple.fr" inputmode="url" autocomplete="url">
+            <button class="btn btn-small" type="button" id="ink-generate">Générer une clé</button>
+          </div>
+          <p class="ink-mini-out" id="ink-out" hidden><code id="ink-key"></code><span id="ink-file"></span></p>
+          <div class="ink-mini-row">
+            <button class="btn btn-ghost btn-small" type="button" id="ink-download" hidden>Télécharger le .txt</button>
+            <span class="tag">indexnow_submit · indexnow_verify</span>
+          </div>
         </article>
 
         <article class="card">
@@ -366,7 +382,145 @@
     </div>
   </section>
 
-  <!-- ── Mesure ───────────────────────────────────────────── -->
+    <!-- ── Analysis console ─────────────────────────────────── -->
+  <section class="section section-console" id="console" aria-labelledby="console-heading">
+    <div class="wrap">
+      <header class="section-head">
+        <p class="eyebrow eyebrow-dark">Console d’analyse</p>
+        <h2 id="console-heading">Toutes les sources au même endroit, une seule décision en sortie</h2>
+        <p class="section-sub">Search Console, GA4, l’audit GEO, la citabilité et IndexNow, côte à côte. La console lit l’audit d’exemple d’opendpe.net — la même charge utile que renvoient les outils MCP.</p>
+      </header>
+
+      <div class="console" role="region" aria-label="Console d’analyse, démonstration">
+        <div class="console-bar">
+          <span class="console-dots" aria-hidden="true"><i></i><i></i><i></i></span>
+          <span class="console-title">gtm-growth · analysis board</span>
+          <span class="console-chip">audit d’exemple · opendpe.net</span>
+        </div>
+
+        <div class="console-tabs" role="tablist" aria-label="Vues de la console">
+          <button role="tab" id="tab-overview" aria-controls="panel-overview" aria-selected="true" class="is-active">Vue d’ensemble</button>
+          <button role="tab" id="tab-geo" aria-controls="panel-geo" aria-selected="false">GEO</button>
+          <button role="tab" id="tab-search" aria-controls="panel-search" aria-selected="false">Recherche</button>
+          <button role="tab" id="tab-indexnow" aria-controls="panel-indexnow" aria-selected="false">IndexNow</button>
+          <button role="tab" id="tab-tracking" aria-controls="panel-tracking" aria-selected="false">Tracking</button>
+        </div>
+
+        <div class="console-body">
+          <section role="tabpanel" id="panel-overview" aria-labelledby="tab-overview">
+            <div class="console-kpis">
+              <div class="kpi"><span>Score GEO</span><strong>71</strong><em>/100</em></div>
+              <div class="kpi"><span>Projeté</span><strong>100</strong><em>/100</em></div>
+              <div class="kpi"><span>Récupérables</span><strong>29</strong><em>pts</em></div>
+              <div class="kpi"><span>Citabilité</span><strong>53</strong><em>/100</em></div>
+            </div>
+            <div class="console-grid">
+              <div class="console-panel">
+                <h3>Trajectoire du score</h3>
+                <p class="console-sub">Cumulatif, une étape par correctif recommandé.</p>
+                <svg viewBox="0 0 320 120" role="img" aria-label="Le score passe de 71 à 100 en 16 correctifs" class="console-chart">
+                  <line x1="12" y1="100" x2="308" y2="100" stroke="#1e2b3d" />
+                  <polyline points="12,92.6 30.5,86.3 49,80 67.5,73.7 86,68.9 104.5,64.3 123,59.7 141.5,55.2 160,53 178.5,50.8 197,45.7 215.5,40.6 234,35.4 252.5,32.9 271,30.3 289.5,27.7 308,25" fill="none" stroke="#2dd4bf" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" />
+                  <circle cx="12" cy="92.6" r="3" fill="#0b1220" stroke="#2dd4bf" stroke-width="2" />
+                  <circle cx="308" cy="25" r="3" fill="#0b1220" stroke="#2dd4bf" stroke-width="2" />
+                  <text x="12" y="84" fill="#8fa3bd" font-size="9">71</text>
+                  <text x="308" y="16" fill="#e6eef8" font-size="10" font-weight="700" text-anchor="end">100</text>
+                </svg>
+              </div>
+              <div class="console-panel">
+                <h3>Actions classées</h3>
+                <p class="console-sub">Blocages d’indexation d’abord, puis points récupérables.</p>
+                <ol class="console-actions">
+                  <li><span class="rank">1</span><div><strong>Publier le fichier de clé IndexNow</strong><small>minutes · débloque 45</small></div></li>
+                  <li><span class="rank">2</span><div><strong>Ajouter des règles explicites pour les bots de citation</strong><small>minutes · +3</small></div></li>
+                  <li><span class="rank">3</span><div><strong>Ajouter le schéma Article</strong><small>heures · +3</small></div></li>
+                  <li><span class="rank">4</span><div><strong>Relier sameAs à quatre piliers</strong><small>minutes · +3</small></div></li>
+                </ol>
+              </div>
+            </div>
+          </section>
+
+          <section role="tabpanel" id="panel-geo" aria-labelledby="tab-geo" hidden>
+            <table class="console-table">
+              <caption>Huit catégories, 100 points</caption>
+              <thead><tr><th scope="col">Catégorie</th><th scope="col">Points</th><th scope="col">Barre</th></tr></thead>
+              <tbody>
+                <tr><th scope="row">robots.txt</th><td>15/18</td><td><span class="cbar"><i style="width:83%"></i></span></td></tr>
+                <tr><th scope="row">llms.txt</th><td>12/18</td><td><span class="cbar"><i style="width:67%"></i></span></td></tr>
+                <tr><th scope="row">Schéma JSON-LD</th><td>13/16</td><td><span class="cbar"><i style="width:81%"></i></span></td></tr>
+                <tr><th scope="row">Métadonnées</th><td>14/14</td><td><span class="cbar"><i style="width:100%"></i></span></td></tr>
+                <tr><th scope="row">Contenu</th><td>11/12</td><td><span class="cbar"><i style="width:92%"></i></span></td></tr>
+                <tr><th scope="row">Marque & entité</th><td>3/10</td><td><span class="cbar warn"><i style="width:30%"></i></span></td></tr>
+                <tr><th scope="row">Signaux</th><td>3/6</td><td><span class="cbar warn"><i style="width:50%"></i></span></td></tr>
+                <tr><th scope="row">Découverte IA</th><td>0/6</td><td><span class="cbar bad"><i style="width:2%"></i></span></td></tr>
+              </tbody>
+            </table>
+          </section>
+
+          <section role="tabpanel" id="panel-search" aria-labelledby="tab-search" hidden>
+            <div class="console-kpis">
+              <div class="kpi"><span>Clics</span><strong>2,940</strong></div>
+              <div class="kpi"><span>Impressions</span><strong>184K</strong></div>
+              <div class="kpi"><span>CTR</span><strong>1.6</strong><em>%</em></div>
+              <div class="kpi"><span>Position moy.</span><strong>14.2</strong></div>
+            </div>
+            <table class="console-table">
+              <caption>Lignes illustratives — connectez une propriété Search Console pour les vôtres</caption>
+              <thead><tr><th scope="col">Requête</th><th scope="col">Clics</th><th scope="col">Position</th></tr></thead>
+              <tbody>
+                <tr><th scope="row">dpe maison</th><td>610</td><td>8.4</td></tr>
+                <tr><th scope="row">diagnostic dpe en ligne</th><td>402</td><td>11.1</td></tr>
+                <tr><th scope="row">dpe appartement</th><td>318</td><td>9.7</td></tr>
+              </tbody>
+            </table>
+          </section>
+
+          <section role="tabpanel" id="panel-indexnow" aria-labelledby="tab-indexnow" hidden>
+            <div class="console-kpis">
+              <div class="kpi"><span>Préparation</span><strong>35</strong><em>/100</em></div>
+              <div class="kpi"><span>Fichier de clé</span><strong>absent</strong></div>
+              <div class="kpi"><span>Bingbot</span><strong>autorisé</strong></div>
+              <div class="kpi"><span>Dernier envoi</span><strong>—</strong></div>
+            </div>
+            <table class="console-table">
+              <caption>Sept contrôles, hors barème GEO</caption>
+              <thead><tr><th scope="col">Contrôle</th><th scope="col">Verdict</th></tr></thead>
+              <tbody>
+                <tr><th scope="row">Clé conforme au protocole</th><td><span class="pill bad">absent</span></td></tr>
+                <tr><th scope="row">Fichier de clé publié</th><td><span class="pill bad">absent</span></td></tr>
+                <tr><th scope="row">Bingbot autorisé</th><td><span class="pill ok">pass</span></td></tr>
+                <tr><th scope="row">Sitemap déclaré</th><td><span class="pill ok">pass</span></td></tr>
+                <tr><th scope="row">HTTPS</th><td><span class="pill ok">pass</span></td></tr>
+              </tbody>
+            </table>
+          </section>
+
+          <section role="tabpanel" id="panel-tracking" aria-labelledby="tab-tracking" hidden>
+            <div class="console-kpis">
+              <div class="kpi"><span>Flux GA4</span><strong>G-EQY…</strong></div>
+              <div class="kpi"><span>Conteneur</span><strong>GTM-WVQ…</strong></div>
+              <div class="kpi"><span>Chargeurs</span><strong>1 gtag</strong><em>2 gtm</em></div>
+              <div class="kpi"><span>Consentement</span><strong>déclaré</strong></div>
+            </div>
+            <table class="console-table">
+              <caption>Lu dans le HTML servi — les chargeurs en double sont le coupable habituel</caption>
+              <thead><tr><th scope="col">Signal</th><th scope="col">Verdict</th></tr></thead>
+              <tbody>
+                <tr><th scope="row">Deux conteneurs GTM</th><td><span class="pill warn">à surveiller</span></td></tr>
+                <tr><th scope="row">dataLayer</th><td><span class="pill ok">pass</span></td></tr>
+                <tr><th scope="row">Consent mode</th><td><span class="pill ok">pass</span></td></tr>
+                <tr><th scope="row">Universal Analytics</th><td><span class="pill ok">aucun</span></td></tr>
+              </tbody>
+            </table>
+          </section>
+        </div>
+
+        <p class="console-foot">Les valeurs GEO, citabilité et IndexNow sont mesurées sur opendpe.net. Les lignes de recherche sont illustratives jusqu’à connexion d’une propriété — la console ne présente jamais un exemple comme le vôtre.</p>
+      </div>
+    </div>
+  </section>
+
+<!-- ── Mesure ───────────────────────────────────────────── -->
   <section class="section section-alt" id="measurement" aria-labelledby="measurement-heading">
     <div class="wrap measurement">
       <div>
@@ -430,7 +584,48 @@ npm run cli -- geo-report --url https://acme.com --out rapport.pdf</code></pre>
     </div>
   </section>
 
-  <!-- ── Offres ───────────────────────────────────────────── -->
+    <!-- ── Crédit toolkit ──────────────────────────────────── -->
+  <section class="section section-alt" id="toolkit" aria-labelledby="toolkit-heading">
+    <div class="wrap">
+      <header class="section-head">
+        <p class="eyebrow eyebrow-dark">Bâti sur un toolkit MIT</p>
+        <h2 id="toolkit-heading">Cinq outils GEO, un seul serveur, rien de réinventé</h2>
+        <p class="section-sub">GeoSuite publie un toolkit GEO sans dépendance sous licence MIT. Trois de ses contrôles existaient déjà ici ; les deux manquants sont désormais natifs, pour qu’un seul audit couvre l’ensemble.</p>
+      </header>
+
+      <div class="grid cards toolkit-grid">
+        <article class="card">
+          <h3>AI Crawl Check</h3>
+          <p>Quels crawlers IA le robots.txt autorise, par bot et par palier.</p>
+          <p class="tag">natif · geo_crawler_access</p>
+        </article>
+        <article class="card">
+          <h3>llms.txt Generator</h3>
+          <p>Construire l’index depuis un sitemap, puis détecter la dérive.</p>
+          <p class="tag">natif · geo_generate_llms_txt</p>
+        </article>
+        <article class="card">
+          <h3>Schema Templates</h3>
+          <p>JSON-LD prêt à coller pour six types, validé à la sortie.</p>
+          <p class="tag">natif · geo_generate_schema</p>
+        </article>
+        <article class="card">
+          <h3>Sitemap Builder</h3>
+          <p>Explorer un site qui n’en a pas, en respectant le robots.txt.</p>
+          <p class="tag new">nouveau · geo_sitemap_build</p>
+        </article>
+        <article class="card">
+          <h3>Poppy Check</h3>
+          <p><code>/.well-known/poppy.json</code> — le fichier qu’un agent personnel lit pour trouver une entreprise et s’y connecter.</p>
+          <p class="tag new">nouveau · poppy_check · poppy_generate</p>
+        </article>
+      </div>
+
+      <p class="board-note">Porté depuis <a href="https://github.com/TryGeoSuite/geo-toolkit">TryGeoSuite/geo-toolkit</a> et <a href="https://github.com/TryGeoSuite/poppy-json">poppy-json</a>, MIT © Matteo Perino et GeoSuite. Les contrôles sont les leurs ; l’implémentation tourne ici dans le même serveur que le reste de l’audit.</p>
+    </div>
+  </section>
+
+<!-- ── Offres ───────────────────────────────────────────── -->
   <section class="section section-alt" id="plans" aria-labelledby="plans-heading">
     <div class="wrap">
       <header class="section-head">
@@ -522,64 +717,6 @@ npm run cli -- geo-audit --url https://acme.com</code></pre>
     </div>
   </section>
 
-  <!-- ── IndexNow ────────────────────────────────────────── -->
-  <section class="section section-alt" id="indexnow" aria-labelledby="indexnow-heading">
-    <div class="wrap">
-      <header class="section-head">
-        <p class="eyebrow eyebrow-dark">IndexNow · Bing</p>
-        <h2 id="indexnow-heading">Re-crawlé en minutes, pas en jours</h2>
-        <p class="section-sub">IndexNow prévient Bing, Yandex, Seznam et Naver qu’une URL a changé. Google ne participe pas. Quatre étapes, sans compte : générer une clé, héberger un fichier texte, soumettre les URL modifiées, vérifier.</p>
-      </header>
-
-      <ol class="steps">
-        <li>
-          <span class="step-num">1</span>
-          <h3>Générer la clé</h3>
-          <p>8 à 128 caractères parmi a–z, A–Z, 0–9 ou tiret. Générée dans votre navigateur ci-dessous — elle ne quitte jamais la page.</p>
-        </li>
-        <li>
-          <span class="step-num">2</span>
-          <h3>Héberger le fichier de clé</h3>
-          <p>Publiez <code>&lt;clé&gt;.txt</code> à la racine : UTF-8, contenant exactement la clé. Ce fichier est la seule preuve de propriété acceptée par le protocole.</p>
-        </li>
-        <li>
-          <span class="step-num">3</span>
-          <h3>Soumettre les URL modifiées</h3>
-          <p>Un seul POST, jusqu’à 10 000 URL. Envoyez ce qui a changé depuis la mise en place — pas toute l’archive.</p>
-        </li>
-        <li>
-          <span class="step-num">4</span>
-          <h3>Vérifier</h3>
-          <p>Un <code>200</code> signifie reçu, jamais indexé. Confirmez le crawl dans Bing Webmaster Tools.</p>
-        </li>
-      </ol>
-
-      <div class="ink-card">
-        <div class="ink-head">
-          <h3>Générateur de clé</h3>
-          <p>Tourne en local. Rien n’est envoyé nulle part.</p>
-        </div>
-        <div class="ink-body">
-          <label class="ink-label" for="ink-host">Votre hôte</label>
-          <input id="ink-host" name="ink-host" type="text" placeholder="exemple.fr" autocomplete="url" inputmode="url">
-          <div class="ink-row">
-            <button class="btn" type="button" id="ink-generate">Générer une clé</button>
-            <button class="btn btn-ghost" type="button" id="ink-download" hidden>Télécharger le .txt</button>
-          </div>
-          <dl class="ink-out" id="ink-out" hidden>
-            <dt>Clé</dt><dd><code id="ink-key"></code></dd>
-            <dt>Fichier</dt><dd><code id="ink-file"></code></dd>
-            <dt>À servir ici</dt><dd><code id="ink-url"></code></dd>
-            <dt>Contenu</dt><dd><code id="ink-content"></code></dd>
-          </dl>
-          <pre class="ink-curl" id="ink-curl" hidden><code></code></pre>
-          <p class="fineprint">Vérifiez ce que vous avez publié : <code>npm run cli -- indexnow-verify --host exemple.fr --key &lt;clé&gt;</code> · puis lancez <code>analysis_board</code> pour voir le panneau évoluer.</p>
-        </div>
-        <p class="fineprint">Le tableau d’analyse les place en premier : sans fichier de clé ou avec un Bingbot bloqué, chaque correctif GEO ne sert à rien.</p>
-      </div>
-    </div>
-  </section>
-
   <!-- ── FAQ ──────────────────────────────────────────────── -->
   <section class="section section-alt" id="faq" aria-labelledby="faq-heading">
     <div class="wrap narrow">
@@ -628,14 +765,14 @@ npm run cli -- geo-audit --url https://acme.com</code></pre>
         <p class="section-sub">Chaque chiffre vient du dépôt que vous pouvez exécuter — et d’un audit réel que vous pouvez relancer.</p>
       </header>
       <ul class="proof-grid">
-        <li><strong>93</strong><span>outils MCP</span></li>
-        <li><strong>187</strong><span>tests au vert</span></li>
+        <li><strong>96</strong><span>outils MCP</span></li>
+        <li><strong>205</strong><span>tests au vert</span></li>
         <li><strong>11</strong><span>contrôles GEO</span></li>
         <li><strong>22</strong><span>outils GTM</span></li>
         <li><strong>5</strong><span>plateformes IA couvertes</span></li>
         <li><strong>Apache-2.0</strong><span>licence</span></li>
       </ul>
-      <p class="proof-note">Lecture seule par défaut · la CI exécute typecheck, lint, 187 tests, build, smoke CLI et contrôles du site à chaque push · <a href="https://github.com/Geoking2104/GTM-Growth/actions">voir les exécutions</a></p>
+      <p class="proof-note">Lecture seule par défaut · la CI exécute typecheck, lint, 205 tests, build, smoke CLI et contrôles du site à chaque push · <a href="https://github.com/Geoking2104/GTM-Growth/actions">voir les exécutions</a></p>
     </div>
   </section>
 
