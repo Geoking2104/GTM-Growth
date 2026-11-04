@@ -20,7 +20,7 @@ limit, and there is no Node built-in in the graph — the audit runs unchanged o
 
 ### 1. One click, from the repository
 
-[![Deploy to Cloudflare Workers](https://deploy.workers.cloudflare.com/button)](https://deploy.workers.cloudflare.com/?url=https://github.com/Geoking2104/Google-Growth)
+[![Deploy to Cloudflare Workers](https://deploy.workers.cloudflare.com/button)](https://deploy.workers.cloudflare.com/?url=https://github.com/Geoking2104/GTM-Growth)
 
 Cloudflare clones the repo, reads `wrangler.toml`, builds and publishes. No CLI,
 no token in a terminal. At the end it shows the `*.workers.dev` URL.

@@ -41,7 +41,7 @@ The GEO rubric is adapted from the MIT-licensed geo-optimizer-skill model.
 
 ## Links
 
-- [Repository](https://github.com/Geoking2104/Google-Growth)
-- [GEO rubric](https://github.com/Geoking2104/Google-Growth/blob/main/docs/GEO.md)
-- [GTM implementation guide](https://github.com/Geoking2104/Google-Growth/blob/main/docs/GTM_IMPLEMENTATION.md)
-- [CLI reference](https://github.com/Geoking2104/Google-Growth/blob/main/docs/CLI.md)
+- [Repository](https://github.com/Geoking2104/GTM-Growth)
+- [GEO rubric](https://github.com/Geoking2104/GTM-Growth/blob/main/docs/GEO.md)
+- [GTM implementation guide](https://github.com/Geoking2104/GTM-Growth/blob/main/docs/GTM_IMPLEMENTATION.md)
+- [CLI reference](https://github.com/Geoking2104/GTM-Growth/blob/main/docs/CLI.md)

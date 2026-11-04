@@ -4,7 +4,7 @@ version = "0.6.1"
 description = "Google Analytics 4 + GTM + sGTM + Measurement Protocol tools for Grok"
 author = "Geoking2104 / KayrosLab"
 license = "Apache-2.0"
-repository = "https://github.com/Geoking2104/Google-Growth"
+repository = "https://github.com/Geoking2104/GTM-Growth"
 
 [mcp_servers.ga-to-grok]
 command = "node"

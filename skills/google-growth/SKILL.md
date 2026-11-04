@@ -4,11 +4,11 @@ description: Use live Google Analytics 4, Tag Manager, Search Console, PageSpeed
 license: Apache-2.0
 compatibility: Requires the google-growth MCP server (stdio or HTTPS). Works with Grok, Claude, and Codex.
 metadata:
-  source: https://github.com/Geoking2104/Google-Growth
+  source: https://github.com/Geoking2104/GTM-Growth
   version: "0.17.0"
   display_name: Google Growth
 external_urls:
-  - https://github.com/Geoking2104/Google-Growth
+  - https://github.com/Geoking2104/GTM-Growth
   - https://grok.com/connectors
   - https://analyticsdata.googleapis.com
   - https://analyticsadmin.googleapis.com
@@ -23,7 +23,7 @@ external_urls:
 
 Work with **GA4 + GTM + Search Console + PageSpeed + CrUX + GEO** via the **google-growth** MCP server.
 
-Source: https://github.com/Geoking2104/Google-Growth
+Source: https://github.com/Geoking2104/GTM-Growth
 
 This skill is for marketers, growth teams, and agencies who want answers from live Google data — not from pasted screenshots. It works with Grok, Claude, and Codex.
 
@@ -224,7 +224,7 @@ Writes (GTM tags, sitemap submit, Indexing API, MP secrets) are off by default.
 
 ## Source of truth
 
-Repo — https://github.com/Geoking2104/Google-Growth  
+Repo — https://github.com/Geoking2104/GTM-Growth  
 Skill name and MCP server name: `google-growth`.
 
 - Setup — `references/setup.md`

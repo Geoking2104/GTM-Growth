@@ -1,6 +1,6 @@
 # Package & use Google Growth with Grok Build
 
-MCP server name: **google-growth**. Repo: https://github.com/Geoking2104/Google-Growth
+MCP server name: **google-growth**. Repo: https://github.com/Geoking2104/GTM-Growth
 
 [Grok Build](https://docs.x.ai/build/overview) loads MCP servers from:
 
@@ -16,7 +16,7 @@ Tools appear as `google-growth__<tool_name>`.
 ## Quick start (local stdio)
 
 ```bash
-git clone https://github.com/Geoking2104/Google-Growth.git
+git clone https://github.com/Geoking2104/GTM-Growth.git
 cd google-growth
 npm install && npm run build
 

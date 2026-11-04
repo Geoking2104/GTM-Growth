@@ -115,7 +115,7 @@ export async function verifyKeyFile(
   let body: string | null = null;
   try {
     const response = await fetcher(url, {
-      headers: { "User-Agent": "GoogleGrowthGEO/1.0 (+https://github.com/Geoking2104/Google-Growth)" },
+      headers: { "User-Agent": "GoogleGrowthGEO/1.0 (+https://github.com/Geoking2104/GTM-Growth)" },
       signal: AbortSignal.timeout(options.timeoutMs ?? 10_000),
       redirect: "follow",
     });
@@ -290,7 +290,7 @@ export async function submitUrls(
       method: "POST",
       headers: {
         "Content-Type": "application/json; charset=utf-8",
-        "User-Agent": "GoogleGrowthGEO/1.0 (+https://github.com/Geoking2104/Google-Growth)",
+        "User-Agent": "GoogleGrowthGEO/1.0 (+https://github.com/Geoking2104/GTM-Growth)",
       },
       body: JSON.stringify(payload),
       signal: AbortSignal.timeout(options.timeoutMs ?? 15_000),

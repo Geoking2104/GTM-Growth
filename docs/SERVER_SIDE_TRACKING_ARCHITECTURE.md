@@ -69,4 +69,4 @@ Voir le détail complet dans l’historique du fichier (sections 1–13) : princ
 7. cutover client-side → server-only
 ```
 
-**Licence** : Apache-2.0 · [Google Growth](https://github.com/Geoking2104/Google-Growth)
+**Licence** : Apache-2.0 · [Google Growth](https://github.com/Geoking2104/GTM-Growth)

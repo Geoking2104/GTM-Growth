@@ -16,4 +16,4 @@ Allow: /
 User-agent: Applebot
 Allow: /
 
-Sitemap: https://geoking2104.github.io/Google-Growth/sitemap.xml
+Sitemap: https://geoking2104.github.io/GTM-Growth/sitemap.xml

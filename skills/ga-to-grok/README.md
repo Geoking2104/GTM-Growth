@@ -1,6 +1,6 @@
 # ga-to-grok skill
 
-Expert workflows for **Google Analytics 4**, **Google Tag Manager** (web + server-side), and **Measurement Protocol** via the open-source [Google Growth MCP server](https://github.com/Geoking2104/Google-Growth).
+Expert workflows for **Google Analytics 4**, **Google Tag Manager** (web + server-side), and **Measurement Protocol** via the open-source [Google Growth MCP server](https://github.com/Geoking2104/GTM-Growth).
 
 ## What this skill does
 
@@ -16,7 +16,7 @@ This skill **does not** contain credentials or the MCP server itself.
 
 You must:
 
-1. Deploy or run the [Google Growth MCP server](https://github.com/Geoking2104/Google-Growth) (Docker, Fly, Railway, VPS, or local).
+1. Deploy or run the [Google Growth MCP server](https://github.com/Geoking2104/GTM-Growth) (Docker, Fly, Railway, VPS, or local).
 2. Authenticate it with a Google Service Account that has access to your GA4 property (and GTM accounts if needed).
 3. Connect the server to your agent (Custom Connector with HTTPS `/mcp` or `/sse`, or local stdio).
 

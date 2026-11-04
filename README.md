@@ -4,7 +4,7 @@
 
 The agent reads live Google data, audits setups, crosses organic search with site speed, and (when explicitly enabled) submits sitemaps or notifies the Indexing API — via **MCP tools** or a **CLI**. Skill, MCP server, and GitHub repo are all named **google-growth**.
 
-**Website:** https://geoking2104.github.io/Google-Growth/ — a free URL read, then the full audit and assisted GTM engagement.
+**Website:** https://geoking2104.github.io/GTM-Growth/ — a free URL read, then the full audit and assisted GTM engagement.
 
 | Client | How to connect | Skill install |
 |--------|----------------|---------------|
@@ -153,7 +153,7 @@ INDEXING_WRITE_ENABLED=true
 ## 2. Install & configure
 
 ```bash
-git clone https://github.com/Geoking2104/Google-Growth.git
+git clone https://github.com/Geoking2104/GTM-Growth.git
 cd google-growth
 npm install
 cp .env.example .env

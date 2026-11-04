@@ -1,6 +1,6 @@
 # Connect Google Growth — practical guide
 
-Source — https://github.com/Geoking2104/Google-Growth
+Source — https://github.com/Geoking2104/GTM-Growth
 
 This guide is for marketers and the person who sets up the tools. You do not need to write code to *use* the skill, but someone must connect the server once.
 
@@ -23,7 +23,7 @@ Best if several people will ask questions in Grok.
 **Quick test deploy (owner)**
 
 ```bash
-git clone https://github.com/Geoking2104/Google-Growth.git
+git clone https://github.com/Geoking2104/GTM-Growth.git
 cd google-growth
 npm install && npm run build
 # fill .env with credentials
@@ -37,7 +37,7 @@ ngrok http 3000
 Best if one person works inside the repo (Grok Build, Cursor, Claude Code).
 
 ```bash
-git clone https://github.com/Geoking2104/Google-Growth.git
+git clone https://github.com/Geoking2104/GTM-Growth.git
 cd google-growth
 npm install && npm run build
 export GOOGLE_APPLICATION_CREDENTIALS=/absolute/path/to/sa.json

@@ -3,7 +3,7 @@ name: ga-to-grok
 description: Deprecated alias. Use the google-growth skill for GA4, GTM, Search Console, PageSpeed, and CrUX. Trigger when the user mentions Google Growth and redirect to google-growth.
 license: Apache-2.0
 metadata:
-  source: https://github.com/Geoking2104/Google-Growth
+  source: https://github.com/Geoking2104/GTM-Growth
   version: "0.8.0"
   replaced_by: google-growth
 ---

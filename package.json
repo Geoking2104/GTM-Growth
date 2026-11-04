@@ -67,12 +67,12 @@
   "license": "Apache-2.0",
   "repository": {
     "type": "git",
-    "url": "https://github.com/Geoking2104/Google-Growth.git"
+    "url": "https://github.com/Geoking2104/GTM-Growth.git"
   },
   "bugs": {
-    "url": "https://github.com/Geoking2104/Google-Growth/issues"
+    "url": "https://github.com/Geoking2104/GTM-Growth/issues"
   },
-  "homepage": "https://github.com/Geoking2104/Google-Growth#readme",
+  "homepage": "https://github.com/Geoking2104/GTM-Growth#readme",
   "engines": {
     "node": ">=20"
   },

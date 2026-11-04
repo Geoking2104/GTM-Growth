@@ -24,7 +24,7 @@ site/
 2. **Settings → Pages → Build and deployment → Source** must be **GitHub Actions**.
    If it is set to *Deploy from a branch*, the workflow stops at **Configure Pages**
    and the URL keeps serving the repository README through the default theme.
-3. Expected URL: `https://geoking2104.github.io/Google-Growth/` — if the
+3. Expected URL: `https://geoking2104.github.io/GTM-Growth/` — if the
    repository is renamed, update the canonical URL, `og:url`, `sitemap.xml`,
    `robots.txt` and `llms.txt`.
 

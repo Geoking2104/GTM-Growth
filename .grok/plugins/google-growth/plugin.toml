@@ -4,7 +4,7 @@ version = "0.8.0"
 description = "GA4, GTM, Search Console, PageSpeed, and CrUX tools"
 author = "Geoking2104 / KayrosLab"
 license = "Apache-2.0"
-repository = "https://github.com/Geoking2104/Google-Growth"
+repository = "https://github.com/Geoking2104/GTM-Growth"
 
 [mcp_servers.google-growth]
 command = "node"
