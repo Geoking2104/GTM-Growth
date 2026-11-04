@@ -27,18 +27,10 @@ import { runPagespeed } from "../google/pagespeed.js";
 import { queryCrux } from "../google/crux.js";
 import { measurePageWeight } from "./weight.js";
 import { logger } from "../utils/logger.js";
+import { phase2Routes } from "./phase2.js";
 
-type Body = Record<string, unknown>;
-export type Handler = (ctx: { url: string; body: Body; user?: TokenClaims }) => Promise<unknown>;
-
-export interface ConsoleRoute { path: string; handler: Handler; needsUrl?: boolean; }
-
-const str = (v: unknown): string | undefined => (typeof v === "string" && v.trim() ? v.trim() : undefined);
-const num = (v: unknown, d: number, min: number, max: number): number => {
-  const n = typeof v === "number" ? v : Number(v);
-  return Number.isFinite(n) ? Math.min(Math.max(n, min), max) : d;
-};
-export const helpers = { str, num };
+import { str, num, type Body, type ConsoleRoute } from "./util.js";
+export type { ConsoleRoute, Handler } from "./util.js";
 
 /** Phase 1 routes: Sitemap, GEO, Performance. */
 export const phase1Routes: ConsoleRoute[] = [
@@ -124,7 +116,7 @@ export function buildConsoleRouter(routes: ConsoleRoute[], options: { config?: O
       }
       try {
         const data = await route.handler({ url, body, user: (res.locals as { user?: TokenClaims }).user });
-        if (data instanceof Buffer) return res.type("application/pdf").send(data);
+        if (Buffer.isBuffer(data)) return res.type("application/pdf").setHeader("Content-Disposition", "attachment; filename=rapport-geo.pdf").send(data);
         return res.json(data);
       } catch (error) {
         logger.info(`[console] ${route.path} failed: ${(error as Error).message}`);
@@ -136,7 +128,7 @@ export function buildConsoleRouter(routes: ConsoleRoute[], options: { config?: O
 }
 
 export function allConsoleRoutes(): ConsoleRoute[] {
-  return [...phase1Routes];
+  return [...phase1Routes, ...phase2Routes];
 }
 
 export function mountConsoleApi(app: Express, options: { config?: OidcConfig | null; jwksLoader?: JwksLoader; routes?: ConsoleRoute[] } = {}): void {

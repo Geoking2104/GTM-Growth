@@ -40,4 +40,55 @@ export const TABS = [
   },
 ];
 
+const pct = (v) => (typeof v === "number" ? `${(v * 100).toFixed(1)} %` : "—");
+const pos = (v) => (typeof v === "number" ? v.toFixed(1) : "—");
+const days = { name: "days", label: "Période (jours)", type: "number", value: 28 };
+const eur = (v) => (v === null || v === undefined ? "—" : `${Number(v).toLocaleString("fr-FR")} €`);
+
+function sparkline(rows, key, label) {
+  const values = rows.map((r) => r[key] ?? 0); const max = Math.max(1, ...values); const w = 720; const h = 120;
+  const points = values.map((v, i) => `${(i / Math.max(1, values.length - 1)) * w},${h - (v / max) * (h - 10) - 5}`).join(" ");
+  const box = el("figure", "c-chart"); box.innerHTML = `<svg viewBox="0 0 ${w} ${h}" width="100%" height="${h}" role="img" aria-label="${label}"><polyline fill="none" stroke="#2563eb" stroke-width="2" points="${points}"/></svg>`;
+  box.append(el("figcaption", "c-note", `${label} — max ${max.toLocaleString("fr-FR")}`)); return box;
+}
+
+TABS.push(
+  {
+    id: "search", label: "Search", intro: "Données Search Console en direct pour la propriété indiquée en haut de page.",
+    actions: [
+      { id: "queries", label: "Requêtes", route: "/search/queries", needsUrl: false, params: [days, { name: "rowLimit", label: "Lignes", type: "number", value: 250 }],
+        render: (d) => [el("p", "c-note", `Du ${d.period.start} au ${d.period.end}`), table(d.rows, [["query", "Requête"], ["clicks", "Clics"], ["impressions", "Impressions"], [(r) => pct(r.ctr), "CTR"], [(r) => pos(r.position), "Position"]])] },
+      { id: "trends", label: "Tendances", route: "/search/trends", needsUrl: false, params: [{ ...days, value: 90 }],
+        render: (d) => [sparkline(d.rows, "clicks", "Clics par jour"), sparkline(d.rows, "impressions", "Impressions par jour")] },
+      { id: "losing", label: "Pages qui perdent des clics", route: "/search/losing-pages", needsUrl: false, params: [days],
+        render: (d) => [table(d.pages, [["page", "Page"], ["clicksBefore", "Clics avant"], ["clicksAfter", "Clics après"], ["delta", "Écart"], [(r) => (r.deltaPercent === null ? "—" : `${r.deltaPercent} %`), "Écart %"], [(r) => `${pos(r.positionBefore)} → ${pos(r.positionAfter)}`, "Position"]])] },
+      { id: "inspect", label: "Inspection d'URL", route: "/search/inspect", needsUrl: false, params: [{ name: "inspectUrl", label: "URL à inspecter", placeholder: "https://…" }],
+        render: (d) => { const r = d.inspectionResult?.indexStatusResult ?? {}; return [metrics([["Verdict", r.verdict], ["Couverture", r.coverageState], ["Dernier crawl", r.lastCrawlTime], ["Canonique Google", r.googleCanonical], ["Robots", r.robotsTxtState], ["Indexation", r.indexingState]])]; } },
+    ],
+  },
+  {
+    id: "keywords", label: "Mots-clés", intro: "Score d'opportunité et regroupement des requêtes, calculés à partir des paires requête/page de Search Console.",
+    actions: [
+      { id: "opps", label: "Opportunités et clusters", route: "/keywords/opportunities", needsUrl: false, params: [days, { name: "minImpressions", label: "Impressions min.", type: "number", value: 20 }, { name: "targetPosition", label: "Position cible", type: "number", value: 3 }],
+        render: (d) => [el("h4", "", "Clusters"), table(d.clusters, [["label", "Thème"], [(c) => c.queries.length, "Requêtes"], ["impressions", "Impressions"], ["clicks", "Clics"], ["score", "Score"], [(c) => c.pages.slice(0, 2).join(" · "), "Pages"]]), el("h4", "", "Requêtes à travailler"), table(d.opportunities, [["query", "Requête"], ["score", "Score"], [(r) => pos(r.position), "Position"], ["impressions", "Impressions"], ["potentialClicks", "Clics potentiels"], ["reason", "Action"], ["page", "Page"]])] },
+    ],
+  },
+  {
+    id: "calculators", label: "Calculateurs", intro: "Estimations indicatives : courbe de CTR par position, valeur du trafic, ROI et budget SEO.",
+    actions: [
+      { id: "ctr", label: "CTR par position", route: "/calc/ctr", needsUrl: false, button: "Afficher", render: (d) => [table(d.curve.map((r) => ({ ...r, ctr: `${r.ctr} %` })), [["position", "Position"], ["ctr", "CTR moyen"]]), el("p", "c-note", d.source)] },
+      { id: "value", label: "Valeur du trafic organique", route: "/calc/traffic-value", needsUrl: false, button: "Calculer", params: [{ name: "searchVolume", label: "Volume mensuel", type: "number", value: 1000 }, { name: "position", label: "Position", type: "number", value: 3 }, { name: "clicks", label: "ou clics réels (GSC)", type: "number" }, { name: "cpc", label: "CPC équivalent (€)", type: "number", step: "0.01", value: 1.5 }],
+        render: (d) => [metrics([["Clics / mois", d.clicks], ["Valeur / mois", eur(d.monthlyValue)], ["Valeur / an", eur(d.yearlyValue)]])] },
+      { id: "roi", label: "ROI SEO", route: "/calc/roi", needsUrl: false, button: "Calculer", params: [{ name: "monthlyTraffic", label: "Trafic / mois", type: "number", value: 5000 }, { name: "conversionRate", label: "Conversion (%)", type: "number", step: "0.1", value: 2 }, { name: "averageOrderValue", label: "Panier moyen (€)", type: "number", value: 80 }, { name: "margin", label: "Marge (%)", type: "number", value: 40 }, { name: "monthlyCost", label: "Coût SEO / mois (€)", type: "number", value: 1500 }],
+        render: (d) => [metrics([["Conversions", d.conversions], ["CA", eur(d.revenue)], ["Marge brute", eur(d.grossProfit)], ["ROI", d.roiPercent === null ? "—" : `${d.roiPercent} %`], ["Trafic d'équilibre", d.breakEvenTraffic]])] },
+      { id: "budget", label: "Budget SEO", route: "/calc/budget", needsUrl: false, button: "Calculer", params: [{ name: "targetRevenue", label: "Objectif CA / mois (€)", type: "number", value: 20000 }, { name: "conversionRate", label: "Conversion (%)", type: "number", step: "0.1", value: 2 }, { name: "averageOrderValue", label: "Panier moyen (€)", type: "number", value: 80 }, { name: "costPerVisit", label: "Coût par visite (€)", type: "number", step: "0.01", value: 0.3 }],
+        render: (d) => [metrics([["Conversions nécessaires", d.conversionsNeeded], ["Trafic nécessaire", d.trafficNeeded], ["Budget / mois", eur(d.monthlyBudget)]])] },
+    ],
+  },
+  {
+    id: "report", label: "Rapport PDF", intro: "Rapport GEO complet (audit, plateformes IA, citabilité) généré à la demande pour le domaine choisi.",
+    actions: [{ id: "pdf", label: "Exporter le rapport PDF", route: "/report/pdf", download: "rapport-geo.pdf", button: "Générer le PDF", params: [{ name: "brandName", label: "Marque (optionnel)" }] }],
+  },
+);
+
 export { raw };
