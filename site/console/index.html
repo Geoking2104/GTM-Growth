@@ -6,36 +6,64 @@
 <meta name="robots" content="noindex, nofollow">
 <title>Console GTM Growth</title>
 <link rel="icon" href="../assets/logo-64.png" type="image/png">
+<link rel="stylesheet" href="../styles.css">
 <link rel="stylesheet" href="../sitemap-map.css">
-<link rel="stylesheet" href="console.css">
+<link rel="stylesheet" href="shell.css">
 </head>
-<body>
-<div id="c-login" class="c-login" hidden>
+<body class="console-page">
+<!-- Connexion : même coque .app que la console publique -->
+<div id="c-login" class="app c-login" hidden>
   <div class="c-login-card">
-    <img src="../assets/logo-64.png" alt="" width="48" height="48">
-    <h1>Console GTM Growth</h1>
-    <p>Accès réservé. Connectez-vous avec votre compte (SSO Keycloak).</p>
+    <img src="../assets/logo-64.png" alt="" width="44" height="44">
+    <h1 data-i18n="title">Console GTM Growth</h1>
+    <p data-i18n="loginLead">Accès réservé. Connectez-vous avec votre compte (SSO Keycloak).</p>
     <img id="c-login-logo" class="c-logo" alt="" hidden>
     <form id="c-login-form" class="c-form">
-      <label class="c-field"><span>E-mail professionnel</span><input id="c-login-email" type="email" autocomplete="username" placeholder="prenom@entreprise.fr"></label>
-      <button id="c-login-btn" class="c-btn" type="submit">Continuer</button>
+      <label class="c-field"><span data-i18n="email">E-mail professionnel</span><input id="c-login-email" type="email" autocomplete="username" placeholder="prenom@entreprise.fr"></label>
+      <button id="c-login-btn" class="btn btn-small" type="submit" data-i18n="continue">Continuer</button>
     </form>
-    <p class="c-note">Votre espace client est détecté à partir de votre e-mail, du sous-domaine (<code>client.gtm.kayroslab.com</code>) ou du lien <code>?tenant=client</code>.</p>
-    <p id="c-login-error" class="c-error"></p>
+    <p class="c-note" data-i18n="loginHelp">Votre espace client est détecté à partir de votre e-mail, du sous-domaine ou du lien ?tenant=client.</p>
+    <p id="c-login-error" class="c-error" role="alert"></p>
+    <p class="c-note"><a href="../" data-i18n="backToSite">← Retour au site</a></p>
   </div>
 </div>
-<div id="c-app" hidden>
-  <header class="c-header">
-    <strong>GTM Growth · Console</strong>
-    <label class="c-field c-inline"><span>Domaine</span><input id="c-url" placeholder="https://www.exemple.fr"></label>
-    <label class="c-field c-inline"><span>Propriété Search Console</span><input id="c-property" placeholder="sc-domain:exemple.fr"></label>
-    <label class="c-field c-inline" id="c-tenant-wrap" hidden><span>Client</span><select id="c-tenant"></select></label>
-    <span id="c-user" class="c-user"></span>
-    <a id="c-account" class="c-btn c-btn-ghost" target="_blank" rel="noopener">Mon compte</a>
-    <button id="c-logout" class="c-btn c-btn-ghost" type="button">Déconnexion</button>
-  </header>
-  <nav id="c-tabs" class="c-tabs" role="tablist" aria-label="Outils"></nav>
-  <main id="c-panels" class="c-panels"></main>
+
+<!-- Console : reprend exactement la structure de la section #console du site -->
+<div id="c-app" class="app c-app" hidden>
+  <div class="app-tabs" id="c-tabs" role="tablist"></div>
+  <div class="app-body">
+    <aside class="app-side">
+      <button type="button" class="app-switch" id="c-switch" aria-expanded="false" aria-controls="c-picker">
+        <img id="c-switch-logo" src="../assets/logo-64.png" alt="" width="20" height="20">
+        <span id="c-switch-label">—</span>
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" class="chev"><path d="M9 6l6 6-6 6"/></svg>
+      </button>
+      <form id="c-picker" class="c-picker" hidden>
+        <label class="c-field" id="c-tenant-wrap" hidden><span data-i18n="client">Client</span><select id="c-tenant"></select></label>
+        <label class="c-field"><span data-i18n="domain">Domaine analysé</span><input id="c-url" placeholder="https://www.exemple.fr"></label>
+        <label class="c-field"><span data-i18n="property">Propriété Search Console</span><input id="c-property" placeholder="sc-domain:exemple.fr"></label>
+        <button class="btn btn-small" type="submit" data-i18n="apply">Appliquer</button>
+      </form>
+      <label class="app-search"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="11" cy="11" r="6.5"/><path d="M16 16l4.5 4.5"/></svg><input id="c-search" type="search" data-i18n-ph="search" placeholder="Rechercher" aria-label="Rechercher"><kbd>⌘K</kbd></label>
+      <p class="app-group" data-i18n="track">Track</p>
+      <ul class="app-nav" id="c-nav-track"></ul>
+      <p class="app-group" data-i18n="act">Act</p>
+      <ul class="app-nav" id="c-nav-act"></ul>
+      <a class="app-side-foot" id="c-account" target="_blank" rel="noopener"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="3"/><path d="M12 3v3M12 18v3M3 12h3M18 12h3M5.6 5.6l2 2M16.4 16.4l2 2M18.4 5.6l-2 2M7.6 16.4l-2 2"/></svg><span data-i18n="settings">Mon compte</span></a>
+    </aside>
+    <div class="app-main">
+      <div class="app-head">
+        <p class="app-crumb"><span id="c-crumb-site">—</span> <span aria-hidden="true">▸</span> <strong id="c-crumb">Vue d’ensemble</strong></p>
+        <div class="app-filters">
+          <span class="app-pill dashed" id="c-user"></span>
+          <span class="app-pill" id="c-live"></span>
+          <a class="app-pill" id="c-lang" href="#"></a>
+          <button class="app-pill" id="c-logout" type="button" data-i18n="logout">Déconnexion</button>
+        </div>
+      </div>
+      <div id="c-panels"></div>
+    </div>
+  </div>
 </div>
 <script type="module" src="app.js"></script>
 </body>

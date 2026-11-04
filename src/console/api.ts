@@ -33,6 +33,10 @@ import { queryCrux } from "../google/crux.js";
 import { measurePageWeight } from "./weight.js";
 import { logger } from "../utils/logger.js";
 import { phase2Routes } from "./phase2.js";
+import { runGeoAudit } from "../geo/audit.js";
+import { buildPlatformReadiness } from "../geo/platforms.js";
+import { auditIndexNow } from "../indexnow/readiness.js";
+import { buildAnalysisBoard } from "../analysis/board.js";
 import { phase3Routes } from "./phase3.js";
 
 import { str, num, type Body, type ConsoleRoute } from "./util.js";
@@ -40,6 +44,26 @@ export type { ConsoleRoute, Handler } from "./util.js";
 
 /** Phase 1 routes: Sitemap, GEO, Performance. */
 export const phase1Routes: ConsoleRoute[] = [
+  {
+    // Vue d'ensemble : même charge utile que l'outil MCP analysis-board (audit GEO,
+    // préparation par moteur, citabilité, IndexNow) pour le tableau de bord de la console.
+    path: "/overview",
+    handler: async ({ url, body }) => {
+      const audit = await runGeoAudit({ url });
+      const platforms = buildPlatformReadiness(audit);
+      const citability = await runCitability({ url: audit.finalUrl }).catch(() => undefined);
+      const host = new URL(audit.finalUrl).hostname;
+      const indexnow = await auditIndexNow({ host, https: audit.finalUrl.startsWith("https:"), audit, key: str(body.indexnowKey) ?? null });
+      const board = buildAnalysisBoard({ audit, platforms, citability, indexnow });
+      return {
+        url: audit.finalUrl, generatedAt: board.generatedAt,
+        geo: { score: audit.score, projectedScore: audit.projectedScore, band: audit.band, breakdown: audit.scoreBreakdown, max: audit.scoreMax, recommendations: audit.recommendations },
+        platforms: platforms.map((p) => ({ id: p.id, label: p.label, score: p.score, band: p.band, mainGap: p.mainGap })),
+        citability: citability ? { score: citability.score, points: citability.points, max: citability.max } : null,
+        indexnow, board,
+      };
+    },
+  },
   {
     path: "/sitemap/map",
     handler: async ({ url }) => {

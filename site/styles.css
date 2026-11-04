@@ -791,3 +791,4 @@ details[open] summary::after { content: "–"; }
 @media (max-width: 420px) {
   .hero-proof-grid, .console-kpis { grid-template-columns: 1fr; }
 }
+.console-cta { margin: 1rem 0 0; }

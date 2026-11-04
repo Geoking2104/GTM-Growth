@@ -1,12 +1,19 @@
+/* Console authentifiée : même design que la section #console du site (coque .app),
+ * données en direct via /api/console/*. Les définitions d'outils viennent de tools.js. */
 import { API_BASE, DISCOVER, CONSOLE_DOMAIN } from "./config.js";
 import { login, logout, handleRedirect, accessToken, currentTenant, setTenant, accountConsoleUrl } from "./auth.js";
-import { TABS, raw } from "./tabs.js";
+import { TABS, raw } from "./tools.js";
 import { el } from "./render.js";
+import { t, actionLabel, LANG } from "./i18n.js";
+import { icon } from "./icons.js";
+import { renderOverview, renderPlan, renderIndexNow } from "./overview.js";
 
 const $ = (s) => document.querySelector(s);
 const selectedTenant = () => sessionStorage.getItem("gtm-console-selected") || currentTenant()?.id || "";
 const headers = (token) => ({ Authorization: `Bearer ${token}`, ...(selectedTenant() ? { "X-Tenant": selectedTenant() } : {}) });
-const state = { url: localStorage.getItem("gtm-console-url") || "", property: localStorage.getItem("gtm-console-property") || "" };
+const state = { url: localStorage.getItem("gtm-console-url") || "", property: localStorage.getItem("gtm-console-property") || "", overview: null, overviewFor: "" };
+const tool = (id) => TABS.find((x) => x.id === id);
+const host = (u) => { try { return new URL(u).hostname.replace(/^www\./, ""); } catch { return u || "—"; } };
 
 export async function api(route, body, { binary = false } = {}) {
   const token = await accessToken();
@@ -17,10 +24,41 @@ export async function api(route, body, { binary = false } = {}) {
   return binary ? res.blob() : res.json();
 }
 
+async function overview() {
+  if (state.overview && state.overviewFor === state.url) return state.overview;
+  state.overview = await api("/overview", { url: state.url }); state.overviewFor = state.url; return state.overview;
+}
+
+/* ── Sections de la barre latérale : Track / Act, comme la démo publique ── */
+const custom = (id, tabs) => ({ id, tabs });
+const fromTool = (id, filter = () => true, intro) => () => { const x = tool(id); return { intro: intro ?? x.intro, tabs: x.actions.filter(filter).map((a) => ({ id: a.id, label: actionLabel(a), action: a })) }; };
+const SECTIONS = {
+  track: [
+    { id: "overview", icon: "overview", build: () => custom("overview", [
+      { id: "board", label: t("s_overview"), async: async () => renderOverview(await overview()) },
+      { id: "plan", label: t("t_plan"), async: async () => renderPlan(await overview()) }]) },
+    { id: "geo", icon: "geo", build: fromTool("geo", (a) => a.id !== "citability") },
+    { id: "citability", icon: "citability", build: fromTool("geo", (a) => a.id === "citability", t("citIntro")) },
+    { id: "indexnow", icon: "indexnow", build: () => custom("indexnow", [{ id: "readiness", label: t("s_indexnow"), async: async () => renderIndexNow(await overview()) }]) },
+    { id: "sitemap", icon: "sitemap", build: fromTool("sitemap") },
+    { id: "performance", icon: "performance", build: fromTool("performance") },
+  ],
+  act: [
+    { id: "search", icon: "search", build: fromTool("search") },
+    { id: "keywords", icon: "keywords", build: fromTool("keywords") },
+    { id: "tracking", icon: "tracking", build: () => custom("tracking", [{ id: "ga4", label: "GA4 · Tag Manager", async: async () => [el("p", "c-intro", t("trackingNote"))] }]) },
+    { id: "audit", icon: "audit", build: fromTool("audit") },
+    { id: "generators", icon: "generators", build: fromTool("generators") },
+    { id: "calculators", icon: "calculators", build: fromTool("calculators") },
+    { id: "report", icon: "report", build: fromTool("report") },
+  ],
+};
+const ALL = [...SECTIONS.track, ...SECTIONS.act];
+
 function paramField(p) {
   const label = el("label", "c-field"); label.append(el("span", "", p.label));
   let input;
-  if (p.type === "select") { input = el("select"); for (const [v, t] of p.options) { const o = el("option", "", t); o.value = v; input.append(o); } }
+  if (p.type === "select") { input = el("select"); for (const [v, txt] of p.options) { const o = el("option", "", txt); o.value = v; input.append(o); } }
   else if (p.type === "textarea") { input = el("textarea"); input.rows = p.rows ?? 4; input.value = p.value ?? ""; }
   else { input = el("input"); input.type = p.type ?? "text"; if (p.value !== undefined) input.value = p.value; if (p.step) input.step = p.step; if (p.placeholder) input.placeholder = p.placeholder; }
   input.name = p.name; label.append(input); return label;
@@ -28,21 +66,21 @@ function paramField(p) {
 
 function renderAction(action) {
   const card = el("section", "c-card");
-  card.append(el("h3", "", action.label));
+  card.append(el("h3", "", actionLabel(action)));
   if (action.help) card.append(el("p", "c-note", action.help));
   const form = el("form", "c-form");
   for (const p of action.params ?? []) form.append(paramField(p));
-  const btn = el("button", "c-btn", action.button ?? "Lancer"); btn.type = "submit"; form.append(btn);
+  const btn = el("button", "btn btn-small", action.button ?? t("run")); btn.type = "submit"; form.append(btn);
   const out = el("div", "c-out");
   form.onsubmit = async (event) => {
     event.preventDefault();
     const body = { url: state.url, property: state.property || undefined };
     for (const [k, v] of new FormData(form)) body[k] = v;
     if (action.local) { out.replaceChildren(...[action.local(body)].flat()); return; }
-    if (action.needsUrl !== false && !state.url) { out.replaceChildren(el("p", "c-error", "Renseignez d'abord le domaine en haut de la page.")); return; }
-    btn.disabled = true; out.replaceChildren(el("p", "c-note", "Analyse en cours…"));
+    if (action.needsUrl !== false && !state.url) { out.replaceChildren(el("p", "c-error", t("noDomain"))); return; }
+    btn.disabled = true; out.replaceChildren(el("p", "c-loading", t("running")));
     try {
-      if (action.download) { const blob = await api(action.route, body, { binary: true }); const a = el("a", "c-btn", "Télécharger le PDF"); a.href = URL.createObjectURL(blob); a.download = action.download; out.replaceChildren(a); a.click(); return; }
+      if (action.download) { const blob = await api(action.route, body, { binary: true }); const a = el("a", "btn btn-small", t("download")); a.href = URL.createObjectURL(blob); a.download = action.download; out.replaceChildren(a); a.click(); return; }
       const data = await api(action.route, body);
       out.replaceChildren(...[action.render ? action.render(data, body) : []].flat(), raw(data));
     } catch (error) { out.replaceChildren(el("p", "c-error", error.message)); }
@@ -51,22 +89,58 @@ function renderAction(action) {
   card.append(form, out); return card;
 }
 
-function mountTabs() {
-  const nav = $("#c-tabs"); const main = $("#c-panels");
-  TABS.forEach((tab, i) => {
-    const b = el("button", "c-tab", tab.label); b.type = "button"; b.setAttribute("role", "tab");
-    const panel = el("div", "c-panel"); panel.setAttribute("role", "tabpanel"); panel.hidden = i !== 0;
-    panel.append(el("p", "c-intro", tab.intro), ...tab.actions.map(renderAction));
-    b.onclick = () => { nav.querySelectorAll(".c-tab").forEach((x) => x.setAttribute("aria-selected", "false")); b.setAttribute("aria-selected", "true"); main.querySelectorAll(".c-panel").forEach((p) => (p.hidden = p !== panel)); location.hash = tab.id; };
-    b.setAttribute("aria-selected", String(i === 0));
-    nav.append(b); main.append(panel);
-  });
-  const wanted = [...nav.children].find((b, i) => TABS[i].id === location.hash.slice(1)); wanted?.click();
+let current = { section: "overview", tab: "" };
+async function show(sectionId, tabId) {
+  const section = ALL.find((s) => s.id === sectionId) ?? ALL[0];
+  const def = section.build();
+  const tab = def.tabs.find((x) => x.id === tabId) ?? def.tabs[0];
+  current = { section: section.id, tab: tab.id };
+  history.replaceState(null, "", `#${section.id}${tab.id !== def.tabs[0].id ? `/${tab.id}` : ""}`);
+  document.querySelectorAll(".app-nav a").forEach((a) => { const on = a.dataset.section === section.id; a.classList.toggle("is-active", on); if (on) a.setAttribute("aria-current", "true"); else a.removeAttribute("aria-current"); });
+  $("#c-crumb").textContent = t(`s_${section.id}`);
+  const tabs = $("#c-tabs"); tabs.replaceChildren();
+  for (const x of def.tabs) {
+    const b = el("button", `app-tab${x.id === tab.id ? " is-active" : ""}`); b.type = "button"; b.setAttribute("role", "tab"); b.setAttribute("aria-selected", String(x.id === tab.id));
+    const ic = el("span", "app-tab-icon"); ic.innerHTML = icon(section.icon); b.append(ic, x.label);
+    b.onclick = () => show(section.id, x.id); tabs.append(b);
+  }
+  const panel = el("section", "app-panel c-panel"); panel.setAttribute("role", "tabpanel");
+  $("#c-panels").replaceChildren(panel);
+  if (def.intro) panel.append(el("p", "c-intro", def.intro));
+  if (tab.action) { panel.append(renderAction(tab.action)); return; }
+  if (!state.url) { panel.append(el("p", "c-intro", t("noDomain"))); return; }
+  const loading = el("p", "c-loading", t("loadingOverview")); panel.append(loading);
+  try { const nodes = await tab.async(); if (current.section === section.id && current.tab === tab.id) loading.replaceWith(...[nodes].flat()); }
+  catch (error) { loading.replaceWith(el("p", "c-error", error.message)); }
+}
+
+function mountNav() {
+  for (const [group, list] of Object.entries(SECTIONS)) {
+    const ul = $(`#c-nav-${group}`);
+    for (const s of list) { const li = el("li"); const a = el("a"); a.href = `#${s.id}`; a.dataset.section = s.id; a.innerHTML = icon(s.icon); a.append(el("span", "", t(`s_${s.id}`))); a.onclick = (e) => { e.preventDefault(); show(s.id); }; li.append(a); ul.append(li); }
+  }
+  const search = $("#c-search");
+  search.oninput = () => { const q = search.value.trim().toLowerCase(); document.querySelectorAll(".app-nav li").forEach((li) => { li.hidden = q && !li.textContent.toLowerCase().includes(q); }); };
+  search.onkeydown = (e) => { if (e.key === "Enter") { const first = [...document.querySelectorAll(".app-nav li:not([hidden]) a")][0]; first?.click(); } };
+  document.addEventListener("keydown", (e) => { if ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === "k") { e.preventDefault(); search.focus(); } });
+}
+
+function i18nStatic() {
+  document.querySelectorAll("[data-i18n]").forEach((n) => { n.textContent = t(n.dataset.i18n); });
+  document.querySelectorAll("[data-i18n-ph]").forEach((n) => { n.placeholder = t(n.dataset.i18nPh); n.setAttribute("aria-label", t(n.dataset.i18nPh)); });
+  document.title = t("title");
+  const other = LANG === "en" ? "fr" : "en"; const l = $("#c-lang"); l.textContent = other.toUpperCase();
+  l.onclick = (e) => { e.preventDefault(); localStorage.setItem("gtm-console-lang", other); const u = new URL(location.href); u.searchParams.delete("lang"); location.replace(u); };
+}
+
+function refreshSite() {
+  $("#c-switch-label").textContent = host(state.url); $("#c-crumb-site").textContent = host(state.url);
+  $("#c-live").textContent = `${t("live")} · ${new Date().toLocaleDateString(LANG === "en" ? "en-GB" : "fr-FR", { day: "numeric", month: "short", year: "numeric" })}`;
 }
 
 function applyBranding(branding) {
-  if (branding?.primaryColor) document.documentElement.style.setProperty("--brand", branding.primaryColor);
-  if (branding?.logoUrl) { const img = $("#c-login-logo") ; img.src = branding.logoUrl; img.hidden = false; }
+  if (branding?.primaryColor) document.documentElement.style.setProperty("--app-accent", branding.primaryColor);
+  if (branding?.logoUrl) { const img = $("#c-login-logo"); img.src = branding.logoUrl; img.hidden = false; $("#c-switch-logo").src = branding.logoUrl; }
 }
 
 async function discover(query) {
@@ -78,66 +152,76 @@ async function discover(query) {
  * Le gestionnaire est attaché avant tout await : un clic n'est jamais perdu, et
  * toute erreur est affichée au lieu d'échouer silencieusement. */
 async function loginScreen() {
+  i18nStaticLogin();
   $("#c-login").hidden = false;
   const errorBox = $("#c-login-error"); const btn = $("#c-login-btn");
   let tenant = currentTenant();
   let ready = Promise.resolve();
   $("#c-login-form").onsubmit = async (event) => {
     event.preventDefault();
-    errorBox.textContent = ""; btn.disabled = true; btn.textContent = "Redirection…";
+    errorBox.textContent = ""; btn.disabled = true; btn.textContent = t("redirecting");
     try {
       await ready;
       const email = $("#c-login-email").value.trim();
       if (!tenant && email) {
-        // Domaine inconnu ou public (gmail.com…) : connexion au realm par défaut ;
-        // l'espace client est ensuite déduit des claims du jeton (organisation, groupes).
         tenant = await discover({ email }).catch(() => null);
         if (tenant) setTenant(tenant);
       }
       await login(email || undefined);
     } catch (error) {
       console.error(error);
-      errorBox.textContent = `Connexion impossible : ${error?.message ?? error}`;
-      btn.disabled = false; btn.textContent = "Continuer";
+      errorBox.textContent = `${t("loginFail")} : ${error?.message ?? error}`;
+      btn.disabled = false; btn.textContent = t("continue");
     }
   };
   const fromUrl = new URLSearchParams(location.search).get("tenant");
-  const host = location.hostname.endsWith(`.${CONSOLE_DOMAIN}`) ? location.hostname : "";
-  if (!tenant && (fromUrl || host)) {
-    ready = discover(fromUrl ? { tenant: fromUrl } : { host }).then((t) => {
-      if (t) { tenant = t; setTenant(t); applyBranding(t.branding); btn.textContent = `Se connecter à ${t.name}`; }
-    }).catch(() => {});
-  } else if (tenant) { applyBranding(tenant.branding); btn.textContent = `Se connecter à ${tenant.name}`; }
+  const sub = location.hostname.endsWith(`.${CONSOLE_DOMAIN}`) ? location.hostname : "";
+  const label = (n) => (LANG === "en" ? `Sign in to ${n}` : `Se connecter à ${n}`);
+  if (!tenant && (fromUrl || sub)) {
+    ready = discover(fromUrl ? { tenant: fromUrl } : { host: sub }).then((x) => { if (x) { tenant = x; setTenant(x); applyBranding(x.branding); btn.textContent = label(x.name); } }).catch(() => {});
+  } else if (tenant) { applyBranding(tenant.branding); btn.textContent = label(tenant.name); }
 }
+function i18nStaticLogin() { document.querySelectorAll("#c-login [data-i18n]").forEach((n) => { n.textContent = t(n.dataset.i18n); }); document.title = t("title"); }
 
 async function start() {
   let tokens;
   try { tokens = await handleRedirect(); } catch (error) { console.error(error); $("#c-login-error").textContent = error.message; }
   if (!tokens) return loginScreen();
-  $("#c-app").hidden = false; $("#c-logout").onclick = () => { setTenant(null); sessionStorage.removeItem("gtm-console-selected"); logout(); };
+  $("#c-app").hidden = false; i18nStatic();
+  $("#c-logout").onclick = () => { setTenant(null); sessionStorage.removeItem("gtm-console-selected"); logout(); };
   $("#c-account").href = accountConsoleUrl();
-  const urlInput = $("#c-url"); const propInput = $("#c-property");
+  const picker = $("#c-picker"); const sw = $("#c-switch");
+  sw.onclick = () => { picker.hidden = !picker.hidden; sw.setAttribute("aria-expanded", String(!picker.hidden)); };
   try {
     const token = await accessToken();
     const res = await fetch(`${API_BASE}/me`, { headers: headers(token) });
     const me = await res.json();
     if (!res.ok) throw new Error(me.error || `Erreur ${res.status}`);
-    $("#c-user").textContent = `${me.username ?? ""}${me.tenant ? ` · ${me.tenant.name}` : ""}${me.platformAdmin ? " · super-admin" : ""}`;
+    $("#c-user").textContent = `${me.username ?? ""}${me.tenant ? ` · ${me.tenant.name}` : ""}${me.platformAdmin ? ` · ${t("superAdmin")}` : ""}`;
     if (me.accountConsole) $("#c-account").href = me.accountConsole;
     applyBranding(me.tenant?.branding);
+    const select = $("#c-tenant");
     if ((me.memberships?.length ?? 0) > 1 || me.platformAdmin) {
-      const select = $("#c-tenant"); $("#c-tenant-wrap").hidden = false;
+      $("#c-tenant-wrap").hidden = false;
       for (const m of me.memberships ?? []) { const o = el("option", "", `${m.id} (${m.role})`); o.value = m.id; select.append(o); }
       if (me.tenant && ![...select.options].some((o) => o.value === me.tenant.id)) { const o = el("option", "", me.tenant.id); o.value = me.tenant.id; select.append(o); }
-      select.value = me.tenant?.id ?? "";
-      select.onchange = () => { sessionStorage.setItem("gtm-console-selected", select.value); location.reload(); };
+      select.value = me.tenant?.id ?? selectedTenant() ?? "";
     }
     if (!state.url && me.tenant?.domains?.[0]) state.url = `https://${me.tenant.domains[0]}`;
     if (!state.property && me.tenant?.gscProperties?.[0]) state.property = me.tenant.gscProperties[0];
   } catch (error) { $("#c-user").textContent = error.message; }
-  urlInput.value = state.url; propInput.value = state.property;
-  urlInput.onchange = () => { state.url = urlInput.value.trim(); localStorage.setItem("gtm-console-url", state.url); };
-  propInput.onchange = () => { state.property = propInput.value.trim(); localStorage.setItem("gtm-console-property", state.property); };
-  mountTabs();
+  $("#c-url").value = state.url; $("#c-property").value = state.property;
+  picker.onsubmit = (e) => {
+    e.preventDefault();
+    const tenantSel = $("#c-tenant");
+    state.url = $("#c-url").value.trim(); state.property = $("#c-property").value.trim();
+    localStorage.setItem("gtm-console-url", state.url); localStorage.setItem("gtm-console-property", state.property);
+    if (!$("#c-tenant-wrap").hidden && tenantSel.value && tenantSel.value !== selectedTenant()) { sessionStorage.setItem("gtm-console-selected", tenantSel.value); location.reload(); return; }
+    picker.hidden = true; sw.setAttribute("aria-expanded", "false"); refreshSite(); show(current.section, current.tab);
+  };
+  refreshSite(); mountNav();
+  const [s, tb] = location.hash.slice(1).split("/");
+  if (!state.url) { picker.hidden = false; sw.setAttribute("aria-expanded", "true"); }
+  show(s || "overview", tb);
 }
 start().catch((error) => { console.error(error); loginScreen(); $("#c-login-error").textContent = error.message; });
