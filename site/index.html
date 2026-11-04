@@ -101,11 +101,10 @@
       <span>GTM&nbsp;Growth</span>
     </a>
     <nav class="nav" aria-label="Primary">
-      <a href="#solutions">Solutions</a>
+      <a href="#tools">Tools</a>
+      <a href="#toolkit">Toolkit</a>
       <a href="#console">Console</a>
-      <a href="#board">Board</a>
-      <a href="#measurement">Measurement</a>
-      <a href="#how">How it works</a>
+      <a href="#proof">Proof</a>
       <a href="#plans">Plans</a>
       <a href="#faq">FAQ</a>
       <a class="nav-gh" href="https://github.com/Geoking2104/GTM-Growth">GitHub</a>
@@ -158,8 +157,8 @@
     </div>
   </section>
 
-  <!-- ── Free read result ─────────────────────────────────── -->
-  <section class="section result-section" id="free-read" aria-labelledby="result-heading" hidden>
+
+<section class="section result-section" id="free-read" aria-labelledby="result-heading" hidden>
     <div class="wrap">
       <div class="result-card">
         <div class="result-head">
@@ -199,30 +198,29 @@
     </div>
   </section>
 
-  <!-- ── Solutions ────────────────────────────────────────── -->
-  <section class="section" id="solutions" aria-labelledby="solutions-heading">
+
+  <!-- ── Free tools ──────────────────────────────────────── -->
+  <section class="section" id="tools" aria-labelledby="tools-heading">
     <div class="wrap">
       <header class="section-head">
-        <p class="eyebrow eyebrow-dark">Solutions</p>
-        <h2 id="solutions-heading">Three free tables, and seven jobs behind them</h2>
-        <p class="section-sub">The free read now returns SEO tables, a GA4 report and a Search Console report, measured on your page, its robots.txt and its sitemap. The server adds the rest, each answer with the evidence behind it.</p>
+        <p class="eyebrow eyebrow-dark">Free tools</p>
+        <h2 id="tools-heading">Three tables, free, before any signup</h2>
+        <p class="section-sub">The free read measures your page, its robots.txt and its sitemap, then renders the SEO, GA4 and Search Console tables. No account, no mail client.</p>
       </header>
 
-            <div class="grid cards cards-free">
+      <div class="grid cards cards-free">
         <article class="card">
           <span class="icon" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M4 6h16M4 12h16M4 18h10"/></svg></span>
           <h3>SEO tables</h3>
           <p>Title and description lengths, canonical, robots meta, H1–H3 outline, word count, internal and external links, images without alt, JSON-LD blocks and types. Measured on the HTML you serve — never estimated.</p>
           <p class="tag">free read · /api/free-read</p>
         </article>
-
         <article class="card">
           <span class="icon" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M7 7h4v10H7zM13 7h4v6h-4z"/></svg></span>
           <h3>GA4 report</h3>
           <p>Measurement IDs, dead Universal Analytics tags, container count, duplicated loaders, <code>dataLayer</code> and consent mode — everything that decides whether the sessions you report actually exist.</p>
           <p class="tag">free read · /api/free-read</p>
         </article>
-
         <article class="card">
           <span class="icon" aria-hidden="true"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="8"/><path d="M4 12h16M12 4c3 3 3 13 0 16M12 4c-3 3-3 13 0 16"/></svg></span>
           <h3>Search Console report</h3>
@@ -231,47 +229,50 @@
         </article>
       </div>
 
-      <p class="free-note">Sessions and clicks need a connected property. Until one is connected, those two reports are labelled <strong>sample</strong> — nothing on this page is estimated silently.</p>
+      <p class="free-note">Sessions and clicks need a connected property. Until one is connected, those two reports are labelled <strong>sample</strong> — nothing here is estimated silently.</p>
+    </div>
+  </section>
 
-      <h3 class="group-head">The server <span>read-only by default, deterministic, covered by tests</span></h3>
+  <!-- ── The toolkit ─────────────────────────────────────── -->
+  <section class="section section-alt" id="toolkit" aria-labelledby="toolkit-heading">
+    <div class="wrap">
+      <header class="section-head">
+        <p class="eyebrow eyebrow-dark">The toolkit</p>
+        <h2 id="toolkit-heading">Seven jobs behind the tables</h2>
+        <p class="section-sub">Read-only by default, deterministic, covered by tests. Every answer arrives with the evidence behind it — including when the answer is no.</p>
+      </header>
 
       <div class="grid cards">
-
         <article class="card">
           <span class="icon" aria-hidden="true"><svg viewBox="0 0 24 24"><circle cx="11" cy="11" r="7"/><path d="M16.5 16.5 21 21"/></svg></span>
           <h3>GEO audit</h3>
           <p>Score a page 0–100 across eight categories — robots, llms.txt, schema, meta, content, brand, signals, discovery — with the fix order computed from recoverable points.</p>
           <p class="tag">geo_audit</p>
         </article>
-
         <article class="card">
           <span class="icon" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M7 7h4v10H7zM13 7h4v6h-4z"/></svg></span>
           <h3>Citability</h3>
           <p>A second score that asks whether a passage would be quoted: statistics, quotations, structure, question headings, answer-first writing, authorship, freshness.</p>
           <p class="tag">geo_citability</p>
         </article>
-
         <article class="card">
           <span class="icon" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M6 4h9l4 4v12H6z"/><path d="M15 4v5h4"/></svg></span>
           <h3>llms.txt, generated and checked</h3>
           <p>Build the file from your sitemap, then catch drift after every deploy: links that left the sitemap, pages never added, and how many links still resolve.</p>
           <p class="tag">geo_generate_llms_txt · geo_llms_drift</p>
         </article>
-
         <article class="card">
           <span class="icon" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M9 7 5 12l4 5M15 7l4 5-4 5"/></svg></span>
           <h3>Structured data</h3>
           <p>Rich JSON-LD templates for WebSite, Organization, FAQ, Article, Product and LocalBusiness — five-plus attributes, not generic name-and-url markup.</p>
           <p class="tag">geo_generate_schema</p>
         </article>
-
         <article class="card">
           <span class="icon" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M4 8h16M4 16h16"/><circle cx="9" cy="8" r="2"/><circle cx="15" cy="16" r="2"/></svg></span>
           <h3>GTM installation</h3>
           <p>Verify the head loader, the noscript fallback, dataLayer order, default consent and duplicate containers — on staging before it reaches production.</p>
           <p class="tag">gtm_audit_installation</p>
         </article>
-
         <article class="card">
           <span class="icon" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M13 3 5 14h6l-1 7 8-11h-6z"/></svg></span>
           <h3>IndexNow &amp; Bing</h3>
@@ -287,7 +288,6 @@
             <span class="tag">indexnow_submit · indexnow_verify</span>
           </div>
         </article>
-
         <article class="card">
           <span class="icon" aria-hidden="true"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="8"/><circle cx="12" cy="12" r="3"/><path d="M12 4v3M12 17v3M4 12h3M17 12h3"/></svg></span>
           <h3>Positioning</h3>
@@ -298,90 +298,7 @@
     </div>
   </section>
 
-    <!-- ── Analysis board ───────────────────────────────────── -->
-  <section class="section" id="board" aria-labelledby="board-heading">
-    <div class="wrap">
-      <header class="section-head">
-        <p class="eyebrow eyebrow-dark">The analysis board</p>
-        <h2 id="board-heading">Three scores, because a page can fail in three different ways</h2>
-        <p class="section-sub">A page can be readable and still never be quoted; quotable and still take days to be noticed. The board measures each layer separately, then ranks one plan across all three.</p>
-      </header>
-
-      <ul class="layers">
-        <li class="layer">
-          <span class="layer-score">71<small>/100</small></span>
-          <h3>GEO readiness</h3>
-          <p>Can an engine fetch, parse and trust the page? Eight categories, 42 checks, evidence per point.</p>
-          <p class="layer-tag">8 categories · 100 points</p>
-        </li>
-        <li class="layer">
-          <span class="layer-score">53<small>/100</small></span>
-          <h3>Citability</h3>
-          <p>Would a passage survive being quoted? Twelve methods — statistics, quotations, structure, authorship, freshness.</p>
-          <p class="layer-tag">12 methods · 0–3 each</p>
-        </li>
-        <li class="layer">
-          <span class="layer-score">35<small>/100</small></span>
-          <h3>IndexNow readiness</h3>
-          <p>Once the page changes, how fast can Bing and its partners know? Key file, verification, crawler access, sitemap.</p>
-          <p class="layer-tag">7 checks · outside the GEO rubric</p>
-        </li>
-      </ul>
-
-      <div class="board-grid">
-        <figure class="board-card">
-          <figcaption>
-            <h3>Trajectory to the fix plan</h3>
-            <p>71 → 100, one point per recommended fix, in the order the engine ranks them.</p>
-          </figcaption>
-          <svg viewBox="0 0 240 140" role="img" aria-label="GEO score rises from 71 to 100 across the 16 recommended fixes">
-            <line x1="12" y1="112" x2="228" y2="112" stroke="#E2E8F2" />
-            <path d="M12.0,96.2 L25.5,88.3 L39.0,80.5 L52.5,72.6 L66.0,67.3 L79.5,62.1 L93.0,56.8 L106.5,51.5 L120.0,48.9 L133.5,46.3 L147.0,41.0 L160.5,35.8 L174.0,30.5 L187.5,27.9 L201.0,25.3 L214.5,22.6 L228.0,20.0 L228.0,112 L12,112 Z" fill="#2563EB" fill-opacity=".12" />
-            <polyline points="12.0,96.2 25.5,88.3 39.0,80.5 52.5,72.6 66.0,67.3 79.5,62.1 93.0,56.8 106.5,51.5 120.0,48.9 133.5,46.3 147.0,41.0 160.5,35.8 174.0,30.5 187.5,27.9 201.0,25.3 214.5,22.6 228.0,20.0" fill="none" stroke="#2563EB" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" />
-            <circle cx="12.0" cy="96.2" r="3.4" fill="#fff" stroke="#2563EB" stroke-width="2" />
-            <circle cx="228.0" cy="20.0" r="3.4" fill="#fff" stroke="#2563EB" stroke-width="2" />
-            <text x="12.0" y="86.2" text-anchor="start" fill="#0B1220" font-size="11" font-weight="700" font-family="ui-sans-serif, system-ui">71</text>
-            <text x="228.0" y="10.0" text-anchor="end" fill="#0B1220" font-size="11" font-weight="700" font-family="ui-sans-serif, system-ui">100</text>
-            <text x="93.0" y="46.8" text-anchor="middle" fill="#5A6B83" font-size="9" font-family="ui-sans-serif, system-ui">86 after 6 fixes</text>
-          </svg>
-        </figure>
-
-        <figure class="board-card">
-          <figcaption>
-            <h3>Five engines, five scores</h3>
-            <p>Readiness per engine, from the same evidence — not a second opinion on the score.</p>
-          </figcaption>
-          <svg viewBox="-24 -6 238 214" role="img" aria-label="Platform readiness: Google AIO 100, ChatGPT 100, Perplexity 65, Gemini 60, Copilot 80">
-            <polygon points="95.0,81.5 107.8,90.8 102.9,105.9 87.1,105.9 82.2,90.8" fill="none" stroke="#E2E8F2" /><polygon points="95.0,68.0 120.7,86.7 110.9,116.8 79.1,116.8 69.3,86.7" fill="none" stroke="#E2E8F2" /><polygon points="95.0,54.5 133.5,82.5 118.8,127.8 71.2,127.8 56.5,82.5" fill="none" stroke="#E2E8F2" /><polygon points="95.0,41.0 146.4,78.3 126.7,138.7 63.3,138.7 43.6,78.3" fill="none" stroke="#E2E8F2" /><line x1="95" y1="95" x2="95.0" y2="41.0" stroke="#E2E8F2" /><line x1="95" y1="95" x2="146.4" y2="78.3" stroke="#E2E8F2" /><line x1="95" y1="95" x2="126.7" y2="138.7" stroke="#E2E8F2" /><line x1="95" y1="95" x2="63.3" y2="138.7" stroke="#E2E8F2" /><line x1="95" y1="95" x2="43.6" y2="78.3" stroke="#E2E8F2" />
-            <polygon points="95.0,41.0 146.4,78.3 115.6,123.4 76.0,121.2 53.9,81.7" fill="#2563EB" fill-opacity=".16" stroke="#2563EB" stroke-width="2" />
-            <text x="95" y="20" text-anchor="middle" fill="#5A6B83" font-size="8.5" font-family="ui-sans-serif, system-ui">AIO 100</text><text x="161" y="69" text-anchor="start" fill="#5A6B83" font-size="8.5" font-family="ui-sans-serif, system-ui">ChatGPT 100</text><text x="133" y="169" text-anchor="middle" fill="#5A6B83" font-size="8.5" font-family="ui-sans-serif, system-ui">Perplexity 65</text><text x="57" y="169" text-anchor="middle" fill="#5A6B83" font-size="8.5" font-family="ui-sans-serif, system-ui">Gemini 60</text><text x="29" y="69" text-anchor="end" fill="#5A6B83" font-size="8.5" font-family="ui-sans-serif, system-ui">Copilot 80</text>
-          </svg>
-        </figure>
-
-        <figure class="board-card">
-          <figcaption>
-            <h3>Entity graph</h3>
-            <p>What an engine can resolve today, and the three nodes that are missing.</p>
-          </figcaption>
-          <ul class="nodes">
-            <li class="ok">Organization</li>
-            <li class="ok">WebSite</li>
-            <li class="ok">WebApplication</li>
-            <li class="ok">FAQPage</li>
-            <li class="missing">Article</li>
-            <li class="missing">Person</li>
-            <li class="missing">sameAs</li>
-          </ul>
-          <p class="nodes-summary">4 present · 3 missing · +7 points</p>
-        </figure>
-      </div>
-
-      <p class="board-note">The ranked plan puts indexation blockers first: a missing key file or a blocked Bingbot makes every copy fix worthless. <a href="reports/opendpe.html">Open the full sample report →</a></p>
-    </div>
-  </section>
-
-    <!-- ── Analysis console ─────────────────────────────────── -->
-  <section class="section section-console" id="console" aria-labelledby="console-heading">
+<section class="section section-console" id="console" aria-labelledby="console-heading">
     <div class="wrap">
       <header class="section-head">
         <p class="eyebrow eyebrow-dark">Analysis console</p>
@@ -518,8 +435,8 @@
     </div>
   </section>
 
-<!-- ── Measurement ──────────────────────────────────────── -->
-  <section class="section section-alt" id="measurement" aria-labelledby="measurement-heading">
+
+<section class="section section-alt" id="measurement" aria-labelledby="measurement-heading">
     <div class="wrap measurement">
       <div>
         <p class="eyebrow eyebrow-dark">Measurement</p>
@@ -555,76 +472,28 @@ npm run cli -- geo-report --url https://acme.com --out report.pdf</code></pre>
     </div>
   </section>
 
-  <!-- ── How it works ─────────────────────────────────────── -->
-  <section class="section" id="how" aria-labelledby="how-heading">
+
+<section class="section" id="proof" aria-labelledby="proof-heading">
     <div class="wrap">
       <header class="section-head">
-        <p class="eyebrow eyebrow-dark">How it works</p>
-        <h2 id="how-heading">From one URL to a plan you can ship</h2>
+        <p class="eyebrow eyebrow-dark">Proof</p>
+        <h2 id="proof-heading">Built in the open, measured in public</h2>
+        <p class="section-sub">Every number below comes from the repository you can run yourself — and from a live audit you can re-run.</p>
       </header>
-      <ol class="steps">
-        <li>
-          <span class="step-num">1</span>
-          <h3>Free read</h3>
-          <p>Type your address. You get the URL-level hygiene score and the checklist of everything the full audit inspects. No account, no fetch, no guesswork.</p>
-        </li>
-        <li>
-          <span class="step-num">2</span>
-          <h3>Full audit</h3>
-          <p>Run the server yourself, or have us run it with you: GEO score, citability, crawler matrix, llms.txt drift, GTM installation and container audit — each with evidence.</p>
-        </li>
-        <li>
-          <span class="step-num">3</span>
-          <h3>Implementation</h3>
-          <p>A prioritized 90-day plan: what to fix now, what to instrument, what to re-measure. Then a before/after comparison on the same deterministic score.</p>
-        </li>
-      </ol>
+      <ul class="proof-grid">
+        <li><strong>96</strong><span>MCP tools</span></li>
+        <li><strong>205</strong><span>tests passing</span></li>
+        <li><strong>11</strong><span>GEO checks</span></li>
+        <li><strong>22</strong><span>GTM tools</span></li>
+        <li><strong>5</strong><span>AI platforms mapped</span></li>
+        <li><strong>Apache-2.0</strong><span>licence</span></li>
+      </ul>
+      <p class="proof-note">Read-only by default · CI runs typecheck, lint, 205 tests, build, CLI smoke and site checks on every push · <a href="https://github.com/Geoking2104/GTM-Growth/actions">see the runs</a></p>
     </div>
   </section>
 
-    <!-- ── Toolkit credit ───────────────────────────────────── -->
-  <section class="section section-alt" id="toolkit" aria-labelledby="toolkit-heading">
-    <div class="wrap">
-      <header class="section-head">
-        <p class="eyebrow eyebrow-dark">Built on an MIT toolkit</p>
-        <h2 id="toolkit-heading">Five GEO tools, one server, no reinvention</h2>
-        <p class="section-sub">GeoSuite publishes a zero-dependency GEO toolkit under MIT. Three of its checks already existed here; the two missing ones are now native, so a single audit covers the whole set.</p>
-      </header>
 
-      <div class="grid cards toolkit-grid">
-        <article class="card">
-          <h3>AI Crawl Check</h3>
-          <p>Which AI crawlers robots.txt allows, per bot and tier.</p>
-          <p class="tag">native · geo_crawler_access</p>
-        </article>
-        <article class="card">
-          <h3>llms.txt Generator</h3>
-          <p>Build the index from a sitemap, then catch drift.</p>
-          <p class="tag">native · geo_generate_llms_txt</p>
-        </article>
-        <article class="card">
-          <h3>Schema Templates</h3>
-          <p>Copy-paste JSON-LD for six types, validated on the way out.</p>
-          <p class="tag">native · geo_generate_schema</p>
-        </article>
-        <article class="card">
-          <h3>Sitemap Builder</h3>
-          <p>Crawl a site that ships without one, honouring robots.txt.</p>
-          <p class="tag new">new · geo_sitemap_build</p>
-        </article>
-        <article class="card">
-          <h3>Poppy Check</h3>
-          <p><code>/.well-known/poppy.json</code> — the file a personal agent reads to find a company and sign in.</p>
-          <p class="tag new">new · poppy_check · poppy_generate</p>
-        </article>
-      </div>
-
-      <p class="board-note">Ported from <a href="https://github.com/TryGeoSuite/geo-toolkit">TryGeoSuite/geo-toolkit</a> and <a href="https://github.com/TryGeoSuite/poppy-json">poppy-json</a>, MIT © Matteo Perino and GeoSuite. The checks are theirs; the implementation here runs inside the same server as the rest of the audit.</p>
-    </div>
-  </section>
-
-<!-- ── Plans ────────────────────────────────────────────── -->
-  <section class="section section-alt" id="plans" aria-labelledby="plans-heading">
+<section class="section section-alt" id="plans" aria-labelledby="plans-heading">
     <div class="wrap">
       <header class="section-head">
         <p class="eyebrow eyebrow-dark">Plans</p>
@@ -662,8 +531,8 @@ npm run cli -- geo-report --url https://acme.com --out report.pdf</code></pre>
     </div>
   </section>
 
-  <!-- ── Lead form ────────────────────────────────────────── -->
-  <section class="section" id="talk" aria-labelledby="talk-heading">
+
+<section class="section" id="talk" aria-labelledby="talk-heading">
     <div class="wrap talk">
       <div>
         <p class="eyebrow eyebrow-dark">Next step</p>
@@ -715,8 +584,8 @@ npm run cli -- geo-audit --url https://acme.com</code></pre>
     </div>
   </section>
 
-  <!-- ── FAQ ──────────────────────────────────────────────── -->
-  <section class="section section-alt" id="faq" aria-labelledby="faq-heading">
+
+<section class="section section-alt" id="faq" aria-labelledby="faq-heading">
     <div class="wrap narrow">
       <header class="section-head">
         <p class="eyebrow eyebrow-dark">FAQ</p>
@@ -754,34 +623,44 @@ npm run cli -- geo-audit --url https://acme.com</code></pre>
     </div>
   </section>
 
-  <!-- ── Closing ──────────────────────────────────────────── -->
-  <section class="section" id="proof" aria-labelledby="proof-heading">
+
+<section class="section section-alt" id="geosuite" aria-labelledby="geosuite-heading">
     <div class="wrap">
       <header class="section-head">
-        <p class="eyebrow eyebrow-dark">Proof</p>
-        <h2 id="proof-heading">Built in the open, measured in public</h2>
-        <p class="section-sub">Every number below comes from the repository you can run yourself — and from a live audit you can re-run.</p>
+        <p class="eyebrow eyebrow-dark">Built on an MIT toolkit</p>
+        <h2 id="geosuite-heading">Five GEO tools, one server, no reinvention</h2>
+        <p class="section-sub">GeoSuite publishes a zero-dependency GEO toolkit under MIT. Three of its checks already existed here; the two missing ones are now native, so a single audit covers the whole set.</p>
       </header>
-      <ul class="proof-grid">
-        <li><strong>96</strong><span>MCP tools</span></li>
-        <li><strong>205</strong><span>tests passing</span></li>
-        <li><strong>11</strong><span>GEO checks</span></li>
-        <li><strong>22</strong><span>GTM tools</span></li>
-        <li><strong>5</strong><span>AI platforms mapped</span></li>
-        <li><strong>Apache-2.0</strong><span>licence</span></li>
-      </ul>
-      <p class="proof-note">Read-only by default · CI runs typecheck, lint, 205 tests, build, CLI smoke and site checks on every push · <a href="https://github.com/Geoking2104/GTM-Growth/actions">see the runs</a></p>
-    </div>
-  </section>
 
-  <section class="closing">
-    <div class="wrap closing-inner">
-      <h2>Your next citation starts with a URL.</h2>
-      <p>Run the free read, or take the whole server and run it yourself.</p>
-      <div class="closing-actions">
-        <a class="btn" href="#free-read">Run the free read</a>
-        <a class="btn btn-ghost btn-on-dark" href="https://github.com/Geoking2104/GTM-Growth">View on GitHub</a>
+      <div class="grid cards toolkit-grid">
+        <article class="card">
+          <h3>AI Crawl Check</h3>
+          <p>Which AI crawlers robots.txt allows, per bot and tier.</p>
+          <p class="tag">native · geo_crawler_access</p>
+        </article>
+        <article class="card">
+          <h3>llms.txt Generator</h3>
+          <p>Build the index from a sitemap, then catch drift.</p>
+          <p class="tag">native · geo_generate_llms_txt</p>
+        </article>
+        <article class="card">
+          <h3>Schema Templates</h3>
+          <p>Copy-paste JSON-LD for six types, validated on the way out.</p>
+          <p class="tag">native · geo_generate_schema</p>
+        </article>
+        <article class="card">
+          <h3>Sitemap Builder</h3>
+          <p>Crawl a site that ships without one, honouring robots.txt.</p>
+          <p class="tag new">new · geo_sitemap_build</p>
+        </article>
+        <article class="card">
+          <h3>Poppy Check</h3>
+          <p><code>/.well-known/poppy.json</code> — the file a personal agent reads to find a company and sign in.</p>
+          <p class="tag new">new · poppy_check · poppy_generate</p>
+        </article>
       </div>
+
+      <p class="board-note">Ported from <a href="https://github.com/TryGeoSuite/geo-toolkit">TryGeoSuite/geo-toolkit</a> and <a href="https://github.com/TryGeoSuite/poppy-json">poppy-json</a>, MIT © Matteo Perino and GeoSuite. The checks are theirs; the implementation here runs inside the same server as the rest of the audit.</p>
     </div>
   </section>
 </main>
