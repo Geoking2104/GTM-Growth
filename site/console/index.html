@@ -1,0 +1,35 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="robots" content="noindex, nofollow">
+<title>Console GTM Growth</title>
+<link rel="icon" href="../assets/logo-64.png" type="image/png">
+<link rel="stylesheet" href="../sitemap-map.css">
+<link rel="stylesheet" href="console.css">
+</head>
+<body>
+<div id="c-login" class="c-login" hidden>
+  <div class="c-login-card">
+    <img src="../assets/logo-64.png" alt="" width="48" height="48">
+    <h1>Console GTM Growth</h1>
+    <p>Accès réservé. Connectez-vous avec votre compte (SSO Keycloak).</p>
+    <button id="c-login-btn" class="c-btn" type="button">Se connecter</button>
+    <p id="c-login-error" class="c-error"></p>
+  </div>
+</div>
+<div id="c-app" hidden>
+  <header class="c-header">
+    <strong>GTM Growth · Console</strong>
+    <label class="c-field c-inline"><span>Domaine</span><input id="c-url" placeholder="https://www.exemple.fr"></label>
+    <label class="c-field c-inline"><span>Propriété Search Console</span><input id="c-property" placeholder="sc-domain:exemple.fr"></label>
+    <span id="c-user" class="c-user"></span>
+    <button id="c-logout" class="c-btn c-btn-ghost" type="button">Déconnexion</button>
+  </header>
+  <nav id="c-tabs" class="c-tabs" role="tablist" aria-label="Outils"></nav>
+  <main id="c-panels" class="c-panels"></main>
+</div>
+<script type="module" src="app.js"></script>
+</body>
+</html>

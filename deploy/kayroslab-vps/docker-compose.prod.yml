@@ -13,6 +13,13 @@ services:
       REDIS_URL: redis://redis:6379
       LEADS_PATH: /data/leads.jsonl
       GOOGLE_APPLICATION_CREDENTIALS: /secrets/service-account.json
+      # Console SSO: tokens issued by the Keycloak realm below (validated via JWKS).
+      OIDC_ISSUER: ${OIDC_ISSUER:-https://auth.kayroslab.com/realms/gtm-growth}
+      OIDC_CLIENT_ID: gtm-console
+      # Only users holding this realm role can use the console.
+      OIDC_REQUIRED_ROLE: console-user
+      # JWKS fetched on the internal network, issuer still checked against the public URL.
+      OIDC_JWKS_URL: http://keycloak:8080/realms/gtm-growth/protocol/openid-connect/certs
     volumes:
       - gtm_growth_data:/data
       # Optional Google service-account file; never commit it to the repository.
@@ -43,6 +50,53 @@ services:
       timeout: 3s
       retries: 5
 
+  # ── Keycloak (SSO de la console) — mode production, base Postgres ──
+  keycloak:
+    image: quay.io/keycloak/keycloak:26.4
+    command: ["start", "--import-realm"]
+    environment:
+      KC_DB: postgres
+      KC_DB_URL: jdbc:postgresql://keycloak-db:5432/keycloak
+      KC_DB_USERNAME: keycloak
+      KC_DB_PASSWORD: ${KC_DB_PASSWORD:?KC_DB_PASSWORD manquant dans .env.local}
+      KC_HOSTNAME: ${KC_HOSTNAME:-https://auth.kayroslab.com}
+      KC_HTTP_ENABLED: "true"
+      KC_PROXY_HEADERS: xforwarded
+      KC_HEALTH_ENABLED: "true"
+      KC_BOOTSTRAP_ADMIN_USERNAME: ${KC_BOOTSTRAP_ADMIN_USERNAME:-admin}
+      KC_BOOTSTRAP_ADMIN_PASSWORD: ${KC_BOOTSTRAP_ADMIN_PASSWORD:?KC_BOOTSTRAP_ADMIN_PASSWORD manquant dans .env.local}
+    volumes:
+      - ./keycloak/realm-gtm-growth.json:/opt/keycloak/data/import/realm-gtm-growth.json:ro
+    ports:
+      # Public only through Nginx (auth.kayroslab.com).
+      - "127.0.0.1:8180:8080"
+    depends_on:
+      keycloak-db:
+        condition: service_healthy
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD-SHELL", "exec 3<>/dev/tcp/127.0.0.1/9000 && printf 'GET /health/ready HTTP/1.0\\r\\n\\r\\n' >&3 && grep -q UP <&3"]
+      interval: 30s
+      timeout: 5s
+      retries: 5
+      start_period: 60s
+
+  keycloak-db:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_DB: keycloak
+      POSTGRES_USER: keycloak
+      POSTGRES_PASSWORD: ${KC_DB_PASSWORD:?KC_DB_PASSWORD manquant dans .env.local}
+    volumes:
+      - gtm_growth_keycloak_db:/var/lib/postgresql/data
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U keycloak -d keycloak"]
+      interval: 10s
+      timeout: 3s
+      retries: 5
+
 volumes:
+  gtm_growth_keycloak_db:
   gtm_growth_data:
   gtm_growth_redis:
