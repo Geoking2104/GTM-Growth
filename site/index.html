@@ -102,6 +102,7 @@
     </a>
     <nav class="nav" aria-label="Primary">
       <a href="#solutions">Solutions</a>
+      <a href="#board">Board</a>
       <a href="#measurement">Measurement</a>
       <a href="#how">How it works</a>
       <a href="#plans">Plans</a>
@@ -137,6 +138,15 @@
       </form>
       <p class="hint" id="check-hint">No signup. The first read scores your URL instantly, then renders the SEO, GA4 and Search Console tables.</p>
       <p class="hint"><a href="reports/opendpe.html">See a full sample report — opendpe.net, 71/100 →</a> · <a href="reports/opendpe.pdf" download>Download it as a PDF (43 kB)</a></p>
+      <div class="hero-proof" aria-label="Live sample audit">
+        <p class="hero-proof-head">One public audit, re-runnable — <strong>opendpe.net</strong>, 2 Nov 2026</p>
+        <ul class="hero-proof-grid">
+          <li><strong>71<span>/100</span></strong><em>GEO score</em><small>100 once the 16 fixes ship</small></li>
+          <li><strong>27<span>/27</span></strong><em>AI crawlers allowed</em><small>zero blocked, five citation bots</small></li>
+          <li><strong>3<span>/5</span></strong><em>engines ready</em><small>AIO 100 · ChatGPT 100</small></li>
+          <li><strong>0<span>/4</span></strong><em>Entity links</em><small>sameAs pillars, worth 7 points</small></li>
+        </ul>
+      </div>
       <p class="form-error" id="check-error" role="alert" hidden></p>
 
       <ul class="hero-stats" aria-label="What ships in the repository">
@@ -269,6 +279,88 @@
           <p class="tag">geo_positioning</p>
         </article>
       </div>
+    </div>
+  </section>
+
+    <!-- ── Analysis board ───────────────────────────────────── -->
+  <section class="section" id="board" aria-labelledby="board-heading">
+    <div class="wrap">
+      <header class="section-head">
+        <p class="eyebrow eyebrow-dark">The analysis board</p>
+        <h2 id="board-heading">Three scores, because a page can fail in three different ways</h2>
+        <p class="section-sub">A page can be readable and still never be quoted; quotable and still take days to be noticed. The board measures each layer separately, then ranks one plan across all three.</p>
+      </header>
+
+      <ul class="layers">
+        <li class="layer">
+          <span class="layer-score">71<small>/100</small></span>
+          <h3>GEO readiness</h3>
+          <p>Can an engine fetch, parse and trust the page? Eight categories, 42 checks, evidence per point.</p>
+          <p class="layer-tag">8 categories · 100 points</p>
+        </li>
+        <li class="layer">
+          <span class="layer-score">53<small>/100</small></span>
+          <h3>Citability</h3>
+          <p>Would a passage survive being quoted? Twelve methods — statistics, quotations, structure, authorship, freshness.</p>
+          <p class="layer-tag">12 methods · 0–3 each</p>
+        </li>
+        <li class="layer">
+          <span class="layer-score">35<small>/100</small></span>
+          <h3>IndexNow readiness</h3>
+          <p>Once the page changes, how fast can Bing and its partners know? Key file, verification, crawler access, sitemap.</p>
+          <p class="layer-tag">7 checks · outside the GEO rubric</p>
+        </li>
+      </ul>
+
+      <div class="board-grid">
+        <figure class="board-card">
+          <figcaption>
+            <h3>Trajectory to the fix plan</h3>
+            <p>71 → 100, one point per recommended fix, in the order the engine ranks them.</p>
+          </figcaption>
+          <svg viewBox="0 0 240 140" role="img" aria-label="GEO score rises from 71 to 100 across the 16 recommended fixes">
+            <line x1="12" y1="112" x2="228" y2="112" stroke="#E2E8F2" />
+            <path d="M12.0,96.2 L25.5,88.3 L39.0,80.5 L52.5,72.6 L66.0,67.3 L79.5,62.1 L93.0,56.8 L106.5,51.5 L120.0,48.9 L133.5,46.3 L147.0,41.0 L160.5,35.8 L174.0,30.5 L187.5,27.9 L201.0,25.3 L214.5,22.6 L228.0,20.0 L228.0,112 L12,112 Z" fill="#2563EB" fill-opacity=".12" />
+            <polyline points="12.0,96.2 25.5,88.3 39.0,80.5 52.5,72.6 66.0,67.3 79.5,62.1 93.0,56.8 106.5,51.5 120.0,48.9 133.5,46.3 147.0,41.0 160.5,35.8 174.0,30.5 187.5,27.9 201.0,25.3 214.5,22.6 228.0,20.0" fill="none" stroke="#2563EB" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" />
+            <circle cx="12.0" cy="96.2" r="3.4" fill="#fff" stroke="#2563EB" stroke-width="2" />
+            <circle cx="228.0" cy="20.0" r="3.4" fill="#fff" stroke="#2563EB" stroke-width="2" />
+            <text x="12.0" y="86.2" text-anchor="start" fill="#0B1220" font-size="11" font-weight="700" font-family="ui-sans-serif, system-ui">71</text>
+            <text x="228.0" y="10.0" text-anchor="end" fill="#0B1220" font-size="11" font-weight="700" font-family="ui-sans-serif, system-ui">100</text>
+            <text x="93.0" y="46.8" text-anchor="middle" fill="#5A6B83" font-size="9" font-family="ui-sans-serif, system-ui">86 after 6 fixes</text>
+          </svg>
+        </figure>
+
+        <figure class="board-card">
+          <figcaption>
+            <h3>Five engines, five scores</h3>
+            <p>Readiness per engine, from the same evidence — not a second opinion on the score.</p>
+          </figcaption>
+          <svg viewBox="-24 -6 238 214" role="img" aria-label="Platform readiness: Google AIO 100, ChatGPT 100, Perplexity 65, Gemini 60, Copilot 80">
+            <polygon points="95.0,81.5 107.8,90.8 102.9,105.9 87.1,105.9 82.2,90.8" fill="none" stroke="#E2E8F2" /><polygon points="95.0,68.0 120.7,86.7 110.9,116.8 79.1,116.8 69.3,86.7" fill="none" stroke="#E2E8F2" /><polygon points="95.0,54.5 133.5,82.5 118.8,127.8 71.2,127.8 56.5,82.5" fill="none" stroke="#E2E8F2" /><polygon points="95.0,41.0 146.4,78.3 126.7,138.7 63.3,138.7 43.6,78.3" fill="none" stroke="#E2E8F2" /><line x1="95" y1="95" x2="95.0" y2="41.0" stroke="#E2E8F2" /><line x1="95" y1="95" x2="146.4" y2="78.3" stroke="#E2E8F2" /><line x1="95" y1="95" x2="126.7" y2="138.7" stroke="#E2E8F2" /><line x1="95" y1="95" x2="63.3" y2="138.7" stroke="#E2E8F2" /><line x1="95" y1="95" x2="43.6" y2="78.3" stroke="#E2E8F2" />
+            <polygon points="95.0,41.0 146.4,78.3 115.6,123.4 76.0,121.2 53.9,81.7" fill="#2563EB" fill-opacity=".16" stroke="#2563EB" stroke-width="2" />
+            <text x="95" y="20" text-anchor="middle" fill="#5A6B83" font-size="8.5" font-family="ui-sans-serif, system-ui">AIO 100</text><text x="161" y="69" text-anchor="start" fill="#5A6B83" font-size="8.5" font-family="ui-sans-serif, system-ui">ChatGPT 100</text><text x="133" y="169" text-anchor="middle" fill="#5A6B83" font-size="8.5" font-family="ui-sans-serif, system-ui">Perplexity 65</text><text x="57" y="169" text-anchor="middle" fill="#5A6B83" font-size="8.5" font-family="ui-sans-serif, system-ui">Gemini 60</text><text x="29" y="69" text-anchor="end" fill="#5A6B83" font-size="8.5" font-family="ui-sans-serif, system-ui">Copilot 80</text>
+          </svg>
+        </figure>
+
+        <figure class="board-card">
+          <figcaption>
+            <h3>Entity graph</h3>
+            <p>What an engine can resolve today, and the three nodes that are missing.</p>
+          </figcaption>
+          <ul class="nodes">
+            <li class="ok">Organization</li>
+            <li class="ok">WebSite</li>
+            <li class="ok">WebApplication</li>
+            <li class="ok">FAQPage</li>
+            <li class="missing">Article</li>
+            <li class="missing">Person</li>
+            <li class="missing">sameAs</li>
+          </ul>
+          <p class="nodes-summary">4 present · 3 missing · +7 points</p>
+        </figure>
+      </div>
+
+      <p class="board-note">The ranked plan puts indexation blockers first: a missing key file or a blocked Bingbot makes every copy fix worthless. <a href="reports/opendpe.html">Open the full sample report →</a></p>
     </div>
   </section>
 
@@ -497,6 +589,14 @@ npm run cli -- geo-audit --url https://acme.com</code></pre>
       <details open>
         <summary>Is the free read a real audit?</summary>
         <p>Two layers. The URL score runs in your browser: HTTPS, hostname shape, path depth, tracking parameters, fragments, length, file extensions — that part never fetches anything. The SEO, GA4 and Search Console tables are measured server-side by <code>/api/free-read</code>, on the page, its <code>robots.txt</code> and its sitemap. When that API is not connected, the tables are labelled <strong>sample</strong>; <code>npm run cli -- geo-free-read --url …</code> gives the same rows locally.</p>
+      </details>
+      <details>
+        <summary>What is GEO, and how is it different from SEO?</summary>
+        <p>SEO optimises for a ranked list of links. GEO optimises for being <em>quoted inside an answer</em>: an engine has to fetch the page, parse it, resolve the entity and find a passage worth citing. They overlap — crawler access, structure, metadata — but a page can rank well and still be uncitable, which is why citability is scored separately here.</p>
+      </details>
+      <details>
+        <summary>How long before AI engines cite me?</summary>
+        <p>Nobody can promise a date, and any tool that does is guessing. What can be measured: whether crawlers are allowed, whether the entity resolves, whether a passage is quotable, and how fast a change is announced (IndexNow). The report gives you those, plus the projected score once the fixes ship.</p>
       </details>
       <details>
         <summary>Does this guarantee AI engines will cite me?</summary>
