@@ -21,7 +21,7 @@ const DICT = {
     citIntro: "Lisibilité IA : la page est-elle facile à citer par un moteur génératif ?", idxIntro: "Préparation IndexNow : clé, fichier de clé, sitemap et signaux de découverte.",
     publicDemo: "Démo publique",
     s_gsc: "Search Console", s_ga4: "Google Analytics 4", s_bing: "Bing Webmaster",
-    t_gscPerf: "Performance", t_queryPages: "Requêtes × pages", t_gscSitemaps: "Sitemaps envoyés", t_ga4: "Audience & acquisition", t_realtime: "Temps réel", t_bing: "Performance de recherche",
+    t_gscPerf: "Performance", t_queryPages: "Requêtes × pages", t_gscSitemaps: "Sitemaps envoyés", t_ga4: "Audience & acquisition", t_realtime: "Temps réel", t_ecommerce: "E-commerce", t_technology: "Systèmes & navigateurs", s_gtm: "Google Tag Manager", t_gtm: "Conteneur, écriture & publication", t_bing: "Performance de recherche",
     t_status: "Statut des accès", t_tags: "Balises GA4 / GTM", t_settings: "Paramètres", ga4Property: "Propriété GA4 (ID)", bingSite: "Site Bing Webmaster",
   },
   en: {
@@ -39,7 +39,7 @@ const DICT = {
     citIntro: "AI readability: is the page easy for a generative engine to quote?", idxIntro: "IndexNow readiness: key, key file, sitemap and discovery signals.",
     publicDemo: "Public demo",
     s_gsc: "Search Console", s_ga4: "Google Analytics 4", s_bing: "Bing Webmaster",
-    t_gscPerf: "Performance", t_queryPages: "Queries × pages", t_gscSitemaps: "Submitted sitemaps", t_ga4: "Audience & acquisition", t_realtime: "Realtime", t_bing: "Search performance",
+    t_gscPerf: "Performance", t_queryPages: "Queries × pages", t_gscSitemaps: "Submitted sitemaps", t_ga4: "Audience & acquisition", t_realtime: "Realtime", t_ecommerce: "Ecommerce", t_technology: "OS & browsers", s_gtm: "Google Tag Manager", t_gtm: "Container, write & publish", t_bing: "Search performance",
     t_status: "Access status", t_tags: "GA4 / GTM tags", t_settings: "Settings", ga4Property: "GA4 property (ID)", bingSite: "Bing Webmaster site",
   },
 };

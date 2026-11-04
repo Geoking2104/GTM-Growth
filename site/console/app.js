@@ -7,7 +7,7 @@ import { el } from "./render.js";
 import { t, tr, actionLabel, LANG } from "./i18n.js";
 import { icon } from "./icons.js";
 import { renderOverview, renderPlan, renderIndexNow } from "./overview.js";
-import { toolbar, renderSearchPerformance, renderQueryPages, renderSitemaps, renderGa4, renderRealtime, renderBing, renderStatus, renderTags, renderSettings } from "./analytics.js";
+import { toolbar, renderSearchPerformance, renderQueryPages, renderSitemaps, renderGa4, renderRealtime, renderEcommerce, renderTechnology, renderGtm, renderBing, renderStatus, renderTags, renderSettings } from "./analytics.js";
 
 const $ = (s) => document.querySelector(s);
 const selectedTenant = () => sessionStorage.getItem("gtm-console-selected") || currentTenant()?.id || "";
@@ -50,6 +50,8 @@ const SECTIONS = {
       { id: "sitemaps", label: t("t_gscSitemaps"), needsDomain: false, async: async () => renderSitemaps(await api("/search/sitemaps", scope())) }]) },
     { id: "ga4", icon: "ga4", build: () => custom("ga4", [
       { id: "overview", label: t("t_ga4"), ...live("/ga4/overview", renderGa4) },
+      { id: "ecommerce", label: t("t_ecommerce"), ...live("/ga4/ecommerce", renderEcommerce) },
+      { id: "technology", label: t("t_technology"), ...live("/ga4/technology", renderTechnology) },
       { id: "realtime", label: t("t_realtime"), needsDomain: false, async: async () => renderRealtime(await api("/ga4/realtime", scope())) }]) },
     { id: "bing", icon: "bing", build: () => custom("bing", [{ id: "performance", label: t("t_bing"), ...live("/bing/performance", renderBing) }]) },
     { id: "geo", icon: "geo", build: fromTool("geo", (a) => a.id !== "citability") },
@@ -65,6 +67,8 @@ const SECTIONS = {
       { id: "status", label: t("t_status"), needsDomain: false, async: async () => renderStatus(await api("/tracking/status", scope()), state) },
       { id: "tags", label: t("t_tags"), async: async () => renderTags(await api("/tracking/status", scope())) },
       { id: "settings", label: t("t_settings"), needsDomain: false, async: async () => renderSettings(state.me, saveSettings) }]) },
+    { id: "gtm", icon: "tracking", build: () => custom("gtm", [
+      { id: "workspace", label: t("t_gtm"), needsDomain: false, async: async () => renderGtm(await api("/gtm/inventory", scope({ container: state.gtmContainer || undefined })), api, rerender) }]) },
     { id: "audit", icon: "audit", build: fromTool("audit") },
     { id: "generators", icon: "generators", build: fromTool("generators") },
     { id: "calculators", icon: "calculators", build: fromTool("calculators") },

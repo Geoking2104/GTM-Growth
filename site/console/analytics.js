@@ -227,6 +227,7 @@ export function renderSettings(me, save) {
     field("gscProperties", L("Propriétés Search Console (séparées par des virgules)", "Search Console properties (comma separated)"), t.gscProperties.join(", "), "sc-domain:exemple.fr"),
     field("ga4Properties", L("Propriétés GA4 (identifiants numériques)", "GA4 properties (numeric ids)"), (t.ga4Properties ?? []).join(", "), "123456789"),
     field("bingSites", L("Sites Bing Webmaster", "Bing Webmaster sites"), (t.bingSites ?? []).join(", "), "https://www.exemple.fr/"),
+    field("gtmContainers", L("Conteneurs GTM (web et serveur)", "GTM containers (web and server)"), (t.gtmContainers ?? []).join(", "), "accounts/123/containers/456"),
     field("bingApiKey", L(`Clé API Bing ${t.bingKeyConfigured ? "(configurée — laisser vide pour la garder)" : ""}`, `Bing API key ${t.bingKeyConfigured ? "(set — leave empty to keep it)" : ""}`), "", "••••••••", "password"),
   );
   const msg = el("p", "c-note");
@@ -234,9 +235,96 @@ export function renderSettings(me, save) {
   else msg.textContent = L("Réservé aux administrateurs du client.", "Client administrators only.");
   form.onsubmit = async (e) => {
     e.preventDefault(); const fd = new FormData(form); const split = (k) => String(fd.get(k) ?? "").split(",").map((x) => x.trim()).filter(Boolean);
-    const body = { gscProperties: split("gscProperties"), ga4Properties: split("ga4Properties"), bingSites: split("bingSites") };
+    const body = { gscProperties: split("gscProperties"), ga4Properties: split("ga4Properties"), bingSites: split("bingSites"), gtmContainers: split("gtmContainers") };
     const key = String(fd.get("bingApiKey") ?? "").trim(); if (key) body.bingApiKey = key;
     try { await save(body); msg.textContent = L("Enregistré.", "Saved."); msg.className = "c-note"; } catch (error) { msg.textContent = error.message; msg.className = "c-error"; }
   };
   return [form, msg];
+}
+
+/* ── GA4 e-commerce ── */
+const money = (v) => (typeof v === "number" ? v.toLocaleString(loc, { style: "currency", currency: "EUR", maximumFractionDigits: 2 }) : "—");
+const FUNNEL_LABEL = { view_item_list: L("Vue de liste", "Item list view"), view_item: L("Vue produit", "Item view"), add_to_cart: L("Ajout au panier", "Add to cart"), begin_checkout: L("Début de commande", "Begin checkout"), add_shipping_info: L("Livraison", "Shipping info"), add_payment_info: L("Paiement", "Payment info"), purchase: L("Achat", "Purchase") };
+
+export function renderEcommerce(d) {
+  if (d.problem) return [problemBox(d.problem)];
+  const t = d.totals; const dl = d.deltas; const out = [periodNote(d.period)];
+  if (!d.hasEcommerce) out.push(problemBox({ state: "not-configured", message: L("Aucun événement e-commerce GA4 (view_item, add_to_cart, purchase…) sur la période : le site ne mesure pas encore le e-commerce. Les tableaux restent affichés à zéro.", "No GA4 ecommerce events (view_item, add_to_cart, purchase…) in the period: the site does not measure ecommerce yet. Tables are shown with zeros.") }));
+  const max = Math.max(1, ...d.funnel.map((f) => f.users));
+  const funnel = el("div", "c-bars");
+  d.funnel.forEach((f, i) => { const prev = i ? d.funnel[i - 1].users : null; const line = el("div", "c-bar"); const fill = el("span", "c-bar-fill"); fill.style.width = `${(f.users / max) * 100}%`; line.append(el("span", "c-bar-label", FUNNEL_LABEL[f.step] ?? f.step), el("span", "c-bar-track"), el("span", "c-bar-value", `${int(f.users)} ${L("util.", "users")}${prev ? ` · ${pct(f.users / prev)}` : ""}`)); line.children[1].append(fill); funnel.append(line); });
+  const ecCols = (key, label) => [[key, label], ["sessions", "Sessions"], ["transactions", "Transactions"], [(r) => money(r.purchaseRevenue), L("Revenu", "Revenue")]];
+  out.push(
+    kpiRow([kpi(L("Revenu", "Revenue"), money(t.purchaseRevenue), dl.purchaseRevenue), kpi("Transactions", int(t.transactions), dl.transactions), kpi(L("Panier moyen", "Average order value"), money(t.averagePurchaseRevenue), dl.averagePurchaseRevenue), kpi(L("Articles achetés", "Items purchased"), int(t.itemsPurchased), dl.itemsPurchased)]),
+    kpiRow([kpi(L("Acheteurs", "Purchasers"), int(t.totalPurchasers), dl.totalPurchasers), kpi(L("Taux d'acheteurs", "Purchaser rate"), pct(t.purchaserRate), dl.purchaserRate), kpi(L("Ajouts au panier", "Add-to-carts"), int(t.addToCarts), dl.addToCarts), kpi(L("Commandes commencées", "Checkouts"), int(t.checkouts), dl.checkouts)]),
+    lineChart(d.trend, [{ key: "purchaseRevenue", label: L("Revenu", "Revenue"), color: "#0f9d58" }, { key: "transactions", label: "Transactions", color: "#4f5bd5" }], L("Revenu quotidien", "Daily revenue")),
+    segments([
+      { label: L("Entonnoir", "Funnel"), count: d.funnel.length, render: () => [funnel, filterable(d.funnel.map((f) => ({ ...f, step: FUNNEL_LABEL[f.step] ?? f.step })), [["step", L("Étape", "Step")], ["users", L("Utilisateurs", "Users")], ["events", L("Événements", "Events")]], "ga4-entonnoir.csv")] },
+      { label: L("Produits", "Items"), count: d.items.length, render: () => filterable(d.items, [["itemName", L("Produit", "Item")], [(r) => money(r.itemRevenue), L("Revenu", "Revenue")], ["itemsPurchased", L("Achetés", "Purchased")], ["itemsViewed", L("Vus", "Viewed")], ["itemsAddedToCart", L("Ajoutés au panier", "Added to cart")]], "ga4-produits.csv") },
+      { label: L("Listes de produits", "Item lists"), count: d.itemLists.length, render: () => filterable(d.itemLists, [["itemListName", L("Liste", "List")], ["itemsViewedInList", L("Vus", "Viewed")], ["itemsClickedInList", L("Cliqués", "Clicked")], [(r) => pct(r.itemListClickThroughRate), "CTR"]], "ga4-listes.csv") },
+      { label: L("Canaux", "Channels"), count: d.channels.length, render: () => filterable(d.channels, ecCols("sessionDefaultChannelGroup", L("Canal", "Channel")), "ga4-ecommerce-canaux.csv") },
+      { label: L("Appareils", "Devices"), count: d.devices.length, render: () => filterable(d.devices, ecCols("deviceCategory", L("Appareil", "Device")), "ga4-ecommerce-appareils.csv") },
+      { label: "Transactions", count: d.transactions.length, render: () => filterable(d.transactions, [["transactionId", "ID"], [(r) => money(r.purchaseRevenue), L("Revenu", "Revenue")]], "ga4-transactions.csv") },
+    ]),
+  );
+  return out;
+}
+
+/* ── GA4 systèmes et navigateurs ── */
+export function renderTechnology(d) {
+  if (d.problem) return [problemBox(d.problem)];
+  const cols = (key, label, k2, l2) => [[key, label], ...(k2 ? [[k2, l2]] : []), ["sessions", "Sessions"], ["totalUsers", L("Utilisateurs", "Users")], [(r) => pct(r.engagementRate), "Engagement"], ["keyEvents", L("Conversions", "Key events")], [(r) => money(r.purchaseRevenue), L("Revenu", "Revenue")]];
+  return [periodNote(d.period), segments([
+    { label: L("Systèmes", "Operating systems"), count: d.os.length, render: () => [bars(d.os, "operatingSystem", "sessions"), filterable(d.os, cols("operatingSystem", L("Système", "OS")), "ga4-systemes.csv")] },
+    { label: L("Navigateurs", "Browsers"), count: d.browser.length, render: () => [bars(d.browser, "browser", "sessions"), filterable(d.browser, cols("browser", L("Navigateur", "Browser")), "ga4-navigateurs.csv")] },
+    { label: L("Système + version", "OS + version"), count: d.osVersion.length, render: () => filterable(d.osVersion, cols("operatingSystemWithVersion", L("Système", "OS")), "ga4-systemes-versions.csv") },
+    { label: L("Navigateur × appareil", "Browser × device"), count: d.browserVersion.length, render: () => filterable(d.browserVersion, cols("browser", L("Navigateur", "Browser"), "deviceCategory", L("Appareil", "Device")), "ga4-navigateur-appareil.csv") },
+    { label: L("Appareil × système", "Device × OS"), count: d.deviceOs.length, render: () => filterable(d.deviceOs, cols("deviceCategory", L("Appareil", "Device"), "operatingSystem", L("Système", "OS")), "ga4-appareil-systeme.csv") },
+    { label: L("Résolutions", "Resolutions"), count: d.resolution.length, render: () => filterable(d.resolution, cols("screenResolution", L("Résolution", "Resolution")), "ga4-resolutions.csv") },
+    { label: L("Plateformes", "Platforms"), count: d.platform.length, render: () => filterable(d.platform, cols("platform", L("Plateforme", "Platform")), "ga4-plateformes.csv") },
+    { label: L("Langues", "Languages"), count: d.language.length, render: () => filterable(d.language, cols("language", L("Langue", "Language")), "ga4-langues.csv") },
+  ]), el("p", "c-note c-pad", L("Search Console ne fournit pas de ventilation par système ou navigateur : seule la dimension appareil existe (Search Console → Appareils).", "Search Console has no OS/browser breakdown: only the device dimension exists (Search Console → Devices)."))];
+}
+
+/* ── Google Tag Manager : inventaire, écriture, publication confirmée ── */
+export function renderGtm(d, api, rerender) {
+  if (d.problem) return [problemBox(d.problem)];
+  const c = d.container; const out = [];
+  out.push(el("p", "c-note c-pad", `${c.name} · ${c.publicId} · ${(c.usageContext ?? []).join(", ")} · ${L("version en ligne", "live version")} : ${d.live ? `${d.live.id} ${d.live.name ?? ""}` : "—"} · ${L("modifications en attente", "pending changes")} : ${d.pendingChanges}`));
+  const msg = el("div", "c-out");
+  const call = async (route, body) => { msg.replaceChildren(el("p", "c-loading", L("En cours…", "Working…"))); try { const r = await api(route, { container: c.path, ...body }); if (r.problem) msg.replaceChildren(problemBox(r.problem)); else { msg.replaceChildren(el("pre", "c-code", JSON.stringify(r.done ?? r, null, 2))); } return r; } catch (e) { msg.replaceChildren(el("p", "c-error", e.message)); } };
+  // Formulaire d'écriture
+  const form = el("form", "c-form");
+  const field = (name, label, node) => { const f = el("label", "c-field"); f.append(el("span", "", label)); node.name = name; f.append(node); form.append(f); return node; };
+  const select = (opts) => { const s = el("select"); for (const [v, t] of opts) { const o = el("option", "", t); o.value = v; s.append(o); } return s; };
+  field("op", L("Opération", "Operation"), select([["create", L("Créer", "Create")], ["update", L("Modifier", "Update")], ["delete", L("Supprimer", "Delete")], ["create-workspace", L("Créer un espace de travail", "Create workspace")], ["delete-workspace", L("Supprimer l'espace de travail", "Delete workspace")], ["create-version", L("Créer une version", "Create version")]]));
+  field("kind", L("Élément", "Item"), select([["tags", L("Balise", "Tag")], ["triggers", L("Déclencheur", "Trigger")], ["variables", "Variable"]]));
+  const ws = field("workspace", L("Espace de travail", "Workspace"), select(d.workspaces.map((w) => [w.path, w.name])));
+  ws.value = d.workspace;
+  const path = el("input"); path.placeholder = "accounts/…/tags/12"; field("path", L("Chemin (modifier/supprimer)", "Path (update/delete)"), path);
+  const name = el("input"); field("name", L("Nom (espace / version)", "Name (workspace / version)"), name);
+  const res = el("textarea"); res.rows = 5; res.placeholder = '{"name":"GA4 - page_view","type":"gaawe","parameter":[…],"firingTriggerId":["2147479553"]}'; field("resource", L("Ressource JSON (API Tag Manager)", "Resource JSON (Tag Manager API)"), res);
+  const dry = el("input"); dry.type = "checkbox"; dry.checked = true; const dl = el("label", "c-field c-inline"); dry.name = "dryRun"; dl.append(dry, el("span", "", L("Simulation (rien n'est envoyé à Google)", "Dry run (nothing sent to Google)"))); form.append(dl);
+  const go = el("button", "btn btn-small", L("Exécuter", "Run")); go.type = "submit"; form.append(go);
+  form.onsubmit = async (e) => { e.preventDefault(); const fd = Object.fromEntries(new FormData(form)); const body = { ...fd, dryRun: dry.checked }; if (body.op === "update" || body.op === "delete") body.path = path.value; else delete body.path; if (body.op === "delete-workspace" && !confirm(L("Supprimer cet espace de travail ?", "Delete this workspace?"))) return; const r = await call("/gtm/write", body); if (r && !r.problem && !dry.checked) rerender(); };
+  // Publication avec confirmation
+  const pub = el("form", "c-form");
+  const ver = el("select"); ver.name = "version"; for (const v of d.versions.filter((x) => !x.deleted)) { const o = el("option", "", `${v.id} · ${v.name ?? ""} (${v.tags ?? 0} ${L("balises", "tags")})`); o.value = v.id; ver.append(o); }
+  const vf = el("label", "c-field"); vf.append(el("span", "", L("Version à publier", "Version to publish")), ver); pub.append(vf);
+  const cf = el("label", "c-field"); const conf = el("input"); conf.name = "confirm"; conf.placeholder = c.publicId; cf.append(el("span", "", L(`Retapez ${c.publicId} pour confirmer`, `Type ${c.publicId} to confirm`)), conf); pub.append(cf);
+  const pb = el("button", "btn btn-small btn-danger", L("Publier en production", "Publish to production")); pb.type = "submit"; pub.append(pb);
+  pub.onsubmit = async (e) => { e.preventDefault(); if (conf.value.trim() !== c.publicId) { msg.replaceChildren(el("p", "c-error", L(`Confirmation incorrecte : tapez ${c.publicId}.`, `Wrong confirmation: type ${c.publicId}.`))); return; } if (!confirm(L(`Publier la version ${ver.value} sur ${c.publicId} ? Elle sera en ligne immédiatement.`, `Publish version ${ver.value} to ${c.publicId}? It goes live immediately.`))) return; await call("/gtm/publish", { version: ver.value, confirm: conf.value.trim() }); };
+  const card = (title, ...kids) => { const s = el("section", "c-card"); s.append(el("h3", "", title), ...kids); return s; };
+  out.push(segments([
+    { label: L("Balises", "Tags"), count: d.tags.length, render: () => filterable(d.tags, [["name", L("Nom", "Name")], ["type", "Type"], [(r) => r.firing.join(", "), L("Déclencheurs", "Triggers")], [(r) => (r.paused ? L("en pause", "paused") : "✓"), L("État", "State")], ["path", L("Chemin", "Path")]], "gtm-balises.csv") },
+    { label: L("Déclencheurs", "Triggers"), count: d.triggers.length, render: () => filterable(d.triggers, [["name", L("Nom", "Name")], ["type", "Type"], ["triggerId", "ID"], ["path", L("Chemin", "Path")]], "gtm-declencheurs.csv") },
+    { label: "Variables", count: d.variables.length, render: () => filterable(d.variables, [["name", L("Nom", "Name")], ["type", "Type"], ["path", L("Chemin", "Path")]], "gtm-variables.csv") },
+    ...(d.clients.length || (c.usageContext ?? []).includes("server") ? [{ label: L("Clients (serveur)", "Clients (server)"), count: d.clients.length, render: () => filterable(d.clients, [["name", L("Nom", "Name")], ["type", "Type"], ["priority", L("Priorité", "Priority")]], "sgtm-clients.csv") }] : []),
+    { label: L("Espaces de travail", "Workspaces"), count: d.workspaces.length, render: () => filterable(d.workspaces, [["name", L("Nom", "Name")], ["description", "Description"], ["path", L("Chemin", "Path")]], "gtm-espaces.csv") },
+    { label: "Versions", count: d.versions.length, render: () => filterable(d.versions, [["id", "ID"], ["name", L("Nom", "Name")], ["tags", L("Balises", "Tags")], ["triggers", L("Déclencheurs", "Triggers")], ["variables", "Variables"]], "gtm-versions.csv") },
+  ]));
+  out.push(card(L("Écrire dans GTM", "Write to GTM"), el("p", "c-note", L("Réservé aux administrateurs du client. Testez d'abord dans un espace de travail dédié ; rien n'est en ligne avant publication.", "Client admins only. Test in a dedicated workspace first; nothing goes live before publishing.")), form));
+  out.push(card(L("Publier une version", "Publish a version"), el("p", "c-note", L("Publication immédiate sur le site : double confirmation requise.", "Goes live immediately: double confirmation required.")), pub));
+  out.push(msg);
+  return out;
 }

@@ -11,7 +11,7 @@
 
 import fs from "node:fs";
 import { google } from "googleapis";
-import { getAuthClient } from "../auth/service-account.js";
+import { getAuthClient, currentKeyFile } from "../auth/service-account.js";
 import { querySearchAnalytics, listSearchConsoleSites, listSitemaps } from "../google/search-console.js";
 import { runReport, runRealtimeReport } from "../google/data-api.js";
 import { auditGtmInstallation } from "../google/gtm-installation.js";
@@ -39,7 +39,7 @@ export const delta = (cur: number, prev: number): number | null => (prev ? Math.
 export function serviceAccountEmail(): string | null {
   try {
     if (process.env.GOOGLE_CREDENTIALS_JSON) return JSON.parse(process.env.GOOGLE_CREDENTIALS_JSON).client_email ?? null;
-    const file = process.env.GOOGLE_APPLICATION_CREDENTIALS;
+    const file = currentKeyFile();
     if (!file || !fs.existsSync(file)) return null;
     return JSON.parse(fs.readFileSync(file, "utf8")).client_email ?? null;
   } catch { return null; }
@@ -230,6 +230,58 @@ export async function bingPerformance(body: Body, tenant: Tenant | undefined, f:
   }
 }
 
+
+// ─── GA4 e-commerce & technologie ──────────────────────────────────────────
+
+const ECOM_TOTALS = ["purchaseRevenue", "transactions", "ecommercePurchases", "averagePurchaseRevenue", "totalPurchasers", "itemsPurchased", "addToCarts", "checkouts", "itemsViewed", "purchaserRate"];
+const FUNNEL = ["view_item_list", "view_item", "add_to_cart", "begin_checkout", "add_shipping_info", "add_payment_info", "purchase"];
+
+export async function ga4Ecommerce(body: Body, report: Report = runReport) {
+  const propertyId = ga4PropertyOf(body);
+  if (!propertyId) return { problem: { state: "not-configured", message: "Aucune propriété GA4 configurée pour ce client." } satisfies AccessProblem };
+  const p = periodOf(num(body.days, 28, 1, 480), 1); const limit = num(body.rowLimit, 50, 1, 1000);
+  const r = (metrics: string[], dimensions: string[] = [], start = p.start, end = p.end, lim = limit, order?: string) =>
+    report({ propertyId, metrics, dimensions, startDate: start, endDate: end, limit: lim, orderBys: order ? [{ metric: { metricName: order }, desc: true }] : undefined }).then((x) => x.rows);
+  const numify = (rows: Record<string, string>[]) => rows.map((row) => Object.fromEntries(Object.entries(row).map(([k, v]) => [k, /^-?[\d.]+(e-?\d+)?$/i.test(v) && k !== "date" && k !== "transactionId" ? n(v) : v])));
+  try {
+    const [tot, prev, trend, items, lists, channels, devices, events, txs] = await Promise.all([
+      r(ECOM_TOTALS), r(ECOM_TOTALS, [], p.prevStart, p.prevEnd),
+      r(["purchaseRevenue", "transactions"], ["date"], p.start, p.end, 500),
+      r(["itemRevenue", "itemsPurchased", "itemsViewed", "itemsAddedToCart"], ["itemName"], p.start, p.end, limit, "itemRevenue").catch(() => []),
+      r(["itemsViewedInList", "itemsClickedInList", "itemListClickThroughRate"], ["itemListName"], p.start, p.end, limit, "itemsViewedInList").catch(() => []),
+      r(["sessions", "transactions", "purchaseRevenue", "sessionKeyEventRate"], ["sessionDefaultChannelGroup"], p.start, p.end, limit, "purchaseRevenue"),
+      r(["sessions", "transactions", "purchaseRevenue"], ["deviceCategory"], p.start, p.end, limit, "purchaseRevenue"),
+      report({ propertyId, metrics: ["eventCount", "totalUsers"], dimensions: ["eventName"], startDate: p.start, endDate: p.end, limit: 200, dimensionFilter: { filter: { fieldName: "eventName", inListFilter: { values: FUNNEL } } } } as any).then((x) => x.rows),
+      r(["purchaseRevenue"], ["transactionId"], p.start, p.end, 50, "purchaseRevenue").catch(() => []),
+    ]);
+    const cur = numify(tot)[0] ?? {}; const pv = numify(prev)[0] ?? {};
+    const ev = new Map(numify(events).map((e: any) => [e.eventName, e]));
+    const funnel = FUNNEL.map((name) => ({ step: name, events: Number((ev.get(name) as any)?.eventCount ?? 0), users: Number((ev.get(name) as any)?.totalUsers ?? 0) }));
+    const hasEcommerce = Number(cur.transactions ?? 0) > 0 || funnel.some((f) => f.events > 0);
+    return {
+      property: propertyId, period: p, hasEcommerce, totals: cur, previous: pv,
+      deltas: Object.fromEntries(ECOM_TOTALS.map((k) => [k, delta(Number(cur[k] ?? 0), Number(pv[k] ?? 0))])),
+      trend: numify(trend).sort((a: any, b: any) => String(a.date).localeCompare(String(b.date))).map((x: any) => ({ ...x, date: `${String(x.date).slice(0, 4)}-${String(x.date).slice(4, 6)}-${String(x.date).slice(6)}` })),
+      funnel, items: numify(items), itemLists: numify(lists), channels: numify(channels), devices: numify(devices), transactions: numify(txs),
+    };
+  } catch (error) { return { problem: accessProblem(error, "ga4", propertyId) }; }
+}
+
+/** Systèmes d'exploitation, navigateurs, résolutions (GA4) ; GSC n'expose pas OS/navigateur (appareil seulement). */
+export async function ga4Technology(body: Body, report: Report = runReport) {
+  const propertyId = ga4PropertyOf(body);
+  if (!propertyId) return { problem: { state: "not-configured", message: "Aucune propriété GA4 configurée pour ce client." } satisfies AccessProblem };
+  const p = periodOf(num(body.days, 28, 1, 480), 1); const limit = num(body.rowLimit, 50, 1, 1000);
+  const M = ["sessions", "totalUsers", "engagementRate", "keyEvents", "purchaseRevenue"];
+  const r = (dimensions: string[]) => report({ propertyId, metrics: M, dimensions, startDate: p.start, endDate: p.end, limit, orderBys: [{ metric: { metricName: "sessions" }, desc: true }] }).then((x) => x.rows.map((row) => Object.fromEntries(Object.entries(row).map(([k, v]) => [k, M.includes(k) ? n(v) : v]))));
+  try {
+    const [os, osVersion, browser, browserVersion, deviceOs, resolution, platform, language] = await Promise.all([
+      r(["operatingSystem"]), r(["operatingSystemWithVersion"]), r(["browser"]), r(["browser", "deviceCategory"]), r(["deviceCategory", "operatingSystem"]), r(["screenResolution"]), r(["platform"]), r(["language"]),
+    ]);
+    return { property: propertyId, period: p, os, osVersion, browser, browserVersion, deviceOs, resolution, platform, language, notes: ["Search Console ne fournit pas de ventilation par système ou navigateur : seule la dimension appareil existe côté GSC (onglet Appareils)."] };
+  } catch (error) { return { problem: accessProblem(error, "ga4", propertyId) }; }
+}
+
 // ─── Statut des accès ──────────────────────────────────────────────────────
 
 export async function trackingStatus(body: Body, tenant: Tenant | undefined, f: BingFetch = (u) => fetch(u)) {
@@ -266,6 +318,8 @@ export const analyticsRoutes: ConsoleRoute[] = [
   { path: "/search/query-pages", needsUrl: false, handler: async ({ body }) => searchQueryPages(body) },
   { path: "/search/sitemaps", needsUrl: false, handler: async ({ body }) => searchSitemaps(body) },
   { path: "/ga4/overview", needsUrl: false, handler: async ({ body }) => ga4Overview(body) },
+  { path: "/ga4/ecommerce", needsUrl: false, handler: async ({ body }) => ga4Ecommerce(body) },
+  { path: "/ga4/technology", needsUrl: false, handler: async ({ body }) => ga4Technology(body) },
   { path: "/ga4/realtime", needsUrl: false, handler: async ({ body }) => ga4Realtime(body) },
   { path: "/bing/performance", needsUrl: false, handler: async ({ body, tenancy }) => bingPerformance(body, tenancy?.tenant ?? undefined) },
   { path: "/tracking/status", needsUrl: false, handler: async ({ body, tenancy }) => trackingStatus(body, tenancy?.tenant ?? undefined) },
