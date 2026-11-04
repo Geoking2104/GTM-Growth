@@ -298,7 +298,8 @@
     </div>
   </section>
 
-<section class="section section-console" id="console" aria-labelledby="console-heading">
+  <!-- ── Analysis console ─────────────────────────────────── -->
+  <section class="section section-console" id="console" aria-labelledby="console-heading">
     <div class="wrap">
       <header class="section-head">
         <p class="eyebrow eyebrow-dark">Analysis console</p>
@@ -306,135 +307,263 @@
         <p class="section-sub">Search Console, GA4, the GEO audit, citability and IndexNow, side by side. The console reads the sample audit of opendpe.net — the same payload the MCP tools return.</p>
       </header>
 
-      <div class="console" role="region" aria-label="Analysis console demo">
-        <div class="console-bar">
-          <span class="console-dots" aria-hidden="true"><i></i><i></i><i></i></span>
-          <span class="console-title">gtm-growth · analysis board</span>
-          <span class="console-chip">sample audit · opendpe.net</span>
+      <div class="app" role="region" aria-label="Analysis console demo">
+        <div class="app-tabs" role="tablist" aria-label="Console views">
+          <button role="tab" id="tab-overview" aria-controls="panel-overview" aria-selected="true" class="app-tab is-active"><span class="app-tab-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 17l5-6 4 4 5-7 4 5"/><path d="M3 21h18"/></svg></span>Overview</button>
+          <button role="tab" id="tab-geo" aria-controls="panel-geo" aria-selected="false" class="app-tab"><span class="app-tab-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 19V5"/><path d="M4 19h16"/><rect x="7" y="11" width="3" height="8"/><rect x="12" y="7" width="3" height="12"/><rect x="17" y="13" width="3" height="6"/></svg></span>GEO</button>
+          <button role="tab" id="tab-search" aria-controls="panel-search" aria-selected="false" class="app-tab"><span class="app-tab-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="11" cy="11" r="6.5"/><path d="M16 16l4.5 4.5"/></svg></span>Search</button>
+          <button role="tab" id="tab-indexnow" aria-controls="panel-indexnow" aria-selected="false" class="app-tab"><span class="app-tab-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M13 3L5 14h5l-1 7 8-11h-6z"/></svg></span>IndexNow</button>
+          <button role="tab" id="tab-tracking" aria-controls="panel-tracking" aria-selected="false" class="app-tab"><span class="app-tab-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 12h4l2-6 3 12 2-6h5"/></svg></span>Tracking</button>
         </div>
 
-        <div class="console-tabs" role="tablist" aria-label="Console views">
-          <button role="tab" id="tab-overview" aria-controls="panel-overview" aria-selected="true" class="is-active">Overview</button>
-          <button role="tab" id="tab-geo" aria-controls="panel-geo" aria-selected="false">GEO</button>
-          <button role="tab" id="tab-search" aria-controls="panel-search" aria-selected="false">Search</button>
-          <button role="tab" id="tab-indexnow" aria-controls="panel-indexnow" aria-selected="false">IndexNow</button>
-          <button role="tab" id="tab-tracking" aria-controls="panel-tracking" aria-selected="false">Tracking</button>
-        </div>
-
-        <div class="console-body">
-          <section role="tabpanel" id="panel-overview" aria-labelledby="tab-overview">
-            <div class="console-kpis">
-              <div class="kpi"><span>GEO score</span><strong>71</strong><em>/100</em></div>
-              <div class="kpi"><span>Projected</span><strong>100</strong><em>/100</em></div>
-              <div class="kpi"><span>Recoverable</span><strong>29</strong><em>pts</em></div>
-              <div class="kpi"><span>Citability</span><strong>53</strong><em>/100</em></div>
+        <div class="app-body">
+          <aside class="app-side">
+            <div class="app-switch">
+              <img src="assets/logo-64.png" alt="" width="20" height="20">
+              <span>opendpe.net</span>
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" class="chev"><path d="M9 6l6 6-6 6"/></svg>
             </div>
-            <div class="console-grid">
-              <div class="console-panel">
-                <h3>Score trajectory</h3>
-                <p class="console-sub">Cumulative, one step per recommended fix.</p>
-                <svg viewBox="0 0 320 120" role="img" aria-label="Score rises from 71 to 100 across 16 fixes" class="console-chart">
-                  <line x1="12" y1="100" x2="308" y2="100" stroke="#1e2b3d" />
-                  <polyline points="12,92.6 30.5,86.3 49,80 67.5,73.7 86,68.9 104.5,64.3 123,59.7 141.5,55.2 160,53 178.5,50.8 197,45.7 215.5,40.6 234,35.4 252.5,32.9 271,30.3 289.5,27.7 308,25" fill="none" stroke="#2dd4bf" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" />
-                  <circle cx="12" cy="92.6" r="3" fill="#0b1220" stroke="#2dd4bf" stroke-width="2" />
-                  <circle cx="308" cy="25" r="3" fill="#0b1220" stroke="#2dd4bf" stroke-width="2" />
-                  <text x="12" y="84" fill="#8fa3bd" font-size="9">71</text>
-                  <text x="308" y="16" fill="#e6eef8" font-size="10" font-weight="700" text-anchor="end">100</text>
-                </svg>
-              </div>
-              <div class="console-panel">
-                <h3>Actions, ranked</h3>
-                <p class="console-sub">Indexation blockers first, then recoverable points.</p>
-                <ol class="console-actions">
-                  <li><span class="rank">1</span><div><strong>Publish the IndexNow key file</strong><small>minutes · unlocks 45</small></div></li>
-                  <li><span class="rank">2</span><div><strong>Add explicit citation-bot rules</strong><small>minutes · +3</small></div></li>
-                  <li><span class="rank">3</span><div><strong>Add Article schema</strong><small>hours · +3</small></div></li>
-                  <li><span class="rank">4</span><div><strong>Link sameAs to four pillars</strong><small>minutes · +3</small></div></li>
-                </ol>
+            <div class="app-search"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="11" cy="11" r="6.5"/><path d="M16 16l4.5 4.5"/></svg><span>Search</span><kbd>⌘K</kbd></div>
+            <p class="app-group">Track</p>
+            <ul class="app-nav">
+              <li><a href="#console" class="is-active" aria-current="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 17l5-6 4 4 5-7 4 5"/><path d="M3 21h18"/></svg><span>Overview</span></a></li>
+              <li><a href="#console"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 19V5"/><path d="M4 19h16"/><rect x="7" y="11" width="3" height="8"/><rect x="12" y="7" width="3" height="12"/><rect x="17" y="13" width="3" height="6"/></svg><span>GEO</span></a></li>
+              <li><a href="#console"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3l7 3v6c0 4-3 7-7 8-4-1-7-4-7-8V6z"/><path d="M9 12l2 2 4-4"/></svg><span>Citability</span></a></li>
+              <li><a href="#console"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M13 3L5 14h5l-1 7 8-11h-6z"/></svg><span>IndexNow</span></a></li>
+            </ul>
+            <p class="app-group">Act</p>
+            <ul class="app-nav">
+              <li><a href="#console"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="11" cy="11" r="6.5"/><path d="M16 16l4.5 4.5"/></svg><span>Search</span></a></li>
+              <li><a href="#console"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 12h4l2-6 3 12 2-6h5"/></svg><span>Tracking</span></a></li>
+              <li><a href="#console"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 4h8l4 4v12H6z"/><path d="M14 4v5h4"/></svg><span>Report</span></a></li>
+            </ul>
+            <p class="app-side-foot"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="3"/><path d="M12 3v3M12 18v3M3 12h3M18 12h3M5.6 5.6l2 2M16.4 16.4l2 2M18.4 5.6l-2 2M7.6 16.4l-2 2"/></svg><span>Settings</span></p>
+          </aside>
+
+          <div class="app-main">
+            <div class="app-head">
+              <p class="app-crumb">opendpe.net <span aria-hidden="true">▸</span> <strong id="app-crumb-current">Overview</strong></p>
+              <div class="app-filters">
+                <span class="app-pill dashed"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="4" y="5" width="16" height="15" rx="2"/><path d="M4 10h16M9 3v4M15 3v4"/></svg>All engines</span>
+                <span class="app-pill"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="4" y="5" width="16" height="15" rx="2"/><path d="M4 10h16M9 3v4M15 3v4"/></svg>Sample · 2 Nov 2026</span>
               </div>
             </div>
-          </section>
 
-          <section role="tabpanel" id="panel-geo" aria-labelledby="tab-geo" hidden>
-            <table class="console-table">
-              <caption>Eight categories, 100 points</caption>
-              <thead><tr><th scope="col">Category</th><th scope="col">Points</th><th scope="col">Bar</th></tr></thead>
-              <tbody>
-                <tr><th scope="row">robots.txt</th><td>15/18</td><td><span class="cbar"><i style="width:83%"></i></span></td></tr>
-                <tr><th scope="row">llms.txt</th><td>12/18</td><td><span class="cbar"><i style="width:67%"></i></span></td></tr>
-                <tr><th scope="row">Schema JSON-LD</th><td>13/16</td><td><span class="cbar"><i style="width:81%"></i></span></td></tr>
-                <tr><th scope="row">Meta tags</th><td>14/14</td><td><span class="cbar"><i style="width:100%"></i></span></td></tr>
-                <tr><th scope="row">Content</th><td>11/12</td><td><span class="cbar"><i style="width:92%"></i></span></td></tr>
-                <tr><th scope="row">Brand & entity</th><td>3/10</td><td><span class="cbar warn"><i style="width:30%"></i></span></td></tr>
-                <tr><th scope="row">Signals</th><td>3/6</td><td><span class="cbar warn"><i style="width:50%"></i></span></td></tr>
-                <tr><th scope="row">AI discovery</th><td>0/6</td><td><span class="cbar bad"><i style="width:2%"></i></span></td></tr>
-              </tbody>
-            </table>
-          </section>
+            <section role="tabpanel" id="panel-overview" aria-labelledby="tab-overview" class="app-panel">
+              <div class="kpi-row">
+                <div class="kpi-cell">
+                  <span class="kpi-label">GEO score</span>
+                  <div class="kpi-value"><strong>71</strong><em>/100</em></div>
+                  <div class="kpi-foot"><span class="delta up">+29</span><span class="kpi-note">projected</span><svg class="spark" viewBox="0 0 76 26" fill="none" aria-hidden="true"><polyline points="2.0,23.0 6.5,20.9 11.0,18.9 15.5,16.8 20.0,15.4 24.5,14.0 29.0,12.7 33.5,11.3 38.0,10.6 42.5,9.9 47.0,8.5 51.5,7.1 56.0,5.8 60.5,5.1 65.0,4.4 69.5,3.7 74.0,3.0" stroke="#4f5bd5" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg></div>
+                </div>
+                <div class="kpi-cell">
+                  <span class="kpi-label">Citability</span>
+                  <div class="kpi-value"><strong>53</strong><em>/100</em></div>
+                  <div class="kpi-foot"><span class="delta up">+47</span><span class="kpi-note">to the max</span><svg class="spark" viewBox="0 0 76 26" fill="none" aria-hidden="true"><polyline points="2.0,23.0 16.4,19.2 30.8,15.3 45.2,11.5 59.6,7.3 74.0,3.0" stroke="#8b7bd8" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg></div>
+                </div>
+                <div class="kpi-cell">
+                  <span class="kpi-label">IndexNow</span>
+                  <div class="kpi-value"><strong>35</strong><em>/100</em></div>
+                  <div class="kpi-foot"><span class="delta up">+65</span><span class="kpi-note">4 checks to fix</span><svg class="spark" viewBox="0 0 76 26" fill="none" aria-hidden="true"><polyline points="2.0,23.0 16.4,19.9 30.8,15.3 45.2,10.7 59.6,6.1 74.0,3.0" stroke="#e0b23c" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg></div>
+                </div>
+                <div class="kpi-cell">
+                  <span class="kpi-label">Engines ready</span>
+                  <div class="kpi-value"><strong>3</strong><em>/5</em></div>
+                  <div class="kpi-foot"><span class="delta up">+2</span><span class="kpi-note">AIO, ChatGPT, Copilot</span><svg class="spark" viewBox="0 0 76 26" fill="none" aria-hidden="true"><polyline points="2.0,23.0 20.0,20.5 38.0,13.0 56.0,3.0 74.0,3.0" stroke="#2f9e6f" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg></div>
+                </div>
+              </div>
 
-          <section role="tabpanel" id="panel-search" aria-labelledby="tab-search" hidden>
-            <div class="console-kpis">
-              <div class="kpi"><span>Clicks</span><strong>2,940</strong></div>
-              <div class="kpi"><span>Impressions</span><strong>184K</strong></div>
-              <div class="kpi"><span>CTR</span><strong>1.6</strong><em>%</em></div>
-              <div class="kpi"><span>Avg position</span><strong>14.2</strong></div>
-            </div>
-            <table class="console-table">
-              <caption>Illustrative rows — connect a Search Console property for yours</caption>
-              <thead><tr><th scope="col">Query</th><th scope="col">Clicks</th><th scope="col">Position</th></tr></thead>
-              <tbody>
-                <tr><th scope="row">dpe maison</th><td>610</td><td>8.4</td></tr>
-                <tr><th scope="row">diagnostic dpe en ligne</th><td>402</td><td>11.1</td></tr>
-                <tr><th scope="row">dpe appartement</th><td>318</td><td>9.7</td></tr>
-              </tbody>
-            </table>
-          </section>
+              <div class="app-split">
+                <figure class="app-chart">
+                  <figcaption>Score trajectory to the fix plan<span>71 → 100 · one point per fix</span></figcaption>
+                  <svg viewBox="0 0 620 240" role="img" aria-label="Score rises from 71 to 100 across 16 fixes">
+                    <g stroke="#eceef3" stroke-width="1">
+                      <line x1="8" y1="36" x2="612" y2="36"/>
+                      <line x1="8" y1="96" x2="612" y2="96"/>
+                      <line x1="8" y1="156" x2="612" y2="156"/>
+                      <line x1="8" y1="216" x2="612" y2="216"/>
+                    </g>
+                    <g fill="#9aa3b2" font-size="10" font-family="var(--font)">
+                      <text x="0" y="39">100</text>
+                      <text x="0" y="99">90</text>
+                      <text x="0" y="159">80</text>
+                      <text x="0" y="219">70</text>
+                    </g>
+                    <polyline points="8.0,190.6 45.8,173.1 83.5,155.7 121.3,138.3 159.0,126.6 196.8,115.0 234.5,103.4 272.3,91.8 310.0,85.9 347.8,80.1 385.5,68.5 423.3,56.9 461.0,45.3 498.8,39.4 536.5,33.6 574.3,27.8 612.0,22.0" fill="none" stroke="#4f5bd5" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/>
+                    <circle cx="8" cy="216" r="3.5" fill="#fff" stroke="#4f5bd5" stroke-width="2"/>
+                    <circle cx="612" cy="36" r="3.5" fill="#fff" stroke="#4f5bd5" stroke-width="2"/>
+                  </svg>
+                  <div class="app-axis"><span>now</span><span>+6 fixes</span><span>+16 fixes</span></div>
+                </figure>
 
-          <section role="tabpanel" id="panel-indexnow" aria-labelledby="tab-indexnow" hidden>
-            <div class="console-kpis">
-              <div class="kpi"><span>Readiness</span><strong>35</strong><em>/100</em></div>
-              <div class="kpi"><span>Key file</span><strong>missing</strong></div>
-              <div class="kpi"><span>Bingbot</span><strong>allowed</strong></div>
-              <div class="kpi"><span>Last submit</span><strong>—</strong></div>
-            </div>
-            <table class="console-table">
-              <caption>Seven checks, outside the GEO rubric</caption>
-              <thead><tr><th scope="col">Check</th><th scope="col">Verdict</th></tr></thead>
-              <tbody>
-                <tr><th scope="row">Key in the protocol grammar</th><td><span class="pill bad">missing</span></td></tr>
-                <tr><th scope="row">Key file published</th><td><span class="pill bad">missing</span></td></tr>
-                <tr><th scope="row">Bingbot allowed</th><td><span class="pill ok">pass</span></td></tr>
-                <tr><th scope="row">Sitemap declared</th><td><span class="pill ok">pass</span></td></tr>
-                <tr><th scope="row">HTTPS</th><td><span class="pill ok">pass</span></td></tr>
-              </tbody>
-            </table>
-          </section>
+                <aside class="app-rank">
+                  <div class="app-rank-head">Engine readiness <span>of 100</span></div>
+                  <p class="app-rank-lead">Best: <strong>Google AIO 100</strong> · weakest: <strong>Gemini 60</strong></p>
+                  <ul class="rank-list">
+                    <li>
+                      <span class="rank-dot" aria-hidden="true"></span>
+                      <span class="rank-name">Google AIO</span>
+                      <span class="rank-score">100</span>
+                      <span class="rank-delta up">0</span>
+                    </li>
+                    <li>
+                      <span class="rank-dot" aria-hidden="true"></span>
+                      <span class="rank-name">ChatGPT</span>
+                      <span class="rank-score">100</span>
+                      <span class="rank-delta up">0</span>
+                    </li>
+                    <li>
+                      <span class="rank-dot" aria-hidden="true"></span>
+                      <span class="rank-name">Copilot</span>
+                      <span class="rank-score">80</span>
+                      <span class="rank-delta down">−20</span>
+                    </li>
+                    <li>
+                      <span class="rank-dot" aria-hidden="true"></span>
+                      <span class="rank-name">Perplexity</span>
+                      <span class="rank-score">65</span>
+                      <span class="rank-delta down">−35</span>
+                    </li>
+                    <li>
+                      <span class="rank-dot" aria-hidden="true"></span>
+                      <span class="rank-name">Gemini</span>
+                      <span class="rank-score">60</span>
+                      <span class="rank-delta down">−40</span>
+                    </li>
+                  </ul>
+                  <p class="rank-foot">Gap to a full pentagon, in points.</p>
+                </aside>
+              </div>
 
-          <section role="tabpanel" id="panel-tracking" aria-labelledby="tab-tracking" hidden>
-            <div class="console-kpis">
-              <div class="kpi"><span>GA4 stream</span><strong>G-EQY…</strong></div>
-              <div class="kpi"><span>Container</span><strong>GTM-WVQ…</strong></div>
-              <div class="kpi"><span>Loaders</span><strong>1 gtag</strong><em>2 gtm</em></div>
-              <div class="kpi"><span>Consent</span><strong>declared</strong></div>
-            </div>
-            <table class="console-table">
-              <caption>Read from the served HTML — duplicated loaders are the usual culprit</caption>
-              <thead><tr><th scope="col">Signal</th><th scope="col">Verdict</th></tr></thead>
-              <tbody>
-                <tr><th scope="row">Two GTM containers</th><td><span class="pill warn">watch</span></td></tr>
-                <tr><th scope="row">dataLayer</th><td><span class="pill ok">pass</span></td></tr>
-                <tr><th scope="row">Consent mode</th><td><span class="pill ok">pass</span></td></tr>
-                <tr><th scope="row">Universal Analytics</th><td><span class="pill ok">none</span></td></tr>
-              </tbody>
-            </table>
-          </section>
+              <div class="app-strip">
+                <h3>Where the points are</h3>
+                <ul class="strip-list">
+                  <li>
+                    <span class="strip-name">robots.txt</span>
+                    <span class="strip-bar"><i style="width:83%"></i></span>
+                    <span class="strip-value">15/18</span>
+                  </li>
+                  <li>
+                    <span class="strip-name">llms.txt</span>
+                    <span class="strip-bar"><i style="width:67%"></i></span>
+                    <span class="strip-value">12/18</span>
+                  </li>
+                  <li>
+                    <span class="strip-name">Schema</span>
+                    <span class="strip-bar"><i style="width:81%"></i></span>
+                    <span class="strip-value">13/16</span>
+                  </li>
+                  <li>
+                    <span class="strip-name">Meta tags</span>
+                    <span class="strip-bar"><i style="width:100%"></i></span>
+                    <span class="strip-value">14/14</span>
+                  </li>
+                  <li>
+                    <span class="strip-name">Content</span>
+                    <span class="strip-bar"><i style="width:92%"></i></span>
+                    <span class="strip-value">11/12</span>
+                  </li>
+                  <li>
+                    <span class="strip-name">Brand & entity</span>
+                    <span class="strip-bar"><i style="width:30%"></i></span>
+                    <span class="strip-value">3/10</span>
+                  </li>
+                  <li>
+                    <span class="strip-name">Signals</span>
+                    <span class="strip-bar"><i style="width:50%"></i></span>
+                    <span class="strip-value">3/6</span>
+                  </li>
+                  <li>
+                    <span class="strip-name">AI discovery</span>
+                    <span class="strip-bar"><i style="width:0%"></i></span>
+                    <span class="strip-value">0/6</span>
+                  </li>
+                </ul>
+              </div>
+            </section>
+
+            <section role="tabpanel" id="panel-geo" aria-labelledby="tab-geo" class="app-panel" hidden>
+              <table class="app-table">
+                <caption>Eight categories, 100 points, one audit</caption>
+                <thead><tr><th scope="col">Category</th><th scope="col">Points</th><th scope="col">Bar</th></tr></thead>
+                <tbody>
+                  <tr><th scope="row">robots.txt</th><td>15/18</td><td><span class="cbar"><i style="width:83%"></i></span></td></tr>
+                  <tr><th scope="row">llms.txt</th><td>12/18</td><td><span class="cbar"><i style="width:67%"></i></span></td></tr>
+                  <tr><th scope="row">Schema</th><td>13/16</td><td><span class="cbar"><i style="width:81%"></i></span></td></tr>
+                  <tr><th scope="row">Meta tags</th><td>14/14</td><td><span class="cbar"><i style="width:100%"></i></span></td></tr>
+                  <tr><th scope="row">Content</th><td>11/12</td><td><span class="cbar"><i style="width:92%"></i></span></td></tr>
+                  <tr><th scope="row">Brand & entity</th><td>3/10</td><td><span class="cbar"><i style="width:30%"></i></span></td></tr>
+                  <tr><th scope="row">Signals</th><td>3/6</td><td><span class="cbar"><i style="width:50%"></i></span></td></tr>
+                  <tr><th scope="row">AI discovery</th><td>0/6</td><td><span class="cbar"><i style="width:0%"></i></span></td></tr>
+                </tbody>
+              </table>
+            </section>
+
+            <section role="tabpanel" id="panel-search" aria-labelledby="tab-search" class="app-panel" hidden>
+              <div class="kpi-row">
+                <div class="kpi-cell"><span class="kpi-label">Clicks</span><div class="kpi-value"><strong>2,940</strong></div><div class="kpi-foot"><span class="kpi-note">sample</span></div></div>
+                <div class="kpi-cell"><span class="kpi-label">Impressions</span><div class="kpi-value"><strong>184K</strong></div><div class="kpi-foot"><span class="kpi-note">sample</span></div></div>
+                <div class="kpi-cell"><span class="kpi-label">CTR</span><div class="kpi-value"><strong>1.6</strong><em>%</em></div><div class="kpi-foot"><span class="kpi-note">sample</span></div></div>
+                <div class="kpi-cell"><span class="kpi-label">Avg position</span><div class="kpi-value"><strong>14.2</strong></div><div class="kpi-foot"><span class="kpi-note">sample</span></div></div>
+              </div>
+              <table class="app-table">
+                <caption>Illustrative rows — connect a Search Console property for yours</caption>
+                <thead><tr><th scope="col">Query</th><th scope="col">Clicks</th><th scope="col">Position</th></tr></thead>
+                <tbody>
+                  <tr><th scope="row">dpe maison</th><td>610</td><td>8.4</td></tr>
+                  <tr><th scope="row">diagnostic dpe en ligne</th><td>402</td><td>11.1</td></tr>
+                  <tr><th scope="row">dpe appartement</th><td>318</td><td>9.7</td></tr>
+                </tbody>
+              </table>
+            </section>
+
+            <section role="tabpanel" id="panel-indexnow" aria-labelledby="tab-indexnow" class="app-panel" hidden>
+              <div class="kpi-row">
+                <div class="kpi-cell"><span class="kpi-label">Readiness</span><div class="kpi-value"><strong>35</strong><em>/100</em></div><div class="kpi-foot"><span class="delta up">+65</span><span class="kpi-note">recoverable</span><svg class="spark" viewBox="0 0 76 26" fill="none" aria-hidden="true"><polyline points="2.0,23.0 16.4,19.9 30.8,15.3 45.2,10.7 59.6,6.1 74.0,3.0" stroke="#e0b23c" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg></div></div>
+                <div class="kpi-cell"><span class="kpi-label">Key file</span><div class="kpi-value"><strong>—</strong></div><div class="kpi-foot"><span class="rank-delta down">missing</span></div></div>
+                <div class="kpi-cell"><span class="kpi-label">Bingbot</span><div class="kpi-value"><strong>OK</strong></div><div class="kpi-foot"><span class="delta up">allowed</span></div></div>
+                <div class="kpi-cell"><span class="kpi-label">Last submit</span><div class="kpi-value"><strong>—</strong></div><div class="kpi-foot"><span class="kpi-note">never</span></div></div>
+              </div>
+              <table class="app-table">
+                <caption>Seven checks, outside the GEO rubric</caption>
+                <thead><tr><th scope="col">Check</th><th scope="col">Verdict</th></tr></thead>
+                <tbody>
+                  <tr><th scope="row">Key in the protocol grammar</th><td><span class="pill bad">missing</span></td></tr>
+                  <tr><th scope="row">Key file published</th><td><span class="pill bad">missing</span></td></tr>
+                  <tr><th scope="row">File contains the key</th><td><span class="pill bad">missing</span></td></tr>
+                  <tr><th scope="row">Bingbot allowed</th><td><span class="pill ok">pass</span></td></tr>
+                  <tr><th scope="row">Sitemap declared</th><td><span class="pill ok">pass</span></td></tr>
+                  <tr><th scope="row">HTTPS</th><td><span class="pill ok">pass</span></td></tr>
+                  <tr><th scope="row">Bing verification</th><td><span class="pill warn">absent</span></td></tr>
+                </tbody>
+              </table>
+            </section>
+
+            <section role="tabpanel" id="panel-tracking" aria-labelledby="tab-tracking" class="app-panel" hidden>
+              <div class="kpi-row">
+                <div class="kpi-cell"><span class="kpi-label">GA4 stream</span><div class="kpi-value"><strong>G-EQY…</strong></div><div class="kpi-foot"><span class="delta up">found</span></div></div>
+                <div class="kpi-cell"><span class="kpi-label">Container</span><div class="kpi-value"><strong>GTM-WVQ…</strong></div><div class="kpi-foot"><span class="kpi-note">2 on the page</span></div></div>
+                <div class="kpi-cell"><span class="kpi-label">Loaders</span><div class="kpi-value"><strong>1</strong><em>gtag</em> <strong>2</strong><em>gtm</em></div><div class="kpi-foot"><span class="rank-delta down">duplicate</span></div></div>
+                <div class="kpi-cell"><span class="kpi-label">Consent</span><div class="kpi-value"><strong>OK</strong></div><div class="kpi-foot"><span class="delta up">declared</span></div></div>
+              </div>
+              <table class="app-table">
+                <caption>Read from the served HTML — duplicated loaders are the usual culprit</caption>
+                <thead><tr><th scope="col">Signal</th><th scope="col">Verdict</th></tr></thead>
+                <tbody>
+                  <tr><th scope="row">Two GTM containers</th><td><span class="pill warn">watch</span></td></tr>
+                  <tr><th scope="row">dataLayer</th><td><span class="pill ok">pass</span></td></tr>
+                  <tr><th scope="row">Consent mode</th><td><span class="pill ok">pass</span></td></tr>
+                  <tr><th scope="row">Universal Analytics</th><td><span class="pill ok">none</span></td></tr>
+                </tbody>
+              </table>
+            </section>
+          </div>
         </div>
 
-        <p class="console-foot">GEO, citability and IndexNow values are measured on opendpe.net. Search rows are illustrative until a property is connected — the console never presents a sample as yours.</p>
+        <p class="app-foot">GEO, citability and IndexNow values are measured on opendpe.net. Search rows are illustrative until a property is connected — the console never presents a sample as yours.</p>
       </div>
     </div>
   </section>
-
 
 <section class="section section-alt" id="measurement" aria-labelledby="measurement-heading">
     <div class="wrap measurement">
