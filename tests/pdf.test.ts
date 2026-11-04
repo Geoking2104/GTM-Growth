@@ -89,8 +89,9 @@ describe("PDF report", () => {
       contactUrl: "https://example.com/contact",
     });
 
-    // cover, dashboard, summary, categories, platforms, entity graph, citability, plan, limits
-    expect(result.pages).toBe(9);
+    // cover, dashboard, console guide, summary, categories, platforms, entity graph,
+    // citability, plan, marketing plays, limits
+    expect(result.pages).toBe(11);
     expect(result.bytes).toBeGreaterThan(8000);
     const bytes = fs.readFileSync(out);
     expect(bytes.subarray(0, 5).toString()).toBe("%PDF-");
@@ -101,8 +102,8 @@ describe("PDF report", () => {
   it("still produces a report without platforms or citability", async () => {
     const out = path.join(os.tmpdir(), `geo-report-min-${Date.now()}.pdf`);
     const result = await writeGeoReportPdf({ audit, outPath: out });
-    // cover, dashboard, summary, categories, plan, limits — no schema, no platforms
-    expect(result.pages).toBeGreaterThanOrEqual(6);
+    // without platforms, citability or schema details the two optional pages drop out
+    expect(result.pages).toBeGreaterThanOrEqual(8);
     expect(fs.existsSync(out)).toBe(true);
     fs.unlinkSync(out);
   });

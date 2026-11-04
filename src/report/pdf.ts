@@ -173,7 +173,9 @@ function paragraph(doc: Doc, text: string, y: number, options: { size?: number; 
 
 function chip(doc: Doc, text: string, x: number, y: number, color: string, filled = true): number {
   doc.font("Helvetica-Bold").fontSize(7.5);
-  const w = doc.widthOfString(text.toUpperCase()) + 14;
+  const label = text.toUpperCase();
+  // Drawn with characterSpacing 0.6: measure what is actually rendered.
+  const w = doc.widthOfString(label) + label.length * 0.6 + 14;
   doc.save();
   if (filled) {
     doc.roundedRect(x, y, w, 16, 8).fill(color);
@@ -749,6 +751,237 @@ function closingPage(doc: Doc, input: PdfReportInput): void {
   );
 }
 
+/**
+ * The console, drawn as a wireframe. A screenshot would age; a schematic shows
+ * the reader where each number lives and why it is there.
+ */
+function consolePage(doc: Doc, input: PdfReportInput): void {
+  doc.addPage();
+  const audit = input.audit;
+  let y = M;
+
+  y = heading(doc, y, "How to read", "The console, panel by panel", "bars");
+  y = paragraph(
+    doc,
+    "The analysis console puts five sources on one screen: the GEO audit, citability, IndexNow, Search Console and the tracking layer. Its five tabs share one rule — every number points back to a check in this report, so a reader can audit the audit.",
+    y
+  );
+
+  // ── Wireframe ────────────────────────────────────────────────────────
+  const w = CONTENT;
+  const h = 236;
+  const top = y + 4;
+  card(doc, M, top, w, h, "#FFFFFF", C.line);
+
+  // Tab strip
+  const tabs = ["Overview", "GEO", "Search", "IndexNow", "Tracking"];
+  const tabW = w / tabs.length;
+  doc.save();
+  doc.rect(M, top, w, 22).fill("#F7F7F9");
+  for (let i = 0; i < tabs.length; i += 1) {
+    const tx = M + i * tabW;
+    if (i === 0) doc.rect(tx, top, tabW, 22).fill(C.white);
+    doc.strokeColor(C.line).lineWidth(0.6).moveTo(tx, top).lineTo(tx, top + 22).stroke();
+    doc.fillColor(i === 0 ? C.ink : C.muted).font(i === 0 ? "Helvetica-Bold" : "Helvetica").fontSize(6.5).text(tabs[i], tx + 8, top + 8, { width: tabW - 12 });
+  }
+  doc.restore();
+
+  // Sidebar
+  const sideW = 96;
+  doc.save();
+  doc.rect(M, top + 22, sideW, h - 22).fill("#FAFAFB");
+  doc.strokeColor(C.line).lineWidth(0.6).moveTo(M + sideW, top + 22).lineTo(M + sideW, top + h).stroke();
+  doc.fillColor(C.ink).font("Helvetica-Bold").fontSize(6.5).text("opendpe.net", M + 8, top + 32, { width: sideW - 16 });
+  doc.fillColor(C.muted).font("Helvetica").fontSize(5.6).text("Track", M + 8, top + 50);
+  const items = ["Overview", "GEO", "Citability", "IndexNow"];
+  items.forEach((item, index) => {
+    const iy = top + 60 + index * 11;
+    if (index === 0) doc.roundedRect(M + 4, iy - 2, sideW - 8, 9, 2).fillAndStroke(C.white, C.line);
+    doc.fillColor(index === 0 ? C.ink : C.muted).font("Helvetica").fontSize(5.6).text(item, M + 8, iy, { width: sideW - 16 });
+  });
+  doc.restore();
+
+  // Main: KPI row
+  const mainX = M + sideW + 10;
+  const mainW = w - sideW - 20;
+  const kpis = [
+    ["GEO score", "71", "/100"],
+    ["Citability", "53", "/100"],
+    ["IndexNow", "35", "/100"],
+    ["Engines", "3", "/5"],
+  ];
+  const kpiW = mainW / 4;
+  doc.save();
+  doc.roundedRect(mainX, top + 30, mainW, 34, 4).lineWidth(0.6).strokeColor(C.line).stroke();
+  kpis.forEach(([label, value, unit], index) => {
+    const kx = mainX + index * kpiW;
+    if (index > 0) doc.strokeColor(C.line).lineWidth(0.5).moveTo(kx, top + 30).lineTo(kx, top + 64).stroke();
+    doc.fillColor(C.muted).font("Helvetica").fontSize(5.4).text(label, kx + 6, top + 35, { width: kpiW - 10 });
+    doc.fillColor(C.ink).font("Helvetica-Bold").fontSize(11).text(value, kx + 6, top + 43, { width: kpiW - 10, continued: true });
+    doc.fillColor(C.muted).font("Helvetica").fontSize(5.5).text(unit, { continued: false });
+  });
+  doc.restore();
+
+  // Main: chart + ranking
+  const chartW = mainW * 0.62;
+  const chartH = 92;
+  const chartY = top + 72;
+  doc.save();
+  doc.roundedRect(mainX, chartY, chartW, chartH, 4).lineWidth(0.6).strokeColor(C.line).stroke();
+  doc.fillColor(C.ink).font("Helvetica-Bold").fontSize(5.8).text("Score trajectory", mainX + 6, chartY + 6, { width: chartW - 12 });
+
+  const series: number[] = [];
+  let running = audit.score;
+  series.push(running);
+  for (const rec of audit.recommendations) {
+    running += rec.points;
+    series.push(running);
+  }
+  const plotX = mainX + 8;
+  const plotW = chartW - 16;
+  const plotY = chartY + 18;
+  const plotH = chartH - 26;
+  const min = Math.min(...series);
+  const max = Math.max(...series);
+  const xAt = (i: number) => plotX + (i / (series.length - 1)) * plotW;
+  const yAt = (v: number) => plotY + plotH - ((v - min) / Math.max(1, max - min)) * plotH;
+  doc.strokeColor(C.brand).lineWidth(1.4);
+  const line = doc.moveTo(xAt(0), yAt(series[0]));
+  series.slice(1).forEach((value, index) => line.lineTo(xAt(index + 1), yAt(value)));
+  line.stroke();
+  doc.restore();
+
+  // Rank list
+  const rankX = mainX + chartW + 8;
+  const rankW = mainW - chartW - 8;
+  doc.save();
+  doc.roundedRect(rankX, chartY, rankW, chartH, 4).lineWidth(0.6).strokeColor(C.line).stroke();
+  doc.fillColor(C.ink).font("Helvetica-Bold").fontSize(5.8).text("Engine readiness", rankX + 6, chartY + 6, { width: rankW - 12 });
+  const engines: [string, number][] = [
+    ["Google AIO", 100],
+    ["ChatGPT", 100],
+    ["Copilot", 80],
+    ["Perplexity", 65],
+    ["Gemini", 60],
+  ];
+  engines.forEach(([name, score], index) => {
+    const ry = chartY + 18 + index * 12;
+    doc.fillColor(score === 100 ? C.green : C.ink).circle(rankX + 8, ry + 2, 1.6).fill();
+    doc.fillColor(C.ink2).font("Helvetica").fontSize(5.4).text(name, rankX + 13, ry - 2, { width: rankW - 40 });
+    doc.fillColor(C.ink).font("Helvetica-Bold").fontSize(5.4).text(String(score), rankX + rankW - 22, ry - 2, { width: 14, align: "right" });
+  });
+  doc.restore();
+
+  // Strip
+  doc.save();
+  doc.fillColor(C.muted).font("Helvetica").fontSize(5.4).text("Where the points are — 8 categories", mainX, chartY + chartH + 8, { width: mainW });
+  doc.restore();
+
+  y = top + h + 18;
+
+  // ── Explanations ─────────────────────────────────────────────────────
+  const blocks: [string, string][] = [
+    ["The KPI row", "Four numbers, four questions: how readable (GEO), how quotable (citability), how fast to update (IndexNow), how many engines are ready. Each one is a score with its checks in this report — never a model output."],
+    ["The trajectory", "Adds the recommended fixes in the order the engine ranks them. Point 6 is the cheap half; point 16 is the full plan. It answers 'how far can I get this month?' with the audit's own arithmetic."],
+    ["The engine ranking", "Shows the gap between each engine's readiness and 100. A short bar means the signals are already in place; a long red delta means the gap is structural — entity links, citations, freshness."],
+    ["The strip and the tabs", "The strip ranks the eight GEO categories so you fix the cheapest first. The tabs carry the same data at full size: Search for demand, IndexNow for speed, Tracking for whether the numbers can be trusted."],
+  ];
+  for (const [title, body] of blocks) {
+    doc.fillColor(C.ink).font("Helvetica-Bold").fontSize(8.5).text(title, M, y, { width: 96 });
+    doc.fillColor(C.muted).font("Helvetica").fontSize(7.8).text(safe(body), M + 104, y, { width: CONTENT - 108, lineGap: 1.4 });
+    y += Math.max(20, doc.heightOfString(safe(body), { width: CONTENT - 108, lineGap: 1.4 }) + 10);
+  }
+
+  y += 14;
+  card(doc, M, y, CONTENT, 92, C.bg, C.line);
+  doc.fillColor(C.ink).font("Helvetica-Bold").fontSize(8.5).text("Where to start", M + 14, y + 12);
+  const start = [
+    ["Overview", "the four numbers and the plan order — this is the page a client reads."],
+    ["GEO", "the eight categories, with the exact check behind every point."],
+    ["Search / IndexNow / Tracking", "demand, speed of update, and whether the measurement itself can be trusted."],
+  ];
+  let sy = y + 26;
+  for (const [name, meaning] of start) {
+    doc.fillColor(C.brand).font("Helvetica-Bold").fontSize(7.6).text(name, M + 14, sy, { width: 120 });
+    doc.fillColor(C.muted).font("Helvetica").fontSize(7.8).text(safe(meaning), M + 138, sy, { width: CONTENT - 152, lineGap: 1.3 });
+    sy += 19;
+  }
+  doc.fillColor(C.muted).font("Helvetica").fontSize(7.2).text(
+    "The console reads the same payload as the analysis_board MCP tool and the CLI: one audit, three surfaces, no second scoring engine.",
+    M + 14,
+    y + 74,
+    { width: CONTENT - 28 }
+  );
+}
+
+/**
+ * Marketing plays, each tied to a check in this audit. No revenue forecast: the
+ * only promises are the points and the signals to watch.
+ */
+function marketingPage(doc: Doc, input: PdfReportInput): void {
+  doc.addPage();
+  const audit = input.audit;
+  let y = M;
+
+  y = heading(doc, y, "Marketing", "Three plays this audit unlocks", "target");
+  y = paragraph(
+    doc,
+    "Every play below is anchored to a check in this report, not to a projection. The question each one answers is commercial: where does an assistant place this brand when a buyer asks who verifies a DPE?",
+    y
+  );
+
+  const plays: { title: string; state: string; points: string; do: string; measure: string }[] = [
+    {
+      title: "1. Be the brand, not the page",
+      state: "Entity signals sit at 3/10. sameAs has 0/4 pillars, the name differs between title, H1 and Organization schema, and there is no about link.",
+      points: "+7 GEO · +3 citability",
+      do: "One name everywhere; sameAs to Wikidata, LinkedIn and Crunchbase; a real about page; a Person author with a URL.",
+      measure: "Branded queries in Search Console, and whether an assistant repeats 'OpenDPE' when asked who verifies a DPE.",
+    },
+    {
+      title: "2. Publish the answer, not the brochure",
+      state: "Citability is 53/100: 0/3 on quotations, outbound citations, authorship and freshness. The page states numbers but sources none of them.",
+      points: "+12 citability",
+      do: "Quote the official DPE method with a link, turn one comparison into a table, name an author, add dateModified, and put a sourced figure above the fold.",
+      measure: "The four zeroed methods in this report, re-run monthly; then AI referral sessions in GA4.",
+    },
+    {
+      title: "3. Own the launch window",
+      state: "IndexNow is 35/100 — no key file — and AI discovery is 0/6: no /.well-known/ai.txt, no /ai/*.json. New pages wait for a crawl nobody announced.",
+      points: "+45 IndexNow · +6 discovery",
+      do: "Publish the key file, verify it, announce each release in one POST, and ship the machine-readable summary, FAQ and service files.",
+      measure: "Time between publish and first crawl in Bing Webmaster Tools; AI referral sessions after a launch.",
+    },
+  ];
+
+  for (const play of plays) {
+    const boxH = 128;
+    card(doc, M, y, CONTENT, boxH);
+    doc.fillColor(C.ink).font("Helvetica-Bold").fontSize(10).text(play.title, M + 14, y + 12, { width: CONTENT - 150 });
+    // Right-anchor the chip on its measured width: a long label must not leave the card.
+    doc.font("Helvetica-Bold").fontSize(7.5);
+    const label = play.points.toUpperCase();
+    const chipWidth = doc.widthOfString(label) + label.length * 0.6 + 14;
+    chip(doc, play.points, M + CONTENT - 14 - chipWidth, y + 12, C.brand);
+    doc.fillColor(C.muted).font("Helvetica").fontSize(8).text(safe(play.state), M + 14, y + 30, { width: CONTENT - 28, lineGap: 1.5 });
+    doc.fillColor(C.ink2).font("Helvetica-Bold").fontSize(7.6).text("DO", M + 14, y + 68, { width: 24 });
+    doc.fillColor(C.ink2).font("Helvetica").fontSize(7.8).text(safe(play.do), M + 40, y + 68, { width: CONTENT - 54, lineGap: 1.4 });
+    doc.fillColor(C.ink2).font("Helvetica-Bold").fontSize(7.6).text("WATCH", M + 14, y + 98, { width: 34 });
+    doc.fillColor(C.muted).font("Helvetica").fontSize(7.8).text(safe(play.measure), M + 50, y + 98, { width: CONTENT - 64, lineGap: 1.4 });
+    y += boxH + 12;
+  }
+
+  y += 2;
+  card(doc, M, y, CONTENT, 56, C.bg, C.line);
+  doc.fillColor(C.ink).font("Helvetica-Bold").fontSize(8.5).text("The proof is the same audit, re-run", M + 14, y + 12);
+  doc.fillColor(C.muted).font("Helvetica").fontSize(8).text(
+    "In 30 days, run geo-audit on the same URL. The category vector moves or it does not — that is the whole report card. Nothing here needs a dashboard to be believed.",
+    M + 14,
+    y + 26,
+    { width: CONTENT - 28, lineGap: 1.4 }
+  );
+}
+
 export async function writeGeoReportPdf(input: PdfReportInput): Promise<PdfReportResult> {
   const generatedAt = input.generatedAt ?? new Date();
   const brand = input.brandName ?? "GTM Growth";
@@ -776,12 +1009,14 @@ export async function writeGeoReportPdf(input: PdfReportInput): Promise<PdfRepor
 
   cover(doc, input, generatedAt);
   dashboardPage(doc, input);
+  consolePage(doc, input);
   summaryPage(doc, input);
   categoriesPage(doc, input);
   if (input.platforms?.length) platformsPage(doc, input);
   entityPage(doc, input);
   if (input.citability) citabilityPage(doc, input);
   actionsPage(doc, input);
+  marketingPage(doc, input);
   closingPage(doc, input);
 
   const range = doc.bufferedPageRange();
