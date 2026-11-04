@@ -1,0 +1,47 @@
+# Aperçu d'une branche (console sous /console-preview/, API sous /api-preview/).
+# Projet Compose séparé : la prod (gtm-growth, port 4300) n'est jamais redémarrée.
+#   cd /opt/gtm-growth-preview/deploy/kayroslab-vps
+#   docker compose -p gtm-preview --env-file /opt/gtm-growth/deploy/kayroslab-vps/.env.local -f docker-compose.preview.yml up -d --build
+services:
+  gtm-growth-preview:
+    build:
+      context: ../..
+      dockerfile: Dockerfile
+    env_file:
+      - /opt/gtm-growth/deploy/kayroslab-vps/.env.local
+    environment:
+      NODE_ENV: production
+      TRANSPORT: http
+      HOST: 0.0.0.0
+      PORT: 3000
+      REDIS_URL: redis://redis:6379
+      LEADS_PATH: /data/leads.jsonl
+      GOOGLE_APPLICATION_CREDENTIALS: /secrets/service-account.json
+      OIDC_ISSUER: ${OIDC_ISSUER:-https://auth.kayroslab.com/realms/gtm-growth}
+      OIDC_CLIENT_ID: gtm-console
+      OIDC_JWKS_URL: http://keycloak:8080/realms/gtm-growth/protocol/openid-connect/certs
+      KEYCLOAK_INTERNAL_URL: http://keycloak:8080
+      OIDC_EXTRA_ISSUERS: ${OIDC_EXTRA_ISSUERS:-}
+      TENANTS_PATH: /data/tenants.json
+      REPORTS_PATH: /data/reports
+      CONSOLE_DOMAIN: gtm.kayroslab.com
+      KEYCLOAK_ADMIN_REALM: ${KEYCLOAK_ADMIN_REALM:-gtm-growth}
+      KEYCLOAK_ADMIN_CLIENT_ID: ${KEYCLOAK_ADMIN_CLIENT_ID:-gtm-provisioner}
+      KEYCLOAK_ADMIN_CLIENT_SECRET: ${KEYCLOAK_ADMIN_CLIENT_SECRET:-}
+    volumes:
+      - gtm_growth_data:/data
+      - /opt/gtm-growth/.secrets:/secrets:ro
+    ports:
+      - "127.0.0.1:4301:3000"
+    networks: [prod]
+    restart: unless-stopped
+
+volumes:
+  gtm_growth_data:
+    external: true
+    name: kayroslab-vps_gtm_growth_data
+
+networks:
+  prod:
+    external: true
+    name: kayroslab-vps_default
