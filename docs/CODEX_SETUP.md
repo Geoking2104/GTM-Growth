@@ -1,14 +1,14 @@
 # Install GTM Growth for Codex
 
-Skill folder: `google-growth`. MCP server name: `google-growth`.
+Skill folder: `gtm-growth`. MCP server name: `gtm-growth`.
 
 ## Where to put the skill
 
 | Scope | Path |
 |-------|------|
-| This project (Codex) | `.codex/skills/google-growth/` |
-| This project (agents) | `.agents/skills/google-growth/` |
-| Your user | `~/.codex/skills/google-growth/` |
+| This project (Codex) | `.codex/skills/gtm-growth/` |
+| This project (agents) | `.agents/skills/gtm-growth/` |
+| Your user | `~/.codex/skills/gtm-growth/` |
 
 Prefer **one** location so you do not load the skill twice.
 
@@ -17,10 +17,10 @@ Prefer **one** location so you do not load the skill twice.
 ```bash
 ./scripts/install-skill.sh codex
 # or
-cp -R skills/google-growth .codex/skills/google-growth
+cp -R skills/gtm-growth .codex/skills/gtm-growth
 ```
 
-`skills/google-growth/agents/openai.yaml` sets the display name. Codex reads it; other agents ignore it.
+`skills/gtm-growth/agents/openai.yaml` sets the display name. Codex reads it; other agents ignore it.
 
 ## Connect live data
 
@@ -32,7 +32,7 @@ export GOOGLE_APPLICATION_CREDENTIALS=/absolute/path/to/sa.json
 Register the server in Codex MCP settings:
 
 ```text
-name: google-growth
+name: gtm-growth
 command: node
 args: dist/index.js --transport stdio
 ```
@@ -41,7 +41,7 @@ Remote HTTP: `https://your-host.example.com/mcp` with `Authorization: Bearer <MC
 
 ## Verify
 
-1. Skill `google-growth` is listed. Invoke with `$google-growth` or ask in plain language.
+1. Skill `gtm-growth` is listed. Invoke with `$gtm-growth` or ask in plain language.
 2. MCP tools are available.
 3. Ask: “Traffic overview for the last 7 days.”
 

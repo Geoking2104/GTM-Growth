@@ -2,18 +2,32 @@
 
 **Open-source MCP server** connecting **Google Analytics 4**, **Google Tag Manager** (web + **server-side**), **Measurement Protocol**, **Search Console**, the **Indexing API**, **PageSpeed Insights**, and **CrUX** to **Grok** (xAI), **Claude** (Anthropic), **Codex** (OpenAI), and any MCP-capable agent.
 
-The agent reads live Google data, audits setups, crosses organic search with site speed, and (when explicitly enabled) submits sitemaps or notifies the Indexing API — via **MCP tools** or a **CLI**. Skill, MCP server, and GitHub repo are all named **google-growth**.
+The agent reads live Google data, audits setups, crosses organic search with site speed, and (when explicitly enabled) submits sitemaps, notifies the Indexing API or announces changed URLs through **IndexNow** to Bing, Yandex, Seznam and Naver — via **MCP tools** or a **CLI**. Skill, MCP server, and GitHub repo are all named **gtm-growth**.
+
+**93 MCP tools** · 187 tests · Apache-2.0 · read-only by default.
 
 **Website:** https://geoking2104.github.io/GTM-Growth/ — a free URL read, then the full audit and assisted GTM engagement.
 
 | Client | How to connect | Skill install |
 |--------|----------------|---------------|
-| **Grok** (xAI) | [grok.com/connectors](https://grok.com/connectors) or Grok Build | Agensi zip of `skills/google-growth/` |
-| **Claude** (Anthropic) | Claude Code MCP / `.mcp.json` | `.claude/skills/google-growth/` — [docs/CLAUDE_SETUP.md](docs/CLAUDE_SETUP.md) |
-| **Codex** (OpenAI) | Codex MCP settings | `.codex/skills/google-growth/` — [docs/CODEX_SETUP.md](docs/CODEX_SETUP.md) |
+| **Grok** (xAI) | [grok.com/connectors](https://grok.com/connectors) or Grok Build | Agensi zip of `skills/gtm-growth/` |
+| **Claude** (Anthropic) | Claude Code MCP / `.mcp.json` | `.claude/skills/gtm-growth/` — [docs/CLAUDE_SETUP.md](docs/CLAUDE_SETUP.md) |
+| **Codex** (OpenAI) | Codex MCP settings | `.codex/skills/gtm-growth/` — [docs/CODEX_SETUP.md](docs/CODEX_SETUP.md) |
 
 > Compatible with **Grok**, **Claude Code**, **Codex**, Cursor (`.mcp.json`), and self-hosted deployments.  
 > **Apache-2.0** license · Node ≥ 20
+
+---
+
+## What's new
+
+| Addition | What it gives you |
+| --- | --- |
+| **IndexNow & Bing** | Generate a key, publish `<key>.txt`, announce up to 10 000 changed URLs in one POST, verify the key file, and score readiness 0–100 outside the GEO rubric — [docs/INDEXNOW.md](docs/INDEXNOW.md) |
+| **Analysis board** | One payload merging GEO, citability, platform readiness and IndexNow, with a ranked plan where an indexation blocker outranks a copy fix — `analysis_board` |
+| **Enriched free read** | The free read now returns SEO tables, a GA4 report and a Search Console report, measured on your HTML, `robots.txt` and sitemap — [docs/GEO.md](docs/GEO.md) |
+| **Public API + lead capture** | `POST /api/free-read` and `POST /api/lead`, on Node or as a **Cloudflare Worker**; the site form posts in-page, no mail client — [docs/PUBLIC_API.md](docs/PUBLIC_API.md), [docs/WORKER.md](docs/WORKER.md) |
+| **Client-ready PDF** | Nine pages: cover, dashboard (trajectory, radar, category bars, citability, band ladder), summary, categories, platforms, entity graph, citability, plan, limits — `geo-report` |
 
 ---
 
@@ -35,7 +49,7 @@ The agent reads live Google data, audits setups, crosses organic search with sit
 4. **Detailed growth dashboards** — period-over-period KPI scorecards, at least 10 evidence-backed watch points, and exactly 3 priorities for short, medium, and long term.
 5. **Safe by default** — reads are open; writes need flags + `confirm=true`.
 
-The agent-facing method lives in [`skills/google-growth/`](skills/google-growth/) (same skill for Agensi, Claude, and Codex).
+The agent-facing method lives in [`skills/gtm-growth/`](skills/gtm-growth/) (same skill for Agensi, Claude, and Codex).
 
 ---
 
@@ -59,6 +73,61 @@ The agent-facing method lives in [`skills/google-growth/`](skills/google-growth/
 
 ---
 
+## IndexNow & Bing — what it is, and what this repo does with it
+
+**IndexNow** is a push protocol: instead of waiting for a crawler to notice a
+change, you tell the participating engines that a URL was added, updated or
+deleted. Submitted URLs are shared between members — **Bing, Yandex, Seznam and
+Naver**. **Google does not participate**, so IndexNow complements Search Console,
+it does not replace it.
+
+### The protocol in four steps
+
+| Step | What you do | Rule |
+| --- | --- | --- |
+| 1. Key | Generate a key | 8–128 characters of `a–z A–Z 0–9 -` |
+| 2. Key file | Publish `https://<host>/<key>.txt` | UTF-8, containing exactly the key |
+| 3. Submit | `POST /indexnow` with `{host, key, keyLocation?, urlList}` | up to 10 000 URLs per request |
+| 4. Verify | Read the response | `200` / `202` = received, **never** indexed |
+
+The key file is the whole security model: it is the only proof that whoever
+submits URLs controls the host. Responses are unambiguous — `400` malformed body,
+`403` key not found or the file does not contain the key, `422` URLs not on the
+host, `429` too many submissions — and this repository translates each one into a
+meaning **and the fix**.
+
+### What ships here
+
+| Surface | What it does |
+| --- | --- |
+| `indexnow_keygen` | 32-hex key plus file name, URL, content, headers and the four steps |
+| `indexnow_verify` | Fetches the key file and names the failure: 404, empty file, HTML served instead of the key |
+| `indexnow_submit` | Posts the batch — **gated by `confirm=true`**, because it writes to a third party |
+| `indexnow_readiness` | 0–100 panel: key grammar 10, key file 35, file matches 10, Bing verification 10, Bingbot allowed 15, sitemap 10, HTTPS 10 |
+| `indexnow_explain` | Decodes any status code without sending anything |
+| `analysis_board` | Ranks IndexNow blockers **above** GEO points, because a blocked crawler makes every other indexation fix worthless |
+
+CLI equivalents: `indexnow-keygen`, `indexnow-verify` (exits `1` on a bad key
+file, so it drops into CI), `indexnow-submit`, `indexnow-explain`,
+`analysis-board`.
+
+The website has a **browser-side key generator** — key, file name, `.txt`
+download and the exact `curl` — that never sends anything anywhere:
+<https://geoking2104.github.io/GTM-Growth/#indexnow>.
+
+### Operating rules
+
+- Publish **changes**, not the archive: URLs added, updated or deleted since you
+  wired IndexNow. A full sitemap dump burns crawl quota for nothing.
+- One batch per publish, not one request per page.
+- Never delete the key file — every later submission returns `403`.
+- A `200` is a receipt. It never means the page ranks, and the tool says so in
+  every response.
+
+Sequence diagrams, weights and security notes: [docs/INDEXNOW.md](docs/INDEXNOW.md).
+
+---
+
 ## Architecture (high level)
 
 ```text
@@ -70,7 +139,7 @@ The agent-facing method lives in [`skills/google-growth/`](skills/google-growth/
                        │ MCP (stdio or HTTPS /mcp)
                        ▼
               ┌───────────────────┐
-              │   google-growth   │
+              │   gtm-growth   │
               │  Service Account  │
               └─────────┬─────────┘
      ┌─────────────────┼───────────────────┐
@@ -100,7 +169,7 @@ Install the skill for Claude and Codex:
 
 Recommended for a marketing team: deploy the server once (HTTPS), invite the Service Account to GA4 / GTM / Search Console, add optional PageSpeed and CrUX keys, then connect the client of your choice.
 
-Step-by-step: [`skills/google-growth/references/setup.md`](skills/google-growth/references/setup.md)
+Step-by-step: [`skills/gtm-growth/references/setup.md`](skills/gtm-growth/references/setup.md)
 
 ---
 
@@ -206,11 +275,11 @@ npm run build
 
 | File | Role |
 |------|------|
-| `.grok/config.toml` | Grok Build MCP server (`google-growth`) |
+| `.grok/config.toml` | Grok Build MCP server (`gtm-growth`) |
 | `.mcp.json` | Claude Code / Cursor / Codex local stdio |
-| `skills/google-growth/` | Canonical skill (Agensi, Claude, Codex) |
-| `skills/google-growth/agents/openai.yaml` | Codex display metadata |
-| `skills/ga-to-grok/` | Redirect to google-growth |
+| `skills/gtm-growth/` | Canonical skill (Agensi, Claude, Codex) |
+| `skills/gtm-growth/agents/openai.yaml` | Codex display metadata |
+| `skills/ga-to-grok/` | Redirect to gtm-growth |
 | `scripts/install-skill.sh` | Copies the skill into `.claude` and `.codex` |
 | `docs/CLAUDE_SETUP.md` | Anthropic Claude Code |
 | `docs/CODEX_SETUP.md` | OpenAI Codex |
@@ -219,9 +288,9 @@ npm run build
 ### Grok
 
 ```bash
-grok mcp add --scope project google-growth -- node dist/index.js --transport stdio
+grok mcp add --scope project gtm-growth -- node dist/index.js --transport stdio
 # or remote
-grok mcp add --transport http google-growth https://your-host.example.com/mcp
+grok mcp add --transport http gtm-growth https://your-host.example.com/mcp
 ```
 
 Or [grok.com/connectors](https://grok.com/connectors) → New Connector → Custom → `https://your-server.com/mcp`.
@@ -257,20 +326,20 @@ docker compose up -d         # see docs/DEPLOYMENT.md
 
 ## 5. Skill for Agensi, Claude, and Codex
 
-Canonical skill: `skills/google-growth/` (`SKILL.md` + `references/`).
+Canonical skill: `skills/gtm-growth/` (`SKILL.md` + `references/`).
 
 | Agent | Install path | Guide |
 |-------|----------------|-------|
-| Agensi / Grok | zip of `google-growth/` | below |
-| Claude Code | `.claude/skills/google-growth/` or `~/.claude/skills/google-growth/` | [docs/CLAUDE_SETUP.md](docs/CLAUDE_SETUP.md) |
-| Codex | `.codex/skills/google-growth/` or `~/.codex/skills/google-growth/` | [docs/CODEX_SETUP.md](docs/CODEX_SETUP.md) |
+| Agensi / Grok | zip of `gtm-growth/` | below |
+| Claude Code | `.claude/skills/gtm-growth/` or `~/.claude/skills/gtm-growth/` | [docs/CLAUDE_SETUP.md](docs/CLAUDE_SETUP.md) |
+| Codex | `.codex/skills/gtm-growth/` or `~/.codex/skills/gtm-growth/` | [docs/CODEX_SETUP.md](docs/CODEX_SETUP.md) |
 
 The skill does not replace MCP. Connect the server (stdio or HTTPS) or the agent will refuse to invent numbers.
 
 Agensi zip:
 
 ```text
-google-growth/
+gtm-growth/
   SKILL.md
   VERSION.txt
   references/
@@ -360,7 +429,21 @@ Full reference: [docs/CLI.md](docs/CLI.md)
 
 All GEO tools are read-only. Rubric, bands and limits: [docs/GEO.md](docs/GEO.md).
 
-Full catalog for agents: [`skills/google-growth/references/tools.md`](skills/google-growth/references/tools.md)
+### IndexNow & Bing
+
+| Tool | Description |
+|------|-------------|
+| `indexnow_keygen` | Generate the key and everything needed to publish it — local, no request |
+| `indexnow_verify` | Check the published key file: status, content found, and the fix |
+| `indexnow_submit` | Announce 1–10 000 URLs (`confirm=true` required); returns the documented status with its meaning |
+| `indexnow_readiness` | 0–100 readiness panel with evidence per check |
+| `indexnow_explain` | Decode 200 / 202 / 400 / 403 / 422 / 429 |
+| `analysis_board` | GEO + citability + platforms + IndexNow, with a ranked action list |
+
+IndexNow writes to a third party, so it is gated exactly like the GTM and
+Indexing writes: nothing leaves the process without `confirm=true`.
+
+Full catalog for agents: [`skills/gtm-growth/references/tools.md`](skills/gtm-growth/references/tools.md)
 
 ---
 
@@ -385,6 +468,14 @@ Each priority includes implementation steps, an owner/role, dependencies, a succ
 `geo_audit` (homepage) → `geo_audit_sitemap` (≤10 pages) → generate only what is missing (`geo_generate_llms_txt`, `geo_generate_schema`, `geo_generate_robots`) → re-run `geo_audit` and compare the breakdown. Readiness only: the server never queries ChatGPT, Claude or Perplexity, so it cannot claim an engine cites the site.
 
 Follow-ups: `geo_citability` (would this passage be quoted), `geo_crawler_access` (which bot is shut out), `geo_llms_drift` (did llms.txt go stale), `geo_content_risks` (hidden text, prompt-like copy), `geo_positioning` (how you differ from named competitors).
+
+### IndexNow rollout
+
+`indexnow_keygen` (host) → publish the `.txt` at the site root → `indexnow_verify`
+(it must pass before anything else) → `indexnow_submit` with the URLs changed
+today and `confirm=true` → `analysis_board` to confirm the IndexNow panel moved
+and to see which GEO fix now ranks first. A `403` means the key file is wrong,
+not that the URLs are: re-run verification rather than resubmitting.
 
 ### Example GEO report
 
@@ -442,7 +533,7 @@ Bands: critical → excellent. The 4 points still missing are llms.txt depth: a 
 
 See [docs/SERVER_SIDE_TRACKING_ARCHITECTURE.md](docs/SERVER_SIDE_TRACKING_ARCHITECTURE.md).
 
-Example report shapes: [`skills/google-growth/references/examples.md`](skills/google-growth/references/examples.md)
+Example report shapes: [`skills/gtm-growth/references/examples.md`](skills/gtm-growth/references/examples.md)
 
 ---
 
@@ -467,11 +558,11 @@ npm run typecheck
 
 | Doc | Content |
 |-----|---------|
-| **[skills/google-growth/SKILL.md](skills/google-growth/SKILL.md)** | **Shared agent skill** |
+| **[skills/gtm-growth/SKILL.md](skills/gtm-growth/SKILL.md)** | **Shared agent skill** |
 | **[docs/CLAUDE_SETUP.md](docs/CLAUDE_SETUP.md)** | **Anthropic Claude Code** |
 | **[docs/CODEX_SETUP.md](docs/CODEX_SETUP.md)** | **OpenAI Codex** |
 | **[docs/GROK_SETUP.md](docs/GROK_SETUP.md)** | **Grok connectors + Build** |
-| [skills/google-growth/references/setup.md](skills/google-growth/references/setup.md) | Connect — 3 solutions |
+| [skills/gtm-growth/references/setup.md](skills/gtm-growth/references/setup.md) | Connect — 3 solutions |
 | [PRESENTATION.md](docs/PRESENTATION.md) | Pitch & marketing guide |
 | [GROK_BUILD.md](docs/GROK_BUILD.md) | Grok Build packaging |
 | [DEPLOYMENT.md](docs/DEPLOYMENT.md) | Docker / Fly / Railway |
@@ -492,11 +583,11 @@ npm run typecheck
 ## 11. Project layout
 
 ```text
-.grok/config.toml              # Grok Build MCP (server name: google-growth)
+.grok/config.toml              # Grok Build MCP (server name: gtm-growth)
 .mcp.json                      # Claude / Cursor / Codex local stdio
-skills/google-growth/          # canonical skill
+skills/gtm-growth/          # canonical skill
   agents/openai.yaml           # Codex appearance metadata
-skills/ga-to-grok/             # redirect to google-growth
+skills/ga-to-grok/             # redirect to gtm-growth
 scripts/install-skill.sh       # copies skill into .claude / .codex
 src/
   google/                      # data-api, gtm, search-console, indexing, pagespeed, crux

@@ -1,6 +1,6 @@
 # Connect GTM Growth to Grok
 
-MCP server name: **google-growth**. Repo: https://github.com/Geoking2104/GTM-Growth
+MCP server name: **gtm-growth**. Repo: https://github.com/Geoking2104/GTM-Growth
 
 Two paths:
 
@@ -16,11 +16,11 @@ Claude and Codex use the same skill. See [CLAUDE_SETUP.md](CLAUDE_SETUP.md) and 
 ```bash
 cd GTM-Growth && npm install && npm run build
 export GOOGLE_APPLICATION_CREDENTIALS=/path/to/sa.json
-grok mcp doctor google-growth
+grok mcp doctor gtm-growth
 grok   # run inside the repo — uses .grok/config.toml
 ```
 
-Tools appear as `google-growth__<tool_name>`.
+Tools appear as `gtm-growth__<tool_name>`.
 
 ---
 
@@ -52,7 +52,7 @@ ngrok http 3000
 
 1. [https://grok.com/connectors](https://grok.com/connectors)
 2. **New Connector → Custom**
-3. Name: `google-growth`
+3. Name: `gtm-growth`
 4. URL: `https://your-server.com/mcp` (or `/sse` for legacy clients)
 5. Optional auth headers (`Authorization: Bearer <MCP_API_TOKEN>`)
 6. Save — tools auto-discover
@@ -72,4 +72,4 @@ ngrok http 3000
 - Grok **web** connectors need a **public** URL (no localhost without a tunnel).
 - Prefer business tools (`get_traffic_overview`, `get_top_queries`, `run_pagespeed`).
 - Writes stay off unless the matching env flag is `true` and the tool is called with `confirm=true`.
-- Old configs named `ga-to-grok` still work if you have not rebuilt. New installs should use `google-growth`.
+- Old configs named `ga-to-grok` still work if you have not rebuilt. New installs should use `gtm-growth`.

@@ -6,4 +6,4 @@ interface:
 dependencies:
   tools:
     - type: mcp
-      value: google-growth
+      value: gtm-growth

@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 # Install the GTM Growth skill for Claude Code and/or Codex.
-# MCP server name is google-growth.
+# MCP server name is gtm-growth.
 # Usage:
 #   ./scripts/install-skill.sh claude
 #   ./scripts/install-skill.sh codex
@@ -25,7 +25,7 @@ while [[ $# -gt 0 ]]; do
 done
 
 ROOT="$(cd "$(dirname "$0")/.." && pwd)"
-SRC="$ROOT/skills/google-growth"
+SRC="$ROOT/skills/gtm-growth"
 
 if [[ ! -f "$SRC/SKILL.md" ]]; then
   echo "Skill not found at $SRC" >&2
@@ -48,18 +48,18 @@ install_one() {
 claude_dest()
 {
   if [[ "$SCOPE" == "user" ]]; then
-    echo "$HOME/.claude/skills/google-growth"
+    echo "$HOME/.claude/skills/gtm-growth"
   else
-    echo "$ROOT/.claude/skills/google-growth"
+    echo "$ROOT/.claude/skills/gtm-growth"
   fi
 }
 
 codex_dest()
 {
   if [[ "$SCOPE" == "user" ]]; then
-    echo "$HOME/.codex/skills/google-growth"
+    echo "$HOME/.codex/skills/gtm-growth"
   else
-    echo "$ROOT/.codex/skills/google-growth"
+    echo "$ROOT/.codex/skills/gtm-growth"
   fi
 }
 
@@ -77,4 +77,4 @@ case "$TARGET" in
 esac
 
 echo "Done. Restart Claude Code / Codex if the skill does not appear."
-echo "MCP server name is google-growth. See docs/CLAUDE_SETUP.md and docs/CODEX_SETUP.md."
+echo "MCP server name is gtm-growth. See docs/CLAUDE_SETUP.md and docs/CODEX_SETUP.md."

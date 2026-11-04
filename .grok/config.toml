@@ -17,7 +17,7 @@
 # Hosted/deployed option: point Grok Connectors or the Remote MCP Tools API at the
 # public HTTPS URL (https://<host>/mcp) with header: Authorization: Bearer <MCP_API_TOKEN>.
 
-[mcp_servers.google-growth]
+[mcp_servers.gtm-growth]
 command = "node"
 args = ["dist/index.js", "--transport", "stdio"]
 startup_timeout_sec = 45

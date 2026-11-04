@@ -1,6 +1,6 @@
 # Landing site
 
-Static page for `google-growth`, published with GitHub Pages from this folder.
+Static page for `gtm-growth`, published with GitHub Pages from this folder.
 No build step: HTML, CSS, four ES modules.
 
 ```

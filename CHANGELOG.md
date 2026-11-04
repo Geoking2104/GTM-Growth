@@ -1,5 +1,21 @@
 # Changelog
 
+## 0.21.0 — 2026-11-04
+
+### Changed
+
+- **Rename to gtm-growth, everywhere**: package name and both binaries, MCP server id, skill directory (`skills/google-growth` → `skills/gtm-growth`), Grok plugin directory, Worker name (`gtm-growth-api`), install paths, and all 129 identifier occurrences across 28 files. The prose brand was already **GTM Growth**; this closes the remaining gap so no `google-growth` string survives in the repository.
+- README rewritten around the current surface: a "What's new" table, a full **IndexNow & Bing** explainer (protocol, four steps, key-file rules, response codes, what ships, operating rules), the IndexNow tool table and an IndexNow rollout workflow.
+
+### Fixed
+
+- **The six IndexNow tools were never registered in the MCP registry.** `indexnow_keygen`, `indexnow_verify`, `indexnow_submit`, `indexnow_readiness`, `indexnow_explain` and `analysis_board` existed, were documented and worked in the CLI, but `src/tools/index.ts` never imported them — MCP clients saw 87 tools instead of 93. Registration added, and `tests/tool-registry.test.ts` now fails if a documented tool is missing from the registry.
+
+### Notes
+
+- Renaming the Worker creates a **new** Cloudflare Worker on the next deploy; the previous `google-growth-api` stays orphaned until it is deleted.
+- MCP clients that stored the server under the key `google-growth` must be updated to `gtm-growth` (see `docs/CLAUDE_SETUP.md`, `docs/CODEX_SETUP.md`, `.mcp.json`).
+
 ## 0.20.0 — 2026-11-04
 
 ### Added
@@ -170,7 +186,7 @@
 - Generators: `geo_generate_llms_txt`, `geo_generate_schema` (website/organization/faq/article/product/localbusiness) and `geo_generate_robots` (append-only; blocked bots are reported, never overridden)
 - CLI: `geo-audit`, `geo-sitemap`, `geo-llms`, `geo-schema`, `geo-robots`
 - `npm run demo:geo` — offline before/after demo (9 → 96) used by the README example
-- `docs/GEO.md` and `skills/google-growth/references/geo.md`
+- `docs/GEO.md` and `skills/gtm-growth/references/geo.md`
 
 ### Fixed
 

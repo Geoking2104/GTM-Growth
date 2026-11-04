@@ -1,12 +1,12 @@
 {
-  "name": "google-growth",
-  "version": "0.20.0",
+  "name": "gtm-growth",
+  "version": "0.21.0",
   "description": "Open-source MCP server connecting GA4, GTM/sGTM, Search Console, Indexing API, PageSpeed, CrUX and GEO/AEO audits to Grok, Claude, and Codex",
   "type": "module",
   "main": "dist/index.js",
   "bin": {
-    "google-growth": "./dist/index.js",
-    "google-growth-cli": "./dist/cli.js"
+    "gtm-growth": "./dist/index.js",
+    "gtm-growth-cli": "./dist/cli.js"
   },
   "scripts": {
     "build": "tsc",

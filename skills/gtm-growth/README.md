@@ -21,10 +21,10 @@ Without that connection the skill explains setup and refuses to invent numbers.
 
 ## Install
 
-Unzip so `SKILL.md` sits at the root of `google-growth/`:
+Unzip so `SKILL.md` sits at the root of `gtm-growth/`:
 
 ```text
-google-growth/
+gtm-growth/
   SKILL.md
   README.md
   VERSION.txt
@@ -34,9 +34,9 @@ google-growth/
 
 | Agent | Path |
 |-------|------|
-| Claude | `~/.claude/skills/google-growth/` |
-| Codex | `~/.codex/skills/google-growth/` |
-| Cursor | `~/.cursor/skills/google-growth/` |
+| Claude | `~/.claude/skills/gtm-growth/` |
+| Codex | `~/.codex/skills/gtm-growth/` |
+| Cursor | `~/.cursor/skills/gtm-growth/` |
 
 ## License
 

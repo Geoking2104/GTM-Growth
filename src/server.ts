@@ -25,7 +25,7 @@ function getVersion(): string {
 }
 
 const VERSION = getVersion();
-const SERVER_NAME = "google-growth";
+const SERVER_NAME = "gtm-growth";
 
 function createMcpServer() {
   const server = new Server(
@@ -80,7 +80,7 @@ export async function startServer(transportType: "stdio" | "http" = "stdio") {
   if (transportType === "stdio") {
     const transport = new StdioServerTransport();
     await server.connect(transport);
-    logger.info("google-growth MCP server running on STDIO");
+    logger.info("gtm-growth MCP server running on STDIO");
     return;
   }
 
@@ -216,7 +216,7 @@ export async function startServer(transportType: "stdio" | "http" = "stdio") {
 
   // Graceful shutdown
   const httpServer = app.listen(port, host, () => {
-    logger.info(`google-growth MCP server running on http://${host}:${port}`);
+    logger.info(`gtm-growth MCP server running on http://${host}:${port}`);
     logger.info(`Streamable HTTP endpoint → http://${host}:${port}/mcp`);
     logger.info(`SSE endpoint (legacy)    → http://${host}:${port}/sse`);
     logger.info(`Messages endpoint        → http://${host}:${port}/messages`);

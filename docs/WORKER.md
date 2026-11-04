@@ -56,13 +56,13 @@ npm run worker:deploy
 Wrangler prints the URL it published to, e.g.
 
 ```
-https://google-growth-api.<your-subdomain>.workers.dev
+https://gtm-growth-api.<your-subdomain>.workers.dev
 ```
 
 Then point the site at it:
 
 ```bash
-npm run site:api -- https://google-growth-api.<your-subdomain>.workers.dev
+npm run site:api -- https://gtm-growth-api.<your-subdomain>.workers.dev
 ```
 
 That writes the `gg-api` meta tag in `site/index.html` and `site/fr/index.html`.

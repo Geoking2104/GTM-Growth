@@ -43,7 +43,7 @@ fly secrets set SEARCH_CONSOLE_WRITE_ENABLED=false
 fly secrets set INDEXING_WRITE_ENABLED=false
 ```
 
-Public URL: `https://google-growth.fly.dev/mcp`
+Public URL: `https://gtm-growth.fly.dev/mcp`
 
 ---
 

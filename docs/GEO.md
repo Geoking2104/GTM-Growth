@@ -3,7 +3,7 @@
 Classic SEO asks "does this page rank?". GEO asks a different question: **when an
 assistant answers a buyer's question, can it read, parse and cite this page?**
 
-`google-growth` now audits that second question with the same read-only posture as
+`gtm-growth` now audits that second question with the same read-only posture as
 its Google tools: it fetches the public URLs an AI crawler fetches, scores the site
 0–100, and returns the fixes ordered by how many points they recover.
 

@@ -2,12 +2,12 @@
 #
 #   npx wrangler login          # once, in your browser
 #   npm run worker:dev          # local, http://localhost:8787
-#   npm run worker:deploy       # publishes to https://google-growth-api.<subdomain>.workers.dev
+#   npm run worker:deploy       # publishes to https://gtm-growth-api.<subdomain>.workers.dev
 #
 # Then put that URL in site/index.html and site/fr/index.html:
-#   <meta name="gg-api" content="https://google-growth-api.<subdomain>.workers.dev">
+#   <meta name="gg-api" content="https://gtm-growth-api.<subdomain>.workers.dev">
 
-name = "google-growth-api"
+name = "gtm-growth-api"
 main = "src/worker/index.ts"
 compatibility_date = "2026-11-03"
 

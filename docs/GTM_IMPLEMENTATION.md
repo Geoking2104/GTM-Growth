@@ -1,7 +1,7 @@
 # GTM implementation guide (and how to verify it)
 
 End-to-end checklist for installing **Google Tag Manager** on a site whose
-analytics you audit with `google-growth`. Every step lists the tool that checks
+analytics you audit with `gtm-growth`. Every step lists the tool that checks
 it, so the guide is verifiable rather than aspirational.
 
 Adapted from the implementation guide supplied for this integration.

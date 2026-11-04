@@ -1,6 +1,6 @@
 {
   "mcpServers": {
-    "google-growth": {
+    "gtm-growth": {
       "command": "node",
       "args": ["dist/index.js", "--transport", "stdio"],
       "env": {

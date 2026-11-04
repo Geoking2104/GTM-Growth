@@ -2,7 +2,7 @@
 /**
  * Point the landing site at the public API.
  *
- *   npm run site:api -- https://google-growth-api.sub.workers.dev
+ *   npm run site:api -- https://gtm-growth-api.sub.workers.dev
  *   npm run site:api -- --clear
  *
  * Writes the `gg-api` meta tag in both language pages, so the free read switches
