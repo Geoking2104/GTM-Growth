@@ -1,0 +1,145 @@
+{
+  "realm": "gtm-growth",
+  "displayName": "GTM Growth",
+  "enabled": true,
+  "sslRequired": "external",
+  "registrationAllowed": false,
+  "loginWithEmailAllowed": true,
+  "resetPasswordAllowed": true,
+  "rememberMe": false,
+  "bruteForceProtected": true,
+  "failureFactor": 5,
+  "accessTokenLifespan": 300,
+  "ssoSessionIdleTimeout": 3600,
+  "ssoSessionMaxLifespan": 36000,
+  "internationalizationEnabled": true,
+  "supportedLocales": [
+    "fr",
+    "en"
+  ],
+  "defaultLocale": "fr",
+  "passwordPolicy": "length(12) and notUsername and notEmail",
+  "roles": {
+    "realm": [
+      {
+        "name": "platform-admin",
+        "description": "Super-administrateur KayrosLab : tous les tenants, provisionnement"
+      },
+      {
+        "name": "tenant-admin",
+        "description": "Rôle générique (réalms dédiés) ; dans le realm partagé, utiliser les groupes /tenants/<id>/tenant-admin"
+      },
+      {
+        "name": "tenant-user",
+        "description": "Rôle générique (réalms dédiés) ; dans le realm partagé, utiliser les groupes /tenants/<id>/tenant-user"
+      }
+    ]
+  },
+  "clients": [
+    {
+      "clientId": "gtm-console",
+      "name": "Console GTM Growth",
+      "enabled": true,
+      "protocol": "openid-connect",
+      "publicClient": true,
+      "standardFlowEnabled": true,
+      "implicitFlowEnabled": false,
+      "directAccessGrantsEnabled": false,
+      "serviceAccountsEnabled": false,
+      "frontchannelLogout": true,
+      "rootUrl": "https://gtm.kayroslab.com",
+      "baseUrl": "/console/",
+      "redirectUris": [
+        "https://gtm.kayroslab.com/console/*"
+      ],
+      "webOrigins": [
+        "https://gtm.kayroslab.com"
+      ],
+      "attributes": {
+        "pkce.code.challenge.method": "S256",
+        "post.logout.redirect.uris": "https://gtm.kayroslab.com/console/*"
+      },
+      "protocolMappers": [
+        {
+          "name": "audience gtm-console",
+          "protocol": "openid-connect",
+          "protocolMapper": "oidc-audience-mapper",
+          "config": {
+            "included.client.audience": "gtm-console",
+            "access.token.claim": "true",
+            "id.token.claim": "false"
+          }
+        },
+        {
+          "name": "groups",
+          "protocol": "openid-connect",
+          "protocolMapper": "oidc-group-membership-mapper",
+          "config": {
+            "full.path": "true",
+            "access.token.claim": "true",
+            "id.token.claim": "false",
+            "userinfo.token.claim": "true",
+            "claim.name": "groups"
+          }
+        },
+        {
+          "name": "organization",
+          "protocol": "openid-connect",
+          "protocolMapper": "oidc-organization-membership-mapper",
+          "config": {
+            "claim.name": "organization",
+            "access.token.claim": "true",
+            "id.token.claim": "true",
+            "introspection.token.claim": "true",
+            "jsonType.label": "String",
+            "multivalued": "true",
+            "addOrganizationAttributes": "false",
+            "addOrganizationId": "false"
+          }
+        }
+      ],
+      "defaultClientScopes": [
+        "web-origins",
+        "acr",
+        "profile",
+        "roles",
+        "email",
+        "basic"
+      ],
+      "optionalClientScopes": [
+        "organization",
+        "offline_access"
+      ]
+    },
+    {
+      "clientId": "gtm-provisioner",
+      "name": "Provisionnement des tenants (service account)",
+      "enabled": true,
+      "protocol": "openid-connect",
+      "publicClient": false,
+      "standardFlowEnabled": false,
+      "directAccessGrantsEnabled": false,
+      "serviceAccountsEnabled": true,
+      "description": "Secret généré dans la console d'administration (jamais dans cet export). Rôles du service account : realm-management → manage-realm, manage-users, manage-clients, manage-identity-providers, view-realm. Pour le mode « realm dédié », créer un client équivalent dans le realm master avec le rôle admin/create-realm."
+    }
+  ],
+  "organizationsEnabled": true,
+  "loginTheme": "gtm-growth",
+  "emailTheme": "gtm-growth",
+  "verifyEmail": true,
+  "otpPolicyType": "totp",
+  "otpPolicyAlgorithm": "HmacSHA1",
+  "otpPolicyDigits": 6,
+  "otpPolicyPeriod": 30,
+  "otpSupportedApplications": [
+    "totpAppFreeOTPName",
+    "totpAppGoogleName",
+    "totpAppMicrosoftAuthenticatorName"
+  ],
+  "groups": [
+    {
+      "name": "tenants",
+      "subGroups": []
+    }
+  ]
+}

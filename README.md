@@ -19,6 +19,155 @@ The agent reads live Google data, audits setups, crosses organic search with sit
 
 ---
 
+## Console GTM Growth — Keycloak multi-tenant et outils en direct (FR)
+
+La console (`https://gtm.kayroslab.com/console/` et `https://<client>.gtm.kayroslab.com/console/`) n'affiche plus de données d'exemple : chaque onglet appelle l'API `/api/console/*`, branchée sur les modules existants du serveur. Tout est **open source / interne** : aucune API payante (SerpApi, DataForSEO, LLM commercial…). Les seules API externes sont les API Google gratuites (Search Console, GA4, PageSpeed, CrUX).
+
+### Keycloak, brique centrale de la stack
+
+**Keycloak 26** (open source, CNCF) n'est pas un simple login de la console. C'est le **fournisseur d'identité de tous les clients de GTM Growth** :
+
+| Couche | Composant |
+| --- | --- |
+| Identité et SSO | **Keycloak 26.4** (`quay.io/keycloak/keycloak`, mode production, Postgres 16), `https://auth.kayroslab.com` |
+| Multi-tenant | **Organisations Keycloak** (une par client) dans le realm partagé `gtm-growth` ; **realm dédié** `tenant-<id>` en option |
+| Fédération | Brokering par client : Google Workspace, Microsoft Entra ID, tout OIDC ou SAML 2.0 (redirection automatique selon le domaine e-mail) |
+| Libre-service | Console de compte Keycloak : mot de passe oublié, changement de mot de passe, **MFA TOTP**, sessions |
+| API | Express + vérification JWT interne (`node:crypto`, JWKS par émetteur), résolution du tenant, cloisonnement des données |
+| Provisionnement | API Admin REST Keycloak (compte de service `gtm-provisioner`) : script `npm run tenant:provision` et API `POST /api/platform/tenants` |
+| Thème | `deploy/kayroslab-vps/keycloak/themes/gtm-growth` (connexion FR, e-mails) ; logo et couleur du client dans la console |
+
+```mermaid
+flowchart LR
+  subgraph Clients
+    U1["Utilisateur client A<br/>a.gtm.kayroslab.com"]
+    U2["Utilisateur client B<br/>(SSO Entra / Google / SAML)"]
+    SA["Super-admin KayrosLab"]
+  end
+  subgraph VPS["VPS KayrosLab (Docker)"]
+    NG["Nginx<br/>*.gtm.kayroslab.com · auth.kayroslab.com"]
+    subgraph KC["Keycloak 26 + Postgres"]
+      R1["Realm gtm-growth<br/>Organisations : A, B…<br/>groupes /tenants/&lt;id&gt;/rôle<br/>rôle platform-admin"]
+      R2["Realm dédié tenant-c<br/>(option)"]
+    end
+    API["API GTM Growth<br/>JWT → tenant → cloisonnement"]
+    REG[("Registre tenants<br/>domaines · propriétés GSC<br/>leads · rapports")]
+  end
+  IDP["IdP du client<br/>Entra ID · Google · SAML"]
+  G["API Google gratuites<br/>GSC · GA4 · PSI · CrUX"]
+  U1 & U2 & SA --> NG
+  NG -->|"/console/ (PKCE)"| KC
+  R1 <-->|brokering| IDP
+  NG -->|"/api/console + Bearer"| API
+  API -->|JWKS par émetteur| KC
+  API --> REG
+  API --> G
+  API -->|"Admin REST (provisionnement)"| KC
+```
+
+### Modèle multi-tenant : pourquoi les Organisations (et le realm dédié en option)
+
+- **Par défaut : une Organisation Keycloak par client** dans le realm `gtm-growth`. Un seul émetteur et un seul JWKS, donc moins de configuration et une seule mise à jour de sécurité. La découverte par domaine e-mail est native (`login_hint` et redirection vers l'IdP du client). Les IdP sont rattachés à l'organisation. L'ajout d'un client se fait en quelques secondes par l'API, sans redémarrage. C'est le modèle recommandé par Keycloak pour le B2B SaaS depuis la version 26.
+- **En option : un realm dédié `tenant-<id>`** pour un client qui exige un thème de connexion entièrement personnalisé, sa propre politique de mot de passe ou de session, ou une isolation complète (clés de signature distinctes). Son émetteur est ajouté au registre et l'API lui fait confiance automatiquement.
+- On n'a pas retenu **un realm par client dans tous les cas** : Keycloak se dégrade au-delà de quelques centaines de realms, et chaque realm multiplie la configuration (clients, thèmes, SMTP, IdP).
+
+**Le tenant est porté par le jeton** :
+- en mode Organisation, par la revendication `organization` (mapper *Organization Membership*) **et** un groupe `/tenants/<id>/tenant-admin|tenant-user`. Les deux doivent concorder, et un groupe sans appartenance à l'organisation est ignoré ;
+- en mode realm dédié, par l'**émetteur** `iss`.
+
+Un utilisateur membre de plusieurs clients choisit le sien dans la console, qui envoie l'en-tête `X-Tenant`. Cet en-tête est vérifié contre le jeton et ne peut pas être usurpé.
+
+**Rôles**
+
+| Rôle | Où | Droits |
+| --- | --- | --- |
+| `tenant-user` | groupe `/tenants/<id>/tenant-user` (ou rôle du realm dédié) | outils de la console sur **ses** domaines et propriétés GSC, **ses** leads et rapports |
+| `tenant-admin` | groupe `/tenants/<id>/tenant-admin` | en plus : `PUT /api/console/tenant/settings` (domaines, propriétés, logo, couleur) et `POST /api/console/tenant/users` (invitation) |
+| `platform-admin` | rôle du realm `gtm-growth` (KayrosLab) | tous les tenants via `X-Tenant`, `GET/POST /api/platform/tenants` |
+
+**Cloisonnement côté API** : chaque requête est rattachée à un tenant. Toute `url` ou `inspectUrl` hors des domaines du tenant reçoit **403**, avant même la résolution DNS. Toute `property` Search Console hors de ses propriétés reçoit **403**, et la propriété par défaut est la première du tenant. `/leads` ne renvoie que les leads dont le site appartient au tenant. Les rapports PDF sont rangés dans `data/reports/<tenant>/` et ne sont lisibles que par ce tenant. Les tests `tests/tenant-isolation.test.ts` couvrent ces cas.
+
+### Connexion à la console
+
+1. **Découverte du client** (`GET /api/tenants/discover`, public, limité à 20 requêtes/min/IP, ne renvoie que le nom, l'émetteur et l'habillage) :
+   - par **sous-domaine** `acme.gtm.kayroslab.com` ;
+   - par **chemin** `?tenant=acme` ;
+   - par **domaine e-mail** saisi sur l'écran de connexion.
+2. **Connexion Keycloak** avec le scope `organization:<id>` et le `login_hint`. Keycloak affiche l'habillage `gtm-growth` et, si le client a un IdP, redirige directement vers son SSO (Entra, Google, SAML).
+3. **Mon compte** (lien dans l'en-tête, console de compte `…/account/`) : changement de mot de passe, **TOTP** (FreeOTP, Google ou Microsoft Authenticator) et sessions. « Mot de passe oublié ? » est actif sur la page de connexion.
+
+### Ajouter un client (onboarding)
+
+Prérequis une fois pour toutes : voir « Mise en service » ci-dessous (DNS, SMTP Keycloak, compte de service).
+
+```bash
+# Sur le VPS (variables KEYCLOAK_* et OIDC_ISSUER chargées depuis .env.local)
+npm run tenant:provision -- --id acme --name "Acme" \
+  --email-domain acme.fr --domain acme.fr --property sc-domain:acme.fr \
+  --admin direction@acme.fr
+# Option SSO Microsoft Entra (le secret est lu dans une variable, jamais en argument) :
+#   --idp microsoft --idp-tenant <tenant-id-entra> --idp-client-id <app-id> --idp-client-secret-env ACME_ENTRA_SECRET
+# Option realm dédié : --mode realm
+```
+
+L'API équivalente, réservée au `platform-admin`, est `POST /api/platform/tenants` avec `{ id, name, emailDomains, domains, gscProperties, admin: { email }, identityProvider? , mode? }`.
+
+Le provisionnement :
+1. crée l'**organisation** (ou le realm) avec ses domaines e-mail ;
+2. crée les groupes `tenant-admin` et `tenant-user` ;
+3. ajoute `https://acme.gtm.kayroslab.com/console/*` aux redirections du client `gtm-console` ;
+4. ajoute l'**IdP** éventuel et le lie à l'organisation ;
+5. crée le premier admin et lui envoie un **e-mail d'invitation** (vérification de l'e-mail, mot de passe, TOTP ; lien valable 72 h) ;
+6. enregistre le tenant (`TENANTS_PATH`).
+
+Ensuite, côté client :
+- accorder au compte de service Google l'accès **Lecture** à ses propriétés Search Console ;
+- le tenant-admin invite ses collègues depuis l'API `tenant/users`.
+
+### Configuration
+
+| Élément | Valeur |
+| --- | --- |
+| Realm | `gtm-growth` (import : `deploy/kayroslab-vps/keycloak/realm-gtm-growth.json`). Organisations activées, OTP, réinitialisation du mot de passe, thème `gtm-growth`, mappers `groups` et `organization` |
+| Client navigateur | `gtm-console` : client **public**, *Authorization Code + PKCE (S256)*, aucun secret côté navigateur |
+| Client de provisionnement | `gtm-provisioner` : confidentiel, compte de service. **Secret à générer dans la console d'administration** ; rôles `realm-management` : `manage-realm`, `manage-users`, `manage-clients`, `manage-identity-providers`. Pour le mode realm dédié, utiliser un client équivalent du realm `master` (`KEYCLOAK_ADMIN_REALM=master`) avec le droit de créer des realms |
+| Variables API | `OIDC_ISSUER`, `OIDC_CLIENT_ID`, `OIDC_JWKS_URL`, `KEYCLOAK_INTERNAL_URL`, `OIDC_EXTRA_ISSUERS`, `TENANTS_PATH`, `REPORTS_PATH`, `CONSOLE_DOMAIN`, `KEYCLOAK_ADMIN_REALM`, `KEYCLOAK_ADMIN_CLIENT_ID`, `KEYCLOAK_ADMIN_CLIENT_SECRET` |
+
+Sans `OIDC_ISSUER`, l'API console répond **503** : elle reste fermée par défaut. Les routes publiques `/api/free-read`, `/api/lead` et `/health` sont inchangées.
+
+**Mise en service (une fois)** — voir aussi `deploy/kayroslab-vps/README.md` :
+
+1. DNS IONOS :
+   - **A** `auth.kayroslab.com` → `51.210.9.71` ;
+   - **A joker** `*.gtm.kayroslab.com` → `51.210.9.71`.
+2. Certificats :
+   - `certbot --nginx -d auth.kayroslab.com` ;
+   - pour le joker `*.gtm.kayroslab.com`, un certificat **DNS-01** (plugin open source `certbot-dns-ionos` ou défi DNS manuel).
+3. Secrets dans `.env.local` (`openssl rand -base64 32`) : `KC_DB_PASSWORD`, `KC_BOOTSTRAP_ADMIN_PASSWORD`, plus `KEYCLOAK_ADMIN_CLIENT_SECRET` après génération dans Keycloak.
+4. `bash deploy/kayroslab-vps/deploy.sh`, puis installation des vhosts Nginx (`nginx-auth-kayroslab.conf` et `nginx-gtm-growth.conf`, qui couvre maintenant `*.gtm.kayroslab.com`).
+5. Admin Keycloak (`https://auth.kayroslab.com/admin/`, à restreindre par IP) :
+   - **SMTP** du realm (*Realm settings → Email*), indispensable pour les invitations et la réinitialisation ;
+   - secret de `gtm-provisioner` et rôles de son compte de service ;
+   - créer le compte KayrosLab avec le rôle `platform-admin`.
+
+### Onglets et routes
+
+| Phase | Onglet | Ce qu'il fait | Route(s) `POST /api/console/…` |
+| --- | --- | --- | --- |
+| 1 | **Sitemap** | Carte visuelle (rendu SlickMap), audit GEO page par page, génération de `sitemap.xml` par crawl | `sitemap/map`, `sitemap/audit`, `sitemap/build` |
+| 1 | **GEO** | Citabilité IA, `llms.txt` (validation, génération depuis le sitemap, dérive), robots IA + `robots.txt` corrigé, données structurées | `geo/citability`, `geo/llms`, `geo/robots`, `geo/schema` |
+| 1 | **Performance** | PageSpeed (mobile/desktop), Core Web Vitals CrUX (origine ou URL), poids de page mesuré par ressource | `performance/pagespeed`, `performance/crux`, `performance/weight` |
+| 2 | **Search** | Requêtes, tendances quotidiennes, pages qui perdent des clics (période vs précédente), inspection d'URL | `search/queries`, `search/trends`, `search/losing-pages`, `search/inspect` |
+| 2 | **Mots-clés** | Score d'opportunité 0–100 (positions 4–15, écart de CTR, top 3 à CTR faible) et clusters de requêtes (similarité de tokens + page commune) depuis les paires requête/page GSC | `keywords/opportunities` |
+| 2 | **Calculateurs** | CTR par position, valeur du trafic organique (CPC saisi), ROI SEO, budget SEO | `calc/ctr`, `calc/traffic-value`, `calc/roi`, `calc/budget` |
+| 2 | **Rapport PDF** | Rapport GEO complet (audit, plateformes IA, citabilité) téléchargé depuis la console | `report/pdf` |
+| 3 | **Audit technique** | Crawler interne (même hôte, 200 pages max) : canonical, title/meta (longueur, doublons), H1/hiérarchie Hn, noindex, redirections et chaînes, liens cassés internes/externes ; aperçu SERP avec troncature en pixels | `audit/technical`, `audit/serp-preview` |
+| 3 | **Générateurs** | Titles, meta descriptions, plans d'article : modèles déterministes FR, ou modèle open source via **Ollama** auto-hébergé (optionnel, profil compose `llm`) | `generate/titles`, `generate/meta`, `generate/outline` |
+
+Champs communs : `url` (domaine ou page, passé par le même garde-fou anti-SSRF que la lecture gratuite) et `property` (propriété Search Console, ex. `sc-domain:kayroslab.com`) pour les onglets Search et Mots-clés. Le compte de service Google doit avoir accès à la propriété (Search Console → Paramètres → Utilisateurs).
+
+Code : `src/console/` (API, auth, modules), `site/console/` (interface), tests `tests/console-*.test.ts`.
+
 ## Mises à jour récentes — novembre 2026 (FR)
 
 | Mise à jour | Détail |
@@ -31,6 +180,7 @@ The agent reads live Google data, audits setups, crosses organic search with sit
 | **Sitemap visuel** | La lecture gratuite affiche l'architecture déclarée dans le sitemap (arbre façon SlickMap, sections, profondeur, `lastmod`). |
 | **Rapport exemple 11 pages** | Rapport PDF d'exemple (opendpe.net) avec guide de la console et plans marketing. |
 | **Console d'analyse** | Console « app-shell » claire (onglets GEO, IndexNow, plateformes IA…), version FR du site. |
+| **Console en direct + Keycloak multi-tenant** | Console `/console/` pour les clients de GTM Growth : Keycloak (Organisations, SSO Entra/Google/SAML, MFA), cloisonnement par client, 9 onglets branchés sur les vraies données (phases 1 à 3) — voir la section ci-dessus. |
 
 > ℹ️ Le formulaire **enregistre** la demande ; il n'envoie pas encore de PDF par e-mail automatiquement. Pour être notifié de chaque demande, renseigner `LEAD_WEBHOOK_URL` (Slack/Discord/n8n…) dans `deploy/kayroslab-vps/.env.local`. Un envoi automatique du PDF nécessiterait un fournisseur e-mail (SMTP ou API) non configuré à ce jour.
 

@@ -1,0 +1,4 @@
+/* Thème de connexion GTM Growth (open source, aucune dépendance externe). */
+:root { --pf-v5-global--primary-color--100: #0f5132; --pf-v5-global--link--Color: #0f5132; }
+.pf-v5-c-login__main-header::before { content: "GTM Growth · KayrosLab"; display: block; font-weight: 700; font-size: 1.1rem; color: #0f5132; margin-bottom: .5rem; }
+.pf-v5-c-button.pf-m-primary { background-color: #0f5132; }

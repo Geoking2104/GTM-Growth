@@ -1,0 +1,42 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="robots" content="noindex, nofollow">
+<title>Console GTM Growth</title>
+<link rel="icon" href="../assets/logo-64.png" type="image/png">
+<link rel="stylesheet" href="../sitemap-map.css">
+<link rel="stylesheet" href="console.css">
+</head>
+<body>
+<div id="c-login" class="c-login" hidden>
+  <div class="c-login-card">
+    <img src="../assets/logo-64.png" alt="" width="48" height="48">
+    <h1>Console GTM Growth</h1>
+    <p>Accès réservé. Connectez-vous avec votre compte (SSO Keycloak).</p>
+    <img id="c-login-logo" class="c-logo" alt="" hidden>
+    <form id="c-login-form" class="c-form">
+      <label class="c-field"><span>E-mail professionnel</span><input id="c-login-email" type="email" autocomplete="username" placeholder="prenom@entreprise.fr"></label>
+      <button id="c-login-btn" class="c-btn" type="submit">Continuer</button>
+    </form>
+    <p class="c-note">Votre espace client est détecté à partir de votre e-mail, du sous-domaine (<code>client.gtm.kayroslab.com</code>) ou du lien <code>?tenant=client</code>.</p>
+    <p id="c-login-error" class="c-error"></p>
+  </div>
+</div>
+<div id="c-app" hidden>
+  <header class="c-header">
+    <strong>GTM Growth · Console</strong>
+    <label class="c-field c-inline"><span>Domaine</span><input id="c-url" placeholder="https://www.exemple.fr"></label>
+    <label class="c-field c-inline"><span>Propriété Search Console</span><input id="c-property" placeholder="sc-domain:exemple.fr"></label>
+    <label class="c-field c-inline" id="c-tenant-wrap" hidden><span>Client</span><select id="c-tenant"></select></label>
+    <span id="c-user" class="c-user"></span>
+    <a id="c-account" class="c-btn c-btn-ghost" target="_blank" rel="noopener">Mon compte</a>
+    <button id="c-logout" class="c-btn c-btn-ghost" type="button">Déconnexion</button>
+  </header>
+  <nav id="c-tabs" class="c-tabs" role="tablist" aria-label="Outils"></nav>
+  <main id="c-panels" class="c-panels"></main>
+</div>
+<script type="module" src="app.js"></script>
+</body>
+</html>
