@@ -1,5 +1,14 @@
 # Changelog
 
+## Unreleased
+
+### Added
+
+- **Live console `/console/` with Keycloak SSO**: OIDC Authorization Code + PKCE (realm `gtm-growth`, public client `gtm-console`, role `console-user`); `/api/console/*` validates bearer tokens via JWKS. Keycloak 26 (production mode, Postgres) added to the VPS compose with realm import and an `auth.kayroslab.com` Nginx vhost.
+- **Phase 1**: Sitemap (map, GEO audit, builder), GEO (citability, llms.txt validate/generate/drift, AI robots, schema), Performance (PageSpeed, CrUX, page weight).
+- **Phase 2**: Search (queries, trends, pages losing clicks, URL inspection), keyword opportunity score and clustering from GSC, calculators (CTR, traffic value, ROI, budget), PDF export.
+- **Phase 3**: technical audit crawler (canonical, Hn, redirects, broken links, duplicates), SERP preview, title/meta/outline generators (templates or self-hosted Ollama). No paid APIs.
+
 ## 0.22.0 — 2026-11-04
 
 ### Added

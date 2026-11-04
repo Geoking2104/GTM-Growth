@@ -68,3 +68,41 @@ bash deploy/kayroslab-vps/deploy.sh
 Ne jamais versionner `.env.local`, le jeton MCP ou le fichier JSON du service
 account. Le site est déjà configuré pour appeler l’API publique via
 `https://gtm.kayroslab.com`.
+
+## Keycloak (SSO de la console)
+
+Services ajoutés au compose : `keycloak` (Keycloak 26, `start --import-realm`, mode
+production, `127.0.0.1:8180`) et `keycloak-db` (Postgres 16, volume
+`gtm_growth_keycloak_db`). Le realm `gtm-growth` et le client public `gtm-console`
+sont importés depuis `keycloak/realm-gtm-growth.json` au premier démarrage.
+
+1. DNS IONOS : **A** `auth.kayroslab.com` → `51.210.9.71`.
+2. Dans `.env.local` (chmod 600), renseigner des valeurs générées sur le VPS :
+
+   ```bash
+   echo "KC_DB_PASSWORD=$(openssl rand -base64 32)" >> deploy/kayroslab-vps/.env.local
+   echo "KC_BOOTSTRAP_ADMIN_PASSWORD=$(openssl rand -base64 32)" >> deploy/kayroslab-vps/.env.local
+   ```
+
+   (`KC_BOOTSTRAP_ADMIN_USERNAME`, `KC_HOSTNAME`, `OIDC_ISSUER` : voir `.env.production.example`.)
+3. `bash deploy/kayroslab-vps/deploy.sh`
+4. Nginx + TLS :
+
+   ```bash
+   cp deploy/kayroslab-vps/nginx-auth-kayroslab.conf /etc/nginx/sites-available/auth.kayroslab.com
+   ln -s /etc/nginx/sites-available/auth.kayroslab.com /etc/nginx/sites-enabled/auth.kayroslab.com
+   nginx -t && systemctl reload nginx
+   certbot --nginx -d auth.kayroslab.com --redirect --agree-tos -m contact@kayroslab.com
+   ```
+
+   Reporter aussi le bloc `location /console/` (et `proxy_read_timeout 180` sur `/api/`) de
+   `nginx-gtm-growth.conf` dans le vhost HTTPS de `gtm.kayroslab.com` géré par certbot.
+5. Se connecter à `https://auth.kayroslab.com/admin/` avec le compte d'administration
+   initial, puis dans le realm `gtm-growth` : créer l'utilisateur, son mot de passe, et lui
+   attribuer le rôle `console-user`. Créer ensuite un administrateur permanent et
+   supprimer le compte initial (recommandation Keycloak). Restreindre `/admin/` par IP dans le vhost.
+6. Vérifier : `curl -fsS https://auth.kayroslab.com/realms/gtm-growth/.well-known/openid-configuration`
+   puis ouvrir `https://gtm.kayroslab.com/console/`.
+
+Optionnel — générateurs via modèle open source : `docker compose --profile llm up -d ollama`,
+`docker compose exec ollama ollama pull mistral`, puis `OLLAMA_URL=http://ollama:11434` dans `.env.local`.

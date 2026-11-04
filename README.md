@@ -19,6 +19,51 @@ The agent reads live Google data, audits setups, crosses organic search with sit
 
 ---
 
+## Console GTM Growth — SSO Keycloak et outils en direct (FR)
+
+La console (`https://gtm.kayroslab.com/console/`) n'affiche plus de données d'exemple : chaque onglet appelle l'API `/api/console/*`, branchée sur les modules existants du serveur. Tout est **open source / interne** : aucune API payante (SerpApi, DataForSEO, LLM commercial…). Les seules API externes sont les API Google gratuites déjà intégrées (Search Console, PageSpeed, CrUX) via le compte de service.
+
+### Accès : login / mot de passe via Keycloak
+
+| Élément | Valeur |
+| --- | --- |
+| Fournisseur SSO | [Keycloak](https://www.keycloak.org/guides) 26 (`quay.io/keycloak/keycloak`), **mode production**, base **Postgres 16** |
+| Realm | `gtm-growth` (import automatique : `deploy/kayroslab-vps/keycloak/realm-gtm-growth.json`) |
+| Client | `gtm-console` — client **public** OIDC, *Authorization Code + PKCE (S256)*, pas de secret côté navigateur |
+| Rôle requis | `console-user` (realm role) — un compte sans ce rôle est refusé par l'API |
+| URL publique | `https://auth.kayroslab.com` (Nginx → `127.0.0.1:8180`) |
+| Protection API | `/api/console/*` exige `Authorization: Bearer <access token>` ; signature vérifiée via le **JWKS** du realm (RS256/PS256/ES256), plus `iss`, `exp`/`nbf`, `aud`/`azp` et rôle. Implémentation interne (`node:crypto`), sans dépendance JWT. |
+| Routes publiques inchangées | `/api/free-read`, `/api/lead`, `/health` |
+| Page `/console/` | Statique, `noindex`, CSP stricte ; sans session elle n'affiche que le bouton « Se connecter ». |
+
+Variables (`deploy/kayroslab-vps/.env.local`, jamais versionné) : `KC_DB_PASSWORD`, `KC_BOOTSTRAP_ADMIN_USERNAME`, `KC_BOOTSTRAP_ADMIN_PASSWORD`, `KC_HOSTNAME`, `OIDC_ISSUER` ; options `CONSOLE_DEFAULT_URL`, `CONSOLE_DEFAULT_PROPERTY`, `OLLAMA_URL`, `OLLAMA_MODEL`. Côté API : `OIDC_ISSUER`, `OIDC_CLIENT_ID` (défaut `gtm-console`), `OIDC_JWKS_URL` (défaut `${OIDC_ISSUER}/protocol/openid-connect/certs`), `OIDC_REQUIRED_ROLE`. Sans `OIDC_ISSUER`, l'API console répond **503** (fermée par défaut). Côté navigateur, l'émetteur et le client se règlent dans `site/console/config.js`.
+
+**Mise en service (une fois)** — voir aussi `deploy/kayroslab-vps/README.md` :
+
+1. DNS IONOS : enregistrement **A** `auth.kayroslab.com` → `51.210.9.71`.
+2. Générer les secrets sur le VPS (`openssl rand -base64 32`) et les placer dans `.env.local`.
+3. `bash deploy/kayroslab-vps/deploy.sh` (démarre `keycloak` + `keycloak-db` avec le reste).
+4. Nginx : `cp deploy/kayroslab-vps/nginx-auth-kayroslab.conf /etc/nginx/sites-available/auth.kayroslab.com`, lien dans `sites-enabled`, `nginx -t && systemctl reload nginx`, puis `certbot --nginx -d auth.kayroslab.com --redirect --agree-tos -m contact@kayroslab.com`. Mettre aussi à jour le vhost `gtm.kayroslab.com` (bloc `location /console/`).
+5. Admin Keycloak (`https://auth.kayroslab.com/admin/`, à restreindre par IP dans le vhost) : realm `gtm-growth` → *Users* → créer l'utilisateur, définir un mot de passe, lui attribuer le rôle `console-user`. Activer l'OTP si souhaité (*Authentication → Required actions*).
+
+### Onglets et routes
+
+| Phase | Onglet | Ce qu'il fait | Route(s) `POST /api/console/…` |
+| --- | --- | --- | --- |
+| 1 | **Sitemap** | Carte visuelle (rendu SlickMap), audit GEO page par page, génération de `sitemap.xml` par crawl | `sitemap/map`, `sitemap/audit`, `sitemap/build` |
+| 1 | **GEO** | Citabilité IA, `llms.txt` (validation, génération depuis le sitemap, dérive), robots IA + `robots.txt` corrigé, données structurées | `geo/citability`, `geo/llms`, `geo/robots`, `geo/schema` |
+| 1 | **Performance** | PageSpeed (mobile/desktop), Core Web Vitals CrUX (origine ou URL), poids de page mesuré par ressource | `performance/pagespeed`, `performance/crux`, `performance/weight` |
+| 2 | **Search** | Requêtes, tendances quotidiennes, pages qui perdent des clics (période vs précédente), inspection d'URL | `search/queries`, `search/trends`, `search/losing-pages`, `search/inspect` |
+| 2 | **Mots-clés** | Score d'opportunité 0–100 (positions 4–15, écart de CTR, top 3 à CTR faible) et clusters de requêtes (similarité de tokens + page commune) depuis les paires requête/page GSC | `keywords/opportunities` |
+| 2 | **Calculateurs** | CTR par position, valeur du trafic organique (CPC saisi), ROI SEO, budget SEO | `calc/ctr`, `calc/traffic-value`, `calc/roi`, `calc/budget` |
+| 2 | **Rapport PDF** | Rapport GEO complet (audit, plateformes IA, citabilité) téléchargé depuis la console | `report/pdf` |
+| 3 | **Audit technique** | Crawler interne (même hôte, 200 pages max) : canonical, title/meta (longueur, doublons), H1/hiérarchie Hn, noindex, redirections et chaînes, liens cassés internes/externes ; aperçu SERP avec troncature en pixels | `audit/technical`, `audit/serp-preview` |
+| 3 | **Générateurs** | Titles, meta descriptions, plans d'article : modèles déterministes FR, ou modèle open source via **Ollama** auto-hébergé (optionnel, profil compose `llm`) | `generate/titles`, `generate/meta`, `generate/outline` |
+
+Champs communs : `url` (domaine ou page, passé par le même garde-fou anti-SSRF que la lecture gratuite) et `property` (propriété Search Console, ex. `sc-domain:kayroslab.com`) pour les onglets Search et Mots-clés. Le compte de service Google doit avoir accès à la propriété (Search Console → Paramètres → Utilisateurs).
+
+Code : `src/console/` (API, auth, modules), `site/console/` (interface), tests `tests/console-*.test.ts`.
+
 ## Mises à jour récentes — novembre 2026 (FR)
 
 | Mise à jour | Détail |
@@ -31,6 +76,7 @@ The agent reads live Google data, audits setups, crosses organic search with sit
 | **Sitemap visuel** | La lecture gratuite affiche l'architecture déclarée dans le sitemap (arbre façon SlickMap, sections, profondeur, `lastmod`). |
 | **Rapport exemple 11 pages** | Rapport PDF d'exemple (opendpe.net) avec guide de la console et plans marketing. |
 | **Console d'analyse** | Console « app-shell » claire (onglets GEO, IndexNow, plateformes IA…), version FR du site. |
+| **Console en direct + SSO Keycloak** | Nouvelle console `/console/` protégée par Keycloak (OIDC + PKCE), 9 onglets branchés sur les vraies données (phases 1 à 3) — voir la section ci-dessus. |
 
 > ℹ️ Le formulaire **enregistre** la demande ; il n'envoie pas encore de PDF par e-mail automatiquement. Pour être notifié de chaque demande, renseigner `LEAD_WEBHOOK_URL` (Slack/Discord/n8n…) dans `deploy/kayroslab-vps/.env.local`. Un envoi automatique du PDF nécessiterait un fournisseur e-mail (SMTP ou API) non configuré à ce jour.
 
