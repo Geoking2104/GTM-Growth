@@ -120,7 +120,7 @@
       "standardFlowEnabled": false,
       "directAccessGrantsEnabled": false,
       "serviceAccountsEnabled": true,
-      "description": "Secret généré dans la console d'administration (jamais dans cet export). Rôles du service account : realm-management → manage-realm, manage-users, manage-clients, manage-identity-providers, view-realm. Pour le mode « realm dédié », créer un client équivalent dans le realm master avec le rôle admin/create-realm."
+      "description": "Provisionnement des tenants. Secret généré dans Keycloak, jamais versionné (voir README)."
     }
   ],
   "organizationsEnabled": true,
