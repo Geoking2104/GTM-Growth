@@ -19,6 +19,23 @@ The agent reads live Google data, audits setups, crosses organic search with sit
 
 ---
 
+## Mises à jour récentes — novembre 2026 (FR)
+
+| Mise à jour | Détail |
+| --- | --- |
+| **Hébergement sur le VPS KayrosLab** | L'application tourne en Docker Compose (`deploy/kayroslab-vps/`) sur le VPS OVH `51.210.9.71`, port privé `127.0.0.1:4300`, derrière Nginx. Le site statique est servi depuis `/opt/gtm-growth/site`, `/api/*` et `/health` sont relayés vers le conteneur. |
+| **DNS** | Enregistrement **A** `gtm.kayroslab.com` → `51.210.9.71` créé chez **IONOS** (TTL 3600), aucun autre enregistrement modifié. |
+| **HTTPS** | Certificat **Let's Encrypt** obtenu via `certbot --nginx -d gtm.kayroslab.com --redirect` : redirection HTTP→HTTPS, renouvellement automatique (timer certbot), expiration actuelle le **2 février 2027**. |
+| **Redémarrage automatique** | Démarrage PM2 activé pour root (`pm2 startup systemd -u root` → service `pm2-root`) : `kayros-api`, `directus` et `opendpe-app-dev` reviennent seuls après un reboot, comme `opendpe-backend` (`pm2-opendpe`). Les conteneurs GTM Growth sont en `restart: unless-stopped`. Vérifié par un redémarrage complet du VPS. |
+| **Correctif formulaire « rapport complet »** | `POST /api/lead` renvoyait **500** (`EACCES: permission denied, open '/data/leads.jsonl'`) : le volume `/data` appartenait à root alors que le conteneur tourne en utilisateur `mcp` (uid 1001). Le `Dockerfile` crée désormais `/data` avec les bons droits ; le volume existant a été corrigé. Les demandes sont enregistrées dans `/data/leads.jsonl` (201 + id). |
+| **Sitemap visuel** | La lecture gratuite affiche l'architecture déclarée dans le sitemap (arbre façon SlickMap, sections, profondeur, `lastmod`). |
+| **Rapport exemple 11 pages** | Rapport PDF d'exemple (opendpe.net) avec guide de la console et plans marketing. |
+| **Console d'analyse** | Console « app-shell » claire (onglets GEO, IndexNow, plateformes IA…), version FR du site. |
+
+> ℹ️ Le formulaire **enregistre** la demande ; il n'envoie pas encore de PDF par e-mail automatiquement. Pour être notifié de chaque demande, renseigner `LEAD_WEBHOOK_URL` (Slack/Discord/n8n…) dans `deploy/kayroslab-vps/.env.local`. Un envoi automatique du PDF nécessiterait un fournisseur e-mail (SMTP ou API) non configuré à ce jour.
+
+---
+
 ## What's new
 
 | Addition | What it gives you |
