@@ -72,6 +72,13 @@ describe("free read", () => {
     expect(meta.rows.find((row) => row.label === "Canonical")?.status).toBe("pass");
   });
 
+  it("returns sitemap-only map metrics", async () => {
+    const result = await runFreeRead({ url: "https://acme.com/", fetcher: fakeFetcher() });
+    expect(result.sitemapMap?.nodeCount).toBe(2);
+    expect(result.sitemapMap?.metrics.lastmodCoveragePercent).toBe(100);
+    expect(result.sitemapMap?.nodes.map((node) => node.url)).toContain("https://acme.com/pricing");
+  });
+
   it("reads the GA4 and Search Console signals without a Google account", async () => {
     const result = await runFreeRead({ url: "https://acme.com/", fetcher: fakeFetcher() });
     const ga4 = result.tables.find((table) => table.id === "ga4.readiness")!;

@@ -16,6 +16,7 @@ import { dictFor } from "./i18n.js";
 import { renderTables, sampleTables } from "./tables.js";
 import { initIndexNow } from "./indexnow.js";
 import { initConsole } from "./console.js";
+import { renderSitemapMap } from "./sitemap-map.js";
 
 const dict = dictFor(document.documentElement.lang);
 
@@ -45,6 +46,7 @@ const scoreEl = $("#score");
 const scoreValue = $("#score-value");
 const tableHost = $("#result-tables");
 const tableNote = $("#result-tables-note");
+const sitemapMapHost = $("#sitemap-map");
 
 const leadForm = $("#lead-form");
 const leadStatus = $("#lead-status");
@@ -133,11 +135,13 @@ async function loadServerTables(url) {
     }
 
     renderTables(tableHost, payload.tables ?? [], dict);
+    renderSitemapMap(sitemapMapHost, payload.sitemapMap ?? null, document.documentElement.lang);
     const measuredAt = new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit", second: "2-digit" });
     const seconds = typeof payload.durationMs === "number" ? (payload.durationMs / 1000).toFixed(1) : null;
     setTablesNote(dict.tables.serverNote({ at: measuredAt, seconds }), "live");
   } catch (error) {
     renderTables(tableHost, sampleTables(dict), dict);
+    renderSitemapMap(sitemapMapHost, null, document.documentElement.lang);
     setTablesNote(dict.tables.unavailable(error.message), "sample");
   }
 }

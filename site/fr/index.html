@@ -22,6 +22,7 @@
 <meta name="twitter:card" content="summary">
 <link rel="icon" href="../assets/logo-64.png" type="image/png">
 <link rel="stylesheet" href="../styles.css">
+<link rel="stylesheet" href="../sitemap-map.css">
 <script type="application/ld+json">
 {
   "@context": "https://schema.org",
@@ -182,6 +183,15 @@
           <div id="result-tables"></div>
         </div>
 
+        <section class="sitemap-map-panel" aria-labelledby="sitemap-map-heading">
+          <div class="sitemap-map-head">
+            <div><p class="eyebrow eyebrow-dark">Sitemap visuel gratuit</p><h3 id="sitemap-map-heading">Votre architecture déclarée, avec ses données sitemap</h3></div>
+            <p>Pages, profondeur, couverture <code>lastmod</code> et répartition par section — mesurées depuis le sitemap XML, jamais devinées.</p>
+          </div>
+          <div id="sitemap-map" aria-live="polite"></div>
+          <p class="sitemap-credit">Langage visuel adapté de <a href="https://github.com/astuteo/slickmap/tree/master-v2-updated-skin">SlickMap CSS v2</a> par Matt Everson / Astuteo.</p>
+        </section>
+
         <div class="result-next">
           <h3>Ce que l’audit complet ajoute</h3>
           <ul class="tick-list">
@@ -206,8 +216,8 @@
     <div class="wrap">
       <header class="section-head">
         <p class="eyebrow eyebrow-dark">Outils gratuits</p>
-        <h2 id="tools-heading">Trois tables, gratuites, avant toute inscription</h2>
-        <p class="section-sub">La lecture gratuite mesure votre page, son robots.txt et son sitemap, puis rend les tables SEO, GA4 et Search Console. Aucun compte, aucun client mail.</p>
+        <h2 id="tools-heading">Quatre outils gratuits, avant toute inscription</h2>
+        <p class="section-sub">La lecture gratuite mesure votre page, son robots.txt et son sitemap, puis rend les données SEO, GA4, Search Console et sitemap visuel. Aucun compte, aucun client mail.</p>
       </header>
 
       <div class="grid cards cards-free">
@@ -228,6 +238,12 @@
           <h3>Rapport Search Console</h3>
           <p>Balise de vérification, directives robots.txt, couverture du sitemap et part de <code>lastmod</code>, indexabilité, hôte canonique — ce dont Google a besoin avant de pouvoir indexer la page.</p>
           <p class="tag">lecture gratuite · /api/free-read</p>
+        </article>
+        <article class="card">
+          <span class="icon" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M12 4v5M6 10h12M6 10v6M12 10v6M18 10v6M3 20h6M9 20h6M15 20h6"/></svg></span>
+          <h3>Sitemap visuel</h3>
+          <p>Vue inspirée de SlickMap des URL déclarées dans le sitemap XML, avec nombre de pages, profondeur, couverture <code>lastmod</code> et répartition par section. Elle lit le sitemap ; elle n’invente pas de trafic.</p>
+          <p class="tag">lecture gratuite · données sitemap</p>
         </article>
       </div>
 

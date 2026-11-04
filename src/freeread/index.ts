@@ -15,6 +15,7 @@ import { fetchText, type FetchResult, type Fetcher } from "../geo/http.js";
 import { HtmlDoc } from "../geo/html.js";
 import { ga4Table, gscTable, trafficTable, type TrafficSample } from "./analytics.js";
 import { seoTables, type DataTable } from "./seo.js";
+import { buildSitemapMap, type SitemapMap } from "./sitemap-map.js";
 
 export interface FreeReadOptions {
   url: string;
@@ -37,6 +38,8 @@ export interface FreeReadResult {
   headline: { label: string; value: string }[];
   topFixes: { checkId: string; points: number; action: string }[];
   tables: DataTable[];
+  /** Sitemap architecture and freshness data for the free visual map. */
+  sitemapMap: SitemapMap | null;
   limitations: string[];
 }
 
@@ -154,6 +157,7 @@ export async function runFreeRead(options: FreeReadOptions): Promise<FreeReadRes
       action: rec.action,
     })),
     tables,
+    sitemapMap: buildSitemapMap(sitemap?.body ?? null, sitemap?.url ?? null, host),
     limitations: [
       "The GEO score covers the audited page only, not the whole site.",
       "GA4 and Search Console traffic rows are sample data unless a property is connected.",

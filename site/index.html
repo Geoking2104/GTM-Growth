@@ -22,6 +22,7 @@
 <meta name="twitter:card" content="summary">
 <link rel="icon" href="assets/logo-64.png" type="image/png">
 <link rel="stylesheet" href="styles.css">
+<link rel="stylesheet" href="sitemap-map.css">
 <script type="application/ld+json">
 {
   "@context": "https://schema.org",
@@ -180,6 +181,15 @@
           <div id="result-tables"></div>
         </div>
 
+        <section class="sitemap-map-panel" aria-labelledby="sitemap-map-heading">
+          <div class="sitemap-map-head">
+            <div><p class="eyebrow eyebrow-dark">Free visual sitemap</p><h3 id="sitemap-map-heading">Your declared architecture, with sitemap analytics</h3></div>
+            <p>Pages, depth, <code>lastmod</code> coverage and section distribution — measured from the XML sitemap, never guessed.</p>
+          </div>
+          <div id="sitemap-map" aria-live="polite"></div>
+          <p class="sitemap-credit">Visual language adapted from <a href="https://github.com/astuteo/slickmap/tree/master-v2-updated-skin">SlickMap CSS v2</a> by Matt Everson / Astuteo.</p>
+        </section>
+
         <div class="result-next">
           <h3>What the full audit adds</h3>
           <ul class="tick-list">
@@ -204,8 +214,8 @@
     <div class="wrap">
       <header class="section-head">
         <p class="eyebrow eyebrow-dark">Free tools</p>
-        <h2 id="tools-heading">Three tables, free, before any signup</h2>
-        <p class="section-sub">The free read measures your page, its robots.txt and its sitemap, then renders the SEO, GA4 and Search Console tables. No account, no mail client.</p>
+        <h2 id="tools-heading">Four free tools, before any signup</h2>
+        <p class="section-sub">The free read measures your page, its robots.txt and its sitemap, then renders SEO, GA4, Search Console and visual sitemap data. No account, no mail client.</p>
       </header>
 
       <div class="grid cards cards-free">
@@ -226,6 +236,12 @@
           <h3>Search Console report</h3>
           <p>Verification tag, robots.txt directives, sitemap coverage and <code>lastmod</code> share, indexability, canonical host — what Google needs before it can index the page at all.</p>
           <p class="tag">free read · /api/free-read</p>
+        </article>
+        <article class="card">
+          <span class="icon" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M12 4v5M6 10h12M6 10v6M12 10v6M18 10v6M3 20h6M9 20h6M15 20h6"/></svg></span>
+          <h3>Visual sitemap</h3>
+          <p>A SlickMap-style view of URLs declared in the XML sitemap, with page count, hierarchy depth, <code>lastmod</code> coverage and section distribution. It reads the sitemap; it does not invent traffic.</p>
+          <p class="tag">free read · sitemap analytics</p>
         </article>
       </div>
 

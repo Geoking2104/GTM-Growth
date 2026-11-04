@@ -8,6 +8,8 @@ site/
   index.html      marketing page + JSON-LD
   styles.css      all styles, no external fonts
   app.js          free read, lead form, copy buttons
+  sitemap-map.js   visual sitemap renderer for measured free-read data
+  sitemap-map.css  SlickMap-inspired visual sitemap skin (attribution in file)
   preview.js      pure URL checks (imported by tests)
   robots.txt      allow all + sitemap
   sitemap.xml     one canonical URL
@@ -152,6 +154,9 @@ Two layers, and the page says which one ran:
      duplication, `dataLayer`, consent mode — all read from the HTML;
    - **Search Console table**: verification meta, robots.txt directives, sitemap
      coverage, lastmod share, indexability, canonical host.
+   - **Visual sitemap**: declared URLs rendered in a SlickMap-inspired hierarchy,
+     with URL count, path depth, `lastmod` coverage and section distribution. These
+     are sitemap metrics, not traffic estimates.
 
 The two traffic reports (sessions, clicks, impressions) need a Google credential
 the visitor never shares. They are returned with `sample: true` and rendered with
