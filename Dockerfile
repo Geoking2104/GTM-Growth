@@ -26,7 +26,7 @@ RUN npm ci --omit=dev && npm cache clean --force
 COPY --from=builder /app/dist ./dist
 
 # Create directory for secrets (optional volume)
-RUN mkdir -p /secrets && chown -R mcp:nodejs /secrets
+RUN mkdir -p /secrets /data && chown -R mcp:nodejs /secrets /data
 
 USER mcp
 
