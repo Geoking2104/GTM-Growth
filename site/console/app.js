@@ -70,34 +70,49 @@ function applyBranding(branding) {
 }
 
 async function discover(query) {
-  const res = await fetch(`${DISCOVER}?${new URLSearchParams(query)}`);
+  const res = await fetch(`${DISCOVER}?${new URLSearchParams(query)}`, { cache: "no-store" });
   return res.ok ? res.json() : null;
 }
 
-/** Découverte du tenant : sous-domaine, ?tenant=, puis e-mail saisi. */
+/** Découverte du tenant : sous-domaine, ?tenant=, puis e-mail saisi.
+ * Le gestionnaire est attaché avant tout await : un clic n'est jamais perdu, et
+ * toute erreur est affichée au lieu d'échouer silencieusement. */
 async function loginScreen() {
   $("#c-login").hidden = false;
-  const fromUrl = new URLSearchParams(location.search).get("tenant");
-  const host = location.hostname.endsWith(`.${CONSOLE_DOMAIN}`) ? location.hostname : "";
+  const errorBox = $("#c-login-error"); const btn = $("#c-login-btn");
   let tenant = currentTenant();
-  if (!tenant && (fromUrl || host)) tenant = await discover(fromUrl ? { tenant: fromUrl } : { host });
-  if (tenant) { setTenant(tenant); applyBranding(tenant.branding); $("#c-login-btn").textContent = `Se connecter à ${tenant.name}`; }
+  let ready = Promise.resolve();
   $("#c-login-form").onsubmit = async (event) => {
     event.preventDefault();
-    const email = $("#c-login-email").value.trim();
-    if (!tenant && email) {
-      // Domaine inconnu ou public (gmail.com…) : connexion au realm par défaut ;
-      // l'espace client est ensuite déduit des claims du jeton (organisation, groupes).
-      tenant = await discover({ email });
-      if (tenant) setTenant(tenant);
+    errorBox.textContent = ""; btn.disabled = true; btn.textContent = "Redirection…";
+    try {
+      await ready;
+      const email = $("#c-login-email").value.trim();
+      if (!tenant && email) {
+        // Domaine inconnu ou public (gmail.com…) : connexion au realm par défaut ;
+        // l'espace client est ensuite déduit des claims du jeton (organisation, groupes).
+        tenant = await discover({ email }).catch(() => null);
+        if (tenant) setTenant(tenant);
+      }
+      await login(email || undefined);
+    } catch (error) {
+      console.error(error);
+      errorBox.textContent = `Connexion impossible : ${error?.message ?? error}`;
+      btn.disabled = false; btn.textContent = "Continuer";
     }
-    await login(email || undefined);
   };
+  const fromUrl = new URLSearchParams(location.search).get("tenant");
+  const host = location.hostname.endsWith(`.${CONSOLE_DOMAIN}`) ? location.hostname : "";
+  if (!tenant && (fromUrl || host)) {
+    ready = discover(fromUrl ? { tenant: fromUrl } : { host }).then((t) => {
+      if (t) { tenant = t; setTenant(t); applyBranding(t.branding); btn.textContent = `Se connecter à ${t.name}`; }
+    }).catch(() => {});
+  } else if (tenant) { applyBranding(tenant.branding); btn.textContent = `Se connecter à ${tenant.name}`; }
 }
 
 async function start() {
   let tokens;
-  try { tokens = await handleRedirect(); } catch (error) { $("#c-login-error").textContent = error.message; }
+  try { tokens = await handleRedirect(); } catch (error) { console.error(error); $("#c-login-error").textContent = error.message; }
   if (!tokens) return loginScreen();
   $("#c-app").hidden = false; $("#c-logout").onclick = () => { setTenant(null); sessionStorage.removeItem("gtm-console-selected"); logout(); };
   $("#c-account").href = accountConsoleUrl();
@@ -125,4 +140,4 @@ async function start() {
   propInput.onchange = () => { state.property = propInput.value.trim(); localStorage.setItem("gtm-console-property", state.property); };
   mountTabs();
 }
-start();
+start().catch((error) => { console.error(error); loginScreen(); $("#c-login-error").textContent = error.message; });
