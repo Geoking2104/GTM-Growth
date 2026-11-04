@@ -11,7 +11,7 @@ export function metrics(pairs) {
 export function table(rows, columns) {
   if (!rows?.length) return el("p", "c-note", "Aucune donnée.");
   const cols = columns ?? Object.keys(rows[0]).filter((k) => typeof rows[0][k] !== "object");
-  const t = el("table", "c-table"); const head = el("tr");
+  const t = el("table", "c-table app-table"); const head = el("tr");
   for (const c of cols) head.append(el("th", "", Array.isArray(c) ? c[1] : c));
   t.append(head);
   for (const row of rows) {
