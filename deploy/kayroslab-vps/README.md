@@ -106,3 +106,15 @@ sont importés depuis `keycloak/realm-gtm-growth.json` au premier démarrage.
 
 Optionnel — générateurs via modèle open source : `docker compose --profile llm up -d ollama`,
 `docker compose exec ollama ollama pull mistral`, puis `OLLAMA_URL=http://ollama:11434` dans `.env.local`.
+
+## Keycloak multi-tenant (clients GTM Growth)
+
+- DNS : `A *.gtm.kayroslab.com → 51.210.9.71`, plus un certificat joker obtenu par DNS-01 (`certbot-dns-ionos`, open source).
+- Le thème `keycloak/themes/gtm-growth` est monté dans le conteneur.
+- Dans Keycloak, configurer :
+  - le SMTP du realm `gtm-growth` (invitations, mot de passe oublié) ;
+  - le secret du client `gtm-provisioner` → `KEYCLOAK_ADMIN_CLIENT_SECRET` dans `.env.local` ;
+  - les rôles du compte de service (`manage-realm`, `manage-users`, `manage-clients`, `manage-identity-providers`) ;
+  - le compte `platform-admin`.
+- Pour ajouter un client, la méthode recommandée en production est `POST /api/platform/tenants`, avec un jeton `platform-admin`. Autre possibilité, depuis le dépôt cloné sur le VPS : `KEYCLOAK_INTERNAL_URL=http://127.0.0.1:8180 TENANTS_PATH=<volume gtm_growth_data>/tenants.json npm run tenant:provision -- …`. L'image de production n'embarque pas `scripts/`. Voir le README principal (« Ajouter un client »).
+- Le realm s'importe au premier démarrage (`--import-realm` n'écrase pas un realm existant). Sur un Keycloak déjà initialisé, appliquer à la main : Organisations activées, mappers `groups` et `organization`, rôle `platform-admin`, client `gtm-provisioner`.

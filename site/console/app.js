@@ -1,15 +1,17 @@
-import { API_BASE } from "./config.js";
-import { login, logout, handleRedirect, accessToken } from "./auth.js";
+import { API_BASE, DISCOVER, CONSOLE_DOMAIN } from "./config.js";
+import { login, logout, handleRedirect, accessToken, currentTenant, setTenant, accountConsoleUrl } from "./auth.js";
 import { TABS, raw } from "./tabs.js";
 import { el } from "./render.js";
 
 const $ = (s) => document.querySelector(s);
+const selectedTenant = () => sessionStorage.getItem("gtm-console-selected") || currentTenant()?.id || "";
+const headers = (token) => ({ Authorization: `Bearer ${token}`, ...(selectedTenant() ? { "X-Tenant": selectedTenant() } : {}) });
 const state = { url: localStorage.getItem("gtm-console-url") || "", property: localStorage.getItem("gtm-console-property") || "" };
 
 export async function api(route, body, { binary = false } = {}) {
   const token = await accessToken();
   if (!token) { await login(); throw new Error("Session expirée"); }
-  const res = await fetch(`${API_BASE}${route}`, { method: "POST", headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` }, body: JSON.stringify(body) });
+  const res = await fetch(`${API_BASE}${route}`, { method: "POST", headers: { "Content-Type": "application/json", ...headers(token) }, body: JSON.stringify(body) });
   if (res.status === 401) { await login(); throw new Error("Session expirée"); }
   if (!res.ok) { const e = await res.json().catch(() => ({})); throw new Error(e.error || `Erreur ${res.status}`); }
   return binary ? res.blob() : res.json();
@@ -62,19 +64,61 @@ function mountTabs() {
   const wanted = [...nav.children].find((b, i) => TABS[i].id === location.hash.slice(1)); wanted?.click();
 }
 
+function applyBranding(branding) {
+  if (branding?.primaryColor) document.documentElement.style.setProperty("--brand", branding.primaryColor);
+  if (branding?.logoUrl) { const img = $("#c-login-logo") ; img.src = branding.logoUrl; img.hidden = false; }
+}
+
+async function discover(query) {
+  const res = await fetch(`${DISCOVER}?${new URLSearchParams(query)}`);
+  return res.ok ? res.json() : null;
+}
+
+/** Découverte du tenant : sous-domaine, ?tenant=, puis e-mail saisi. */
+async function loginScreen() {
+  $("#c-login").hidden = false;
+  const fromUrl = new URLSearchParams(location.search).get("tenant");
+  const host = location.hostname.endsWith(`.${CONSOLE_DOMAIN}`) ? location.hostname : "";
+  let tenant = currentTenant();
+  if (!tenant && (fromUrl || host)) tenant = await discover(fromUrl ? { tenant: fromUrl } : { host });
+  if (tenant) { setTenant(tenant); applyBranding(tenant.branding); $("#c-login-btn").textContent = `Se connecter à ${tenant.name}`; }
+  $("#c-login-form").onsubmit = async (event) => {
+    event.preventDefault();
+    const email = $("#c-login-email").value.trim();
+    if (!tenant && email) {
+      tenant = await discover({ email });
+      if (!tenant) { $("#c-login-error").textContent = "Aucun espace client n'est associé à ce domaine e-mail. Contactez KayrosLab."; return; }
+      setTenant(tenant);
+    }
+    await login(email || undefined);
+  };
+}
+
 async function start() {
   let tokens;
   try { tokens = await handleRedirect(); } catch (error) { $("#c-login-error").textContent = error.message; }
-  if (!tokens) { $("#c-login").hidden = false; $("#c-login-btn").onclick = () => login(); return; }
-  $("#c-app").hidden = false; $("#c-logout").onclick = () => logout();
+  if (!tokens) return loginScreen();
+  $("#c-app").hidden = false; $("#c-logout").onclick = () => { setTenant(null); sessionStorage.removeItem("gtm-console-selected"); logout(); };
+  $("#c-account").href = accountConsoleUrl();
   const urlInput = $("#c-url"); const propInput = $("#c-property");
   try {
     const token = await accessToken();
-    const me = await (await fetch(`${API_BASE}/me`, { headers: { Authorization: `Bearer ${token}` } })).json();
-    $("#c-user").textContent = me.username ?? "";
-    if (!state.url && me.defaults?.url) state.url = me.defaults.url;
-    if (!state.property && me.defaults?.property) state.property = me.defaults.property;
-  } catch { /* l'API répondra 401 plus tard si besoin */ }
+    const res = await fetch(`${API_BASE}/me`, { headers: headers(token) });
+    const me = await res.json();
+    if (!res.ok) throw new Error(me.error || `Erreur ${res.status}`);
+    $("#c-user").textContent = `${me.username ?? ""}${me.tenant ? ` · ${me.tenant.name}` : ""}${me.platformAdmin ? " · super-admin" : ""}`;
+    if (me.accountConsole) $("#c-account").href = me.accountConsole;
+    applyBranding(me.tenant?.branding);
+    if (me.memberships?.length > 1 || me.platformAdmin) {
+      const select = $("#c-tenant"); $("#c-tenant-wrap").hidden = false;
+      for (const m of me.memberships) { const o = el("option", "", `${m.id} (${m.role})`); o.value = m.id; select.append(o); }
+      if (me.tenant && ![...select.options].some((o) => o.value === me.tenant.id)) { const o = el("option", "", me.tenant.id); o.value = me.tenant.id; select.append(o); }
+      select.value = me.tenant?.id ?? "";
+      select.onchange = () => { sessionStorage.setItem("gtm-console-selected", select.value); location.reload(); };
+    }
+    if (!state.url && me.tenant?.domains?.[0]) state.url = `https://${me.tenant.domains[0]}`;
+    if (!state.property && me.tenant?.gscProperties?.[0]) state.property = me.tenant.gscProperties[0];
+  } catch (error) { $("#c-user").textContent = error.message; }
   urlInput.value = state.url; propInput.value = state.property;
   urlInput.onchange = () => { state.url = urlInput.value.trim(); localStorage.setItem("gtm-console-url", state.url); };
   propInput.onchange = () => { state.property = propInput.value.trim(); localStorage.setItem("gtm-console-property", state.property); };

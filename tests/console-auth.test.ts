@@ -4,6 +4,13 @@ import express from "express";
 import type { AddressInfo } from "node:net";
 import { JwksCache, verifyAccessToken, type OidcConfig } from "../src/console/auth.js";
 import { buildConsoleRouter } from "../src/console/api.js";
+import { TenantStore } from "../src/tenants/store.js";
+import { mkdtempSync } from "node:fs";
+import { tmpdir } from "node:os";
+import { join } from "node:path";
+
+const store = new TenantStore(join(mkdtempSync(join(tmpdir(), "tenants-")), "tenants.json"));
+store.upsert({ id: "acme", name: "Acme", mode: "organization", issuer: "https://auth.example.com/realms/gtm-growth", domains: ["acme.fr"], emailDomains: ["acme.fr"], gscProperties: [], branding: {}, identityProviders: [], status: "active", createdAt: "" });
 
 const { privateKey, publicKey } = generateKeyPairSync("rsa", { modulusLength: 2048 });
 const jwk = { ...publicKey.export({ format: "jwk" }), kid: "k1", alg: "RS256", use: "sig" };
@@ -13,7 +20,7 @@ const enc = (o: object) => Buffer.from(JSON.stringify(o)).toString("base64url");
 
 function token(claims: Record<string, unknown>, kid = "k1") {
   const head = enc({ alg: "RS256", kid, typ: "JWT" });
-  const body = enc({ iss: config.issuer, aud: "gtm-console", exp: Math.floor(Date.now() / 1000) + 300, realm_access: { roles: ["console-user"] }, preferred_username: "geoffroy", ...claims });
+  const body = enc({ iss: config.issuer, aud: "gtm-console", exp: Math.floor(Date.now() / 1000) + 300, realm_access: { roles: ["console-user"] }, preferred_username: "geoffroy", organization: ["acme"], groups: ["/tenants/acme/tenant-user"], ...claims });
   return `${head}.${body}.${sign("sha256", Buffer.from(`${head}.${body}`), privateKey).toString("base64url")}`;
 }
 
@@ -40,7 +47,7 @@ describe("console OIDC", () => {
 
   const app = express();
   app.use(express.json());
-  app.use("/api/console", buildConsoleRouter([{ path: "/echo", needsUrl: false, handler: async ({ user }) => ({ who: user?.preferred_username }) }], { config, jwksLoader: loader }));
+  app.use("/api/console", buildConsoleRouter([{ path: "/echo", needsUrl: false, handler: async ({ user }) => ({ who: user?.preferred_username }) }], { config, jwksLoader: loader, store }));
   const server = app.listen(0);
   const base = `http://127.0.0.1:${(server.address() as AddressInfo).port}/api/console`;
   afterAll(() => server.close());

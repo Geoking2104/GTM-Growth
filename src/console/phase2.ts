@@ -11,12 +11,14 @@ import { runCitability } from "../geo/citability.js";
 import { writeGeoReportPdf } from "../report/pdf.js";
 import { clusterQueries, ctrTable, losingPages, scoreOpportunities, seoBudget, seoRoi, trafficValue } from "./keywords.js";
 import { str, num, type ConsoleRoute } from "./util.js";
+import { saveTenantReport } from "../tenants/data.js";
 const day = (offset: number) => new Date(Date.now() - offset * 86_400_000).toISOString().slice(0, 10);
 /** GSC data lags ~2–3 days. */
 const LAG = 3;
 
+/** Property already checked against the tenant by the router; defaults to the tenant's first one. */
 export function propertyOf(body: Record<string, unknown>): string {
-  const p = str(body.property) ?? process.env.CONSOLE_DEFAULT_PROPERTY;
+  const p = str(body.property);
   if (!p) throw new Error("Propriété Search Console requise (ex. sc-domain:exemple.fr ou https://www.exemple.fr/).");
   return p;
 }
@@ -75,12 +77,16 @@ export const phase2Routes: ConsoleRoute[] = [
   { path: "/calc/budget", needsUrl: false, handler: async ({ body }) => seoBudget({ targetRevenue: n(body.targetRevenue), conversionRate: n(body.conversionRate), averageOrderValue: n(body.averageOrderValue), costPerVisit: n(body.costPerVisit) }) },
   {
     path: "/report/pdf",
-    handler: async ({ url, body }) => {
+    handler: async ({ url, body, tenancy }) => {
       const audit = await runGeoAudit({ url });
       const citability = await runCitability({ url }).catch(() => undefined);
       const outPath = join(tmpdir(), `gtm-console-${randomUUID()}.pdf`);
       await writeGeoReportPdf({ audit, platforms: buildPlatformReadiness(audit), citability, outPath, brandName: str(body.brandName) });
-      try { return await readFile(outPath); } finally { await unlink(outPath).catch(() => undefined); }
+      try {
+        const pdf = await readFile(outPath);
+        if (tenancy?.tenant) saveTenantReport(tenancy.tenant.id, url, pdf);
+        return pdf;
+      } finally { await unlink(outPath).catch(() => undefined); }
     },
   },
 ];

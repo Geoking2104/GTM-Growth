@@ -10,6 +10,11 @@
 import express, { type Express, type Request, type Response, type Router } from "express";
 import { checkTarget } from "../http/public-api.js";
 import { requireOidc, oidcConfigFromEnv, type JwksLoader, type OidcConfig, type TokenClaims } from "./auth.js";
+import { TenantStore, normalizeHost, tenantOwnsProperty, tenantOwnsUrl, type Tenant } from "../tenants/store.js";
+import { resolveTenant, TenantAccessError, type TenantContext } from "../tenants/context.js";
+import { tenantLeads, listTenantReports, readTenantReport } from "../tenants/data.js";
+import { KeycloakAdmin, keycloakAdminFromEnv } from "../tenants/keycloak-admin.js";
+import { inviteUser, provisionTenant, type ProvisionInput } from "../tenants/provision.js";
 import { collectSitemapEntries, runSiteGeoAudit } from "../geo/site.js";
 import { buildSitemapMap } from "../freeread/sitemap-map.js";
 import { buildSitemap } from "../geosuite/sitemap-builder.js";
@@ -96,42 +101,212 @@ export const phase1Routes: ConsoleRoute[] = [
   { path: "/performance/weight", handler: async ({ url, body }) => measurePageWeight(url, { maxResources: num(body.maxResources, 60, 1, 150) }) },
 ];
 
-export function buildConsoleRouter(routes: ConsoleRoute[], options: { config?: OidcConfig | null; jwksLoader?: JwksLoader } = {}): Router {
+export interface ConsoleOptions {
+  config?: OidcConfig | null;
+  jwksLoader?: JwksLoader;
+  routes?: ConsoleRoute[];
+  store?: TenantStore;
+  keycloakAdmin?: KeycloakAdmin | null;
+}
+
+type Locals = { user?: TokenClaims; tenancy?: TenantContext };
+
+const fail = (res: Response, status: number, error: string) => res.status(status).json({ error });
+
+function withTrust(config: OidcConfig | null, store: TenantStore): OidcConfig | null {
+  if (!config) return null;
+  return { ...config, trustIssuer: (iss) => Boolean(store.byIssuer(iss)?.status === "active") || Boolean(config.trustIssuer?.(iss)) };
+}
+
+/** Tenant resolution middleware (after token verification). */
+function tenancyMiddleware(config: OidcConfig | null, store: TenantStore) {
+  return (req: Request, res: Response, next: () => void) => {
+    const locals = res.locals as Locals;
+    const requested = str(req.headers["x-tenant"]);
+    try {
+      locals.tenancy = resolveTenant(locals.user ?? {}, store, config?.issuer ?? "", requested);
+      return next();
+    } catch (error) {
+      return fail(res, error instanceof TenantAccessError ? error.status : 403, (error as Error).message);
+    }
+  };
+}
+
+/** Data scoping: every url / property in the request must belong to the tenant. */
+async function scopeRequest(route: ConsoleRoute, body: Body, tenancy: TenantContext): Promise<{ url: string } | { status: number; error: string }> {
+  const { tenant, platformAdmin } = tenancy;
+  if (!platformAdmin && !tenant) return { status: 403, error: "Aucun tenant sélectionné." };
+  if (route.adminOnly && !(platformAdmin || tenancy.role === "tenant-admin")) return { status: 403, error: "Réservé aux administrateurs du tenant." };
+  let url = "";
+  const wantsUrl = route.needsUrl !== false || str(body.url) !== undefined;
+  if (wantsUrl && !(route.needsUrl === false && body.usePage === "non")) {
+    // Tenant ownership first (no DNS lookup for foreign domains).
+    const raw = str(body.url);
+    if (raw && tenant && !platformAdmin && !tenantOwnsUrl(tenant, raw)) return { status: 403, error: `Le domaine ${normalizeHost(raw)} n'appartient pas au tenant ${tenant.id}.` };
+    const check = await checkTarget(body.url);
+    if (!check.ok || !check.url) {
+      if (route.needsUrl !== false) return { status: 400, error: check.reason ?? "url invalide" };
+    } else {
+      if (tenant && !platformAdmin && !tenantOwnsUrl(tenant, check.url)) return { status: 403, error: `Le domaine ${new URL(check.url).hostname} n'appartient pas au tenant ${tenant.id}.` };
+      url = check.url;
+    }
+  }
+  const inspect = str(body.inspectUrl);
+  if (inspect && tenant && !platformAdmin && !tenantOwnsUrl(tenant, inspect)) return { status: 403, error: "URL à inspecter hors du périmètre du tenant." };
+  const property = str(body.property);
+  if (property) {
+    if (tenant && !platformAdmin && !tenantOwnsProperty(tenant, property)) return { status: 403, error: `La propriété ${property} n'appartient pas au tenant ${tenant.id}.` };
+  } else if (tenant?.gscProperties.length) {
+    body.property = tenant.gscProperties[0];
+  }
+  return { url };
+}
+
+const publicTenant = (t: Tenant) => ({ id: t.id, name: t.name, mode: t.mode, domains: t.domains, gscProperties: t.gscProperties, emailDomains: t.emailDomains, branding: t.branding, identityProviders: t.identityProviders, status: t.status });
+
+export function buildConsoleRouter(routes: ConsoleRoute[], options: ConsoleOptions = {}): Router {
   const router = express.Router();
-  const config = options.config === undefined ? oidcConfigFromEnv() : options.config;
+  const store = options.store ?? new TenantStore();
+  const config = withTrust(options.config === undefined ? oidcConfigFromEnv() : options.config, store);
+  const kcAdmin = options.keycloakAdmin === undefined ? (keycloakAdminFromEnv() ? new KeycloakAdmin(keycloakAdminFromEnv()!) : null) : options.keycloakAdmin;
   router.use(requireOidc(config, options.jwksLoader));
+  router.use(tenancyMiddleware(config, store));
 
   router.get("/me", (_req, res) => {
-    const user = (res.locals as { user?: TokenClaims }).user;
-    res.json({ username: user?.preferred_username ?? user?.sub, email: user?.email ?? null, roles: user?.realm_access?.roles ?? [], defaults: { url: process.env.CONSOLE_DEFAULT_URL ?? null, property: process.env.CONSOLE_DEFAULT_PROPERTY ?? null } });
+    const { user, tenancy } = res.locals as Locals;
+    res.json({
+      username: user?.preferred_username ?? user?.sub, email: user?.email ?? null,
+      role: tenancy?.role, platformAdmin: tenancy?.platformAdmin ?? false,
+      tenant: tenancy?.tenant ? publicTenant(tenancy.tenant) : null,
+      memberships: tenancy?.memberships ?? [],
+      accountConsole: user?.iss ? `${user.iss}/account/` : null,
+    });
+  });
+
+  router.get("/leads", (_req, res) => {
+    const { tenancy } = res.locals as Locals;
+    if (!tenancy?.tenant) return fail(res, 400, "Sélectionnez un tenant.");
+    return res.json({ leads: tenantLeads(tenancy.tenant) });
+  });
+  router.get("/reports", (_req, res) => {
+    const { tenancy } = res.locals as Locals;
+    if (!tenancy?.tenant) return fail(res, 400, "Sélectionnez un tenant.");
+    return res.json({ reports: listTenantReports(tenancy.tenant.id) });
+  });
+  router.get("/reports/:file", (req, res) => {
+    const { tenancy } = res.locals as Locals;
+    if (!tenancy?.tenant) return fail(res, 400, "Sélectionnez un tenant.");
+    try { return res.type("application/pdf").send(readTenantReport(tenancy.tenant.id, req.params.file)); } catch { return fail(res, 404, "Rapport introuvable."); }
+  });
+
+  // Tenant administration (tenant-admin of this tenant, or platform super-admin).
+  const isAdmin = (t?: TenantContext) => Boolean(t && (t.platformAdmin || t.role === "tenant-admin"));
+  router.put("/tenant/settings", (req, res) => {
+    const { tenancy } = res.locals as Locals;
+    if (!tenancy?.tenant) return fail(res, 400, "Sélectionnez un tenant.");
+    if (!isAdmin(tenancy)) return fail(res, 403, "Réservé aux administrateurs du tenant.");
+    const body = (req.body ?? {}) as Body;
+    const list = (v: unknown) => (Array.isArray(v) ? v.filter((x): x is string => typeof x === "string" && x.trim().length > 0).slice(0, 50) : undefined);
+    const branding = (body.branding ?? {}) as Record<string, unknown>;
+    const color = str(branding.primaryColor);
+    const logo = str(branding.logoUrl);
+    if (color && !/^#[0-9a-f]{6}$/i.test(color)) return fail(res, 400, "Couleur invalide (#rrggbb).");
+    if (logo && !/^https:\/\//.test(logo)) return fail(res, 400, "Le logo doit être une URL https.");
+    const t = tenancy.tenant;
+    const updated = store.upsert({ ...t, domains: list(body.domains) ?? t.domains, gscProperties: list(body.gscProperties) ?? t.gscProperties, branding: { ...t.branding, ...(color ? { primaryColor: color } : {}), ...(logo ? { logoUrl: logo } : {}), ...(str(branding.displayName) ? { displayName: str(branding.displayName) } : {}) } });
+    return res.json({ tenant: publicTenant(updated) });
+  });
+  router.post("/tenant/users", async (req, res) => {
+    const { tenancy } = res.locals as Locals;
+    if (!tenancy?.tenant) return fail(res, 400, "Sélectionnez un tenant.");
+    if (!isAdmin(tenancy)) return fail(res, 403, "Réservé aux administrateurs du tenant.");
+    if (!kcAdmin) return fail(res, 503, "Provisionnement Keycloak non configuré.");
+    const body = (req.body ?? {}) as Body;
+    const email = str(body.email);
+    if (!email) return fail(res, 400, "E-mail requis.");
+    try {
+      const userId = await inviteUser(tenancy.tenant, { email, role: body.role === "tenant-admin" ? "tenant-admin" : "tenant-user" }, { admin: kcAdmin });
+      return res.status(201).json({ userId, invited: email });
+    } catch (error) { return fail(res, 502, (error as Error).message); }
   });
 
   for (const route of routes) {
     router.post(route.path, async (req: Request, res: Response) => {
-      const body = (req.body ?? {}) as Body;
-      let url = "";
-      if (route.needsUrl !== false) {
-        const check = await checkTarget(body.url);
-        if (!check.ok || !check.url) return res.status(400).json({ error: check.reason ?? "url invalide" });
-        url = check.url;
-      }
+      const body = { ...((req.body ?? {}) as Body) };
+      const { user, tenancy } = res.locals as Locals;
+      const scoped = await scopeRequest(route, body, tenancy!);
+      if ("error" in scoped) return fail(res, scoped.status, scoped.error);
       try {
-        const data = await route.handler({ url, body, user: (res.locals as { user?: TokenClaims }).user });
+        const data = await route.handler({ url: scoped.url, body, user, tenancy });
         if (Buffer.isBuffer(data)) return res.type("application/pdf").setHeader("Content-Disposition", "attachment; filename=rapport-geo.pdf").send(data);
         return res.json(data);
       } catch (error) {
         logger.info(`[console] ${route.path} failed: ${(error as Error).message}`);
-        return res.status(502).json({ error: (error as Error).message });
+        return fail(res, 502, (error as Error).message);
       }
     });
   }
   return router;
 }
 
+/** Platform API (KayrosLab super-admin): list and provision client tenants. */
+export function buildPlatformRouter(options: ConsoleOptions = {}): Router {
+  const router = express.Router();
+  const store = options.store ?? new TenantStore();
+  const config = withTrust(options.config === undefined ? oidcConfigFromEnv() : options.config, store);
+  const envAdmin = keycloakAdminFromEnv();
+  const kcAdmin = options.keycloakAdmin === undefined ? (envAdmin ? new KeycloakAdmin(envAdmin) : null) : options.keycloakAdmin;
+  router.use(requireOidc(config, options.jwksLoader));
+  router.use((_req, res, next) => {
+    const user = (res.locals as Locals).user;
+    if (user?.iss !== config?.issuer || !(user?.realm_access?.roles ?? []).includes("platform-admin")) return fail(res, 403, "Réservé au super-administrateur de la plateforme.");
+    return next();
+  });
+  router.get("/tenants", (_req, res) => res.json({ tenants: store.list().map(publicTenant) }));
+  router.post("/tenants", async (req, res) => {
+    if (!kcAdmin || !config) return fail(res, 503, "Provisionnement Keycloak non configuré (KEYCLOAK_INTERNAL_URL, KEYCLOAK_ADMIN_CLIENT_ID, KEYCLOAK_ADMIN_CLIENT_SECRET).");
+    try {
+      const result = await provisionTenant(req.body as ProvisionInput, { admin: kcAdmin, store, publicKeycloakUrl: new URL(config.issuer).origin, consoleDomain: process.env.CONSOLE_DOMAIN });
+      return res.status(201).json({ tenant: publicTenant(result.tenant), steps: result.steps });
+    } catch (error) { return fail(res, 400, (error as Error).message); }
+  });
+  return router;
+}
+
+/**
+ * Public tenant discovery for the login page: by email domain, by subdomain
+ * (<id>.gtm.kayroslab.com) or by explicit id. Returns only what the login page
+ * needs (issuer, organization alias, branding) — never domains or properties.
+ */
+export function discoverTenant(store: TenantStore, query: { email?: string; host?: string; tenant?: string }, consoleDomain = process.env.CONSOLE_DOMAIN ?? "gtm.kayroslab.com") {
+  let tenant: Tenant | undefined;
+  if (query.tenant) tenant = store.get(query.tenant);
+  if (!tenant && query.host) {
+    const host = query.host.toLowerCase().split(":")[0];
+    if (host.endsWith(`.${consoleDomain}`)) tenant = store.get(host.slice(0, -consoleDomain.length - 1));
+  }
+  if (!tenant && query.email) tenant = store.byEmailDomain(query.email);
+  if (!tenant || tenant.status !== "active") return null;
+  return { id: tenant.id, name: tenant.branding.displayName ?? tenant.name, mode: tenant.mode, issuer: tenant.issuer, organization: tenant.mode === "organization" ? tenant.id : null, branding: { logoUrl: tenant.branding.logoUrl ?? null, primaryColor: tenant.branding.primaryColor ?? null } };
+}
+
 export function allConsoleRoutes(): ConsoleRoute[] {
   return [...phase1Routes, ...phase2Routes, ...phase3Routes];
 }
 
-export function mountConsoleApi(app: Express, options: { config?: OidcConfig | null; jwksLoader?: JwksLoader; routes?: ConsoleRoute[] } = {}): void {
-  app.use("/api/console", buildConsoleRouter(options.routes ?? allConsoleRoutes(), options));
+export function mountConsoleApi(app: Express, options: ConsoleOptions = {}): void {
+  const store = options.store ?? new TenantStore();
+  const opts = { ...options, store };
+  const limiter = new Map<string, number[]>();
+  app.get("/api/tenants/discover", (req, res) => {
+    // Small per-IP limit: discovery must not become a tenant enumeration oracle.
+    const ip = req.ip ?? "?"; const now = Date.now();
+    const hits = (limiter.get(ip) ?? []).filter((t) => now - t < 60_000); hits.push(now); limiter.set(ip, hits);
+    if (hits.length > 20) return fail(res, 429, "Trop de requêtes.");
+    const q = { email: str(req.query.email), host: str(req.query.host) ?? req.headers["x-forwarded-host"]?.toString() ?? req.headers.host, tenant: str(req.query.tenant) };
+    const found = discoverTenant(store, q);
+    return found ? res.json(found) : fail(res, 404, "Aucun espace client trouvé.");
+  });
+  app.use("/api/platform", buildPlatformRouter(opts));
+  app.use("/api/console", buildConsoleRouter(options.routes ?? allConsoleRoutes(), opts));
 }

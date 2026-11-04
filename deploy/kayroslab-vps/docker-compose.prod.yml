@@ -16,10 +16,19 @@ services:
       # Console SSO: tokens issued by the Keycloak realm below (validated via JWKS).
       OIDC_ISSUER: ${OIDC_ISSUER:-https://auth.kayroslab.com/realms/gtm-growth}
       OIDC_CLIENT_ID: gtm-console
-      # Only users holding this realm role can use the console.
-      OIDC_REQUIRED_ROLE: console-user
       # JWKS fetched on the internal network, issuer still checked against the public URL.
       OIDC_JWKS_URL: http://keycloak:8080/realms/gtm-growth/protocol/openid-connect/certs
+      # Multi-tenant: dedicated client realms are trusted from the tenant registry;
+      # their JWKS are fetched through the internal Keycloak URL.
+      KEYCLOAK_INTERNAL_URL: http://keycloak:8080
+      OIDC_EXTRA_ISSUERS: ${OIDC_EXTRA_ISSUERS:-}
+      TENANTS_PATH: /data/tenants.json
+      REPORTS_PATH: /data/reports
+      CONSOLE_DOMAIN: gtm.kayroslab.com
+      # Tenant provisioning (service account, secret only in .env.local).
+      KEYCLOAK_ADMIN_REALM: ${KEYCLOAK_ADMIN_REALM:-gtm-growth}
+      KEYCLOAK_ADMIN_CLIENT_ID: ${KEYCLOAK_ADMIN_CLIENT_ID:-gtm-provisioner}
+      KEYCLOAK_ADMIN_CLIENT_SECRET: ${KEYCLOAK_ADMIN_CLIENT_SECRET:-}
     volumes:
       - gtm_growth_data:/data
       # Optional Google service-account file; never commit it to the repository.
@@ -65,8 +74,10 @@ services:
       KC_HEALTH_ENABLED: "true"
       KC_BOOTSTRAP_ADMIN_USERNAME: ${KC_BOOTSTRAP_ADMIN_USERNAME:-admin}
       KC_BOOTSTRAP_ADMIN_PASSWORD: ${KC_BOOTSTRAP_ADMIN_PASSWORD:?KC_BOOTSTRAP_ADMIN_PASSWORD manquant dans .env.local}
+      KC_FEATURES: organization
     volumes:
       - ./keycloak/realm-gtm-growth.json:/opt/keycloak/data/import/realm-gtm-growth.json:ro
+      - ./keycloak/themes/gtm-growth:/opt/keycloak/themes/gtm-growth:ro
     ports:
       # Public only through Nginx (auth.kayroslab.com).
       - "127.0.0.1:8180:8080"

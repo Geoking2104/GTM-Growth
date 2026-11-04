@@ -4,6 +4,16 @@
 
 ### Added
 
+- **Keycloak multi-tenant for GTM Growth clients**:
+  - Keycloak 26 Organizations, one per client, in the shared realm `gtm-growth`, with an optional dedicated realm `tenant-<id>`.
+  - Tenant resolved from the token (`organization` claim plus `/tenants/<id>/<role>` groups, or the issuer for dedicated realms).
+  - Strict API scoping of domains, GSC properties, leads and PDF reports.
+  - Roles `tenant-admin`, `tenant-user` and `platform-admin`.
+  - Provisioning through the Keycloak Admin REST API (`npm run tenant:provision`, `POST /api/platform/tenants`), with organization, groups, redirect URI, optional IdP (Google, Microsoft Entra, OIDC, SAML) and an invite email for the first admin (password and TOTP).
+  - Public discovery `GET /api/tenants/discover` by email domain, subdomain `<client>.gtm.kayroslab.com` or `?tenant=`.
+  - `gtm-growth` Keycloak theme, "Mon compte" link to the account console, tenant switcher and branding in the console.
+  - Isolation tests.
+
 - **Live console `/console/` with Keycloak SSO**: OIDC Authorization Code + PKCE (realm `gtm-growth`, public client `gtm-console`, role `console-user`); `/api/console/*` validates bearer tokens via JWKS. Keycloak 26 (production mode, Postgres) added to the VPS compose with realm import and an `auth.kayroslab.com` Nginx vhost.
 - **Phase 1**: Sitemap (map, GEO audit, builder), GEO (citability, llms.txt validate/generate/drift, AI robots, schema), Performance (PageSpeed, CrUX, page weight).
 - **Phase 2**: Search (queries, trends, pages losing clicks, URL inspection), keyword opportunity score and clustering from GSC, calculators (CTR, traffic value, ROI, budget), PDF export.

@@ -15,7 +15,12 @@
     <img src="../assets/logo-64.png" alt="" width="48" height="48">
     <h1>Console GTM Growth</h1>
     <p>Accès réservé. Connectez-vous avec votre compte (SSO Keycloak).</p>
-    <button id="c-login-btn" class="c-btn" type="button">Se connecter</button>
+    <img id="c-login-logo" class="c-logo" alt="" hidden>
+    <form id="c-login-form" class="c-form">
+      <label class="c-field"><span>E-mail professionnel</span><input id="c-login-email" type="email" autocomplete="username" placeholder="prenom@entreprise.fr"></label>
+      <button id="c-login-btn" class="c-btn" type="submit">Continuer</button>
+    </form>
+    <p class="c-note">Votre espace client est détecté à partir de votre e-mail, du sous-domaine (<code>client.gtm.kayroslab.com</code>) ou du lien <code>?tenant=client</code>.</p>
     <p id="c-login-error" class="c-error"></p>
   </div>
 </div>
@@ -24,7 +29,9 @@
     <strong>GTM Growth · Console</strong>
     <label class="c-field c-inline"><span>Domaine</span><input id="c-url" placeholder="https://www.exemple.fr"></label>
     <label class="c-field c-inline"><span>Propriété Search Console</span><input id="c-property" placeholder="sc-domain:exemple.fr"></label>
+    <label class="c-field c-inline" id="c-tenant-wrap" hidden><span>Client</span><select id="c-tenant"></select></label>
     <span id="c-user" class="c-user"></span>
+    <a id="c-account" class="c-btn c-btn-ghost" target="_blank" rel="noopener">Mon compte</a>
     <button id="c-logout" class="c-btn c-btn-ghost" type="button">Déconnexion</button>
   </header>
   <nav id="c-tabs" class="c-tabs" role="tablist" aria-label="Outils"></nav>

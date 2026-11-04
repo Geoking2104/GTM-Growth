@@ -16,10 +16,18 @@ import { createPublicKey, verify as cryptoVerify, type JsonWebKey } from "node:c
 import type { NextFunction, Request, Response } from "express";
 
 export interface OidcConfig {
+  /** Primary issuer (shared realm `gtm-growth`, tenants = Keycloak Organizations). */
   issuer: string;
+  /** Extra trusted issuers: dedicated realms for tenants that need full isolation/branding. */
+  extraIssuers?: string[];
   clientId: string;
+  /** JWKS of the primary issuer (may point at the internal Keycloak URL). */
   jwksUrl: string;
+  /** Internal Keycloak base (e.g. http://keycloak:8080) used to fetch JWKS of any trusted issuer. */
+  internalBaseUrl?: string;
   requiredRole?: string;
+  /** Dynamic trust (e.g. dedicated realms of registered tenants). */
+  trustIssuer?: (issuer: string) => boolean;
   /** Clock tolerance in seconds. */
   leeway?: number;
 }
@@ -35,6 +43,11 @@ export interface TokenClaims {
   preferred_username?: string;
   email?: string;
   realm_access?: { roles?: string[] };
+  resource_access?: Record<string, { roles?: string[] }>;
+  /** Keycloak 26 Organizations: aliases (or alias → attributes map) of the user's organizations. */
+  organization?: string[] | Record<string, unknown>;
+  /** Group full paths, e.g. /tenants/acme/tenant-admin. */
+  groups?: string[];
   [key: string]: unknown;
 }
 
@@ -48,10 +61,36 @@ export function oidcConfigFromEnv(env: NodeJS.ProcessEnv = process.env): OidcCon
   if (!issuer) return null;
   return {
     issuer,
+    extraIssuers: (env.OIDC_EXTRA_ISSUERS ?? "").split(",").map((v) => v.trim().replace(/\/$/, "")).filter(Boolean),
     clientId: env.OIDC_CLIENT_ID || "gtm-console",
     jwksUrl: env.OIDC_JWKS_URL || `${issuer}/protocol/openid-connect/certs`,
+    internalBaseUrl: env.KEYCLOAK_INTERNAL_URL?.replace(/\/$/, "") || undefined,
     requiredRole: env.OIDC_REQUIRED_ROLE || undefined,
   };
+}
+
+export function trustedIssuers(config: OidcConfig): string[] {
+  return [config.issuer, ...(config.extraIssuers ?? [])];
+}
+
+/** JWKS URL for a trusted issuer, rewritten to the internal Keycloak URL when configured. */
+export function jwksUrlFor(config: OidcConfig, issuer: string): string {
+  if (issuer === config.issuer) return config.jwksUrl;
+  const certs = `${issuer}/protocol/openid-connect/certs`;
+  if (!config.internalBaseUrl) return certs;
+  const u = new URL(certs);
+  return `${config.internalBaseUrl}${u.pathname}`;
+}
+
+/** One JWKS cache per trusted issuer. */
+export class IssuerKeys {
+  private caches = new Map<string, JwksCache>();
+  constructor(private config: OidcConfig, private loader?: JwksLoader) {}
+  for(issuer: string): JwksCache {
+    let c = this.caches.get(issuer);
+    if (!c) { c = new JwksCache(jwksUrlFor(this.config, issuer), this.loader); this.caches.set(issuer, c); }
+    return c;
+  }
 }
 
 const defaultLoader: JwksLoader = async (url) => {
@@ -89,9 +128,14 @@ const ALGS: Record<string, { hash: string; opts?: object }> = {
   ES256: { hash: "sha256", opts: { dsaEncoding: "ieee-p1363" } },
 };
 
-export async function verifyAccessToken(token: string, config: OidcConfig, jwks: JwksCache, now = Date.now() / 1000): Promise<TokenClaims> {
+export async function verifyAccessToken(token: string, config: OidcConfig, keys: JwksCache | IssuerKeys, now = Date.now() / 1000): Promise<TokenClaims> {
   const parts = token.split(".");
   if (parts.length !== 3) throw new Error("malformed token");
+  // The issuer is read before verification only to pick the JWKS; it must be in the allow-list.
+  let unverifiedIss: unknown;
+  try { unverifiedIss = (JSON.parse(b64url(parts[1]).toString("utf8")) as TokenClaims).iss; } catch { throw new Error("malformed token"); }
+  if (typeof unverifiedIss !== "string" || !(trustedIssuers(config).includes(unverifiedIss) || config.trustIssuer?.(unverifiedIss))) throw new Error("bad issuer");
+  const jwks = keys instanceof IssuerKeys ? keys.for(unverifiedIss) : keys;
   const header = JSON.parse(b64url(parts[0]).toString("utf8")) as { alg?: string; kid?: string };
   const alg = header.alg ? ALGS[header.alg] : undefined;
   if (!alg) throw new Error(`unsupported alg ${header.alg}`);
@@ -104,7 +148,7 @@ export async function verifyAccessToken(token: string, config: OidcConfig, jwks:
 
   const claims = JSON.parse(b64url(parts[1]).toString("utf8")) as TokenClaims;
   const leeway = config.leeway ?? 30;
-  if (claims.iss !== config.issuer) throw new Error("bad issuer");
+  if (claims.iss !== unverifiedIss) throw new Error("bad issuer");
   if (typeof claims.exp !== "number" || claims.exp + leeway < now) throw new Error("token expired");
   if (typeof claims.nbf === "number" && claims.nbf - leeway > now) throw new Error("token not yet valid");
   const aud = Array.isArray(claims.aud) ? claims.aud : claims.aud ? [claims.aud] : [];
@@ -115,7 +159,7 @@ export async function verifyAccessToken(token: string, config: OidcConfig, jwks:
 
 /** Express middleware: 401 without a valid Keycloak token, 503 if OIDC is not configured. */
 export function requireOidc(config: OidcConfig | null, loader?: JwksLoader) {
-  const jwks = config ? new JwksCache(config.jwksUrl, loader) : null;
+  const jwks = config ? new IssuerKeys(config, loader) : null;
   return async (req: Request, res: Response, next: NextFunction) => {
     if (!config || !jwks) return res.status(503).json({ error: "Console SSO non configurée (OIDC_ISSUER manquant)." });
     const header = req.headers.authorization ?? "";

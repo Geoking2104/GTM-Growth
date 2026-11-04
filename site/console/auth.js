@@ -3,9 +3,15 @@
 import { OIDC } from "./config.js";
 
 const KEY = "gtm-console-tokens";
+const TENANT_KEY = "gtm-console-tenant";
+/** Tenant découvert (id, issuer, organisation, branding) : détermine l'émetteur utilisé. */
+export const currentTenant = () => { try { return JSON.parse(sessionStorage.getItem(TENANT_KEY) || "null"); } catch { return null; } };
+export const setTenant = (t) => (t ? sessionStorage.setItem(TENANT_KEY, JSON.stringify(t)) : sessionStorage.removeItem(TENANT_KEY));
+const issuer = () => currentTenant()?.issuer || OIDC.issuer;
 const b64url = (bytes) => btoa(String.fromCharCode(...new Uint8Array(bytes))).replace(/\+/g, "-").replace(/\//g, "_").replace(/=+$/, "");
 const random = (n = 32) => b64url(crypto.getRandomValues(new Uint8Array(n)));
-const endpoint = (path) => `${OIDC.issuer}/protocol/openid-connect/${path}`;
+const endpoint = (path) => `${issuer()}/protocol/openid-connect/${path}`;
+export const accountConsoleUrl = () => `${issuer()}/account/`;
 const redirectUri = () => `${location.origin}${location.pathname}`;
 
 function save(tokens) {
@@ -16,12 +22,16 @@ function save(tokens) {
 }
 const load = () => { try { return JSON.parse(sessionStorage.getItem(KEY) || "null"); } catch { return null; } };
 
-export async function login() {
+export async function login(loginHint) {
   const verifier = random(48);
   const state = random(16);
   const challenge = b64url(await crypto.subtle.digest("SHA-256", new TextEncoder().encode(verifier)));
   sessionStorage.setItem("gtm-console-pkce", JSON.stringify({ verifier, state }));
-  const params = new URLSearchParams({ client_id: OIDC.clientId, response_type: "code", scope: OIDC.scope, redirect_uri: redirectUri(), state, code_challenge: challenge, code_challenge_method: "S256" });
+  const tenant = currentTenant();
+  // organization:<alias> : Keycloak affiche la connexion de l'organisation (IdP du client, thème).
+  const scope = tenant?.organization ? `${OIDC.scope} organization:${tenant.organization}` : `${OIDC.scope} organization`;
+  const params = new URLSearchParams({ client_id: OIDC.clientId, response_type: "code", scope, redirect_uri: redirectUri(), state, code_challenge: challenge, code_challenge_method: "S256", ui_locales: "fr" });
+  if (loginHint) params.set("login_hint", loginHint);
   location.assign(`${endpoint("auth")}?${params}`);
 }
 
