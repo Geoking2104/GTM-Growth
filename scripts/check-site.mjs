@@ -30,6 +30,7 @@ const required = [
   "preview.js",
   "i18n.js",
   "tables.js",
+  "indexnow.js",
   "robots.txt",
   "sitemap.xml",
   "llms.txt",
@@ -62,6 +63,8 @@ const hooks = [
   'id="lead-company"',
   'id="result-heading"',
   'id="result-tables"',
+  'id="ink-host"',
+  'id="ink-generate"',
 ];
 for (const hook of hooks) {
   if (!html.includes(hook)) failures.push(`index.html lost hook ${hook}`);
@@ -86,6 +89,7 @@ for (const meta of ["gg-api", "gg-form"]) {
   if (!frHtml.includes(`name="${meta}"`)) failures.push(`fr/index.html missing the ${meta} meta`);
 }
 if (!js.includes("result-tables")) failures.push("app.js no longer renders the tables");
+if (!js.includes("initIndexNow")) failures.push("app.js no longer initialises the IndexNow generator");
 if (!html.includes("reports/opendpe.html")) failures.push("index.html no longer links the sample report");
 const reportHtml = read("reports/opendpe.html");
 if (!reportHtml.includes("opendpe.pdf")) failures.push("sample report no longer links its PDF");

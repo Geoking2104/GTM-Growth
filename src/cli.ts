@@ -135,6 +135,11 @@ Usage:
   geo-platforms             --url <url>
   geo-report                --url <url> [--out <file.pdf>] [--contact <url>]
   geo-free-read             --url <url> [--json]   SEO tables + GA4/GSC readiness
+  indexnow-keygen           --host <host>          generate the key + key file
+  indexnow-verify           --host <host> --key <key>
+  indexnow-submit           --host <host> --key <key> --urls <a,b> --confirm=true
+  indexnow-explain          --status <code>       decode an IndexNow response
+  analysis-board            --url <url> [--indexnow-key <key>]
   leads                     [--file <jsonl>] [--limit <n>]   read captured leads
 
 ── Server ───────────────────────────────────────────
@@ -642,6 +647,64 @@ async function main() {
         const limit = Number(str(args, "limit") ?? 50);
         const rows = readLeads(file, Number.isFinite(limit) ? limit : 50);
         print({ file, count: rows.length, leads: rows });
+        break;
+      }
+      case "indexnow-keygen": {
+        const { generateKey, keyMaterial, hostOf } = await import("./indexnow/client.js");
+        const host = hostOf(req(args, "host"));
+        const key = generateKey();
+        print({ ...keyMaterial(key, host), next: "host the file, then run indexnow-verify" });
+        break;
+      }
+      case "indexnow-verify": {
+        const { verifyKeyFile, hostOf } = await import("./indexnow/client.js");
+        const result = await verifyKeyFile(req(args, "key"), hostOf(req(args, "host")), { keyLocation: str(args, "keyLocation") });
+        print(result);
+        if (!result.ok) process.exitCode = 1;
+        break;
+      }
+      case "indexnow-submit": {
+        const { submitUrls, hostOf } = await import("./indexnow/client.js");
+        const urls = req(args, "urls").split(",").map((value) => value.trim()).filter(Boolean);
+        const result = await submitUrls({
+          host: hostOf(req(args, "host")),
+          key: req(args, "key"),
+          urls,
+          keyLocation: str(args, "keyLocation"),
+          endpoint: str(args, "endpoint") ?? "indexnow",
+          confirm: args.confirm === "true" || args.confirm === true,
+        });
+        print(result);
+        if (!result.submitted) process.exitCode = 1;
+        break;
+      }
+      case "indexnow-explain": {
+        const { explainStatus } = await import("./indexnow/client.js");
+        const status = Number(req(args, "status"));
+        print({ status, ...explainStatus(status) });
+        break;
+      }
+      case "analysis-board": {
+        const { runGeoAudit } = await import("./geo/audit.js");
+        const { buildPlatformReadiness } = await import("./geo/platforms.js");
+        const { buildAnalysisBoard } = await import("./analysis/board.js");
+        const { auditIndexNow } = await import("./indexnow/readiness.js");
+        const audit = await runGeoAudit({ url: req(args, "url") });
+        const host = new URL(audit.finalUrl).hostname;
+        let citability;
+        try {
+          const { runCitability } = await import("./geo/citability.js");
+          citability = await runCitability({ url: audit.finalUrl });
+        } catch {
+          citability = undefined;
+        }
+        const indexnow = await auditIndexNow({
+          host,
+          https: audit.finalUrl.startsWith("https:"),
+          audit,
+          key: str(args, "indexnow-key") ?? null,
+        });
+        print(buildAnalysisBoard({ audit, platforms: buildPlatformReadiness(audit), citability, indexnow }));
         break;
       }
       case "serve-http": {

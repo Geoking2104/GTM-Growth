@@ -1,5 +1,26 @@
 # Changelog
 
+## 0.20.0 — 2026-11-04
+
+### Added
+
+- **IndexNow (Bing, Yandex, Seznam, Naver)**: `src/indexnow/client.ts` generates keys inside the protocol grammar, builds the key file and its headers, verifies that the published file contains the key, and submits up to 10 000 URLs in one POST. Every documented status (200, 202, 400, 403, 422, 429) is translated into a meaning and a fix.
+- **IndexNow readiness panel** — 0–100 outside the GEO rubric: key grammar (10), key file published (35), file contains the key (10), Bing verification (10), Bingbot allowed (15), sitemap declared (10), HTTPS (10).
+- **`analysis_board`** — one payload combining GEO, citability, platform readiness and IndexNow, with a ranked action list. IndexNow blockers rank above GEO points because a blocked crawler or a missing key file makes every other indexation fix worthless. Deterministic ordering, impact = the check's own weight.
+- MCP tools: `indexnow_keygen`, `indexnow_verify`, `indexnow_submit` (requires `confirm=true`), `indexnow_readiness`, `indexnow_explain`, `analysis_board`.
+- CLI: `indexnow-keygen`, `indexnow-verify` (exit 1 on a bad key file, so it works in CI), `indexnow-submit`, `analysis-board`.
+- Landing page: an **IndexNow section with a browser-side key generator** — key, file name, URL, content, `.txt` download and the exact `curl` — run locally, nothing sent anywhere.
+- `docs/INDEXNOW.md`: the four-step architecture, the data flow into the board, the customisation paths and the operating rules.
+
+### Changed
+
+- Nav gains an **IndexNow** entry on both language pages; the free-read FAQ sentence about "never fetching the page" now describes the two layers accurately.
+
+### Notes
+
+- A 200 from IndexNow means *received*, never *indexed* — the tool says so in every response.
+- Google does not participate in IndexNow; the board never implies otherwise.
+
 ## 0.19.0 — 2026-11-03
 
 ### Added

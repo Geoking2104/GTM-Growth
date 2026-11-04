@@ -14,6 +14,7 @@
 import { auditUrlShape, normalizeTarget, verdict } from "./preview.js";
 import { dictFor } from "./i18n.js";
 import { renderTables, sampleTables } from "./tables.js";
+import { initIndexNow } from "./indexnow.js";
 
 const dict = dictFor(document.documentElement.lang);
 
@@ -286,6 +287,9 @@ leadForm?.addEventListener("submit", async (event) => {
 });
 
 void flushQueue();
+
+// IndexNow key generator: local only, no network.
+initIndexNow();
 
 // Copy-to-clipboard buttons
 for (const button of document.querySelectorAll("[data-copy]")) {

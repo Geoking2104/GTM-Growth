@@ -488,3 +488,57 @@ details p { color: var(--muted); margin: .75rem 0 0; font-size: .95rem; }
   text-transform: none;
   color: var(--muted);
 }
+
+/* ── IndexNow key generator ───────────────────────────────── */
+.ink-card {
+  margin-top: 2rem;
+  border: 1px solid var(--line);
+  border-radius: 16px;
+  background: var(--surface, #fff);
+  overflow: hidden;
+}
+.ink-head {
+  padding: 1.1rem 1.3rem;
+  border-bottom: 1px solid var(--line);
+  background: linear-gradient(180deg, #f7fbff, #fff);
+}
+.ink-head h3 { margin: 0 0 .2rem; font-size: 1.05rem; }
+.ink-head p { margin: 0; color: var(--muted); font-size: .86rem; }
+.ink-body { padding: 1.2rem 1.3rem 1.4rem; display: grid; gap: .7rem; }
+.ink-label { font-size: .8rem; font-weight: 700; letter-spacing: .06em; text-transform: uppercase; color: var(--muted); }
+.ink-body input {
+  padding: .7rem .8rem;
+  border: 1px solid var(--line);
+  border-radius: 9px;
+  font: inherit;
+  max-width: 28rem;
+}
+.ink-row { display: flex; gap: .6rem; flex-wrap: wrap; }
+.ink-out {
+  display: grid;
+  grid-template-columns: max-content 1fr;
+  gap: .4rem 1rem;
+  margin: .4rem 0 0;
+  padding: .9rem 1rem;
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  background: #f8fafc;
+  font-size: .88rem;
+}
+.ink-out dt { color: var(--muted); }
+.ink-out dd { margin: 0; overflow-wrap: anywhere; }
+.ink-out code { font-size: .86rem; }
+.ink-curl {
+  margin: 0;
+  padding: .9rem 1rem;
+  border-radius: 10px;
+  background: #0b1220;
+  color: #e5edff;
+  overflow-x: auto;
+  font-size: .8rem;
+}
+.ink-curl code { color: inherit; }
+@media (max-width: 640px) {
+  .ink-out { grid-template-columns: 1fr; }
+  .ink-out dt { margin-top: .4rem; }
+}
