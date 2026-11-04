@@ -228,6 +228,7 @@ export function renderSettings(me, save) {
     field("ga4Properties", L("Propriétés GA4 (identifiants numériques)", "GA4 properties (numeric ids)"), (t.ga4Properties ?? []).join(", "), "123456789"),
     field("bingSites", L("Sites Bing Webmaster", "Bing Webmaster sites"), (t.bingSites ?? []).join(", "), "https://www.exemple.fr/"),
     field("gtmContainers", L("Conteneurs GTM (web et serveur)", "GTM containers (web and server)"), (t.gtmContainers ?? []).join(", "), "accounts/123/containers/456"),
+    field("clarityProjects", L("Projets Microsoft Clarity (ID)", "Microsoft Clarity projects (id)"), (t.clarityProjects ?? []).join(", "), "z8ln1th2sn"),
     field("bingApiKey", L(`Clé API Bing ${t.bingKeyConfigured ? "(configurée — laisser vide pour la garder)" : ""}`, `Bing API key ${t.bingKeyConfigured ? "(set — leave empty to keep it)" : ""}`), "", "••••••••", "password"),
   );
   const msg = el("p", "c-note");
@@ -235,7 +236,7 @@ export function renderSettings(me, save) {
   else msg.textContent = L("Réservé aux administrateurs du client.", "Client administrators only.");
   form.onsubmit = async (e) => {
     e.preventDefault(); const fd = new FormData(form); const split = (k) => String(fd.get(k) ?? "").split(",").map((x) => x.trim()).filter(Boolean);
-    const body = { gscProperties: split("gscProperties"), ga4Properties: split("ga4Properties"), bingSites: split("bingSites"), gtmContainers: split("gtmContainers") };
+    const body = { gscProperties: split("gscProperties"), ga4Properties: split("ga4Properties"), bingSites: split("bingSites"), gtmContainers: split("gtmContainers"), clarityProjects: split("clarityProjects") };
     const key = String(fd.get("bingApiKey") ?? "").trim(); if (key) body.bingApiKey = key;
     try { await save(body); msg.textContent = L("Enregistré.", "Saved."); msg.className = "c-note"; } catch (error) { msg.textContent = error.message; msg.className = "c-error"; }
   };

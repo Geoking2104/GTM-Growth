@@ -175,7 +175,25 @@ export function auditGtmHtml(html: string): {
       : "Set gtag('consent', 'default', {…}) before GTM loads so tags respect the initial state (GDPR/CCPA).",
   });
 
+  const clarityIds = extractClarityIds(html);
+  checks.push({
+    id: "clarity.tag",
+    label: "Microsoft Clarity (optional)",
+    status: clarityIds.length === 1 ? "pass" : "warn",
+    required: false,
+    evidence: clarityIds.length ? `clarity.ms/tag/${clarityIds.join(", ")}` : "No Microsoft Clarity loader found in the served HTML (may still load through GTM)",
+    fix: clarityIds.length > 1 ? "Several Clarity projects load on the page — keep only one." : clarityIds.length ? undefined : "Add the Clarity snippet to <head> or as a Custom HTML tag in GTM (All Pages).",
+  });
+
   return { containerIds, checks };
+}
+
+/** Clarity project ids loaded by the page (direct loader or standard snippet). */
+export function extractClarityIds(html: string): string[] {
+  const ids = new Set<string>();
+  for (const m of html.matchAll(/clarity\.ms\/tag\/([a-z0-9]{6,16})/gi)) ids.add(m[1]);
+  for (const m of html.matchAll(/["']clarity["']\s*,\s*["']script["']\s*,\s*["']([a-z0-9]{6,16})["']/gi)) ids.add(m[1]);
+  return [...ids];
 }
 
 export interface GtmAuditOptions {

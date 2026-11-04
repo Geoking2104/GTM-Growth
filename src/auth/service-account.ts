@@ -24,6 +24,10 @@ const SCOPES = [
   "https://www.googleapis.com/auth/analytics.edit",
   "https://www.googleapis.com/auth/tagmanager.readonly",
   "https://www.googleapis.com/auth/tagmanager.edit.containers",
+  // Console GTM : suppression d'espaces de travail, création et publication de versions
+  "https://www.googleapis.com/auth/tagmanager.delete.containers",
+  "https://www.googleapis.com/auth/tagmanager.edit.containerversions",
+  "https://www.googleapis.com/auth/tagmanager.publish",
   // Search Console read (sites, sitemaps, URL inspection)
   "https://www.googleapis.com/auth/webmasters.readonly",
   // Search Console write (submit sitemap) — gated by SEARCH_CONSOLE_WRITE_ENABLED

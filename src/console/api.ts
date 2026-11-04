@@ -205,7 +205,7 @@ async function scopeRequest(route: ConsoleRoute, body: Body, tenancy: TenantCont
   return { url };
 }
 
-const publicTenant = (t: Tenant) => ({ id: t.id, name: t.name, mode: t.mode, domains: t.domains, gscProperties: t.gscProperties, ga4Properties: t.ga4Properties ?? [], bingSites: t.bingSites ?? [], gtmContainers: t.gtmContainers ?? [], bingKeyConfigured: Boolean(t.bingApiKey), emailDomains: t.emailDomains, branding: t.branding, identityProviders: t.identityProviders, status: t.status });
+const publicTenant = (t: Tenant) => ({ id: t.id, name: t.name, mode: t.mode, domains: t.domains, gscProperties: t.gscProperties, ga4Properties: t.ga4Properties ?? [], bingSites: t.bingSites ?? [], gtmContainers: t.gtmContainers ?? [], clarityProjects: t.clarityProjects ?? [], bingKeyConfigured: Boolean(t.bingApiKey), emailDomains: t.emailDomains, branding: t.branding, identityProviders: t.identityProviders, status: t.status });
 
 export function buildConsoleRouter(routes: ConsoleRoute[], options: ConsoleOptions = {}): Router {
   const router = express.Router();
@@ -260,11 +260,13 @@ export function buildConsoleRouter(routes: ConsoleRoute[], options: ConsoleOptio
     if (ga4List?.some((x) => !/^\d{5,15}$/.test(x))) return fail(res, 400, "Propriété GA4 invalide (identifiant numérique).");
     const gtmList = list(body.gtmContainers);
     if (gtmList?.some((x) => !/^accounts\/\d+\/containers\/\d+$/.test(x))) return fail(res, 400, "Conteneur GTM invalide (accounts/<id>/containers/<id>).");
+    const clarityList = list(body.clarityProjects);
+    if (clarityList?.some((x) => !/^[a-z0-9]{6,16}$/i.test(x))) return fail(res, 400, "Projet Clarity invalide.");
     const bingList = list(body.bingSites);
     if (bingList?.some((x) => !/^https?:\/\//.test(x))) return fail(res, 400, "Site Bing invalide (URL https://…/).");
     const bingKey = typeof body.bingApiKey === "string" ? body.bingApiKey.trim() : undefined;
     if (bingKey && !/^[A-Za-z0-9]{16,64}$/.test(bingKey)) return fail(res, 400, "Clé API Bing invalide.");
-    const updated = store.upsert({ ...t, ga4Properties: ga4List ?? t.ga4Properties, bingSites: bingList ?? t.bingSites, gtmContainers: gtmList ?? t.gtmContainers, bingApiKey: bingKey === undefined ? t.bingApiKey : bingKey || undefined, domains: list(body.domains) ?? t.domains, gscProperties: list(body.gscProperties) ?? t.gscProperties, branding: { ...t.branding, ...(color ? { primaryColor: color } : {}), ...(logo ? { logoUrl: logo } : {}), ...(str(branding.displayName) ? { displayName: str(branding.displayName) } : {}) } });
+    const updated = store.upsert({ ...t, ga4Properties: ga4List ?? t.ga4Properties, bingSites: bingList ?? t.bingSites, gtmContainers: gtmList ?? t.gtmContainers, clarityProjects: clarityList ?? t.clarityProjects, bingApiKey: bingKey === undefined ? t.bingApiKey : bingKey || undefined, domains: list(body.domains) ?? t.domains, gscProperties: list(body.gscProperties) ?? t.gscProperties, branding: { ...t.branding, ...(color ? { primaryColor: color } : {}), ...(logo ? { logoUrl: logo } : {}), ...(str(branding.displayName) ? { displayName: str(branding.displayName) } : {}) } });
     return res.json({ tenant: publicTenant(updated) });
   });
   router.post("/tenant/users", async (req, res) => {

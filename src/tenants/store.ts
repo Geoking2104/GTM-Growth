@@ -32,6 +32,8 @@ export interface Tenant {
   bingApiKey?: string;
   /** GTM containers (accounts/<id>/containers/<id>) the tenant may read/write. */
   gtmContainers?: string[];
+  /** Microsoft Clarity project ids (free) used by the tenant sites. */
+  clarityProjects?: string[];
   /** Google key file name (same folder as GOOGLE_APPLICATION_CREDENTIALS) to use for this tenant. Never sent to the browser. */
   googleCredential?: string;
   branding: TenantBranding;
