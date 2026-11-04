@@ -106,6 +106,7 @@
       <a href="#measurement">Mesure</a>
       <a href="#how">Fonctionnement</a>
       <a href="#plans">Offres</a>
+      <a href="#indexnow">IndexNow</a>
       <a href="#faq">FAQ</a>
       <a class="nav-gh" href="https://github.com/Geoking2104/Google-Growth">GitHub</a>
     </nav>
@@ -429,6 +430,64 @@ npm run cli -- geo-audit --url https://acme.com</code></pre>
     </div>
   </section>
 
+  <!-- ── IndexNow ────────────────────────────────────────── -->
+  <section class="section section-alt" id="indexnow" aria-labelledby="indexnow-heading">
+    <div class="wrap">
+      <header class="section-head">
+        <p class="eyebrow eyebrow-dark">IndexNow · Bing</p>
+        <h2 id="indexnow-heading">Re-crawlé en minutes, pas en jours</h2>
+        <p class="section-sub">IndexNow prévient Bing, Yandex, Seznam et Naver qu’une URL a changé. Google ne participe pas. Quatre étapes, sans compte : générer une clé, héberger un fichier texte, soumettre les URL modifiées, vérifier.</p>
+      </header>
+
+      <ol class="steps">
+        <li>
+          <span class="step-num">1</span>
+          <h3>Générer la clé</h3>
+          <p>8 à 128 caractères parmi a–z, A–Z, 0–9 ou tiret. Générée dans votre navigateur ci-dessous — elle ne quitte jamais la page.</p>
+        </li>
+        <li>
+          <span class="step-num">2</span>
+          <h3>Héberger le fichier de clé</h3>
+          <p>Publiez <code>&lt;clé&gt;.txt</code> à la racine : UTF-8, contenant exactement la clé. Ce fichier est la seule preuve de propriété acceptée par le protocole.</p>
+        </li>
+        <li>
+          <span class="step-num">3</span>
+          <h3>Soumettre les URL modifiées</h3>
+          <p>Un seul POST, jusqu’à 10 000 URL. Envoyez ce qui a changé depuis la mise en place — pas toute l’archive.</p>
+        </li>
+        <li>
+          <span class="step-num">4</span>
+          <h3>Vérifier</h3>
+          <p>Un <code>200</code> signifie reçu, jamais indexé. Confirmez le crawl dans Bing Webmaster Tools.</p>
+        </li>
+      </ol>
+
+      <div class="ink-card">
+        <div class="ink-head">
+          <h3>Générateur de clé</h3>
+          <p>Tourne en local. Rien n’est envoyé nulle part.</p>
+        </div>
+        <div class="ink-body">
+          <label class="ink-label" for="ink-host">Votre hôte</label>
+          <input id="ink-host" name="ink-host" type="text" placeholder="exemple.fr" autocomplete="url" inputmode="url">
+          <div class="ink-row">
+            <button class="btn" type="button" id="ink-generate">Générer une clé</button>
+            <button class="btn btn-ghost" type="button" id="ink-download" hidden>Télécharger le .txt</button>
+          </div>
+          <dl class="ink-out" id="ink-out" hidden>
+            <dt>Clé</dt><dd><code id="ink-key"></code></dd>
+            <dt>Fichier</dt><dd><code id="ink-file"></code></dd>
+            <dt>À servir ici</dt><dd><code id="ink-url"></code></dd>
+            <dt>Contenu</dt><dd><code id="ink-content"></code></dd>
+          </dl>
+          <pre class="ink-curl" id="ink-curl" hidden><code></code></pre>
+          <p class="fineprint">Vérifiez ce que vous avez publié : <code>npm run cli -- indexnow-verify --host exemple.fr --key &lt;clé&gt;</code> · puis lancez <code>analysis_board</code> pour voir le panneau évoluer.</p>
+        </div>
+        <p class="fineprint">Le tableau d’analyse les place en premier : sans fichier de clé ou avec un Bingbot bloqué, chaque correctif GEO ne sert à rien.</p>
+      </div>
+    </div>
+  </section>
+
   <!-- ── FAQ ──────────────────────────────────────────────── -->
   <section class="section section-alt" id="faq" aria-labelledby="faq-heading">
     <div class="wrap narrow">
@@ -470,13 +529,13 @@ npm run cli -- geo-audit --url https://acme.com</code></pre>
       </header>
       <ul class="proof-grid">
         <li><strong>87</strong><span>outils MCP</span></li>
-        <li><strong>149</strong><span>tests au vert</span></li>
+        <li><strong>183</strong><span>tests au vert</span></li>
         <li><strong>11</strong><span>contrôles GEO</span></li>
         <li><strong>22</strong><span>outils GTM</span></li>
         <li><strong>5</strong><span>plateformes IA couvertes</span></li>
         <li><strong>Apache-2.0</strong><span>licence</span></li>
       </ul>
-      <p class="proof-note">Lecture seule par défaut · la CI exécute typecheck, lint, 149 tests, build, smoke CLI et contrôles du site à chaque push · <a href="https://github.com/Geoking2104/Google-Growth/actions">voir les exécutions</a></p>
+      <p class="proof-note">Lecture seule par défaut · la CI exécute typecheck, lint, 183 tests, build, smoke CLI et contrôles du site à chaque push · <a href="https://github.com/Geoking2104/Google-Growth/actions">voir les exécutions</a></p>
     </div>
   </section>
 

@@ -105,6 +105,7 @@
       <a href="#measurement">Measurement</a>
       <a href="#how">How it works</a>
       <a href="#plans">Plans</a>
+      <a href="#indexnow">IndexNow</a>
       <a href="#faq">FAQ</a>
       <a class="nav-gh" href="https://github.com/Geoking2104/Google-Growth">GitHub</a>
     </nav>
@@ -427,6 +428,64 @@ npm run cli -- geo-audit --url https://acme.com</code></pre>
     </div>
   </section>
 
+  <!-- ── IndexNow ────────────────────────────────────────── -->
+  <section class="section section-alt" id="indexnow" aria-labelledby="indexnow-heading">
+    <div class="wrap">
+      <header class="section-head">
+        <p class="eyebrow eyebrow-dark">IndexNow · Bing</p>
+        <h2 id="indexnow-heading">Get re-crawled in minutes, not days</h2>
+        <p class="section-sub">IndexNow tells Bing, Yandex, Seznam and Naver that a URL changed. Google does not take part. Four steps, no account: generate a key, host one text file, submit the changed URLs, verify.</p>
+      </header>
+
+      <ol class="steps">
+        <li>
+          <span class="step-num">1</span>
+          <h3>Generate the key</h3>
+          <p>8–128 characters of a–z, A–Z, 0–9 or dash. Generated in your browser below — it never leaves the page.</p>
+        </li>
+        <li>
+          <span class="step-num">2</span>
+          <h3>Host the key file</h3>
+          <p>Publish <code>&lt;key&gt;.txt</code> at the site root: UTF-8, containing exactly the key. That file is the only proof of ownership the protocol accepts.</p>
+        </li>
+        <li>
+          <span class="step-num">3</span>
+          <h3>Submit the changed URLs</h3>
+          <p>One POST, up to 10 000 URLs. Send what changed since you wired IndexNow — not the whole archive.</p>
+        </li>
+        <li>
+          <span class="step-num">4</span>
+          <h3>Verify</h3>
+          <p>A <code>200</code> means received, never indexed. Confirm the crawl in Bing Webmaster Tools.</p>
+        </li>
+      </ol>
+
+      <div class="ink-card">
+        <div class="ink-head">
+          <h3>Key generator</h3>
+          <p>Runs locally. Nothing is sent anywhere.</p>
+        </div>
+        <div class="ink-body">
+          <label class="ink-label" for="ink-host">Your host</label>
+          <input id="ink-host" name="ink-host" type="text" placeholder="example.com" autocomplete="url" inputmode="url">
+          <div class="ink-row">
+            <button class="btn" type="button" id="ink-generate">Generate a key</button>
+            <button class="btn btn-ghost" type="button" id="ink-download" hidden>Download .txt</button>
+          </div>
+          <dl class="ink-out" id="ink-out" hidden>
+            <dt>Key</dt><dd><code id="ink-key"></code></dd>
+            <dt>File</dt><dd><code id="ink-file"></code></dd>
+            <dt>Serve at</dt><dd><code id="ink-url"></code></dd>
+            <dt>Content</dt><dd><code id="ink-content"></code></dd>
+          </dl>
+          <pre class="ink-curl" id="ink-curl" hidden><code></code></pre>
+          <p class="fineprint">Verify what you published: <code>npm run cli -- indexnow-verify --host example.com --key &lt;key&gt;</code> · then submit with <code>analysis_board</code> to see the panel move.</p>
+        </div>
+        <p class="fineprint">The analysis board ranks these first: a missing key file or a blocked Bingbot makes every GEO fix worthless.</p>
+      </div>
+    </div>
+  </section>
+
   <!-- ── FAQ ──────────────────────────────────────────────── -->
   <section class="section section-alt" id="faq" aria-labelledby="faq-heading">
     <div class="wrap narrow">
@@ -468,13 +527,13 @@ npm run cli -- geo-audit --url https://acme.com</code></pre>
       </header>
       <ul class="proof-grid">
         <li><strong>87</strong><span>MCP tools</span></li>
-        <li><strong>149</strong><span>tests passing</span></li>
+        <li><strong>183</strong><span>tests passing</span></li>
         <li><strong>11</strong><span>GEO checks</span></li>
         <li><strong>22</strong><span>GTM tools</span></li>
         <li><strong>5</strong><span>AI platforms mapped</span></li>
         <li><strong>Apache-2.0</strong><span>licence</span></li>
       </ul>
-      <p class="proof-note">Read-only by default · CI runs typecheck, lint, 149 tests, build, CLI smoke and site checks on every push · <a href="https://github.com/Geoking2104/Google-Growth/actions">see the runs</a></p>
+      <p class="proof-note">Read-only by default · CI runs typecheck, lint, 183 tests, build, CLI smoke and site checks on every push · <a href="https://github.com/Geoking2104/Google-Growth/actions">see the runs</a></p>
     </div>
   </section>
 
