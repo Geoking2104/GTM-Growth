@@ -1,0 +1,38 @@
+name: Deploy GTM Growth to KayrosLab VPS
+
+# The VPS is shared with OpenDPE and KayrosLab. GTM Growth stays isolated in
+# /opt/gtm-growth and binds only to 127.0.0.1:4300; Nginx is the public edge.
+# Required repository secrets: VPS_SSH_USER and VPS_SSH_KEY.
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'src/**'
+      - 'site/**'
+      - 'deploy/kayroslab-vps/**'
+      - 'Dockerfile'
+      - 'package.json'
+      - 'package-lock.json'
+      - 'tsconfig.json'
+      - '.github/workflows/deploy-kayroslab-vps.yml'
+  workflow_dispatch:
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Deploy through the shared OVH VPS
+        uses: appleboy/ssh-action@v1.2.0
+        with:
+          host: 51.210.9.71
+          username: ${{ secrets.VPS_SSH_USER }}
+          key: ${{ secrets.VPS_SSH_KEY }}
+          port: 22
+          command_timeout: 30m
+          script: |
+            set -euo pipefail
+            git config --global --add safe.directory /opt/gtm-growth
+            cd /opt/gtm-growth
+            git fetch origin main
+            git reset --hard origin/main
+            bash deploy/kayroslab-vps/deploy.sh

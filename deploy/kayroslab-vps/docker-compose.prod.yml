@@ -1,0 +1,48 @@
+services:
+  gtm-growth:
+    build:
+      context: ../..
+      dockerfile: Dockerfile
+    env_file:
+      - .env.local
+    environment:
+      NODE_ENV: production
+      TRANSPORT: http
+      HOST: 0.0.0.0
+      PORT: 3000
+      REDIS_URL: redis://redis:6379
+      LEADS_PATH: /data/leads.jsonl
+      GOOGLE_APPLICATION_CREDENTIALS: /secrets/service-account.json
+    volumes:
+      - gtm_growth_data:/data
+      # Optional Google service-account file; never commit it to the repository.
+      - /opt/gtm-growth/.secrets:/secrets:ro
+    ports:
+      # The API is deliberately private; Nginx is its only public entry point.
+      - "127.0.0.1:4300:3000"
+    depends_on:
+      redis:
+        condition: service_healthy
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "wget", "-qO-", "http://127.0.0.1:3000/health"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 15s
+
+  redis:
+    image: redis:7-alpine
+    command: redis-server --appendonly yes --maxmemory 256mb --maxmemory-policy allkeys-lru
+    volumes:
+      - gtm_growth_redis:/data
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 3s
+      retries: 5
+
+volumes:
+  gtm_growth_data:
+  gtm_growth_redis:
