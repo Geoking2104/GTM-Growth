@@ -11,6 +11,8 @@ export function initConsole() {
   const panels = [...document.querySelectorAll('[role="tabpanel"]')];
   if (!tabs.length || !panels.length) return;
 
+  const crumb = document.querySelector("#app-crumb-current");
+
   const select = (index) => {
     tabs.forEach((tab, i) => {
       const active = i === index;
@@ -21,6 +23,8 @@ export function initConsole() {
     panels.forEach((panel, i) => {
       panel.hidden = i !== index;
     });
+    // The breadcrumb names the view you are actually looking at.
+    if (crumb && tabs[index]) crumb.textContent = tabs[index].textContent.trim();
   };
 
   tabs.forEach((tab, index) => {
