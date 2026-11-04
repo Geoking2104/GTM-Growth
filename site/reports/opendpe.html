@@ -135,7 +135,7 @@
       <div>
         <h1>opendpe.net — GEO audit</h1>
         <p class="report-url">https://www.opendpe.net</p>
-        <p class="report-meta">Snapshot 2 November 2026 · engine v0.20.0 · 8 categories, 100 points · page audited in French, report in English</p>
+        <p class="report-meta">Snapshot 4 November 2026 · engine v0.22.0 · 8 categories, 100 points · page audited in French, report in English</p>
       </div>
       <div class="report-score">
         <div class="score" id="score" style="--score:71" aria-label="GEO score 71 out of 100">
@@ -152,10 +152,10 @@
   <div class="wrap">
     <div class="download-band">
       <div>
-        <h2>Download this report</h2>
-        <p>9-page PDF, no email required — score, trajectory, platform radar, entity graph, citability and the ordered plan.</p>
+        <h2>Example of a full report</h2>
+        <p>11-page PDF, no email required — console guide and marketing plays included — score, trajectory, platform radar, entity graph, citability and the ordered plan.</p>
       </div>
-      <a class="btn" href="opendpe.pdf" download>Download the PDF (43 kB)</a>
+      <a class="btn" href="opendpe.pdf" download>Download the PDF (50 kB)</a>
     </div>
   </div>
 
@@ -444,6 +444,41 @@
           <div class="kpi"><strong>+7</strong><span>points on the table</span></div>
         </div>
         <p class="note">An assistant that cannot resolve the entity quotes the idea and drops the brand. <code>sameAs</code> plus Article schema is the cheapest seven points in this audit.</p>
+      </section>
+
+      <section class="panel">
+        <h2>How to read the console</h2>
+        <p class="sub">The same payload the console renders, explained once. Every number points back to a check in this report.</p>
+        <ul class="tick-list">
+          <li><strong>The KPI row</strong> — four questions: how readable (GEO), how quotable (citability), how fast to update (IndexNow), how many engines are ready.</li>
+          <li><strong>The trajectory</strong> — the recommended fixes added in the engine's order, so point 6 is the cheap half and point 16 the full plan.</li>
+          <li><strong>The engine ranking</strong> — the gap between each engine and 100. A long red delta means the gap is structural, not cosmetic.</li>
+          <li><strong>The strip and the tabs</strong> — the eight categories ranked by cost to fix, then Search, IndexNow and Tracking at full size.</li>
+        </ul>
+        <p class="note">Start with Overview, then GEO. The other three tabs answer the follow-up questions: demand, speed, and whether the measurement itself can be trusted.</p>
+      </section>
+
+      <section class="panel">
+        <h2>Three plays this audit unlocks</h2>
+        <p class="sub">Each play is anchored to a check below it — no revenue projection, just the points it moves and the signal to watch.</p>
+        <div class="play">
+          <h3>1. Be the brand, not the page <span class="band partial">+7 GEO · +3 citability</span></h3>
+          <p>Entity signals sit at 3/10: <code>sameAs</code> has 0/4 pillars, the name differs between title, H1 and Organization schema, and there is no about link.</p>
+          <p><strong>Do:</strong> one name everywhere, <code>sameAs</code> to Wikidata, LinkedIn and Crunchbase, a real about page, a Person author with a URL.</p>
+          <p><strong>Watch:</strong> branded queries in Search Console, and whether an assistant repeats “OpenDPE” when asked who verifies a DPE.</p>
+        </div>
+        <div class="play">
+          <h3>2. Publish the answer, not the brochure <span class="band partial">+12 citability</span></h3>
+          <p>Citability is 53/100: 0/3 on quotations, outbound citations, authorship and freshness. The page states numbers but sources none of them.</p>
+          <p><strong>Do:</strong> quote the official DPE method with a link, turn one comparison into a table, name an author, add <code>dateModified</code>, and put a sourced figure above the fold.</p>
+          <p><strong>Watch:</strong> the four zeroed methods, re-run monthly, then AI referral sessions in GA4.</p>
+        </div>
+        <div class="play">
+          <h3>3. Own the launch window <span class="band partial">+45 IndexNow · +6 discovery</span></h3>
+          <p>IndexNow is 35/100 — no key file — and AI discovery is 0/6: no <code>/.well-known/ai.txt</code>, no <code>/ai/*.json</code>. New pages wait for a crawl nobody announced.</p>
+          <p><strong>Do:</strong> publish the key file, verify it, announce each release in one POST, and ship the machine-readable summary, FAQ and service files.</p>
+          <p><strong>Watch:</strong> time between publish and first crawl in Bing Webmaster Tools; AI referral sessions after a launch.</p>
+        </div>
       </section>
 
       <section class="panel">
