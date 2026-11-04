@@ -15,8 +15,8 @@
 ## Documentation
 
 - [CLI reference](https://github.com/Geoking2104/GTM-Growth/blob/main/docs/CLI.md)
-- [Tool catalogue](https://github.com/Geoking2104/GTM-Growth/blob/main/skills/google-growth/references/tools.md)
-- [Setup](https://github.com/Geoking2104/GTM-Growth/blob/main/skills/google-growth/references/setup.md)
+- [Tool catalogue](https://github.com/Geoking2104/GTM-Growth/blob/main/skills/gtm-growth/references/tools.md)
+- [Setup](https://github.com/Geoking2104/GTM-Growth/blob/main/skills/gtm-growth/references/setup.md)
 
 ## Optional
 
