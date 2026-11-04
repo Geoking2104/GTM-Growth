@@ -96,7 +96,18 @@ services:
       timeout: 3s
       retries: 5
 
+  # ── Optionnel : modèle open source auto-hébergé pour les générateurs ──
+  # docker compose --profile llm up -d ollama && docker compose exec ollama ollama pull mistral
+  # puis OLLAMA_URL=http://ollama:11434 dans .env.local
+  ollama:
+    image: ollama/ollama:latest
+    profiles: ["llm"]
+    volumes:
+      - gtm_growth_ollama:/root/.ollama
+    restart: unless-stopped
+
 volumes:
+  gtm_growth_ollama:
   gtm_growth_keycloak_db:
   gtm_growth_data:
   gtm_growth_redis:

@@ -91,4 +91,36 @@ TABS.push(
   },
 );
 
+const genParams = [{ name: "keyword", label: "Mot-clé principal", placeholder: "audit seo" }, { name: "brand", label: "Marque" }, { name: "audience", label: "Public cible" }, { name: "benefit", label: "Bénéfice clé" }, { name: "usePage", label: "Contexte : page du domaine", type: "select", options: [["oui", "Oui"], ["non", "Non"]] }, { name: "engine", label: "Moteur", type: "select", options: [["modeles", "Modèles (déterministe)"], ["ollama", "Ollama (modèle open source)"]] }];
+const llmBlock = (d) => (d.llm ? (d.llm.error ? el("p", "c-error", `Ollama : ${d.llm.error}`) : [el("h4", "", `Proposition ${d.llm.model}`), code(d.llm.text, "proposition.txt")]) : []);
+const textsTable = (rows) => table(rows, [["text", "Proposition"], ["chars", "Caractères"]]);
+
+function serpCard(d) {
+  const card = el("div", "c-serp"); card.append(el("div", "u", d.breadcrumb), el("div", "t", d.title || "(sans title)"), el("div", "d", d.description || "(sans meta description)"));
+  return [card, metrics([["Title", `${d.titleChars} car. · ≈${d.titlePx} px`], ["Description", `${d.descriptionChars} car. · ≈${d.descriptionPx} px`]]), ...d.warnings.map((w) => el("p", "c-warn", w))];
+}
+
+TABS.push(
+  {
+    id: "audit", label: "Audit technique", intro: "Crawl interne du domaine : canonical, titres Hn, redirections, liens cassés, doublons, et aperçu du résultat Google.",
+    actions: [
+      { id: "tech", label: "Audit technique (crawler)", route: "/audit/technical", params: [{ name: "maxPages", label: "Pages max (200)", type: "number", value: 30 }, { name: "maxExternal", label: "Liens externes vérifiés", type: "number", value: 40 }],
+        render: (d) => [metrics([["Pages", d.summary.pages], ["Erreurs", d.summary.errors], ["Alertes", d.summary.warnings], ["Liens cassés", d.summary.brokenLinks], ["Titles dupliqués", d.summary.duplicateTitles], ["Descriptions dupliquées", d.summary.duplicateDescriptions]]), d.capped ? el("p", "c-note", "Crawl limité au nombre de pages demandé.") : [],
+          el("h4", "", "Problèmes par page"), table(d.pages.filter((p) => p.issues.length).map((p) => ({ url: p.url, status: p.status, h1: p.headings.filter((h) => h.level === 1).length, issues: p.issues.map((i) => `[${i.severity}] ${i.message}`).join(" · ") })), [["url", "URL"], ["status", "HTTP"], ["h1", "H1"], ["issues", "Problèmes"]]),
+          el("h4", "", "Liens cassés"), table(d.brokenLinks.map((b) => ({ ...b, foundOn: b.foundOn.join(" · "), internal: b.internal ? "interne" : "externe" })), [["url", "Lien"], ["status", "HTTP"], ["internal", "Type"], ["foundOn", "Trouvé sur"]]),
+          el("h4", "", "Chaînes de redirections"), table(d.redirectChains.map((c) => ({ ...c, chain: c.chain.join(" → ") })), [["hops", "Sauts"], ["chain", "Chaîne"]])] },
+      { id: "serp", label: "Aperçu SERP", route: "/audit/serp-preview", help: "Laisser vide pour lire le title et la meta description de la page ; sinon tester vos propres textes.", params: [{ name: "title", label: "Title (optionnel)" }, { name: "description", label: "Meta description (optionnel)", type: "textarea", rows: 2 }], render: serpCard },
+    ],
+  },
+  {
+    id: "generators", label: "Générateurs", intro: "Titles, meta descriptions et plans d'article. Modèles déterministes par défaut ; Ollama (modèle open source auto-hébergé) en option.",
+    actions: [
+      { id: "titles", label: "Balises title", route: "/generate/titles", needsUrl: false, button: "Générer", params: genParams, render: (d) => [textsTable(d.templates), llmBlock(d)].flat() },
+      { id: "meta", label: "Meta descriptions", route: "/generate/meta", needsUrl: false, button: "Générer", params: genParams, render: (d) => [textsTable(d.templates), llmBlock(d)].flat() },
+      { id: "outline", label: "Plan d'article", route: "/generate/outline", needsUrl: false, button: "Générer", params: genParams,
+        render: (d) => { const md = [`# ${d.templates.h1}`, ...d.templates.sections.flatMap((s) => [`## ${s.h2}`, ...s.h3.map((h) => `### ${h}`)]), "## FAQ", ...d.templates.faq.map((q) => `- ${q}`)].join("\n"); return [code(md, "plan.md"), llmBlock(d)].flat(); } },
+    ],
+  },
+);
+
 export { raw };

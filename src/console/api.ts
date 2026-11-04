@@ -28,6 +28,7 @@ import { queryCrux } from "../google/crux.js";
 import { measurePageWeight } from "./weight.js";
 import { logger } from "../utils/logger.js";
 import { phase2Routes } from "./phase2.js";
+import { phase3Routes } from "./phase3.js";
 
 import { str, num, type Body, type ConsoleRoute } from "./util.js";
 export type { ConsoleRoute, Handler } from "./util.js";
@@ -128,7 +129,7 @@ export function buildConsoleRouter(routes: ConsoleRoute[], options: { config?: O
 }
 
 export function allConsoleRoutes(): ConsoleRoute[] {
-  return [...phase1Routes, ...phase2Routes];
+  return [...phase1Routes, ...phase2Routes, ...phase3Routes];
 }
 
 export function mountConsoleApi(app: Express, options: { config?: OidcConfig | null; jwksLoader?: JwksLoader; routes?: ConsoleRoute[] } = {}): void {
