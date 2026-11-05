@@ -45,6 +45,7 @@ import { gtmRoutes } from "./gtm-console.js";
 import { withCredential } from "../auth/service-account.js";
 import { fetchPublicPage } from "../http/public-fetch.js";
 import { analyzePositioning } from "../geo/positioning.js";
+import { extractOnboardingProfile } from "./onboarding-profile.js";
 
 import { str, num, type Body, type ConsoleRoute } from "./util.js";
 export type { ConsoleRoute, Handler } from "./util.js";
@@ -53,11 +54,13 @@ export type { ConsoleRoute, Handler } from "./util.js";
 export const phase1Routes: ConsoleRoute[] = [
   {
     path: "/onboarding/profile",
+    // Démarrage guidé : profil de marque lu sur la page d'accueil. Nom depuis le
+    // JSON-LD en priorité (avec la source), puis og:site_name ; description depuis
+    // la meta, puis og:description, puis le schema ; langue et types détectés.
     handler: async ({ url }) => {
       const page = await fetchPublicPage(url);
       if (!page.ok) throw new Error(`HTTP ${page.status}`);
-      const doc = HtmlDoc.parse(page.body);
-      return { url: page.url, name: doc.metaByProperty("og:site_name")?.attrs.content?.trim() || "", title: doc.title() || "", description: doc.metaByName("description")?.attrs.content?.trim() || "" };
+      return { profile: extractOnboardingProfile(HtmlDoc.parse(page.body), page.url, page.status) };
     },
   },
   {

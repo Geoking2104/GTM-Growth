@@ -4,6 +4,7 @@
 
 ### Added
 
+- **Richer brand profile in guided onboarding**: `/api/console/onboarding/profile` now prefers the JSON-LD `name` (source shown in the wizard: “name read from structured data”), falls back to `og:site_name`, then `title`; description falls back meta description → og:description → schema; and surfaces `lang` and detected schema types as hints in the wizard. No LLM, no paid API — pure HTML reading.
 - **Keycloak multi-tenant for GTM Growth clients**:
   - Keycloak 26 Organizations, one per client, in the shared realm `gtm-growth`, with an optional dedicated realm `tenant-<id>`.
   - Tenant resolved from the token (`organization` claim plus `/tenants/<id>/<role>` groups, or the issuer for dedicated realms).

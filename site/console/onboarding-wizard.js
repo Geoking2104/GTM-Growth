@@ -20,7 +20,7 @@ export function renderAgentHelp() {
 }
 
 export function openWizard({ state, api, scope, saveSettings, renderSettings, renderStatus, onSite, onClose }) {
-  const storageKey = keyFor(state.me); let step = -1, usage = state.me.tenant.usageType || "", status = null, audit = null, read = null, profile = null, comparison = null, busy = false, selected = state.url;
+  const storageKey = keyFor(state.me); let step = -1, usage = state.me.tenant.usageType || "", status = null, audit = null, read = null, profile = null, profileHints = "", comparison = null, busy = false, selected = state.url;
   const overlay = el("div", "wizard-overlay"); overlay.setAttribute("role", "dialog"); overlay.setAttribute("aria-modal", "true"); overlay.setAttribute("aria-labelledby", "wizard-title");
   const panel = el("div", "wizard-panel"); overlay.append(panel); document.body.append(overlay);
   const close = (complete = false) => { if (complete) localStorage.setItem(storageKey, "done"); overlay.remove(); onClose(); };
@@ -45,7 +45,7 @@ export function openWizard({ state, api, scope, saveSettings, renderSettings, re
       const domains = state.me.tenant.domains || []; for (const d of domains) { const o = el("option", "", d); o.value = `https://${d}`; select.append(o); }
       if (!domains.length) selected = "";
       if (domains.length) { select.value = [...select.options].some((o) => o.value === selected) ? selected : select.options[0].value; selected = select.value; }
-      select.onchange = () => { selected = select.value; read = null; profile = null; audit = null; comparison = null; }; label.append(select); content.append(label);
+      select.onchange = () => { selected = select.value; read = null; profile = null; profileHints = ""; audit = null; comparison = null; }; label.append(select); content.append(label);
       if (!domains.length) content.append(el("p", "c-error", L("Aucun domaine autorisé. Contactez l’administrateur de votre espace.", "No authorized domain. Contact your workspace administrator.")));
     }
     if (step === 1) {
@@ -55,10 +55,12 @@ export function openWizard({ state, api, scope, saveSettings, renderSettings, re
         const [response, extracted] = await Promise.all([fetch(`${root}/free-read`, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ url: selected }) }), api("/onboarding/profile", { url: selected })]);
         const data = await response.json(); if (!response.ok) throw new Error(data.error || L("Lecture impossible", "Read failed"));
         read = data; const domain = new URL(selected).hostname; const saved = state.me.tenant.siteProfiles?.[domain];
-        profile = saved ? { ...saved } : { name: extracted.name || extracted.title || "", description: extracted.description || "", industry: "" };
+        const pf = extracted.profile || extracted; profile = saved ? { ...saved } : { name: pf.siteName || pf.title || "", description: pf.description || "", industry: "" };
+        profileHints = saved ? "" : [pf.siteNameSource === "schema" ? L("nom lu dans les données structurées", "name read from structured data") : pf.siteName ? L("nom lu dans les balises meta", "name read from meta tags") : "", pf.lang ? `${L("langue")} ${pf.lang}` : "", (pf.schemaTypes || []).length ? `${L("données structurées")} : ${pf.schemaTypes.join(", ")}` : ""].filter(Boolean).join(" · ");
       })));
       else {
         content.append(el("p", "", `${L("Score de lecture", "Read score")} : ${read.score}/100 · ${read.finalUrl}`));
+        if (profileHints) content.append(el("p", "c-note", profileHints));
         for (const [key, label, max] of [["name", L("Nom", "Name"), 200], ["description", "Description", 500], ["industry", L("Secteur", "Industry"), 200]]) {
           const wrapper = el("label", "c-field"); wrapper.append(el("span", "", label)); const input = el(key === "description" ? "textarea" : "input"); input.maxLength = max; input.value = profile[key]; input.oninput = () => { profile[key] = input.value; }; wrapper.append(input); content.append(wrapper);
         }
