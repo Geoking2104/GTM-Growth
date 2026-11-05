@@ -36,6 +36,12 @@ export interface Tenant {
   clarityProjects?: string[];
   /** Google key file name (same folder as GOOGLE_APPLICATION_CREDENTIALS) to use for this tenant. Never sent to the browser. */
   googleCredential?: string;
+  /** Business segmentation does not grant access to other tenants. */
+  usageType?: "company" | "agency";
+  /** GSC queries selected by an administrator, keyed by authorized property. */
+  watchedQueries?: Record<string, string[]>;
+  /** Human-reviewed profiles keyed by an authorized domain. */
+  siteProfiles?: Record<string, { name: string; description: string; industry: string }>;
   branding: TenantBranding;
   /** Identity providers brokered for this tenant (aliases only, never secrets). */
   identityProviders: string[];

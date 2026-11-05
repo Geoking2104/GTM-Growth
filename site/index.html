@@ -91,13 +91,6 @@
   ]
 }
 </script>
-<script type="text/javascript">
-    (function(c,l,a,r,i,t,y){
-        c[a]=c[a]||function(){(c[a].q=c[a].q||[]).push(arguments)};
-        t=l.createElement(r);t.async=1;t.src="https://www.clarity.ms/tag/"+i;
-        y=l.getElementsByTagName(r)[0];y.parentNode.insertBefore(t,y);
-    })(window, document, "clarity", "script", "z8ln1th2sn");
-</script>
 </head>
 <body>
 <a class="skip-link" href="#main">Skip to content</a>
@@ -108,15 +101,10 @@
       <img src="assets/logo-128.png" alt="" width="32" height="32">
       <span>GTM&nbsp;Growth</span>
     </a>
-    <nav class="nav" aria-label="Primary">
-      <a href="#how">How it works</a>
-      <a href="#tools">Tools</a>
-      <a href="#toolkit">Toolkit</a>
-      <a href="#console">Console</a>
-      <a href="#proof">Proof</a>
-      <a href="#plans">Plans</a>
-      <a href="#faq">FAQ</a>
-      <a class="nav-gh" href="https://github.com/Geoking2104/GTM-Growth">GitHub</a>
+    <nav class="nav" aria-label="Main navigation">
+      <details class="nav-menu"><summary>Tools</summary><div class="nav-dropdown"><a href="#tools"><strong>Free tools</strong><span>Read and analyze a website</span></a><a href="#toolkit"><strong>GEO toolkit</strong><span>Improve AI search signals</span></a><a href="#console"><strong>Console</strong><span>Track and act on your data</span></a></div></details>
+      <details class="nav-menu"><summary>Resources</summary><div class="nav-dropdown"><a href="#how"><strong>Getting started</strong><span>From URL to action plan</span></a><a href="#faq"><strong>Frequently asked questions</strong><span>How the service works</span></a><a href="https://github.com/Geoking2104/GTM-Growth"><strong>Documentation</strong><span>Guides and source code</span></a></div></details>
+      <a href="#plans">Pricing</a>
     </nav>
     <div class="lang" role="group" aria-label="Language">
       <a href="./" hreflang="en" aria-current="true">EN</a>
@@ -808,6 +796,7 @@ npm run cli -- geo-report --url https://acme.com --out report.pdf</code></pre>
             <label for="lead-company">Company</label>
             <input id="lead-company" name="company" type="text" tabindex="-1" autocomplete="off">
           </div>
+          <p class="fineprint">Your details are used to respond to your request. <a href="./privacy.html">Privacy and your rights</a>.</p>
           <button class="btn" type="submit">Request the report</button>
           <p class="hint" id="lead-status" role="status" aria-live="polite"></p>
           <p class="fineprint">Sent directly from this page — no mail client opens. We reply within one business day.</p>
@@ -916,11 +905,10 @@ npm run cli -- geo-audit --url https://acme.com</code></pre>
         <p>Open-source MCP server for GA4, GTM, Search Console and AI-search readiness.</p>
       </div>
     </div>
-    <nav aria-label="Footer">
-      <a href="https://github.com/Geoking2104/GTM-Growth">Repository</a>
-      <a href="https://github.com/Geoking2104/GTM-Growth/blob/main/docs/GEO.md">GEO docs</a>
-      <a href="https://github.com/Geoking2104/GTM-Growth/blob/main/docs/GTM_IMPLEMENTATION.md">GTM guide</a>
-      <a href="https://github.com/Geoking2104/GTM-Growth/blob/main/LICENSE">Apache-2.0</a>
+    <nav class="footer-nav" aria-label="Footer">
+      <div><strong>Product</strong><a href="#tools">Tools</a><a href="#toolkit">Toolkit</a><a href="#console">Console</a><a href="#plans">Pricing</a></div>
+      <div><strong>Resources</strong><a href="#how">How it works</a><a href="#measurement">Measurement</a><a href="#proof">Evidence</a><a href="#faq">FAQ</a><a href="https://github.com/Geoking2104/GTM-Growth">GitHub</a><a href="https://github.com/Geoking2104/GTM-Growth/blob/main/docs/GEO.md">GEO documentation</a></div>
+      <div><strong>Information</strong><a href="#talk">Contact</a><a href="./privacy.html">Privacy and legal notice</a><button type="button" class="privacy-settings">Privacy preferences</button><a href="https://github.com/Geoking2104/GTM-Growth/blob/main/LICENSE">Apache-2.0 license</a></div>
     </nav>
   </div>
   <div class="wrap fineprint">
@@ -928,6 +916,7 @@ npm run cli -- geo-audit --url https://acme.com</code></pre>
   </div>
 </footer>
 
+<script src="./privacy.js" defer></script>
 <script type="module" src="app.js"></script>
 </body>
 </html>

@@ -1004,3 +1004,33 @@ details[open] summary::after { content: "–"; }
   overflow-x: auto;
 }
 code { overflow-wrap: anywhere; }
+
+/* Header menus, footer and privacy preferences use the existing brand tokens. */
+.nav-menu { position: relative; }
+.nav-menu summary { list-style: none; cursor: pointer; color: var(--ink-2); font-size: .9rem; font-weight: 500; padding: .5rem 0; }
+.nav-menu summary::-webkit-details-marker { display: none; }
+.nav-menu summary::after { content: "⌄"; margin-left: .35rem; color: var(--muted); }
+.nav-menu[open] summary { color: var(--brand); }
+.nav-dropdown { position: absolute; top: 100%; left: -1rem; width: 19rem; padding: .5rem; background: var(--surface); border: 1px solid var(--line); border-radius: var(--radius); box-shadow: var(--shadow-md); }
+.nav-dropdown a { display: grid; gap: .2rem; padding: .7rem; border-radius: var(--radius-sm); }
+.nav-dropdown a:hover, .nav-dropdown a:focus-visible { background: var(--bg-2); }
+.nav-dropdown a span { color: var(--muted); font-size: .78rem; font-weight: 400; }
+.footer-nav { display: grid; grid-template-columns: repeat(3, minmax(8rem, 1fr)); gap: 2rem; }
+.footer-nav div { display: grid; align-content: start; gap: .65rem; }
+.footer-nav strong { color: var(--night-ink); }
+.privacy-settings { padding: 0; border: 0; background: none; color: inherit; text-align: left; font: inherit; cursor: pointer; }
+.privacy-settings:hover { text-decoration: underline; }
+.privacy-banner { position: fixed; z-index: 100; right: 1rem; bottom: 1rem; width: min(28rem, calc(100vw - 2rem)); padding: 1.25rem; background: var(--surface); color: var(--ink); border: 1px solid var(--line); border-radius: var(--radius); box-shadow: var(--shadow-md); }
+.privacy-banner p { margin: .55rem 0; font-size: .9rem; color: var(--ink-2); }
+.privacy-actions { display: flex; gap: .7rem; flex-wrap: wrap; margin-top: 1rem; }
+.legal-main { max-width: 52rem; margin: 0 auto; padding: 4rem 1.5rem 6rem; }
+.legal-main h1 { margin-bottom: .8rem; }
+.legal-main h2 { margin-top: 2rem; font-size: 1.25rem; }
+.legal-main p, .legal-main li { color: var(--ink-2); }
+@media (max-width: 760px) {
+  .header-inner { flex-wrap: wrap; gap: .5rem 1rem; padding-block: .65rem; }
+  .header-inner .brand { margin-right: auto; }
+  .header-inner .nav { display: flex; order: 3; flex-basis: 100%; margin-left: 0; justify-content: space-between; }
+  .nav-dropdown { width: min(19rem, calc(100vw - 2rem)); }
+  .footer-nav { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+}

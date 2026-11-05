@@ -41,6 +41,8 @@ import { phase3Routes } from "./phase3.js";
 import { analyticsRoutes } from "./analytics.js";
 import { gtmRoutes } from "./gtm-console.js";
 import { withCredential } from "../auth/service-account.js";
+import { fetchPublicPage } from "../http/public-fetch.js";
+import { analyzePositioning } from "../geo/positioning.js";
 
 import { str, num, type Body, type ConsoleRoute } from "./util.js";
 export type { ConsoleRoute, Handler } from "./util.js";
@@ -48,13 +50,30 @@ export type { ConsoleRoute, Handler } from "./util.js";
 /** Phase 1 routes: Sitemap, GEO, Performance. */
 export const phase1Routes: ConsoleRoute[] = [
   {
+    path: "/onboarding/profile",
+    handler: async ({ url }) => {
+      const page = await fetchPublicPage(url);
+      if (!page.ok) throw new Error(`HTTP ${page.status}`);
+      const doc = HtmlDoc.parse(page.body);
+      return { url: page.url, name: doc.metaByProperty("og:site_name")?.attrs.content?.trim() || "", title: doc.title() || "", description: doc.metaByName("description")?.attrs.content?.trim() || "" };
+    },
+  },
+  {
+    path: "/geo/positioning",
+    handler: async ({ url, body }) => {
+      const competitors = body.competitors;
+      if (!Array.isArray(competitors) || competitors.length < 1 || competitors.length > 5 || competitors.some((item) => typeof item !== "string" || item.length > 2048)) throw new Error("Provide 1 to 5 competitor URLs");
+      return analyzePositioning({ url, competitors, fetcher: fetchPublicPage });
+    },
+  },
+  {
     // Vue d'ensemble : même charge utile que l'outil MCP analysis-board (audit GEO,
     // préparation par moteur, citabilité, IndexNow) pour le tableau de bord de la console.
     path: "/overview",
     handler: async ({ url, body }) => {
-      const audit = await runGeoAudit({ url });
+      const audit = await runGeoAudit({ url, fetcher: fetchPublicPage });
       const platforms = buildPlatformReadiness(audit);
-      const citability = await runCitability({ url: audit.finalUrl }).catch(() => undefined);
+      const citability = await runCitability({ url: audit.finalUrl, fetcher: fetchPublicPage }).catch(() => undefined);
       const host = new URL(audit.finalUrl).hostname;
       const indexnow = await auditIndexNow({ host, https: audit.finalUrl.startsWith("https:"), audit, key: str(body.indexnowKey) ?? null });
       const board = buildAnalysisBoard({ audit, platforms, citability, indexnow });
@@ -205,7 +224,7 @@ async function scopeRequest(route: ConsoleRoute, body: Body, tenancy: TenantCont
   return { url };
 }
 
-const publicTenant = (t: Tenant) => ({ id: t.id, name: t.name, mode: t.mode, domains: t.domains, gscProperties: t.gscProperties, ga4Properties: t.ga4Properties ?? [], bingSites: t.bingSites ?? [], gtmContainers: t.gtmContainers ?? [], clarityProjects: t.clarityProjects ?? [], bingKeyConfigured: Boolean(t.bingApiKey), emailDomains: t.emailDomains, branding: t.branding, identityProviders: t.identityProviders, status: t.status });
+const publicTenant = (t: Tenant) => ({ id: t.id, name: t.name, mode: t.mode, domains: t.domains, gscProperties: t.gscProperties, ga4Properties: t.ga4Properties ?? [], bingSites: t.bingSites ?? [], gtmContainers: t.gtmContainers ?? [], clarityProjects: t.clarityProjects ?? [], bingKeyConfigured: Boolean(t.bingApiKey), emailDomains: t.emailDomains, branding: t.branding, siteProfiles: t.siteProfiles ?? {}, usageType: t.usageType ?? null, watchedQueries: t.watchedQueries ?? {}, identityProviders: t.identityProviders, status: t.status });
 
 export function buildConsoleRouter(routes: ConsoleRoute[], options: ConsoleOptions = {}): Router {
   const router = express.Router();
@@ -266,7 +285,24 @@ export function buildConsoleRouter(routes: ConsoleRoute[], options: ConsoleOptio
     if (bingList?.some((x) => !/^https?:\/\//.test(x))) return fail(res, 400, "Site Bing invalide (URL https://…/).");
     const bingKey = typeof body.bingApiKey === "string" ? body.bingApiKey.trim() : undefined;
     if (bingKey && !/^[A-Za-z0-9]{16,64}$/.test(bingKey)) return fail(res, 400, "Clé API Bing invalide.");
-    const updated = store.upsert({ ...t, ga4Properties: ga4List ?? t.ga4Properties, bingSites: bingList ?? t.bingSites, gtmContainers: gtmList ?? t.gtmContainers, clarityProjects: clarityList ?? t.clarityProjects, bingApiKey: bingKey === undefined ? t.bingApiKey : bingKey || undefined, domains: list(body.domains) ?? t.domains, gscProperties: list(body.gscProperties) ?? t.gscProperties, branding: { ...t.branding, ...(color ? { primaryColor: color } : {}), ...(logo ? { logoUrl: logo } : {}), ...(str(branding.displayName) ? { displayName: str(branding.displayName) } : {}) } });
+    let usageType = t.usageType;
+    if (body.usageType !== undefined) {
+      if (body.usageType !== "company" && body.usageType !== "agency") return fail(res, 400, "Usage invalide.");
+      usageType = body.usageType;
+    }
+    let watchedQueries = t.watchedQueries;
+    if (body.watchedQueries !== undefined) {
+      const selection = body.watchedQueries as Record<string, unknown>;
+      if (!selection || typeof selection !== "object" || Array.isArray(selection) || typeof selection.property !== "string" || !t.gscProperties.includes(selection.property) || !Array.isArray(selection.queries) || selection.queries.length > 10 || selection.queries.some((q) => typeof q !== "string" || !q.trim() || q.length > 200)) return fail(res, 400, "Sélection de requêtes invalide.");
+      watchedQueries = { ...t.watchedQueries, [selection.property]: [...new Set((selection.queries as string[]).map((q) => q.trim()))] };
+    }
+    let siteProfiles = t.siteProfiles;
+    if (body.siteProfile !== undefined) {
+      const profile = body.siteProfile as Record<string, unknown>;
+      if (!profile || typeof profile !== "object" || Array.isArray(profile) || typeof profile.domain !== "string" || !t.domains.includes(profile.domain) || [profile.name, profile.description, profile.industry].some((v) => typeof v !== "string") || String(profile.name).length > 200 || String(profile.description).length > 500 || String(profile.industry).length > 200) return fail(res, 400, "Profil du site invalide.");
+      siteProfiles = { ...t.siteProfiles, [profile.domain]: { name: String(profile.name).trim(), description: String(profile.description).trim(), industry: String(profile.industry).trim() } };
+    }
+    const updated = store.upsert({ ...t, usageType, watchedQueries, siteProfiles, ga4Properties: ga4List ?? t.ga4Properties, bingSites: bingList ?? t.bingSites, gtmContainers: gtmList ?? t.gtmContainers, clarityProjects: clarityList ?? t.clarityProjects, bingApiKey: bingKey === undefined ? t.bingApiKey : bingKey || undefined, domains: list(body.domains) ?? t.domains, gscProperties: list(body.gscProperties) ?? t.gscProperties, branding: { ...t.branding, ...(color ? { primaryColor: color } : {}), ...(logo ? { logoUrl: logo } : {}), ...(str(branding.displayName) ? { displayName: str(branding.displayName) } : {}) } });
     return res.json({ tenant: publicTenant(updated) });
   });
   router.post("/tenant/users", async (req, res) => {

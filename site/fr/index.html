@@ -92,13 +92,6 @@
   ]
 }
 </script>
-<script type="text/javascript">
-    (function(c,l,a,r,i,t,y){
-        c[a]=c[a]||function(){(c[a].q=c[a].q||[]).push(arguments)};
-        t=l.createElement(r);t.async=1;t.src="https://www.clarity.ms/tag/"+i;
-        y=l.getElementsByTagName(r)[0];y.parentNode.insertBefore(t,y);
-    })(window, document, "clarity", "script", "z8ln1th2sn");
-</script>
 </head>
 <body>
 <a class="skip-link" href="#main">Aller au contenu</a>
@@ -109,15 +102,10 @@
       <img src="../assets/logo-128.png" alt="" width="32" height="32">
       <span>GTM&nbsp;Growth</span>
     </a>
-    <nav class="nav" aria-label="Primary">
-      <a href="#how">Fonctionnement</a>
-      <a href="#tools">Outils</a>
-      <a href="#toolkit">Toolkit</a>
-      <a href="#console">Console</a>
-      <a href="#proof">Preuves</a>
-      <a href="#plans">Offres</a>
-      <a href="#faq">FAQ</a>
-      <a class="nav-gh" href="https://github.com/Geoking2104/GTM-Growth">GitHub</a>
+    <nav class="nav" aria-label="Navigation principale">
+      <details class="nav-menu"><summary>Outils</summary><div class="nav-dropdown"><a href="#tools"><strong>Outils gratuits</strong><span>Lire et analyser un site</span></a><a href="#toolkit"><strong>Toolkit GEO</strong><span>Optimiser les signaux pour l’IA</span></a><a href="#console"><strong>Console</strong><span>Suivre et agir sur vos données</span></a></div></details>
+      <details class="nav-menu"><summary>Ressources</summary><div class="nav-dropdown"><a href="#how"><strong>Premiers pas</strong><span>De l’URL au plan d’action</span></a><a href="#faq"><strong>Questions fréquentes</strong><span>Comprendre le fonctionnement</span></a><a href="https://github.com/Geoking2104/GTM-Growth"><strong>Documentation</strong><span>Guides et code source</span></a></div></details>
+      <a href="#plans">Prix</a>
     </nav>
     <div class="lang" role="group" aria-label="Langue">
       <a href="../" hreflang="en">EN</a>
@@ -811,6 +799,7 @@ npm run cli -- geo-report --url https://acme.com --out rapport.pdf</code></pre>
             <label for="lead-company">Société</label>
             <input id="lead-company" name="company" type="text" tabindex="-1" autocomplete="off">
           </div>
+          <p class="fineprint">Vos données servent à répondre à votre demande. <a href="./confidentialite.html">Confidentialité et droits</a>.</p>
           <button class="btn" type="submit">Demander le rapport</button>
           <p class="hint" id="lead-status" role="status" aria-live="polite"></p>
           <p class="fineprint">Envoyé directement depuis cette page — aucun client mail ne s’ouvre. Réponse sous un jour ouvré.</p>
@@ -919,11 +908,10 @@ npm run cli -- geo-audit --url https://acme.com</code></pre>
         <p>Serveur MCP open source pour GA4, GTM, Search Console et la lisibilité par les moteurs IA.</p>
       </div>
     </div>
-    <nav aria-label="Pied de page">
-      <a href="https://github.com/Geoking2104/GTM-Growth">Dépôt</a>
-      <a href="https://github.com/Geoking2104/GTM-Growth/blob/main/docs/GEO.md">Docs GEO</a>
-      <a href="https://github.com/Geoking2104/GTM-Growth/blob/main/docs/GTM_IMPLEMENTATION.md">Guide GTM</a>
-      <a href="https://github.com/Geoking2104/GTM-Growth/blob/main/LICENSE">Apache-2.0</a>
+    <nav class="footer-nav" aria-label="Pied de page">
+      <div><strong>Produit</strong><a href="#tools">Outils</a><a href="#toolkit">Toolkit</a><a href="#console">Console</a><a href="#plans">Prix</a></div>
+      <div><strong>Ressources</strong><a href="#how">Fonctionnement</a><a href="#measurement">Mesure</a><a href="#proof">Preuves</a><a href="#faq">FAQ</a><a href="https://github.com/Geoking2104/GTM-Growth">GitHub</a><a href="https://github.com/Geoking2104/GTM-Growth/blob/main/docs/GEO.md">Documentation GEO</a></div>
+      <div><strong>Informations</strong><a href="#talk">Contact</a><a href="./confidentialite.html">Confidentialité et mentions légales</a><button type="button" class="privacy-settings">Préférences de confidentialité</button><a href="https://github.com/Geoking2104/GTM-Growth/blob/main/LICENSE">Licence Apache-2.0</a></div>
     </nav>
   </div>
   <div class="wrap fineprint">
@@ -931,6 +919,7 @@ npm run cli -- geo-audit --url https://acme.com</code></pre>
   </div>
 </footer>
 
+<script src="../privacy.js" defer></script>
 <script type="module" src="../app.js"></script>
 </body>
 </html>

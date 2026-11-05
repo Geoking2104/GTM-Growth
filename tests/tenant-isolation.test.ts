@@ -90,6 +90,34 @@ describe("isolation stricte entre tenants", () => {
     expect((await call("/c/echo", acmeUser, { ga4Property: "123456" })).status).toBe(200);
     expect((await call("/c/tenant/settings", acmeAdmin, { ga4Properties: ["abc"] })).status).toBe(400);
   });
+  it("protège les profils partagés par tenant et par domaine", async () => {
+    const profile = { domain: "acme.fr", name: "ACME", description: "Description", industry: "Commerce" };
+    expect((await call("/c/tenant/settings", acmeUser, { siteProfile: profile })).status).toBe(403);
+    expect((await call("/c/tenant/settings", acmeAdmin, { siteProfile: { ...profile, domain: "globex.com" } })).status).toBe(400);
+    expect((await call("/c/tenant/settings", acmeAdmin, { siteProfile: profile })).status).toBe(200);
+    expect((await (await call("/c/me", acmeUser)).json()).tenant.siteProfiles["acme.fr"]).toMatchObject({ name: "ACME", industry: "Commerce" });
+    expect((await (await call("/c/me", superAdmin, undefined, { "X-Tenant": "globex" })).json()).tenant.siteProfiles).toEqual({});
+  });
+  it("segmente le client sans modifier ses autorisations", async () => {
+    expect((await call("/c/tenant/settings", acmeUser, { usageType: "agency" })).status).toBe(403);
+    expect((await call("/c/tenant/settings", acmeAdmin, { usageType: "invalid" })).status).toBe(400);
+    expect((await call("/c/tenant/settings", acmeAdmin, { usageType: "agency" })).status).toBe(200);
+    const me = await (await call("/c/me", acmeUser)).json();
+    expect(me.tenant.usageType).toBe("agency");
+    expect((await call("/c/me", acmeUser, undefined, { "X-Tenant": "globex" })).status).toBe(403);
+  });
+  it("limite les requêtes suivies à une propriété autorisée et dix valeurs", async () => {
+    const watchedQueries = { property: "sc-domain:acme", queries: ["audit geo", "seo"] };
+    expect((await call("/c/tenant/settings", acmeUser, { watchedQueries })).status).toBe(403);
+    expect((await call("/c/tenant/settings", acmeAdmin, { watchedQueries: { ...watchedQueries, property: "sc-domain:globex" } })).status).toBe(400);
+    expect((await call("/c/tenant/settings", acmeAdmin, { watchedQueries: { ...watchedQueries, queries: Array.from({ length: 11 }, (_, i) => `q${i}`) } })).status).toBe(400);
+    expect((await call("/c/tenant/settings", acmeAdmin, { watchedQueries })).status).toBe(200);
+    expect((await (await call("/c/me", acmeUser)).json()).tenant.watchedQueries["sc-domain:acme"]).toEqual(["audit geo", "seo"]);
+    expect((await (await call("/c/me", superAdmin, undefined, { "X-Tenant": "globex" })).json()).tenant.watchedQueries).toEqual({});
+  });
+  it("refuse le provisionnement de plateforme aux utilisateurs de tenant", async () => {
+    expect((await call("/p/tenants", acmeAdmin, {})).status).toBe(403);
+  });
   it("refuse un en-tête X-Tenant usurpé", async () => {
     expect((await call("/c/me", acmeUser, undefined, { "X-Tenant": "globex" })).status).toBe(403);
   });

@@ -19,6 +19,7 @@ import { lookup } from "node:dns/promises";
 import { isIP } from "node:net";
 import { appendLead, validateLead } from "../leads/store.js";
 import { runFreeRead } from "../freeread/index.js";
+import { fetchPublicPage } from "./public-fetch.js";
 import { logger } from "../utils/logger.js";
 
 const CACHE_TTL_MS = 10 * 60_000;
@@ -163,7 +164,7 @@ export function mountPublicApi(app: Express): void {
     }
 
     try {
-      const result = await runFreeRead({ url: check.url, timeoutMs: 12_000 });
+      const result = await runFreeRead({ url: check.url, timeoutMs: 12_000, fetcher: fetchPublicPage });
       cache.set(key, { at: Date.now(), payload: result });
       if (cache.size > 500) cache.clear();
       return res.json(result);

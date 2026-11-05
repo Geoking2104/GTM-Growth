@@ -95,3 +95,26 @@ a.app-side-foot { text-decoration: none; color: inherit; margin-top: auto; }
 /* IndexNow key generator (local) */
 .c-keygen .ink-mini { margin: .55rem 0 .35rem; max-width: 28rem; }
 .c-keygen .ink-mini-out { max-width: 28rem; }
+
+.wizard-overlay { position: fixed; inset: 0; z-index: 1000; background: #f5f6fb; overflow: auto; padding: 32px 20px; }
+.wizard-panel { max-width: 820px; margin: 0 auto; background: white; border: 1px solid #e1e5ee; border-radius: 16px; padding: 32px; box-shadow: 0 12px 48px #1b245216; }
+.wizard-top, .wizard-actions { display: flex; align-items: center; justify-content: space-between; gap: 12px; }
+.wizard-top { color: #58647a; font-size: .8rem; font-weight: 700; letter-spacing: .08em; }
+.wizard-link { border: 0; background: none; color: #4f5bd5; cursor: pointer; }
+.wizard-content { padding: 16px 0 24px; }
+.wizard-content .c-field { max-width: 640px; }
+.wizard-actions { border-top: 1px solid #e1e5ee; padding-top: 20px; justify-content: flex-end; flex-wrap: wrap; }
+.wizard-actions button:disabled { opacity: .5; cursor: not-allowed; }
+.wizard-score { font-size: 2rem; font-weight: 700; color: #4f5bd5; }
+.wizard-agent { margin: 20px 0; }
+.wizard-prompt { white-space: pre-wrap; overflow-wrap: anywhere; background: #f4f5fa; border-radius: 8px; padding: 14px; font: inherit; }
+@media (max-width: 600px) { .wizard-overlay { padding: 0; } .wizard-panel { border: 0; border-radius: 0; min-height: 100vh; padding: 20px; } }
+.tracked-list { list-style: none; padding: 0; max-height: 440px; overflow: auto; }
+.tracked-list li { padding: 8px 0; border-bottom: 1px solid #e1e5ee; }
+.tracked-list li p { margin: 3px 0 0 24px; }
+.tracked-queries button { margin: 8px 12px 0 0; }
+.wizard-choice { display: flex; gap: 14px; align-items: flex-start; padding: 16px; margin: 12px 0; border: 1px solid #d9dfeb; border-radius: 10px; cursor: pointer; }
+.wizard-choice p { margin: 4px 0 0; }
+.platform-setup button { margin: 8px 12px 0 0; }
+.platform-setup dl { display: grid; grid-template-columns: max-content 1fr; gap: 8px 20px; }
+.platform-setup dd { margin: 0; overflow-wrap: anywhere; }
