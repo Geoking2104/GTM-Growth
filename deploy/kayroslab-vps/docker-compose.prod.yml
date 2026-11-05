@@ -79,7 +79,7 @@ services:
       KC_FEATURES: organization
     volumes:
       - ./keycloak/realm-gtm-growth.json:/opt/keycloak/data/import/realm-gtm-growth.json:ro
-      - ./keycloak/themes/gtm-growth:/opt/keycloak/themes/gtm-growth:ro
+      - ./keycloak/themes:/opt/keycloak/themes:ro
     ports:
       # Public only through Nginx (auth.kayroslab.com).
       - "127.0.0.1:8180:8080"

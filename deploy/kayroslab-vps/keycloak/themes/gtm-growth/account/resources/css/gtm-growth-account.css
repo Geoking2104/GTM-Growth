@@ -1,0 +1,10 @@
+/* Account console (keycloak.v3) — light GTM Growth branding */
+:root {
+  --pf-v5-global--primary-color--100: #2563eb;
+  --pf-v5-global--primary-color--200: #1d4fd8;
+  --pf-v5-global--link--Color: #2563eb;
+  --pf-v5-global--FontFamily--text: "Inter", "Segoe UI", system-ui, -apple-system, "Helvetica Neue", Arial, sans-serif;
+  --pf-v5-global--FontFamily--heading: "Inter", "Segoe UI", system-ui, -apple-system, "Helvetica Neue", Arial, sans-serif;
+}
+body { font-family: "Inter", "Segoe UI", system-ui, -apple-system, "Helvetica Neue", Arial, sans-serif; }
+.pf-v5-c-button.pf-m-primary { background-color: #2563eb !important; border-radius: 999px !important; }

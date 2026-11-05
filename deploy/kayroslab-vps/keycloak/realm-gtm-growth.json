@@ -141,5 +141,6 @@
       "name": "tenants",
       "subGroups": []
     }
-  ]
+  ],
+  "accountTheme": "gtm-growth"
 }
