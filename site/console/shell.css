@@ -91,3 +91,40 @@ a.app-side-foot { text-decoration: none; color: inherit; margin-top: auto; }
 .onboarding-list li.is-done a { color: var(--app-muted); }
 .kpi-help { font-size: .74rem; color: var(--app-muted); margin: .35rem 0 0; line-height: 1.35; }
 @media (max-width: 720px) { .onboarding-list { grid-template-columns: 1fr; } }
+
+/* Wizard « Démarrage guidé » : plein écran, distraction-free */
+.wiz-overlay { position: fixed; inset: 0; z-index: 60; background: #f3f4f7; overflow-y: auto; }
+.wiz { max-width: 560px; margin: 0 auto; padding: 1.6rem 1.2rem 3rem; display: flex; flex-direction: column; min-height: 100%; }
+.wiz-head { display: flex; justify-content: space-between; align-items: center; }
+.wiz-brand { font-weight: 700; font-size: .95rem; color: var(--app-2); }
+.wiz-exit { font: inherit; font-size: .8rem; background: none; border: 0; color: var(--app-muted); cursor: pointer; padding: .3rem .4rem; }
+.wiz-exit:hover { color: var(--app-2); text-decoration: underline; }
+.wiz-step { margin: 2.2rem 0 0; font-size: .68rem; font-weight: 700; letter-spacing: .08em; color: var(--app-accent); }
+.wiz-title { margin: .3rem 0 0; font-size: 1.45rem; }
+.wiz-lead { margin: .5rem 0 0; color: var(--app-muted); font-size: .9rem; line-height: 1.45; }
+.wiz-body { margin-top: 1.2rem; display: grid; gap: .8rem; flex: 1; }
+.wiz-field { display: grid; gap: .7rem; align-content: start; }
+.wiz-field label { display: grid; gap: .3rem; font-size: .78rem; font-weight: 600; color: var(--app-muted); align-content: start; }
+.wiz-field input, .wiz-field textarea { font: inherit; font-size: .95rem; padding: .65rem .7rem; border: 1px solid var(--app-line); border-radius: 10px; background: #fff; color: var(--app-ink); }
+.wiz-note { font-size: .8rem; color: var(--app-muted); margin: 0; line-height: 1.45; }
+.wiz-error { font-size: .84rem; color: var(--app-red); margin: .4rem 0 0; }
+.wiz-nav { display: flex; gap: .7rem; margin-top: 1.6rem; }
+.wiz-nav .wiz-btn { flex: 1; justify-content: center; }
+.wiz-btn { font: inherit; font-size: .9rem; padding: .7rem 1rem; border-radius: 10px; border: 1px solid var(--app-line); background: #fff; color: var(--app-2); cursor: pointer; display: inline-flex; align-items: center; justify-content: center; height: auto; }
+.wiz-btn:disabled { opacity: .45; cursor: not-allowed; }
+.wiz-btn-primary { background: var(--app-accent); border-color: var(--app-accent); color: #fff; }
+.wiz-btn-skip { background: transparent; border-style: dashed; color: var(--app-muted); }
+.wiz-access { display: grid; gap: .6rem; }
+.wiz-access-line { display: flex; flex-wrap: wrap; align-items: baseline; gap: .5rem; padding: .7rem .8rem; border: 1px solid var(--app-line); border-radius: 10px; background: #fff; }
+.wiz-access-line.is-ok { border-color: #0f9d58; }
+.wiz-access-line strong { font-size: .9rem; }
+.wiz-how { flex-basis: 100%; font-size: .76rem; color: var(--app-muted); line-height: 1.4; }
+.wiz-chips { display: flex; flex-wrap: wrap; gap: .45rem; }
+.wiz-chip { display: inline-flex; align-items: center; gap: .4rem; border: 1px solid var(--app-line); background: #fff; border-radius: 999px; padding: .3rem .7rem; font-size: .8rem; }
+.wiz-chip button { border: 0; background: none; cursor: pointer; font-size: .95rem; color: var(--app-muted); padding: 0; }
+.wiz-expect { margin: 0; padding-left: 1.15rem; font-size: .86rem; color: var(--app-2); display: grid; gap: .35rem; line-height: 1.45; }
+.wiz-result { display: grid; gap: .6rem; }
+.wiz-score-row { margin: 0; display: flex; align-items: baseline; gap: .5rem; font-size: .9rem; }
+.wiz-score { font-size: 2rem; font-variant-numeric: tabular-nums; color: var(--app-accent); }
+.wiz-prompt { margin: 0; padding: .9rem; border: 1px solid var(--app-line); border-radius: 10px; background: #fff; font-size: .8rem; white-space: pre-wrap; word-break: break-word; color: var(--app-2); }
+.wiz-body h3 { margin: .6rem 0 0; font-size: 1.05rem; }

@@ -7,7 +7,8 @@ import { el } from "./render.js";
 import { t, tr, actionLabel, LANG } from "./i18n.js";
 import { icon } from "./icons.js";
 import { renderOverview, renderPlan, renderIndexNow } from "./overview.js";
-import { renderOnboarding } from "./onboarding.js";
+import { renderOnboarding, agentPromptBlock } from "./onboarding.js";
+import { wizardNeeded, mountWizard, wizardRedo } from "./onboarding-wizard.js";
 import { toolbar, renderSearchPerformance, renderQueryPages, renderSitemaps, renderGa4, renderRealtime, renderEcommerce, renderTechnology, renderGtm, renderBing, renderStatus, renderTags, renderSettings } from "./analytics.js";
 
 const $ = (s) => document.querySelector(s);
@@ -47,7 +48,7 @@ const fromTool = (id, filter = () => true, intro) => () => { const x = tool(id);
 const SECTIONS = {
   track: [
     { id: "overview", icon: "overview", build: () => custom("overview", [
-      { id: "board", label: t("s_overview"), async: async () => { const [ov, status, reports] = await Promise.all([overview().catch(() => null), api("/tracking/status", scope()).catch(() => null), reportsList()]); return [renderOnboarding({ status, tenant: state.me?.tenant, overview: ov, reports }), ...(ov ? renderOverview(ov) : [])]; } },
+      { id: "board", label: t("s_overview"), async: async () => { const [ov, status, reports] = await Promise.all([overview().catch(() => null), api("/tracking/status", scope()).catch(() => null), reportsList()]); return [renderOnboarding({ status, tenant: state.me?.tenant, overview: ov, reports }, { onRedo: () => { wizardRedo(); location.reload(); } }), agentPromptBlock(), ...(ov ? renderOverview(ov) : [])]; } },
       { id: "plan", label: t("t_plan"), async: async () => renderPlan(await overview()) }]) },
     { id: "gsc", icon: "google", build: () => custom("gsc", [
       { id: "performance", label: t("t_gscPerf"), ...live("/search/performance", renderSearchPerformance, { searchType: true }) },
@@ -261,6 +262,13 @@ async function start() {
     picker.hidden = true; sw.setAttribute("aria-expanded", "false"); refreshSite(); show(current.section, current.tab);
   };
   refreshSite(); mountNav();
+  if (wizardNeeded(state.me)) {
+    mountWizard({
+      api, state, scope, saveSettings, me: state.me,
+      saveUrl: (u) => { state.url = u; localStorage.setItem("gtm-console-url", u); refreshSite(); },
+      onExit: () => { state.overview = null; state.overviewFor = ""; show(current.section, current.tab); },
+    });
+  }
   const [s, tb] = location.hash.slice(1).split("/");
   if (!state.url) { picker.hidden = false; sw.setAttribute("aria-expanded", "true"); }
   show(s || "overview", tb);

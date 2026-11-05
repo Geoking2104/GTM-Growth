@@ -4,6 +4,10 @@
 
 ### Added
 
+- **Guided onboarding wizard** (console, first sign-in): full-screen 5-step setup inspired by geoptie.com/app/onboarding and rea.tools/get-started — domain (tenant-scoped), brand profile pre-filled from the real homepage (JSON-LD name → og:site_name, meta description, lang, schema types; no LLM, no paid API), live access check with binary criteria (at least one of GSC/GA4 `hasAccess: true`, or explicit "Later"), 0–5 competitors saved to tenant settings, first GEO audit with the expected result announced up front, and a final "Copy this prompt into your agent" block (MCP). The existing 8-step checklist stays as the permanent reminder, now with "Run setup again".
+- **`POST /api/console/onboarding/profile`**: reads the tenant homepage once and returns the brand profile used by step 2 (same SSRF guard as every console route).
+- **Tenant `competitors`** (max 5, https URLs): stored in the tenant registry, editable via `PUT /api/console/tenant/settings` (tenant-admin), exposed through `/me`; validated like every other tenant field.
+
 - **Keycloak multi-tenant for GTM Growth clients**:
   - Keycloak 26 Organizations, one per client, in the shared realm `gtm-growth`, with an optional dedicated realm `tenant-<id>`.
   - Tenant resolved from the token (`organization` claim plus `/tenants/<id>/<role>` groups, or the issuer for dedicated realms).

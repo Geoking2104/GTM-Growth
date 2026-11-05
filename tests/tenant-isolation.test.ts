@@ -90,6 +90,15 @@ describe("isolation stricte entre tenants", () => {
     expect((await call("/c/echo", acmeUser, { ga4Property: "123456" })).status).toBe(200);
     expect((await call("/c/tenant/settings", acmeAdmin, { ga4Properties: ["abc"] })).status).toBe(400);
   });
+  it("valide et cloisonne les concurrents du démarrage guidé", async () => {
+    const ok = await call("/c/tenant/settings", acmeAdmin, { competitors: ["https://rival1.fr/", "https://rival2.fr/"] });
+    expect(ok.status).toBe(200);
+    expect((await ok.json()).tenant).toMatchObject({ competitors: ["https://rival1.fr/", "https://rival2.fr/"] });
+    // URL invalide refusée, plus de 5 refusés, non-admin refusé.
+    expect((await call("/c/tenant/settings", acmeAdmin, { competitors: ["rival1.fr"] })).status).toBe(400);
+    expect((await call("/c/tenant/settings", acmeAdmin, { competitors: ["https://a.fr/", "https://b.fr/", "https://c.fr/", "https://d.fr/", "https://e.fr/", "https://f.fr/"] })).status).toBe(400);
+    expect((await call("/c/tenant/settings", acmeUser, { competitors: ["https://rival1.fr/"] })).status).toBe(403);
+  });
   it("refuse un en-tête X-Tenant usurpé", async () => {
     expect((await call("/c/me", acmeUser, undefined, { "X-Tenant": "globex" })).status).toBe(403);
   });

@@ -40,6 +40,7 @@ import { buildAnalysisBoard } from "../analysis/board.js";
 import { phase3Routes } from "./phase3.js";
 import { analyticsRoutes } from "./analytics.js";
 import { gtmRoutes } from "./gtm-console.js";
+import { extractOnboardingProfile } from "./onboarding-profile.js";
 import { withCredential } from "../auth/service-account.js";
 
 import { str, num, type Body, type ConsoleRoute } from "./util.js";
@@ -126,6 +127,17 @@ export const phase1Routes: ConsoleRoute[] = [
     },
   },
   { path: "/performance/weight", handler: async ({ url, body }) => measurePageWeight(url, { maxResources: num(body.maxResources, 60, 1, 150) }) },
+  {
+    // Démarrage guidé : lecture du profil de marque (étape « Vérifiez votre profil »).
+    // Analyse réelle de la page d'accueil du tenant, sans LLM : l'utilisateur corrige
+    // des valeurs lues (title, description, lang, types de schema) au lieu de saisir.
+    path: "/onboarding/profile",
+    handler: async ({ url }) => {
+      const page = await fetchQuiet(fetchText, url);
+      if (!page) throw new Error(`Impossible de joindre ${url}`);
+      return { profile: extractOnboardingProfile(HtmlDoc.parse(page.body), page.url, page.status) };
+    },
+  },
 ];
 
 export interface ConsoleOptions {
@@ -205,7 +217,7 @@ async function scopeRequest(route: ConsoleRoute, body: Body, tenancy: TenantCont
   return { url };
 }
 
-const publicTenant = (t: Tenant) => ({ id: t.id, name: t.name, mode: t.mode, domains: t.domains, gscProperties: t.gscProperties, ga4Properties: t.ga4Properties ?? [], bingSites: t.bingSites ?? [], gtmContainers: t.gtmContainers ?? [], clarityProjects: t.clarityProjects ?? [], bingKeyConfigured: Boolean(t.bingApiKey), emailDomains: t.emailDomains, branding: t.branding, identityProviders: t.identityProviders, status: t.status });
+const publicTenant = (t: Tenant) => ({ id: t.id, name: t.name, mode: t.mode, domains: t.domains, gscProperties: t.gscProperties, ga4Properties: t.ga4Properties ?? [], bingSites: t.bingSites ?? [], gtmContainers: t.gtmContainers ?? [], clarityProjects: t.clarityProjects ?? [], competitors: t.competitors ?? [], bingKeyConfigured: Boolean(t.bingApiKey), emailDomains: t.emailDomains, branding: t.branding, identityProviders: t.identityProviders, status: t.status });
 
 export function buildConsoleRouter(routes: ConsoleRoute[], options: ConsoleOptions = {}): Router {
   const router = express.Router();
@@ -264,9 +276,12 @@ export function buildConsoleRouter(routes: ConsoleRoute[], options: ConsoleOptio
     if (clarityList?.some((x) => !/^[a-z0-9]{6,16}$/i.test(x))) return fail(res, 400, "Projet Clarity invalide.");
     const bingList = list(body.bingSites);
     if (bingList?.some((x) => !/^https?:\/\//.test(x))) return fail(res, 400, "Site Bing invalide (URL https://…/).");
+    const competitorList = list(body.competitors);
+    if (competitorList?.some((x) => !/^https?:\/\//.test(x))) return fail(res, 400, "URL concurrente invalide (https://…).");
+    if (competitorList && competitorList.length > 5) return fail(res, 400, "Cinq concurrents maximum.");
     const bingKey = typeof body.bingApiKey === "string" ? body.bingApiKey.trim() : undefined;
     if (bingKey && !/^[A-Za-z0-9]{16,64}$/.test(bingKey)) return fail(res, 400, "Clé API Bing invalide.");
-    const updated = store.upsert({ ...t, ga4Properties: ga4List ?? t.ga4Properties, bingSites: bingList ?? t.bingSites, gtmContainers: gtmList ?? t.gtmContainers, clarityProjects: clarityList ?? t.clarityProjects, bingApiKey: bingKey === undefined ? t.bingApiKey : bingKey || undefined, domains: list(body.domains) ?? t.domains, gscProperties: list(body.gscProperties) ?? t.gscProperties, branding: { ...t.branding, ...(color ? { primaryColor: color } : {}), ...(logo ? { logoUrl: logo } : {}), ...(str(branding.displayName) ? { displayName: str(branding.displayName) } : {}) } });
+    const updated = store.upsert({ ...t, ga4Properties: ga4List ?? t.ga4Properties, bingSites: bingList ?? t.bingSites, gtmContainers: gtmList ?? t.gtmContainers, clarityProjects: clarityList ?? t.clarityProjects, competitors: competitorList ?? t.competitors, bingApiKey: bingKey === undefined ? t.bingApiKey : bingKey || undefined, domains: list(body.domains) ?? t.domains, gscProperties: list(body.gscProperties) ?? t.gscProperties, branding: { ...t.branding, ...(color ? { primaryColor: color } : {}), ...(logo ? { logoUrl: logo } : {}), ...(str(branding.displayName) ? { displayName: str(branding.displayName) } : {}) } });
     return res.json({ tenant: publicTenant(updated) });
   });
   router.post("/tenant/users", async (req, res) => {

@@ -34,6 +34,8 @@ export interface Tenant {
   gtmContainers?: string[];
   /** Microsoft Clarity project ids (free) used by the tenant sites. */
   clarityProjects?: string[];
+  /** Competitor websites (https URLs) the tenant benchmarks against, max 5. */
+  competitors?: string[];
   /** Google key file name (same folder as GOOGLE_APPLICATION_CREDENTIALS) to use for this tenant. Never sent to the browser. */
   googleCredential?: string;
   branding: TenantBranding;

@@ -1,6 +1,8 @@
-/* Carte « Démarrage » de la vue d'ensemble : mêmes étapes que la section #how du site. */
+/* Carte « Démarrage » de la vue d'ensemble : mêmes étapes que la section #how du site.
+ * Après le wizard, elle reste affichée en rappel permanent : chaque étape se coche
+ * à partir du statut réel. `opts.onRedo` propose de rejouer le démarrage guidé. */
 import { el } from "./render.js";
-import { LANG } from "./i18n.js";
+import { t, LANG } from "./i18n.js";
 import { onboardingSteps, onboardingProgress } from "./onboarding-steps.js";
 
 const FR = LANG === "fr";
@@ -15,7 +17,18 @@ const LABELS = {
   plan: [ "4 · Plan d’action priorisé disponible", "4 · Prioritised action plan available" ],
 };
 
-export function renderOnboarding(input) {
+export function agentPromptBlock() {
+  const card = el("section", "app-strip onboarding-card");
+  card.append(el("h3", "", t("wizAgentTitle")));
+  card.append(el("p", "c-note", t("wizAgentLead")));
+  const pre = el("pre", "wiz-prompt"); pre.textContent = t("wizAgentPrompt");
+  const copy = el("button", "wiz-btn wiz-btn-primary", FR ? "Copier le prompt" : "Copy the prompt"); copy.type = "button";
+  copy.onclick = () => { navigator.clipboard?.writeText(t("wizAgentPrompt")); copy.textContent = FR ? "Copié ✓" : "Copied ✓"; };
+  card.append(pre, copy);
+  return card;
+}
+
+export function renderOnboarding(input, opts = {}) {
   const steps = onboardingSteps(input);
   const { done, total } = onboardingProgress(steps);
   const card = el("section", "app-strip onboarding-card");
@@ -32,5 +45,10 @@ export function renderOnboarding(input) {
     const a = el("a", "", LABELS[s.id][FR ? 0 : 1]); a.href = s.href; li.append(a); ul.append(li);
   }
   card.append(ul);
+  if (opts.onRedo) {
+    const redo = el("button", "wiz-btn", t("wizRedo")); redo.type = "button";
+    redo.onclick = opts.onRedo;
+    card.append(redo);
+  }
   return card;
 }
