@@ -6,6 +6,7 @@
 
 import fs from "node:fs";
 import path from "node:path";
+import Database from "better-sqlite3";
 
 export type TenantMode = "organization" | "realm";
 export interface TenantBranding { displayName?: string; logoUrl?: string; primaryColor?: string; }
@@ -61,41 +62,76 @@ export const normalizeHost = (value: string): string => {
   try { return new URL(/^https?:\/\//.test(v) ? v : `https://${v}`).hostname.replace(/^www\./, ""); } catch { return v; }
 };
 
+const connections = new Map<string, Database.Database>();
+
+/** A local SQLite database coordinates writers on the same host. */
 export class TenantStore {
-  private cache: { mtime: number; tenants: Tenant[] } | null = null;
   constructor(private file: string = process.env.TENANTS_PATH ?? "data/tenants.json") {}
 
-  list(): Tenant[] {
-    if (!fs.existsSync(this.file)) return [];
-    const mtime = fs.statSync(this.file).mtimeMs;
-    if (this.cache?.mtime === mtime) return this.cache.tenants;
-    const tenants = JSON.parse(fs.readFileSync(this.file, "utf8")) as Tenant[];
-    this.cache = { mtime, tenants };
-    return tenants;
+  private database(): Database.Database {
+    const legacy = path.resolve(this.file);
+    const file = `${legacy}.sqlite3`;
+    const cached = connections.get(file);
+    if (cached) return cached;
+    fs.mkdirSync(path.dirname(file), { recursive: true, mode: 0o700 });
+    try { const fd = fs.openSync(file, "wx", 0o600); fs.closeSync(fd); }
+    catch (error) { if ((error as NodeJS.ErrnoException).code !== "EEXIST") throw error; }
+    const db = new Database(file, { timeout: 10000 });
+    try {
+      db.pragma("busy_timeout = 10000"); db.pragma("journal_mode = DELETE"); db.pragma("synchronous = FULL");
+      db.exec("CREATE TABLE IF NOT EXISTS tenants (id TEXT PRIMARY KEY, payload TEXT NOT NULL); CREATE TABLE IF NOT EXISTS migrations (name TEXT PRIMARY KEY)");
+      const migrate = db.transaction(() => {
+        if (db.prepare("SELECT 1 FROM migrations WHERE name = ?").get("legacy-json")) return;
+        if (fs.existsSync(legacy)) {
+          const data: unknown = JSON.parse(fs.readFileSync(legacy, "utf8"));
+          if (!Array.isArray(data)) throw new Error("Invalid tenant registry");
+          const insert = db.prepare("INSERT INTO tenants (id, payload) VALUES (?, ?)");
+          for (const tenant of data) {
+            if (!tenant || typeof tenant !== "object" || typeof tenant.id !== "string" || !validTenantId(tenant.id) || !Array.isArray(tenant.domains) || !Array.isArray(tenant.emailDomains) || !Array.isArray(tenant.gscProperties)) throw new Error("Invalid tenant registry entry");
+            insert.run(tenant.id, JSON.stringify(tenant));
+          }
+        }
+        db.prepare("INSERT INTO migrations (name) VALUES (?)").run("legacy-json");
+      });
+      migrate.immediate();
+      connections.set(file, db);
+      return db;
+    } catch (error) { db.close(); throw error; }
   }
 
-  get(id: string): Tenant | undefined { return this.list().find((t) => t.id === id); }
-
+  list(): Tenant[] {
+    return (this.database().prepare("SELECT payload FROM tenants ORDER BY rowid").all() as { payload: string }[]).map((row) => JSON.parse(row.payload) as Tenant);
+  }
+  get(id: string): Tenant | undefined {
+    const row = this.database().prepare("SELECT payload FROM tenants WHERE id = ?").get(id) as { payload: string } | undefined;
+    return row ? JSON.parse(row.payload) as Tenant : undefined;
+  }
   byIssuer(issuer: string): Tenant | undefined { return this.list().find((t) => t.mode === "realm" && t.issuer === issuer); }
-
   byEmailDomain(email: string): Tenant | undefined {
     const domain = email.split("@").pop()?.trim().toLowerCase();
     return domain ? this.list().find((t) => t.status === "active" && t.emailDomains.includes(domain)) : undefined;
   }
-
-  upsert(tenant: Tenant): Tenant {
+  upsert(tenant: Tenant, expected?: Tenant): Tenant {
     if (!validTenantId(tenant.id)) throw new Error(`identifiant de tenant invalide : ${tenant.id}`);
-    const all = this.list().filter((t) => t.id !== tenant.id);
     const clean: Tenant = { ...tenant, domains: [...new Set(tenant.domains.map(normalizeHost))], emailDomains: [...new Set(tenant.emailDomains.map((d) => d.toLowerCase()))] };
-    all.push(clean);
-    fs.mkdirSync(path.dirname(this.file), { recursive: true });
-    const tmp = `${this.file}.${process.pid}.tmp`;
-    fs.writeFileSync(tmp, JSON.stringify(all, null, 2), { mode: 0o600 });
-    fs.renameSync(tmp, this.file);
-    this.cache = null;
+    const db = this.database();
+    const write = db.transaction(() => {
+      if (expected) {
+        const row = db.prepare("SELECT payload FROM tenants WHERE id = ?").get(tenant.id) as { payload: string } | undefined;
+        if (!row || row.payload !== JSON.stringify(expected)) throw new TenantConflictError();
+      }
+      db.prepare("INSERT INTO tenants (id, payload) VALUES (?, ?) ON CONFLICT(id) DO UPDATE SET payload = excluded.payload").run(clean.id, JSON.stringify(clean));
+    });
+    write.immediate();
     return clean;
   }
 }
+
+export class TenantConflictError extends Error {
+  constructor() { super("Le tenant a été modifié simultanément. Actualisez et réessayez."); }
+}
+
+export function closeTenantStores() { for (const db of connections.values()) db.close(); connections.clear(); }
 
 /** True when `url` belongs to one of the tenant's domains (exact host or subdomain). */
 export function tenantOwnsUrl(tenant: Tenant, url: string): boolean {
