@@ -94,7 +94,7 @@ Three entry points, from lightest to deepest.
 
 ### 4.1 In the browser, no key leaves the page
 
-The landing page has a generator (`site/index.html`, `#indexnow`): it mints a key
+The authenticated console has a generator (IndexNow section): it mints a key
 with `crypto.randomUUID()`, shows the file name, offers the `.txt` download and
 prints the exact `curl` to submit. Nothing is sent anywhere — the key is generated
 locally, which is also the safest default.

@@ -2,6 +2,7 @@
  * app-rank, app-strip), alimentés par POST /api/console/overview. */
 import { el } from "./render.js";
 import { t, CATEGORY, LANG } from "./i18n.js";
+import { makeKey, keyFile, normalizeHost } from "../indexnow.js";
 
 const NS = "http://www.w3.org/2000/svg";
 const svg = (tag, attrs = {}) => { const n = document.createElementNS(NS, tag); for (const [k, v] of Object.entries(attrs)) n.setAttribute(k, v); return n; };
@@ -84,10 +85,86 @@ export function renderPlan(d) {
   return [tableOf(`${d.geo.score} → ${d.geo.projectedScore}`, [t("rank"), t("action"), t("impact"), t("area")], recs.map((r, i) => [String(i + 1), r.action, `+${r.points}`, CATEGORY[r.category] ?? r.category ?? ""]))];
 }
 
+
+/** Local IndexNow key generator — browser only, no network. Lives in the console. */
+export function renderIndexNowKeygen() {
+  const card = el("section", "c-card c-keygen");
+  card.append(el("h3", "", t("idxKeyTitle")));
+  card.append(el("p", "c-note", t("idxKeyHelp")));
+
+  const form = el("div", "ink-mini");
+  const label = el("label", "sr-only");
+  label.htmlFor = "ink-host";
+  label.textContent = t("idxKeyHost");
+  const hostInput = el("input");
+  hostInput.id = "ink-host";
+  hostInput.name = "ink-host";
+  hostInput.type = "text";
+  hostInput.placeholder = t("idxKeyPlaceholder");
+  hostInput.inputMode = "url";
+  hostInput.autocomplete = "url";
+  const genBtn = el("button", "btn btn-small", t("idxKeyGenerate"));
+  genBtn.type = "button";
+  genBtn.id = "ink-generate";
+  form.append(label, hostInput, genBtn);
+
+  const out = el("p", "ink-mini-out");
+  out.id = "ink-out";
+  out.hidden = true;
+  const keyEl = el("code");
+  keyEl.id = "ink-key";
+  const fileEl = el("span");
+  fileEl.id = "ink-file";
+  out.append(keyEl, fileEl);
+
+  const row = el("div", "ink-mini-row");
+  const dlBtn = el("button", "btn btn-ghost btn-small", t("idxKeyDownload"));
+  dlBtn.type = "button";
+  dlBtn.id = "ink-download";
+  dlBtn.hidden = true;
+  row.append(dlBtn);
+
+  card.append(form, out, row);
+
+  let current = null;
+  const render = () => {
+    if (!current) return;
+    const host = normalizeHost(hostInput.value);
+    const material = keyFile(current, host);
+    keyEl.textContent = current;
+    fileEl.textContent = host ? `→ ${material.url}` : `→ ${material.name}`;
+    out.hidden = false;
+    dlBtn.hidden = false;
+  };
+  genBtn.addEventListener("click", () => {
+    current = makeKey();
+    render();
+  });
+  hostInput.addEventListener("input", () => { if (current) render(); });
+  dlBtn.addEventListener("click", () => {
+    if (!current) return;
+    const host = normalizeHost(hostInput.value);
+    const material = keyFile(current, host);
+    const blob = new Blob([material.content], { type: "text/plain;charset=utf-8" });
+    const url = URL.createObjectURL(blob);
+    const a = el("a");
+    a.href = url;
+    a.download = material.name;
+    document.body.append(a);
+    a.click();
+    a.remove();
+    setTimeout(() => URL.revokeObjectURL(url), 1000);
+  });
+
+  return [card];
+}
+
 export function renderIndexNow(d) {
-  const ix = d.indexnow; if (!ix) return [el("p", "c-note", "—")];
+  const parts = renderIndexNowKeygen();
+  const ix = d?.indexnow;
+  if (!ix) return [...parts, el("p", "c-note", t("idxNoAudit"))];
   const row = el("div", "kpi-row"); const fails = ix.checks.filter((c) => c.status !== "pass").length;
   row.append(kpi(t("kIdx"), ix.score, 100, 100 - ix.score, `${fails} ${t("toFix")}`, "#e0b23c"));
-  return [row, el("p", "c-intro", t("idxIntro")), tableOf("IndexNow", [t("check"), t("points"), t("status"), t("evidence"), t("fix")], ix.checks.map((c) => [c.label ?? c.id, `${c.points ?? 0}/${c.max ?? "—"}`, pill(c.status), c.evidence ?? c.detail ?? "", c.fix ?? ""]))];
+  return [...parts, row, el("p", "c-intro", t("idxIntro")), tableOf("IndexNow", [t("check"), t("points"), t("status"), t("evidence"), t("fix")], ix.checks.map((c) => [c.label ?? c.id, `${c.points ?? 0}/${c.max ?? "—"}`, pill(c.status), c.evidence ?? c.detail ?? "", c.fix ?? ""]))];
 }
 export const lang = LANG;
