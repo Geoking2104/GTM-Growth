@@ -190,11 +190,38 @@ pre code { background: none; border: 0; padding: 0; font-size: .86rem; }
   letter-spacing: -.035em; margin: 0 0 1.1rem; text-wrap: balance;
 }
 .lede { font-size: 1.1rem; line-height: 1.65; color: #c2d2e6; max-width: 60ch; }
-.ai-engine-strip { display: flex; align-items: center; gap: .8rem; flex-wrap: wrap; margin: 1.25rem 0; max-width: 720px; }
-.ai-engine-label { color: #9fb2ca; font-size: .8rem; font-weight: 650; }
-.ai-engines { display: flex; flex-wrap: wrap; gap: .45rem; list-style: none; margin: 0; padding: 0; }
-.ai-engines li { display: inline-flex; align-items: center; gap: .38rem; min-height: 2rem; padding: .34rem .58rem; border: 1px solid rgba(159, 190, 226, .25); border-radius: 999px; background: rgba(255,255,255,.06); color: #e8f1fb; font-size: .76rem; font-weight: 700; letter-spacing: -.01em; }
-.ai-engines img { width: 1rem; height: 1rem; object-fit: contain; }
+.ai-logo-stack {
+  display: flex;
+  align-items: center;
+  list-style: none;
+  margin: 0 0 1.35rem;
+  padding: 0;
+}
+.ai-logo-badge {
+  display: grid;
+  place-items: center;
+  width: 2.75rem;
+  height: 2.75rem;
+  border-radius: 999px;
+  background: #fff;
+  box-shadow:
+    0 0 0 3px rgba(10, 16, 28, .55),
+    0 6px 14px rgba(0, 0, 0, .28);
+  position: relative;
+}
+.ai-logo-badge + .ai-logo-badge { margin-left: -.55rem; }
+.ai-logo-badge svg {
+  width: 1.3rem;
+  height: 1.3rem;
+  display: block;
+}
+.hero-sub {
+  font-size: .98rem;
+  line-height: 1.55;
+  color: #9fb2ca;
+  max-width: 46ch;
+  margin: 0;
+}
 .check-form {
   display: flex; gap: .5rem; margin: 1.9rem 0 0; max-width: 620px;
   padding: .4rem; border-radius: 999px;
@@ -786,7 +813,9 @@ details[open] summary::after { content: "–"; }
   .data-table { min-width: 0; }
   .cit-row { grid-template-columns: 1fr; gap: .2rem; }
   .hero-stats { gap: 1.6rem; }
-  .ai-engine-strip { align-items: flex-start; }
+  .ai-logo-badge { width: 2.4rem; height: 2.4rem; }
+  .ai-logo-badge svg { width: 1.15rem; height: 1.15rem; }
+  .ai-logo-badge + .ai-logo-badge { margin-left: -.45rem; }
 }
 @media (max-width: 420px) {
   .hero-proof-grid, .console-kpis { grid-template-columns: 1fr; }
