@@ -334,6 +334,7 @@ pre code { background: none; border: 0; padding: 0; font-size: .86rem; }
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
   gap: 0;
+  align-items: stretch;
   border: 1px solid var(--line);
   border-radius: var(--radius-lg);
   overflow: hidden;
@@ -353,6 +354,7 @@ pre code { background: none; border: 0; padding: 0; font-size: .86rem; }
   padding: 1.6rem 1.5rem 1.45rem;
   background: var(--card);
   min-width: 0;
+  height: 100%;
 }
 .feature-card .feature-num {
   margin: 0;
@@ -378,30 +380,43 @@ pre code { background: none; border: 0; padding: 0; font-size: .86rem; }
 .feature-shot {
   margin: .35rem 0 0;
   flex: 1 1 auto;
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
 }
 .feature-shot-panel {
   background:
     radial-gradient(circle at 1px 1px, #d7deea 1px, transparent 0) 0 0 / 14px 14px,
     #f3f5f9;
   border-radius: 12px;
-  padding: 1.1rem 1rem 0;
+  padding: 1rem 1rem 0;
   overflow: hidden;
-  min-height: 12rem;
+  width: 100%;
+  aspect-ratio: 16 / 10;
+  height: auto;
+  min-height: 11.5rem;
   display: flex;
-  align-items: flex-end;
+  align-items: flex-start;
   justify-content: center;
 }
-.feature-shot-panel img {
+.feature-shot-panel img,
+.feature-shot-panel picture {
   display: block;
   width: 100%;
-  height: auto;
+  height: 100%;
   max-width: 100%;
+}
+.feature-shot-panel picture { height: 100%; }
+.feature-shot-panel img {
+  object-fit: cover;
+  object-position: top center;
   border-radius: 10px 10px 0 0;
   box-shadow: 0 12px 28px -16px rgba(15, 23, 42, .45), 0 1px 0 rgba(255,255,255,.7) inset;
   background: #fff;
 }
 .feature-cta {
-  margin: .35rem 0 0;
+  margin-top: auto;
+  padding-top: .35rem;
 }
 .feature-cta .btn.btn-small {
   width: 100%;
@@ -410,9 +425,21 @@ pre code { background: none; border: 0; padding: 0; font-size: .86rem; }
   min-height: 3.5rem;
   box-sizing: border-box;
 }
-.feature-card .ink-mini {
-  margin-top: .15rem;
+.ink-utility {
+  margin: 1.35rem 0 0;
+  padding: 1.1rem 1.2rem;
+  border: 1px solid var(--line);
+  border-radius: var(--radius-lg);
+  background: var(--card);
+  box-shadow: var(--shadow);
+  max-width: 36rem;
 }
+.ink-utility__label {
+  margin: 0 0 .65rem;
+  font-size: .88rem;
+  color: var(--muted);
+}
+.ink-utility .ink-mini { margin: 0; }
 @media (max-width: 860px) {
   .feature-grid-2 {
     grid-template-columns: 1fr;
@@ -425,6 +452,7 @@ pre code { background: none; border: 0; padding: 0; font-size: .86rem; }
   }
   .feature-shot-panel {
     min-height: 10rem;
+    aspect-ratio: 16 / 11;
     padding: .85rem .75rem 0;
   }
 }
