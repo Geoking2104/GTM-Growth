@@ -792,3 +792,11 @@ details[open] summary::after { content: "–"; }
   .hero-proof-grid, .console-kpis { grid-template-columns: 1fr; }
 }
 .console-cta { margin: 1rem 0 0; }
+
+/* Onboarding (#how) — four linked steps */
+.steps.steps-4 { grid-template-columns: repeat(4, minmax(0, 1fr)); }
+.step-link { margin: .6rem 0 0 !important; font-size: .86rem !important; }
+.step-link a, .card-next a { font-weight: 600; }
+.card-next { font-size: .82rem; color: var(--muted); margin: .5rem 0 0; }
+@media (max-width: 980px) { .steps.steps-4 { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+@media (max-width: 640px) { .steps.steps-4 { grid-template-columns: 1fr; } }

@@ -82,3 +82,12 @@ a.app-side-foot { text-decoration: none; color: inherit; margin-top: auto; }
 .c-st-ok { color: #0f9d58; font-weight: 600; } .c-st-bad { color: var(--app-red); font-weight: 600; } .c-st-warn { color: #e37400; font-weight: 600; }
 .c-panel .kpi-row { margin: 1rem 1.2rem 0; }
 .c-panel .app-chart { margin: 1rem 1.2rem; }
+
+/* Démarrage (onboarding) */
+.onboarding-card { margin: 1rem 1.2rem 0; }
+.onboarding-count { font-weight: 500; color: var(--app-muted); font-size: .85em; }
+.onboarding-list { list-style: none; padding: 0; margin: .6rem 0 0; display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: .45rem 1.2rem; font-size: .86rem; }
+.onboarding-list li { display: flex; gap: .5rem; align-items: center; }
+.onboarding-list li.is-done a { color: var(--app-muted); }
+.kpi-help { font-size: .74rem; color: var(--app-muted); margin: .35rem 0 0; line-height: 1.35; }
+@media (max-width: 720px) { .onboarding-list { grid-template-columns: 1fr; } }

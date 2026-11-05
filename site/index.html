@@ -109,6 +109,7 @@
       <span>GTM&nbsp;Growth</span>
     </a>
     <nav class="nav" aria-label="Primary">
+      <a href="#how">How it works</a>
       <a href="#tools">Tools</a>
       <a href="#toolkit">Toolkit</a>
       <a href="#console">Console</a>
@@ -226,6 +227,43 @@
   </section>
 
 
+  <!-- ── How it works (onboarding) ─────────────────────────── -->
+  <section class="section" id="how" aria-labelledby="how-heading">
+    <div class="wrap">
+      <header class="section-head">
+        <p class="eyebrow eyebrow-dark">How it works</p>
+        <h2 id="how-heading">From one URL to a plan you can ship</h2>
+        <p class="section-sub">Four steps, from the free read to the console. Each step links straight to the tool that does it.</p>
+      </header>
+      <ol class="steps steps-4">
+        <li>
+          <span class="step-num">1</span>
+          <h3>Free read</h3>
+          <p>Type your address. You get the URL-level hygiene score and the checklist of everything the full audit inspects. No account, no fetch, no guesswork.</p>
+          <p class="step-link"><a href="#top">Run the read →</a></p>
+        </li>
+        <li>
+          <span class="step-num">2</span>
+          <h3>Connect your access</h3>
+          <p>In the console, Tracking → Settings: Search Console and GA4 (read-only service account), free Bing Webmaster API key, Google Tag Manager container and Microsoft Clarity project. The “Getting started” card ticks itself.</p>
+          <p class="step-link"><a href="/console/#tracking/settings">Open Tracking → Settings →</a></p>
+        </li>
+        <li>
+          <span class="step-num">3</span>
+          <h3>Full audit</h3>
+          <p>Run the server yourself, or have us run it with you: GEO score, citability, crawler matrix, llms.txt drift, GTM installation and container audit — each with evidence.</p>
+          <p class="step-link"><a href="/console/">Open the console →</a></p>
+        </li>
+        <li>
+          <span class="step-num">4</span>
+          <h3>Implementation</h3>
+          <p>A prioritized 90-day plan: what to fix now, what to instrument, what to re-measure. Then a before/after comparison on the same deterministic score.</p>
+          <p class="step-link"><a href="/console/#overview/plan">ACT tools: plan, GTM, generators →</a></p>
+        </li>
+      </ol>
+    </div>
+  </section>
+
   <!-- ── Free tools ──────────────────────────────────────── -->
   <section class="section" id="tools" aria-labelledby="tools-heading">
     <div class="wrap">
@@ -241,24 +279,28 @@
           <h3>SEO tables</h3>
           <p>Title and description lengths, canonical, robots meta, H1–H3 outline, word count, internal and external links, images without alt, JSON-LD blocks and types. Measured on the HTML you serve — never estimated.</p>
           <p class="tag">free read · /api/free-read</p>
+          <p class="card-next"><a href="/console/#search">Goes further in the console: Search → queries, pages, devices, countries; Audit → GEO score and structured data.</a></p>
         </article>
         <article class="card">
           <span class="icon" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M7 7h4v10H7zM13 7h4v6h-4z"/></svg></span>
           <h3>GA4 report</h3>
           <p>Measurement IDs, dead Universal Analytics tags, container count, duplicated loaders, <code>dataLayer</code> and consent mode — everything that decides whether the sessions you report actually exist.</p>
           <p class="tag">free read · /api/free-read</p>
+          <p class="card-next"><a href="/console/#ga4">Goes further in the console: GA4 → channels, pages, devices, countries, e-commerce, systems & browsers; GTM installation audit.</a></p>
         </article>
         <article class="card">
           <span class="icon" aria-hidden="true"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="8"/><path d="M4 12h16M12 4c3 3 3 13 0 16M12 4c-3 3-3 13 0 16"/></svg></span>
           <h3>Search Console report</h3>
           <p>Verification tag, robots.txt directives, sitemap coverage and <code>lastmod</code> share, indexability, canonical host — what Google needs before it can index the page at all.</p>
           <p class="tag">free read · /api/free-read</p>
+          <p class="card-next"><a href="/console/#search">Goes further in the console: Search Console performance, sitemaps; IndexNow &amp; Bing readiness.</a></p>
         </article>
         <article class="card">
           <span class="icon" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M12 4v5M6 10h12M6 10v6M12 10v6M18 10v6M3 20h6M9 20h6M15 20h6"/></svg></span>
           <h3>Visual sitemap</h3>
           <p>A SlickMap-style view of URLs declared in the XML sitemap, with page count, hierarchy depth, <code>lastmod</code> coverage and section distribution. It reads the sitemap; it does not invent traffic.</p>
           <p class="tag">free read · sitemap analytics</p>
+          <p class="card-next"><a href="/console/#sitemap">Goes further in the console: llms.txt generated from the sitemap, then drift checked after every deploy.</a></p>
         </article>
       </div>
 
