@@ -168,6 +168,18 @@ Champs communs : `url` (domaine ou page, passé par le même garde-fou anti-SSRF
 
 Code : `src/console/` (API, auth, modules), `site/console/` (interface), tests `tests/console-*.test.ts`.
 
+### Concurrence : opportunités et suivi (FR)
+
+La console compare les marques sur les réponses importées dans Visibilité IA. Les mentions automatiques restent provisoires et peuvent être confirmées ou rejetées. Les données, priorités et actions sont cloisonnées par tenant ; modifier les marques ou alias crée un nouveau jeu pour préserver l'historique. Les administrateurs peuvent confirmer une page de leur domaine à partir d'une suggestion lexicale Search Console ; cette suggestion n'est pas une équivalence automatique.
+
+Le score est un classement indicatif, pas une estimation de trafic : `100 × (réponses perdues / réponses valides) × min(nombre de réponses / 20, 1) × (importance / 3) × ((4 - effort) / 3) × facteur page`, où le facteur page vaut 1 si une page a été confirmée et 0,75 sinon. Importance et effort sont réglés de 1 à 3 par question ; 20 réponses et le facteur page sont des paramètres heuristiques à calibrer avec les usages réels, et la couverture n'est pas une confiance statistique. Les chiffres GSC concernent la propriété et la période affichées.
+
+La comparaison avec la période précédente donne le même poids aux couples question/source présents dans les deux périodes. L'historique peut inclure les autres jeux aux marques et alias identiques ; les doublons sont supprimés en donnant priorité au jeu affiché. Les actions terminées montrent un avant/après de 30 jours si les données comparables existent ; une période après incomplète reste possible et aucun lien causal n'est déduit. Une surveillance en console compare trois périodes UTC complètes sur les mêmes couples question/source ; elle signale une hausse ou baisse lorsque les deux périodes récentes franchissent le seuil configuré et que chacune atteint le minimum de réponses. Elle utilise les jeux compatibles disponibles, sans notification externe. La collecte planifiée, les plafonds monétaires et les alertes externes ne sont pas encore inclus.
+
+### MCP Concurrence par client
+
+Le transport HTTP dédié, en lecture seule, est `https://gtm.kayroslab.com/api/mcp/competition`. Chaque requête exige un jeton d'accès OIDC Keycloak valide pour la console (`Authorization: Bearer …`) et `X-Tenant: <identifiant-client>` ; le serveur vérifie l'appartenance et le statut actif du client à chaque requête. Un identifiant transmis comme argument d'outil ne donne aucun accès. Les outils disponibles sont `competition_list_datasets`, `competition_report`, `competition_discovery` et `competition_alert`. Les appels ne sont pas disponibles sur le transport MCP historique ; les données restent confinées au tenant sélectionné. Le rapport peut inclure les réponses importées, donc l'accès au jeton doit être limité comme celui de la console. Le transport est stateless et accepte les requêtes MCP HTTP POST.
+
 ### Track : Search Console, GA4 et Bing en direct (FR)
 
 La barre latérale **Track** de la console regroupe désormais toutes les données de performance, sans API payante :

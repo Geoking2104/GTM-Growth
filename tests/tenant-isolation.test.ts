@@ -11,6 +11,7 @@ import { TenantStore, type Tenant } from "../src/tenants/store.js";
 import { resolveTenant } from "../src/tenants/context.js";
 import { saveTenantReport } from "../src/tenants/data.js";
 import { KeycloakAdmin } from "../src/tenants/keycloak-admin.js";
+import { buildCompetitionMcpRouter } from "../src/console/competition-mcp.js";
 import { aiVisibilityRoutes } from "../src/console/ai-visibility.js";
 
 const dir = mkdtempSync(join(tmpdir(), "iso-"));
@@ -60,6 +61,7 @@ const fakeFetch = (async (u: string | URL, init?: RequestInit) => {
 }) as typeof fetch;
 const keycloakAdmin = new KeycloakAdmin({ baseUrl: "http://kc", authRealm: "master", clientId: "p", clientSecret: "s", fetch: fakeFetch });
 app.use("/c", buildConsoleRouter([echo, ...aiVisibilityRoutes], { config, jwksLoader: loader, store, keycloakAdmin }));
+app.use("/mcp-competition", buildCompetitionMcpRouter({ config, jwksLoader: loader, store }));
 app.use("/p", buildPlatformRouter({ config, jwksLoader: loader, store, keycloakAdmin }));
 let server: ReturnType<typeof app.listen>; let root = "";
 beforeAll(() => { server = app.listen(0); root = `http://127.0.0.1:${(server.address() as AddressInfo).port}`; });
@@ -212,5 +214,24 @@ describe("découverte du tenant", () => {
     expect(d).not.toHaveProperty("domains");
     expect(discoverTenant(store, { tenant: "umbrella" })).toBeNull();
     expect(discoverTenant(store, { email: "x@inconnu.fr" })).toBeNull();
+  });
+});
+
+describe("MCP concurrence tenant", () => {
+  const rpc = (name: string, args: unknown = {}) => ({ jsonrpc: "2.0", id: 1, method: "tools/call", params: { name, arguments: args } });
+  const send = (claims: Record<string, unknown>, body: unknown, tenant = "acme") => fetch(`${root}/mcp-competition`, { method: "POST", headers: { Authorization: `Bearer ${token(claims)}`, "Content-Type": "application/json", Accept: "application/json, text/event-stream", ...(tenant ? { "X-Tenant": tenant } : {}) }, body: JSON.stringify(body) });
+  it("requires a validated token and rejects tenant impersonation", async () => {
+    expect((await fetch(`${root}/mcp-competition`, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(rpc("competition_list_datasets")) })).status).toBe(401);
+    expect((await send(acmeUser, rpc("competition_list_datasets"), "globex")).status).toBe(403);
+    expect((await send(acmeUser, rpc("competition_list_datasets"), "")).status).toBe(400);
+  });
+  it("exposes only read-only tools and confines dataset access", async () => {
+    const imported = await call("/c/ai-visibility/import", acmeAdmin, { brands: [{ name: "Acme" }], responses: [{ prompt: "Question?", answer: "Acme", source: "import", observedAt: "2026-01-01T00:00:00Z" }] });
+    const id = (await imported.json()).id;
+    const list = await send(acmeUser, { jsonrpc: "2.0", id: 1, method: "tools/list", params: {} });
+    const listText = await list.text(); expect(list.status).toBe(200); expect(listText).toContain("competition_report"); expect(listText).not.toContain("run_report");
+    const own = await send(acmeUser, rpc("competition_report", { datasetId: id })); expect(await own.text()).toContain("Acme");
+    const other = await send(superAdmin, rpc("competition_report", { datasetId: id }), "globex"); expect(await other.text()).not.toContain("Acme");
+    const spoof = await send(acmeUser, rpc("competition_report", { datasetId: id, tenantId: "globex" })); expect(await spoof.text()).toContain("Invalid arguments");
   });
 });

@@ -13,6 +13,7 @@ import { fileURLToPath } from "url";
 import { dirname, join } from "path";
 import { logger } from "./utils/logger.js";
 import { mountPublicApi } from "./http/public-api.js";
+import { buildCompetitionMcpRouter } from "./console/competition-mcp.js";
 import { mountConsoleApi } from "./console/api.js";
 
 function getVersion(): string {
@@ -122,6 +123,7 @@ export async function startServer(transportType: "stdio" | "http" = "stdio") {
 
   // Console API — Keycloak-protected (OIDC bearer tokens validated via JWKS).
   mountConsoleApi(app);
+  app.use("/api/mcp/competition", buildCompetitionMcpRouter());
 
   // ── Modern: Streamable HTTP transport at /mcp (stateless) ───────────
   app.post("/mcp", requireToken, async (req: Request, res: Response) => {

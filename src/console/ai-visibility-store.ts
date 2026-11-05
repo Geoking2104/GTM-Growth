@@ -17,8 +17,22 @@ function database(): Database.Database {
   const db = new Database(file, { timeout: 10000 });
   db.pragma("busy_timeout = 10000"); db.pragma("journal_mode = DELETE"); db.pragma("synchronous = FULL");
   db.exec(`CREATE TABLE IF NOT EXISTS datasets (tenant_id TEXT NOT NULL, id TEXT NOT NULL, created_at TEXT NOT NULL, payload TEXT NOT NULL, PRIMARY KEY (tenant_id, id));
-           CREATE TABLE IF NOT EXISTS legacy_imports (tenant_id TEXT PRIMARY KEY, imported_at TEXT NOT NULL);`);
+           CREATE TABLE IF NOT EXISTS legacy_imports (tenant_id TEXT PRIMARY KEY, imported_at TEXT NOT NULL);
+           CREATE TABLE IF NOT EXISTS competition_state (tenant_id TEXT PRIMARY KEY, payload TEXT NOT NULL);`);
   connections.set(file, db); return db;
+}
+export function readCompetitionState<T>(tenantId: string, fallback: T): T {
+  validateTenant(tenantId); const row = database().prepare("SELECT payload FROM competition_state WHERE tenant_id = ?").get(tenantId) as Row | undefined;
+  return row ? parse<T>(row) : fallback;
+}
+export function updateCompetitionState<T>(tenantId: string, fallback: T, update: (state: T) => void): T {
+  validateTenant(tenantId); const db = database();
+  const transaction = db.transaction(() => {
+    const row = db.prepare("SELECT payload FROM competition_state WHERE tenant_id = ?").get(tenantId) as Row | undefined;
+    const state = row ? parse<T>(row) : fallback; update(state);
+    db.prepare("INSERT INTO competition_state (tenant_id, payload) VALUES (?, ?) ON CONFLICT(tenant_id) DO UPDATE SET payload = excluded.payload").run(tenantId, JSON.stringify(state));
+    return state;
+  }); return transaction.immediate();
 }
 function parse<T>(row: Row): T { return JSON.parse(row.payload) as T; }
 function migrateLegacy(db: Database.Database, tenantId: string) {

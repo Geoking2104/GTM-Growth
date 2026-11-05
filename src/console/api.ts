@@ -39,6 +39,7 @@ import { auditIndexNow } from "../indexnow/readiness.js";
 import { buildAnalysisBoard } from "../analysis/board.js";
 import { phase3Routes } from "./phase3.js";
 import { aiVisibilityRoutes } from "./ai-visibility.js";
+import { competitionRoutes } from "./competition.js";
 import { analyticsRoutes } from "./analytics.js";
 import { gtmRoutes } from "./gtm-console.js";
 import { withCredential } from "../auth/service-account.js";
@@ -160,13 +161,13 @@ type Locals = { user?: TokenClaims; tenancy?: TenantContext };
 
 const fail = (res: Response, status: number, error: string) => res.status(status).json({ error });
 
-function withTrust(config: OidcConfig | null, store: TenantStore): OidcConfig | null {
+export function withTrust(config: OidcConfig | null, store: TenantStore): OidcConfig | null {
   if (!config) return null;
   return { ...config, trustIssuer: (iss) => Boolean(store.byIssuer(iss)?.status === "active") || Boolean(config.trustIssuer?.(iss)) };
 }
 
 /** Tenant resolution middleware (after token verification). */
-function tenancyMiddleware(config: OidcConfig | null, store: TenantStore) {
+export function tenancyMiddleware(config: OidcConfig | null, store: TenantStore) {
   return (req: Request, res: Response, next: () => void) => {
     const locals = res.locals as Locals;
     const requested = str(req.headers["x-tenant"]);
@@ -385,7 +386,7 @@ export function discoverTenant(store: TenantStore, query: { email?: string; host
 }
 
 export function allConsoleRoutes(): ConsoleRoute[] {
-  return [...phase1Routes, ...phase2Routes, ...phase3Routes, ...analyticsRoutes, ...gtmRoutes, ...aiVisibilityRoutes];
+  return [...phase1Routes, ...phase2Routes, ...phase3Routes, ...analyticsRoutes, ...gtmRoutes, ...aiVisibilityRoutes, ...competitionRoutes];
 }
 
 export function mountConsoleApi(app: Express, options: ConsoleOptions = {}): void {

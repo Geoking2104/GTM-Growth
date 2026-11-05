@@ -6,6 +6,7 @@ import { TABS, raw } from "./tools.js";
 import { el } from "./render.js";
 import { t, tr, actionLabel, LANG } from "./i18n.js";
 import { icon } from "./icons.js";
+import { renderCompetition } from "./competition.js";
 import { renderAiVisibility } from "./ai-visibility.js";
 import { renderAudienceOverview } from "./audience-overview.js";
 import { renderOverview, renderPlan, renderIndexNow } from "./overview.js";
@@ -62,6 +63,7 @@ const SECTIONS = {
         return [renderAudienceOverview({ search, ga4, status, state, rerender }), ...(ov ? renderOverview(ov) : []), renderOnboarding({ status, tenant: state.me?.tenant, overview: ov, reports }), wizardButton(), renderAgentHelp()];
       } },
       { id: "plan", label: t("t_plan"), async: async () => renderPlan(await overview()) }]) },
+    { id: "competition", icon: "geo", build: () => custom("competition", [{ id: "board", label: LANG === "fr" ? "Concurrence" : "Competition", needsDomain: false, async: async () => renderCompetition({ api, me: state.me, property: state.property, days: state.days }) }]) },
     { id: "ai_visibility", icon: "geo", build: () => custom("ai_visibility", [{ id: "board", label: LANG === "fr" ? "Réponses IA" : "AI answers", needsDomain: false, async: async () => renderAiVisibility({ api, me: state.me }) }]) },
     { id: "gsc", icon: "google", build: () => custom("gsc", [
       { id: "performance", label: t("t_gscPerf"), ...live("/search/performance", renderSearchPerformance, { searchType: true }) },
@@ -161,7 +163,7 @@ async function show(sectionId, tabId) {
   current = { section: section.id, tab: tab.id };
   history.replaceState(null, "", `#${section.id}${tab.id !== def.tabs[0].id ? `/${tab.id}` : ""}`);
   document.querySelectorAll(".app-nav a").forEach((a) => { const on = a.dataset.section === section.id; a.classList.toggle("is-active", on); if (on) a.setAttribute("aria-current", "true"); else a.removeAttribute("aria-current"); });
-  $("#c-crumb").textContent = (section.id === "platform" ? (LANG === "fr" ? "Administration plateforme" : "Platform administration") : section.id === "ai_visibility" ? (LANG === "fr" ? "Visibilité IA" : "AI visibility") : t(`s_${section.id}`));
+  $("#c-crumb").textContent = (section.id === "platform" ? (LANG === "fr" ? "Administration plateforme" : "Platform administration") : section.id === "competition" ? (LANG === "fr" ? "Concurrence" : "Competition") : section.id === "ai_visibility" ? (LANG === "fr" ? "Visibilité IA" : "AI visibility") : t(`s_${section.id}`));
   const tabs = $("#c-tabs"); tabs.replaceChildren();
   for (const x of def.tabs) {
     const b = el("button", `app-tab${x.id === tab.id ? " is-active" : ""}`); b.type = "button"; b.setAttribute("role", "tab"); b.setAttribute("aria-selected", String(x.id === tab.id));
@@ -181,7 +183,7 @@ async function show(sectionId, tabId) {
 function mountNav() {
   for (const [group, list] of Object.entries(SECTIONS)) {
     const ul = $(`#c-nav-${group}`);
-    for (const s of list) { const li = el("li"); const a = el("a"); a.href = `#${s.id}`; a.dataset.section = s.id; a.innerHTML = icon(s.icon); a.append(el("span", "", (s.id === "platform" ? (LANG === "fr" ? "Administration plateforme" : "Platform administration") : s.id === "ai_visibility" ? (LANG === "fr" ? "Visibilité IA" : "AI visibility") : t(`s_${s.id}`)))); a.onclick = (e) => { e.preventDefault(); show(s.id); }; li.append(a); ul.append(li); }
+    for (const s of list) { const li = el("li"); const a = el("a"); a.href = `#${s.id}`; a.dataset.section = s.id; a.innerHTML = icon(s.icon); a.append(el("span", "", (s.id === "platform" ? (LANG === "fr" ? "Administration plateforme" : "Platform administration") : s.id === "competition" ? (LANG === "fr" ? "Concurrence" : "Competition") : s.id === "ai_visibility" ? (LANG === "fr" ? "Visibilité IA" : "AI visibility") : t(`s_${s.id}`)))); a.onclick = (e) => { e.preventDefault(); show(s.id); }; li.append(a); ul.append(li); }
   }
   const search = $("#c-search");
   search.oninput = () => { const q = search.value.trim().toLowerCase(); document.querySelectorAll(".app-nav li").forEach((li) => { li.hidden = q && !li.textContent.toLowerCase().includes(q); }); };
