@@ -61,7 +61,7 @@ const SECTIONS = {
     { id: "bing", icon: "bing", build: () => custom("bing", [{ id: "performance", label: t("t_bing"), ...live("/bing/performance", renderBing) }]) },
     { id: "geo", icon: "geo", build: fromTool("geo", (a) => a.id !== "citability") },
     { id: "citability", icon: "citability", build: fromTool("geo", (a) => a.id === "citability", t("citIntro")) },
-    { id: "indexnow", icon: "indexnow", build: () => custom("indexnow", [{ id: "readiness", label: t("s_indexnow"), async: async () => renderIndexNow(await overview()) }]) },
+    { id: "indexnow", icon: "indexnow", build: () => custom("indexnow", [{ id: "readiness", label: t("s_indexnow"), needsDomain: false, async: async () => renderIndexNow(await overview().catch(() => null)) }]) },
     { id: "sitemap", icon: "sitemap", build: fromTool("sitemap") },
     { id: "performance", icon: "performance", build: fromTool("performance") },
   ],

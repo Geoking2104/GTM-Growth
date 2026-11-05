@@ -91,3 +91,7 @@ a.app-side-foot { text-decoration: none; color: inherit; margin-top: auto; }
 .onboarding-list li.is-done a { color: var(--app-muted); }
 .kpi-help { font-size: .74rem; color: var(--app-muted); margin: .35rem 0 0; line-height: 1.35; }
 @media (max-width: 720px) { .onboarding-list { grid-template-columns: 1fr; } }
+
+/* IndexNow key generator (local) */
+.c-keygen .ink-mini { margin: .55rem 0 .35rem; max-width: 28rem; }
+.c-keygen .ink-mini-out { max-width: 28rem; }

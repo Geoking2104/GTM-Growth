@@ -14,7 +14,6 @@
 import { auditUrlShape, normalizeTarget, verdict } from "./preview.js";
 import { dictFor } from "./i18n.js";
 import { renderTables, sampleTables } from "./tables.js";
-import { initIndexNow } from "./indexnow.js";
 import { initConsole } from "./console.js";
 import { renderSitemapMap } from "./sitemap-map.js";
 
@@ -293,8 +292,6 @@ leadForm?.addEventListener("submit", async (event) => {
 
 void flushQueue();
 
-// IndexNow key generator: local only, no network.
-initIndexNow();
 initConsole();
 
 // Copy-to-clipboard buttons

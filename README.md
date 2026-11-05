@@ -293,9 +293,9 @@ CLI equivalents: `indexnow-keygen`, `indexnow-verify` (exits `1` on a bad key
 file, so it drops into CI), `indexnow-submit`, `indexnow-explain`,
 `analysis-board`.
 
-The website has a **browser-side key generator** — key, file name, `.txt`
+The console has a **browser-side key generator** — key, file name, `.txt`
 download and the exact `curl` — that never sends anything anywhere:
-<https://geoking2104.github.io/GTM-Growth/#indexnow>.
+<https://gtm.kayroslab.com/console/#indexnow> (sign-in required).
 
 ### Operating rules
 

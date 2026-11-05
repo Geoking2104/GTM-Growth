@@ -1,5 +1,5 @@
 /**
- * IndexNow key generator — compact form, inside the Solutions card.
+ * IndexNow key helpers — used by the authenticated console key generator.
  *
  * Runs entirely in the browser: crypto.randomUUID() → 32 hex characters, inside
  * the protocol grammar ([A-Za-z0-9-], 8–128). Nothing is sent anywhere.
