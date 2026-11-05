@@ -10,7 +10,7 @@
 import express, { type Express, type Request, type Response, type Router } from "express";
 import { checkTarget } from "../http/public-api.js";
 import { requireOidc, oidcConfigFromEnv, type JwksLoader, type OidcConfig, type TokenClaims } from "./auth.js";
-import { TenantStore, normalizeHost, tenantOwnsProperty, tenantOwnsUrl, tenantOwnsGa4, tenantOwnsBingSite, tenantOwnsGtmContainer, type Tenant } from "../tenants/store.js";
+import { TenantStore, TenantConflictError, normalizeHost, tenantOwnsProperty, tenantOwnsUrl, tenantOwnsGa4, tenantOwnsBingSite, tenantOwnsGtmContainer, type Tenant } from "../tenants/store.js";
 import { resolveTenant, TenantAccessError, type TenantContext } from "../tenants/context.js";
 import { tenantLeads, listTenantReports, readTenantReport } from "../tenants/data.js";
 import { KeycloakAdmin, keycloakAdminFromEnv } from "../tenants/keycloak-admin.js";
@@ -303,7 +303,11 @@ export function buildConsoleRouter(routes: ConsoleRoute[], options: ConsoleOptio
       if (!profile || typeof profile !== "object" || Array.isArray(profile) || typeof profile.domain !== "string" || !t.domains.includes(profile.domain) || [profile.name, profile.description, profile.industry].some((v) => typeof v !== "string") || String(profile.name).length > 200 || String(profile.description).length > 500 || String(profile.industry).length > 200) return fail(res, 400, "Profil du site invalide.");
       siteProfiles = { ...t.siteProfiles, [profile.domain]: { name: String(profile.name).trim(), description: String(profile.description).trim(), industry: String(profile.industry).trim() } };
     }
-    const updated = store.upsert({ ...t, usageType, watchedQueries, siteProfiles, ga4Properties: ga4List ?? t.ga4Properties, bingSites: bingList ?? t.bingSites, gtmContainers: gtmList ?? t.gtmContainers, clarityProjects: clarityList ?? t.clarityProjects, bingApiKey: bingKey === undefined ? t.bingApiKey : bingKey || undefined, domains: list(body.domains) ?? t.domains, gscProperties: list(body.gscProperties) ?? t.gscProperties, branding: { ...t.branding, ...(color ? { primaryColor: color } : {}), ...(logo ? { logoUrl: logo } : {}), ...(str(branding.displayName) ? { displayName: str(branding.displayName) } : {}) } });
+    let updated: Tenant;
+    try { updated = store.upsert({ ...t, usageType, watchedQueries, siteProfiles, ga4Properties: ga4List ?? t.ga4Properties, bingSites: bingList ?? t.bingSites, gtmContainers: gtmList ?? t.gtmContainers, clarityProjects: clarityList ?? t.clarityProjects, bingApiKey: bingKey === undefined ? t.bingApiKey : bingKey || undefined, domains: list(body.domains) ?? t.domains, gscProperties: list(body.gscProperties) ?? t.gscProperties, branding: { ...t.branding, ...(color ? { primaryColor: color } : {}), ...(logo ? { logoUrl: logo } : {}), ...(str(branding.displayName) ? { displayName: str(branding.displayName) } : {}) } }, t); } catch (error) {
+      if (error instanceof TenantConflictError) return fail(res, 409, error.message);
+      throw error;
+    }
     return res.json({ tenant: publicTenant(updated) });
   });
   router.post("/tenant/users", async (req, res) => {

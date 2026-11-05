@@ -121,8 +121,14 @@ Optionnel — générateurs via modèle open source : `docker compose --profile 
 
 ## Stockage de la visibilité IA
 
-Les jeux de données sont stockés dans `ai-visibility/datasets.sqlite3` sur le volume de données (ou dans `AI_VISIBILITY_PATH` si défini). SQLite utilise des transactions et un journal de rollback pour les écritures de plusieurs processus sur un même serveur et un système de fichiers local. Ne pas partager cette base entre plusieurs hôtes via un disque réseau. Le registre de tenants utilise un stockage distinct.
+Les jeux de données sont stockés dans `ai-visibility/datasets.sqlite3` sur le volume de données (ou dans `AI_VISIBILITY_PATH` si défini). SQLite utilise des transactions et un journal de rollback pour les écritures de plusieurs processus sur un même serveur et un système de fichiers local. Ne pas partager cette base entre plusieurs hôtes via un disque réseau. Le registre de tenants est dans une base SQLite distincte : `tenants.json.sqlite3`, à côté de `TENANTS_PATH`.
 
 À la première consultation de chaque tenant, les anciens fichiers JSON sont importés dans une transaction et conservés. Arrêter tous les anciens processus écrivant les fichiers JSON avant la migration : leurs écritures ultérieures ne seraient pas reprises. Conserver et gérer les anciens fichiers dans les procédures de rétention. Une restauration de l'ancien code après migration nécessite d'abord un export des nouvelles données : les fichiers JSON ne sont plus mis à jour.
 
 Sauvegarder la base avec l'API de sauvegarde SQLite ou arrêter tous les processus et copier la base et son éventuel journal ensemble. Vérifier la restauration et inclure les sauvegardes et anciens JSON dans les procédures d'effacement. La suppression automatique après un an n'est pas implémentée.
+
+## Migration du registre clients
+
+Le premier accès importe transactionnellement `tenants.json` dans `tenants.json.sqlite3` et conserve le JSON. Arrêter tous les anciens processus avant la migration : les modifications ultérieures au JSON ne sont pas synchronisées. L'application et les scripts de provisionnement doivent utiliser la nouvelle version et le même volume local. Ne pas modifier manuellement le JSON après migration.
+
+Sauvegarder la base par l'API SQLite, ou arrêter tous les processus avant de copier la base avec son éventuel journal. Inclure aussi le JSON historique dans les règles de sauvegarde et d'effacement. Un retour à l'ancien code nécessite un export préalable des données SQLite ; le fichier JSON d'origine n'est plus mis à jour. Les modifications simultanées d'un même client sont refusées avec HTTP 409 et doivent être réessayées après actualisation. SQLite est limité à un même hôte et un disque local.
