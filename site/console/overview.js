@@ -9,17 +9,10 @@ const svg = (tag, attrs = {}) => { const n = document.createElementNS(NS, tag); 
 const fmtDelta = (n) => (n > 0 ? `+${n}` : n < 0 ? `−${Math.abs(n)}` : "0");
 const width = (node, pct) => { node.style.width = `${Math.max(0, Math.min(100, pct))}%`; return node; }; // CSSOM, compatible CSP
 
-function spark(from, to, color, steps = 6) {
-  const s = svg("svg", { class: "spark", viewBox: "0 0 76 26", fill: "none", "aria-hidden": "true" });
-  const pts = Array.from({ length: steps }, (_, i) => { const x = 2 + (72 * i) / (steps - 1); const y = 23 - (20 * (i / (steps - 1)) ** 0.8); return `${x.toFixed(1)},${y.toFixed(1)}`; });
-  s.append(svg("polyline", { points: pts.join(" "), stroke: color, "stroke-width": "1.6", "stroke-linecap": "round", "stroke-linejoin": "round" }));
-  return s;
-}
-
 function kpi(label, value, max, delta, note, color, help) {
   const c = el("div", "kpi-cell");
   const v = el("div", "kpi-value"); v.append(el("strong", "", String(value ?? "—")), el("em", "", `/${max}`));
-  const f = el("div", "kpi-foot"); f.append(el("span", `delta ${delta >= 0 ? "up" : "down"}`, fmtDelta(delta)), el("span", "kpi-note", note), spark(value, max, color));
+  const f = el("div", "kpi-foot"); f.append(el("span", `delta ${delta >= 0 ? "up" : "down"}`, fmtDelta(delta)), el("span", "kpi-note", note));
   c.append(el("span", "kpi-label", label), v, f); if (help) c.append(el("p", "kpi-help", help)); return c;
 }
 

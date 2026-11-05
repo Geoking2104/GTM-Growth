@@ -33,6 +33,10 @@ jobs:
             set -euo pipefail
             git config --global --add safe.directory /opt/gtm-growth
             cd /opt/gtm-growth
+            if ! git diff --quiet || ! git diff --cached --quiet; then
+              echo "Refusing to deploy: tracked local changes exist on the VPS." >&2
+              exit 1
+            fi
             git fetch origin main
-            git reset --hard origin/main
+            git merge --ff-only origin/main
             bash deploy/kayroslab-vps/deploy.sh
