@@ -110,7 +110,7 @@ Optionnel — générateurs via modèle open source : `docker compose --profile 
 ## Keycloak multi-tenant (clients GTM Growth)
 
 - DNS : `A *.gtm.kayroslab.com → 51.210.9.71`, plus un certificat joker obtenu par DNS-01 (`certbot-dns-ionos`, open source).
-- Le thème `keycloak/themes/gtm-growth` est monté dans le conteneur.
+- Le dossier `keycloak/themes/` est monté dans le conteneur (`gtm-growth` login/email/account ; un thème `gtm-preview` peut cohabiter pour validation).
 - Dans Keycloak, configurer :
   - le SMTP du realm `gtm-growth` (invitations, mot de passe oublié) ;
   - le secret du client `gtm-provisioner` → `KEYCLOAK_ADMIN_CLIENT_SECRET` dans `.env.local` ;
