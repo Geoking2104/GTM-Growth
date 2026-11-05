@@ -4,7 +4,7 @@ FROM node:20-alpine AS builder
 WORKDIR /app
 
 COPY package*.json ./
-RUN npm ci
+RUN apk add --no-cache python3 make g++ && npm ci
 
 COPY tsconfig.json ./
 COPY src ./src
@@ -21,7 +21,7 @@ RUN addgroup -g 1001 -S nodejs && \
 WORKDIR /app
 
 COPY package*.json ./
-RUN npm ci --omit=dev && npm cache clean --force
+RUN apk add --no-cache libstdc++ && apk add --no-cache --virtual .build-deps python3 make g++ && npm ci --omit=dev && npm cache clean --force && apk del .build-deps
 
 COPY --from=builder /app/dist ./dist
 

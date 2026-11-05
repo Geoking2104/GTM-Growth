@@ -11,10 +11,12 @@ import { TenantStore, type Tenant } from "../src/tenants/store.js";
 import { resolveTenant } from "../src/tenants/context.js";
 import { saveTenantReport } from "../src/tenants/data.js";
 import { KeycloakAdmin } from "../src/tenants/keycloak-admin.js";
+import { aiVisibilityRoutes } from "../src/console/ai-visibility.js";
 
 const dir = mkdtempSync(join(tmpdir(), "iso-"));
 process.env.REPORTS_PATH = join(dir, "reports");
 process.env.LEADS_PATH = join(dir, "leads.jsonl");
+process.env.AI_VISIBILITY_PATH = join(dir, "ai-visibility");
 writeFileSync(process.env.LEADS_PATH, [
   { name: "A", email: "a@x.fr", website: "https://www.acme.fr", createdAt: "2026-01-01" },
   { name: "B", email: "b@y.fr", website: "https://globex.com/page", createdAt: "2026-01-01" },
@@ -57,7 +59,7 @@ const fakeFetch = (async (u: string | URL, init?: RequestInit) => {
   return new Response(null, { status: 204 });
 }) as typeof fetch;
 const keycloakAdmin = new KeycloakAdmin({ baseUrl: "http://kc", authRealm: "master", clientId: "p", clientSecret: "s", fetch: fakeFetch });
-app.use("/c", buildConsoleRouter([echo], { config, jwksLoader: loader, store, keycloakAdmin }));
+app.use("/c", buildConsoleRouter([echo, ...aiVisibilityRoutes], { config, jwksLoader: loader, store, keycloakAdmin }));
 app.use("/p", buildPlatformRouter({ config, jwksLoader: loader, store, keycloakAdmin }));
 let server: ReturnType<typeof app.listen>; let root = "";
 beforeAll(() => { server = app.listen(0); root = `http://127.0.0.1:${(server.address() as AddressInfo).port}`; });
@@ -89,6 +91,57 @@ describe("isolation stricte entre tenants", () => {
     expect(JSON.stringify(body)).not.toContain("ABCDEF0123456789ABCDEF");
     expect((await call("/c/echo", acmeUser, { ga4Property: "123456" })).status).toBe(200);
     expect((await call("/c/tenant/settings", acmeAdmin, { ga4Properties: ["abc"] })).status).toBe(400);
+  });
+  it("protège les profils partagés par tenant et par domaine", async () => {
+    const profile = { domain: "acme.fr", name: "ACME", description: "Description", industry: "Commerce" };
+    expect((await call("/c/tenant/settings", acmeUser, { siteProfile: profile })).status).toBe(403);
+    expect((await call("/c/tenant/settings", acmeAdmin, { siteProfile: { ...profile, domain: "globex.com" } })).status).toBe(400);
+    expect((await call("/c/tenant/settings", acmeAdmin, { siteProfile: profile })).status).toBe(200);
+    expect((await (await call("/c/me", acmeUser)).json()).tenant.siteProfiles["acme.fr"]).toMatchObject({ name: "ACME", industry: "Commerce" });
+    expect((await (await call("/c/me", superAdmin, undefined, { "X-Tenant": "globex" })).json()).tenant.siteProfiles).toEqual({});
+  });
+  it("segmente le client sans modifier ses autorisations", async () => {
+    expect((await call("/c/tenant/settings", acmeUser, { usageType: "agency" })).status).toBe(403);
+    expect((await call("/c/tenant/settings", acmeAdmin, { usageType: "invalid" })).status).toBe(400);
+    expect((await call("/c/tenant/settings", acmeAdmin, { usageType: "agency" })).status).toBe(200);
+    const me = await (await call("/c/me", acmeUser)).json();
+    expect(me.tenant.usageType).toBe("agency");
+    expect((await call("/c/me", acmeUser, undefined, { "X-Tenant": "globex" })).status).toBe(403);
+  });
+  it("limite les requêtes suivies à une propriété autorisée et dix valeurs", async () => {
+    const watchedQueries = { property: "sc-domain:acme", queries: ["audit geo", "seo"] };
+    expect((await call("/c/tenant/settings", acmeUser, { watchedQueries })).status).toBe(403);
+    expect((await call("/c/tenant/settings", acmeAdmin, { watchedQueries: { ...watchedQueries, property: "sc-domain:globex" } })).status).toBe(400);
+    expect((await call("/c/tenant/settings", acmeAdmin, { watchedQueries: { ...watchedQueries, queries: Array.from({ length: 11 }, (_, i) => `q${i}`) } })).status).toBe(400);
+    expect((await call("/c/tenant/settings", acmeAdmin, { watchedQueries })).status).toBe(200);
+    expect((await (await call("/c/me", acmeUser)).json()).tenant.watchedQueries["sc-domain:acme"]).toEqual(["audit geo", "seo"]);
+    expect((await (await call("/c/me", superAdmin, undefined, { "X-Tenant": "globex" })).json()).tenant.watchedQueries).toEqual({});
+  });
+  it("refuse le provisionnement de plateforme aux utilisateurs de tenant", async () => {
+    expect((await call("/p/tenants", acmeAdmin, {})).status).toBe(403);
+  });
+  it("isole les observations IA et réserve leur import aux administrateurs", async () => {
+    const data = { brands: [{ name: "Acme" }], responses: [{ prompt: "Qui choisir ?", answer: "Acme est fiable.", source: "import", observedAt: "2026-11-01T12:00:00Z" }] };
+    expect((await call("/c/ai-visibility/import", acmeUser, data)).status).toBe(403);
+    const imported = await call("/c/ai-visibility/import", acmeAdmin, data); expect(imported.status).toBe(200);
+    const id = (await imported.json()).id;
+    expect((await (await call("/c/ai-visibility/datasets", acmeUser, {})).json()).datasets).toHaveLength(1);
+    expect((await (await call("/c/ai-visibility/datasets", superAdmin, {}, { "X-Tenant": "globex" })).json()).datasets).toHaveLength(0);
+    expect((await call("/c/ai-visibility/report", superAdmin, { datasetId: id }, { "X-Tenant": "globex" })).status).toBe(502);
+    const report = await (await call("/c/ai-visibility/report", acmeUser, { datasetId: id })).json();
+    const review = { datasetId: id, responseId: report.responses[0].id, brand: "Acme", status: "rejected", sentiment: "unknown" };
+    expect((await call("/c/ai-visibility/review", acmeUser, review)).status).toBe(403);
+    expect((await call("/c/ai-visibility/review", superAdmin, review, { "X-Tenant": "globex" })).status).toBe(502);
+    expect((await call("/c/ai-visibility/review", acmeAdmin, review)).status).toBe(200);
+    expect((await (await call("/c/ai-visibility/report", acmeUser, { datasetId: id })).json()).count).toBe(0);
+  });
+  it("sépare les clés fournisseur et bloque Gemini avant tout appel", async () => {
+    process.env.AI_VISIBILITY_OPENAI_KEY_ACME = "test-secret";
+    const a = await (await call("/c/ai-visibility/openai-status", acmeAdmin, {})).json();
+    const b = await (await call("/c/ai-visibility/openai-status", superAdmin, {}, { "X-Tenant": "globex" })).json();
+    expect(a.configured).toBe(true); expect(JSON.stringify(a)).not.toContain("test-secret"); expect(b.configured).toBe(false);
+    expect((await call("/c/ai-visibility/gemini-run", acmeAdmin, {})).status).toBe(502);
+    delete process.env.AI_VISIBILITY_OPENAI_KEY_ACME;
   });
   it("refuse un en-tête X-Tenant usurpé", async () => {
     expect((await call("/c/me", acmeUser, undefined, { "X-Tenant": "globex" })).status).toBe(403);

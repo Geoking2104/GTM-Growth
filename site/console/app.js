@@ -6,8 +6,14 @@ import { TABS, raw } from "./tools.js";
 import { el } from "./render.js";
 import { t, tr, actionLabel, LANG } from "./i18n.js";
 import { icon } from "./icons.js";
+import { renderAiVisibility } from "./ai-visibility.js";
+import { renderAudienceOverview } from "./audience-overview.js";
 import { renderOverview, renderPlan, renderIndexNow } from "./overview.js";
 import { renderOnboarding } from "./onboarding.js";
+import { renderAccessManagement } from "./access-management.js";
+import { renderPlatformSetup } from "./platform-setup.js";
+import { renderTrackedQueries } from "./tracked-queries.js";
+import { openWizard, renderAgentHelp } from "./onboarding-wizard.js";
 import { toolbar, renderSearchPerformance, renderQueryPages, renderSitemaps, renderGa4, renderRealtime, renderEcommerce, renderTechnology, renderGtm, renderBing, renderStatus, renderTags, renderSettings } from "./analytics.js";
 
 const $ = (s) => document.querySelector(s);
@@ -47,8 +53,16 @@ const fromTool = (id, filter = () => true, intro) => () => { const x = tool(id);
 const SECTIONS = {
   track: [
     { id: "overview", icon: "overview", build: () => custom("overview", [
-      { id: "board", label: t("s_overview"), async: async () => { const [ov, status, reports] = await Promise.all([overview().catch(() => null), api("/tracking/status", scope()).catch(() => null), reportsList()]); return [renderOnboarding({ status, tenant: state.me?.tenant, overview: ov, reports }), ...(ov ? renderOverview(ov) : [])]; } },
+      { id: "board", label: t("s_overview"), async: async () => {
+        const [ov, status, reports] = await Promise.all([overview().catch(() => null), api("/tracking/status", scope()).catch(() => null), reportsList()]);
+        const [search, ga4] = await Promise.all([
+          status?.gsc?.hasAccess === true ? api("/search/performance", scope()).catch(() => ({ problem: true })) : null,
+          status?.ga4?.hasAccess === true ? api("/ga4/overview", scope()).catch(() => ({ problem: true })) : null,
+        ]);
+        return [renderAudienceOverview({ search, ga4, status, state, rerender }), ...(ov ? renderOverview(ov) : []), renderOnboarding({ status, tenant: state.me?.tenant, overview: ov, reports }), wizardButton(), renderAgentHelp()];
+      } },
       { id: "plan", label: t("t_plan"), async: async () => renderPlan(await overview()) }]) },
+    { id: "ai_visibility", icon: "geo", build: () => custom("ai_visibility", [{ id: "board", label: LANG === "fr" ? "Réponses IA" : "AI answers", needsDomain: false, async: async () => renderAiVisibility({ api, me: state.me }) }]) },
     { id: "gsc", icon: "google", build: () => custom("gsc", [
       { id: "performance", label: t("t_gscPerf"), ...live("/search/performance", renderSearchPerformance, { searchType: true }) },
       { id: "query-pages", label: t("t_queryPages"), ...live("/search/query-pages", renderQueryPages) },
@@ -67,11 +81,12 @@ const SECTIONS = {
   ],
   act: [
     { id: "search", icon: "search", build: fromTool("search") },
-    { id: "keywords", icon: "keywords", build: fromTool("keywords") },
+    { id: "keywords", icon: "keywords", build: () => { const base = fromTool("keywords")(); base.tabs.push({ id: "tracked", label: LANG === "fr" ? "Requêtes suivies" : "Tracked queries", needsDomain: false, async: async () => renderTrackedQueries({ state, api, scope, saveSettings }) }); return base; } },
     { id: "tracking", icon: "tracking", build: () => custom("tracking", [
       { id: "status", label: t("t_status"), needsDomain: false, async: async () => renderStatus(await api("/tracking/status", scope()), state) },
       { id: "tags", label: t("t_tags"), async: async () => renderTags(await api("/tracking/status", scope())) },
-      { id: "settings", label: t("t_settings"), needsDomain: false, async: async () => renderSettings(state.me, saveSettings) }]) },
+      { id: "settings", label: t("t_settings"), needsDomain: false, async: async () => renderSettings(state.me, saveSettings) },
+      { id: "access", label: LANG === "fr" ? "Accès" : "Access", needsDomain: false, async: async () => renderAccessManagement(state.me, api) }]) },
     { id: "gtm", icon: "tracking", build: () => custom("gtm", [
       { id: "workspace", label: t("t_gtm"), needsDomain: false, async: async () => renderGtm(await api("/gtm/inventory", scope({ container: state.gtmContainer || undefined })), api, rerender) }]) },
     { id: "audit", icon: "audit", build: fromTool("audit") },
@@ -116,6 +131,17 @@ function renderAction(action) {
   card.append(form, out); return card;
 }
 
+function wizardButton() {
+  const button = el("button", "btn btn-small", LANG === "fr" ? "Refaire le démarrage guidé" : "Restart guided setup");
+  button.type = "button"; button.onclick = launchWizard; return button;
+}
+function launchWizard() {
+  if (!state.me?.tenant) return;
+  openWizard({ state, api, scope, saveSettings, renderSettings, renderStatus, onSite: (url) => {
+    state.url = url; state.overview = null; state.overviewFor = "";
+    localStorage.setItem("gtm-console-url", url); $("#c-url").value = url; refreshSite();
+  }, onClose: () => show("overview") });
+}
 let current = { section: "overview", tab: "" };
 async function saveSettings(body) {
   const token = await accessToken();
@@ -135,7 +161,7 @@ async function show(sectionId, tabId) {
   current = { section: section.id, tab: tab.id };
   history.replaceState(null, "", `#${section.id}${tab.id !== def.tabs[0].id ? `/${tab.id}` : ""}`);
   document.querySelectorAll(".app-nav a").forEach((a) => { const on = a.dataset.section === section.id; a.classList.toggle("is-active", on); if (on) a.setAttribute("aria-current", "true"); else a.removeAttribute("aria-current"); });
-  $("#c-crumb").textContent = t(`s_${section.id}`);
+  $("#c-crumb").textContent = (section.id === "platform" ? (LANG === "fr" ? "Administration plateforme" : "Platform administration") : section.id === "ai_visibility" ? (LANG === "fr" ? "Visibilité IA" : "AI visibility") : t(`s_${section.id}`));
   const tabs = $("#c-tabs"); tabs.replaceChildren();
   for (const x of def.tabs) {
     const b = el("button", `app-tab${x.id === tab.id ? " is-active" : ""}`); b.type = "button"; b.setAttribute("role", "tab"); b.setAttribute("aria-selected", String(x.id === tab.id));
@@ -155,7 +181,7 @@ async function show(sectionId, tabId) {
 function mountNav() {
   for (const [group, list] of Object.entries(SECTIONS)) {
     const ul = $(`#c-nav-${group}`);
-    for (const s of list) { const li = el("li"); const a = el("a"); a.href = `#${s.id}`; a.dataset.section = s.id; a.innerHTML = icon(s.icon); a.append(el("span", "", t(`s_${s.id}`))); a.onclick = (e) => { e.preventDefault(); show(s.id); }; li.append(a); ul.append(li); }
+    for (const s of list) { const li = el("li"); const a = el("a"); a.href = `#${s.id}`; a.dataset.section = s.id; a.innerHTML = icon(s.icon); a.append(el("span", "", (s.id === "platform" ? (LANG === "fr" ? "Administration plateforme" : "Platform administration") : s.id === "ai_visibility" ? (LANG === "fr" ? "Visibilité IA" : "AI visibility") : t(`s_${s.id}`)))); a.onclick = (e) => { e.preventDefault(); show(s.id); }; li.append(a); ul.append(li); }
   }
   const search = $("#c-search");
   search.oninput = () => { const q = search.value.trim().toLowerCase(); document.querySelectorAll(".app-nav li").forEach((li) => { li.hidden = q && !li.textContent.toLowerCase().includes(q); }); };
@@ -246,10 +272,16 @@ async function start() {
       if (me.tenant && ![...select.options].some((o) => o.value === me.tenant.id)) { const o = el("option", "", me.tenant.id); o.value = me.tenant.id; select.append(o); }
       select.value = me.tenant?.id ?? selectedTenant() ?? "";
     }
-    if (!state.url && me.tenant?.domains?.[0]) state.url = `https://${me.tenant.domains[0]}`;
-    if (!state.property && me.tenant?.gscProperties?.[0]) state.property = me.tenant.gscProperties[0];
-    if (!state.ga4Property && me.tenant?.ga4Properties?.[0]) state.ga4Property = me.tenant.ga4Properties[0];
-    if (!state.bingSite && me.tenant?.bingSites?.[0]) state.bingSite = me.tenant.bingSites[0];
+    if (me.tenant) {
+      // The picker was historically shared by all tenants on this browser.
+      // Never reuse another tenant's scope after switching workspaces.
+      const domains = me.tenant.domains || [];
+      let hostname = ""; try { hostname = new URL(state.url).hostname.toLowerCase().replace(/^www\./, ""); } catch { /* no valid selection */ }
+      if (!domains.some((d) => hostname === d || hostname.endsWith(`.${d}`))) state.url = domains[0] ? `https://${domains[0]}` : "";
+      if (!me.tenant.gscProperties?.includes(state.property)) state.property = me.tenant.gscProperties?.[0] || "";
+      if (!me.tenant.ga4Properties?.includes(state.ga4Property)) state.ga4Property = me.tenant.ga4Properties?.[0] || "";
+      if (!me.tenant.bingSites?.includes(state.bingSite)) state.bingSite = me.tenant.bingSites?.[0] || "";
+    }
   } catch (error) { $("#c-user").textContent = error.message; }
   $("#c-url").value = state.url; $("#c-property").value = state.property; $("#c-ga4").value = state.ga4Property; $("#c-bing").value = state.bingSite;
   picker.onsubmit = (e) => {
@@ -260,10 +292,15 @@ async function start() {
     if (!$("#c-tenant-wrap").hidden && tenantSel.value && tenantSel.value !== selectedTenant()) { sessionStorage.setItem("gtm-console-selected", tenantSel.value); location.reload(); return; }
     picker.hidden = true; sw.setAttribute("aria-expanded", "false"); refreshSite(); show(current.section, current.tab);
   };
+  if (state.me?.platformAdmin) {
+    const platform = { id: "platform", icon: "tracking", build: () => custom("platform", [{ id: "setup", label: LANG === "fr" ? "Provisionnement" : "Provisioning", needsDomain: false, async: async () => renderPlatformSetup(accessToken) }]) };
+    SECTIONS.act.push(platform); ALL.push(platform);
+  }
   refreshSite(); mountNav();
   const [s, tb] = location.hash.slice(1).split("/");
   if (!state.url) { picker.hidden = false; sw.setAttribute("aria-expanded", "true"); }
   show(s || "overview", tb);
+  if (state.me?.tenant && !localStorage.getItem(`gtm-console-wizard-v1:${state.me.tenant.id}:${state.me.email || state.me.username || "user"}`)) launchWizard();
 }
 window.addEventListener("hashchange", () => { const [a, b] = location.hash.slice(1).split("/"); if (a && ALL.some((x) => x.id === a)) show(a, b); });
 start().catch((error) => { console.error(error); loginScreen(); $("#c-login-error").textContent = error.message; });

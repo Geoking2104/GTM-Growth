@@ -64,8 +64,6 @@ const hooks = [
   'id="lead-company"',
   'id="result-heading"',
   'id="result-tables"',
-  'id="ink-host"',
-  'id="ink-generate"',
   'id="tab-overview"',
   'id="panel-overview"',
 ];
@@ -92,7 +90,8 @@ for (const meta of ["gg-api", "gg-form"]) {
   if (!frHtml.includes(`name="${meta}"`)) failures.push(`fr/index.html missing the ${meta} meta`);
 }
 if (!js.includes("result-tables")) failures.push("app.js no longer renders the tables");
-if (!js.includes("initIndexNow")) failures.push("app.js no longer initialises the IndexNow generator");
+if (!html.includes("/console/#indexnow") || !frHtml.includes("/console/#indexnow")) failures.push("landing pages no longer link to IndexNow in the console");
+if (!read("console/app.js").includes("renderIndexNow")) failures.push("console no longer initialises IndexNow");
 if (!js.includes("initConsole")) failures.push("app.js no longer initialises the console");
 if (!html.includes("reports/opendpe.html")) failures.push("index.html no longer links the sample report");
 const reportHtml = read("reports/opendpe.html");

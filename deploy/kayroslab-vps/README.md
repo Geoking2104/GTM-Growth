@@ -61,7 +61,7 @@ Sur le VPS, après chaque mise à jour :
 ```bash
 cd /opt/gtm-growth
 git fetch origin main
-git reset --hard origin/main
+git merge --ff-only origin/main
 bash deploy/kayroslab-vps/deploy.sh
 ```
 
@@ -118,3 +118,11 @@ Optionnel — générateurs via modèle open source : `docker compose --profile 
   - le compte `platform-admin`.
 - Pour ajouter un client, la méthode recommandée en production est `POST /api/platform/tenants`, avec un jeton `platform-admin`. Autre possibilité, depuis le dépôt cloné sur le VPS : `KEYCLOAK_INTERNAL_URL=http://127.0.0.1:8180 TENANTS_PATH=<volume gtm_growth_data>/tenants.json npm run tenant:provision -- …`. L'image de production n'embarque pas `scripts/`. Voir le README principal (« Ajouter un client »).
 - Le realm s'importe au premier démarrage (`--import-realm` n'écrase pas un realm existant). Sur un Keycloak déjà initialisé, appliquer à la main : Organisations activées, mappers `groups` et `organization`, rôle `platform-admin`, client `gtm-provisioner`.
+
+## Stockage de la visibilité IA
+
+Les jeux de données sont stockés dans `ai-visibility/datasets.sqlite3` sur le volume de données (ou dans `AI_VISIBILITY_PATH` si défini). SQLite utilise des transactions et un journal de rollback pour les écritures de plusieurs processus sur un même serveur et un système de fichiers local. Ne pas partager cette base entre plusieurs hôtes via un disque réseau. Le registre de tenants utilise un stockage distinct.
+
+À la première consultation de chaque tenant, les anciens fichiers JSON sont importés dans une transaction et conservés. Arrêter tous les anciens processus écrivant les fichiers JSON avant la migration : leurs écritures ultérieures ne seraient pas reprises. Conserver et gérer les anciens fichiers dans les procédures de rétention. Une restauration de l'ancien code après migration nécessite d'abord un export des nouvelles données : les fichiers JSON ne sont plus mis à jour.
+
+Sauvegarder la base avec l'API de sauvegarde SQLite ou arrêter tous les processus et copier la base et son éventuel journal ensemble. Vérifier la restauration et inclure les sauvegardes et anciens JSON dans les procédures d'effacement. La suppression automatique après un an n'est pas implémentée.

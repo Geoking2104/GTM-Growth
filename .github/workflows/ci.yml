@@ -50,6 +50,9 @@ jobs:
       - name: Landing site check
         run: node scripts/check-site.mjs
 
+      - name: Build production image
+        run: docker build -t gtm-growth-ci .
+
       - name: Upload dist artifact
         uses: actions/upload-artifact@v4
         with:
