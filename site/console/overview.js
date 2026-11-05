@@ -15,11 +15,11 @@ function spark(from, to, color, steps = 6) {
   return s;
 }
 
-function kpi(label, value, max, delta, note, color) {
+function kpi(label, value, max, delta, note, color, help) {
   const c = el("div", "kpi-cell");
   const v = el("div", "kpi-value"); v.append(el("strong", "", String(value ?? "—")), el("em", "", `/${max}`));
   const f = el("div", "kpi-foot"); f.append(el("span", `delta ${delta >= 0 ? "up" : "down"}`, fmtDelta(delta)), el("span", "kpi-note", note), spark(value, max, color));
-  c.append(el("span", "kpi-label", label), v, f); return c;
+  c.append(el("span", "kpi-label", label), v, f); if (help) c.append(el("p", "kpi-help", help)); return c;
 }
 
 function trajectory(score, projected, recs) {
@@ -62,13 +62,13 @@ export function renderOverview(d) {
   const idxFails = (d.indexnow?.checks ?? []).filter((c) => c.status !== "pass").length;
   const row = el("div", "kpi-row");
   row.append(
-    kpi(t("kGeo"), d.geo.score, 100, d.geo.projectedScore - d.geo.score, t("projected"), "#4f5bd5"),
-    kpi(t("kCit"), d.citability?.score ?? "—", 100, d.citability ? 100 - d.citability.score : 0, t("toMax"), "#8b7bd8"),
-    kpi(t("kIdx"), d.indexnow?.score ?? "—", 100, d.indexnow ? 100 - d.indexnow.score : 0, `${idxFails} ${t("toFix")}`, "#e0b23c"),
-    kpi(t("kEng"), ready.length, d.platforms.length, d.platforms.length - ready.length, ready.map((p) => p.label).join(", ") || "—", "#2f9e6f"),
+    kpi(t("kGeo"), d.geo.score, 100, d.geo.projectedScore - d.geo.score, t("projected"), "#4f5bd5", t("hGeo")),
+    kpi(t("kCit"), d.citability?.score ?? "—", 100, d.citability ? 100 - d.citability.score : 0, t("toMax"), "#8b7bd8", t("hCit")),
+    kpi(t("kIdx"), d.indexnow?.score ?? "—", 100, d.indexnow ? 100 - d.indexnow.score : 0, `${idxFails} ${t("toFix")}`, "#e0b23c", t("hIdx")),
+    kpi(t("kEng"), ready.length, d.platforms.length, d.platforms.length - ready.length, ready.map((p) => p.label).join(", ") || "—", "#2f9e6f", t("hEng")),
   );
   const split = el("div", "app-split"); split.append(trajectory(d.geo.score, d.geo.projectedScore, d.geo.recommendations ?? []), rank(d.platforms));
-  return [row, split, strip(d.geo.breakdown, d.geo.max)];
+  return [el("p", "c-note c-pad", t("hBoard")), row, split, strip(d.geo.breakdown, d.geo.max)];
 }
 
 function tableOf(caption, head, rows) {

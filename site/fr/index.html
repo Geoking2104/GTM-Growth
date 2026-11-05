@@ -110,6 +110,7 @@
       <span>GTM&nbsp;Growth</span>
     </a>
     <nav class="nav" aria-label="Primary">
+      <a href="#how">Fonctionnement</a>
       <a href="#tools">Outils</a>
       <a href="#toolkit">Toolkit</a>
       <a href="#console">Console</a>
@@ -228,6 +229,43 @@
   </section>
 
 
+  <!-- ── How it works (onboarding) ─────────────────────────── -->
+  <section class="section" id="how" aria-labelledby="how-heading">
+    <div class="wrap">
+      <header class="section-head">
+        <p class="eyebrow eyebrow-dark">Fonctionnement</p>
+        <h2 id="how-heading">D’une URL à un plan exécutable</h2>
+        <p class="section-sub">Quatre étapes, de la lecture gratuite à la console. Chaque étape mène directement à l’outil qui la réalise.</p>
+      </header>
+      <ol class="steps steps-4">
+        <li>
+          <span class="step-num">1</span>
+          <h3>Lecture gratuite</h3>
+          <p>Saisissez votre adresse. Vous obtenez la note d’hygiène de l’URL et la liste de tout ce que l’audit complet inspecte. Sans compte, sans chargement, sans supposition.</p>
+          <p class="step-link"><a href="#top">Lancer la lecture →</a></p>
+        </li>
+        <li>
+          <span class="step-num">2</span>
+          <h3>Connecter vos accès</h3>
+          <p>Dans la console, Tracking → Paramètres : Search Console et GA4 (compte de service en lecture), clé API Bing Webmaster gratuite, conteneur Google Tag Manager et projet Microsoft Clarity. La carte « Démarrage » se coche d’elle-même.</p>
+          <p class="step-link"><a href="/console/#tracking/settings">Ouvrir Tracking → Paramètres →</a></p>
+        </li>
+        <li>
+          <span class="step-num">3</span>
+          <h3>Audit complet</h3>
+          <p>Lancez le serveur vous-même, ou faites-le avec nous : note GEO, citabilité, matrice de robots, dérive llms.txt, installation GTM et audit du conteneur — chaque point avec sa preuve.</p>
+          <p class="step-link"><a href="/console/">Ouvrir la console →</a></p>
+        </li>
+        <li>
+          <span class="step-num">4</span>
+          <h3>Mise en œuvre</h3>
+          <p>Un plan priorisé sur 90 jours : quoi corriger maintenant, quoi instrumenter, quoi remesurer. Puis une comparaison avant/après sur la même note déterministe.</p>
+          <p class="step-link"><a href="/console/#overview/plan">Outils ACT : plan, GTM, générateurs →</a></p>
+        </li>
+      </ol>
+    </div>
+  </section>
+
   <!-- ── Free tools ──────────────────────────────────────── -->
   <section class="section" id="tools" aria-labelledby="tools-heading">
     <div class="wrap">
@@ -243,24 +281,28 @@
           <h3>Tables SEO</h3>
           <p>Longueur du titre et de la description, canonique, meta robots, plan H1–H3, nombre de mots, liens internes et externes, images sans alt, blocs et types JSON-LD. Mesuré sur le HTML que vous servez — jamais estimé.</p>
           <p class="tag">lecture gratuite · /api/free-read</p>
+          <p class="card-next"><a href="/console/#search">Va plus loin dans la console : Search → requêtes, pages, appareils, pays ; Audit → note GEO et données structurées.</a></p>
         </article>
         <article class="card">
           <span class="icon" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M7 7h4v10H7zM13 7h4v6h-4z"/></svg></span>
           <h3>Rapport GA4</h3>
           <p>IDs de mesure, balises Universal Analytics mortes, nombre de conteneurs, chargeurs en double, <code>dataLayer</code> et consentement — tout ce qui décide si les sessions que vous présentez existent vraiment.</p>
           <p class="tag">lecture gratuite · /api/free-read</p>
+          <p class="card-next"><a href="/console/#ga4">Va plus loin dans la console : GA4 → canaux, pages, appareils, pays, e-commerce, systèmes et navigateurs ; audit d’installation GTM.</a></p>
         </article>
         <article class="card">
           <span class="icon" aria-hidden="true"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="8"/><path d="M4 12h16M12 4c3 3 3 13 0 16M12 4c-3 3-3 13 0 16"/></svg></span>
           <h3>Rapport Search Console</h3>
           <p>Balise de vérification, directives robots.txt, couverture du sitemap et part de <code>lastmod</code>, indexabilité, hôte canonique — ce dont Google a besoin avant de pouvoir indexer la page.</p>
           <p class="tag">lecture gratuite · /api/free-read</p>
+          <p class="card-next"><a href="/console/#search">Va plus loin dans la console : performances Search Console, sitemaps ; préparation IndexNow et Bing.</a></p>
         </article>
         <article class="card">
           <span class="icon" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M12 4v5M6 10h12M6 10v6M12 10v6M18 10v6M3 20h6M9 20h6M15 20h6"/></svg></span>
           <h3>Sitemap visuel</h3>
           <p>Vue inspirée de SlickMap des URL déclarées dans le sitemap XML, avec nombre de pages, profondeur, couverture <code>lastmod</code> et répartition par section. Elle lit le sitemap ; elle n’invente pas de trafic.</p>
           <p class="tag">lecture gratuite · données sitemap</p>
+          <p class="card-next"><a href="/console/#sitemap">Va plus loin dans la console : llms.txt généré depuis le sitemap, puis dérive contrôlée après chaque déploiement.</a></p>
         </article>
       </div>
 

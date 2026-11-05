@@ -7,6 +7,7 @@ import { el } from "./render.js";
 import { t, tr, actionLabel, LANG } from "./i18n.js";
 import { icon } from "./icons.js";
 import { renderOverview, renderPlan, renderIndexNow } from "./overview.js";
+import { renderOnboarding } from "./onboarding.js";
 import { toolbar, renderSearchPerformance, renderQueryPages, renderSitemaps, renderGa4, renderRealtime, renderEcommerce, renderTechnology, renderGtm, renderBing, renderStatus, renderTags, renderSettings } from "./analytics.js";
 
 const $ = (s) => document.querySelector(s);
@@ -36,13 +37,17 @@ async function overview() {
   state.overview = await api("/overview", { url: state.url }); state.overviewFor = state.url; return state.overview;
 }
 
+async function reportsList() {
+  try { const token = await accessToken(); const r = await fetch(`${API_BASE}/reports`, { headers: headers(token) }); return r.ok ? (await r.json()).reports ?? [] : []; } catch { return []; }
+}
+
 /* ── Sections de la barre latérale : Track / Act, comme la démo publique ── */
 const custom = (id, tabs) => ({ id, tabs });
 const fromTool = (id, filter = () => true, intro) => () => { const x = tool(id); return { intro: intro ?? tr(x.intro), tabs: x.actions.filter(filter).map((a) => ({ id: a.id, label: actionLabel(a), action: a })) }; };
 const SECTIONS = {
   track: [
     { id: "overview", icon: "overview", build: () => custom("overview", [
-      { id: "board", label: t("s_overview"), async: async () => renderOverview(await overview()) },
+      { id: "board", label: t("s_overview"), async: async () => { const [ov, status, reports] = await Promise.all([overview().catch(() => null), api("/tracking/status", scope()).catch(() => null), reportsList()]); return [renderOnboarding({ status, tenant: state.me?.tenant, overview: ov, reports }), ...(ov ? renderOverview(ov) : [])]; } },
       { id: "plan", label: t("t_plan"), async: async () => renderPlan(await overview()) }]) },
     { id: "gsc", icon: "google", build: () => custom("gsc", [
       { id: "performance", label: t("t_gscPerf"), ...live("/search/performance", renderSearchPerformance, { searchType: true }) },
@@ -260,4 +265,5 @@ async function start() {
   if (!state.url) { picker.hidden = false; sw.setAttribute("aria-expanded", "true"); }
   show(s || "overview", tb);
 }
+window.addEventListener("hashchange", () => { const [a, b] = location.hash.slice(1).split("/"); if (a && ALL.some((x) => x.id === a)) show(a, b); });
 start().catch((error) => { console.error(error); loginScreen(); $("#c-login-error").textContent = error.message; });
