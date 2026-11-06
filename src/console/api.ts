@@ -284,6 +284,7 @@ export function buildConsoleRouter(routes: ConsoleRoute[], options: ConsoleOptio
     if (ga4List?.some((x) => !/^\d{5,15}$/.test(x))) return fail(res, 400, "Propriété GA4 invalide (identifiant numérique).");
     const gtmList = list(body.gtmContainers);
     if (gtmList?.some((x) => !/^accounts\/\d+\/containers\/\d+$/.test(x))) return fail(res, 400, "Conteneur GTM invalide (accounts/<id>/containers/<id>).");
+    if (!tenancy.platformAdmin && gtmList?.some((x) => !(tenancy.tenant?.gtmContainers ?? []).includes(x))) return fail(res, 403, "L’association d’un nouveau conteneur doit être validée par l’administration de la plateforme.");
     const clarityList = list(body.clarityProjects);
     if (clarityList?.some((x) => !/^[a-z0-9]{6,16}$/i.test(x))) return fail(res, 400, "Projet Clarity invalide.");
     const bingList = list(body.bingSites);
