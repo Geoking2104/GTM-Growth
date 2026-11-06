@@ -196,7 +196,7 @@ export function renderGtmAccess(serviceAccount) {
   const copy = el("button", "btn btn-small", L("Copier l’adresse", "Copy email")); copy.type = "button";
   copy.onclick = async () => { try { if (!navigator.clipboard?.writeText) throw new Error(); await navigator.clipboard.writeText(serviceAccount.email); feedback.textContent = L("Adresse copiée. Collez-la dans Google Tag Manager.", "Email copied. Paste it in Google Tag Manager."); } catch { feedback.textContent = L("Copie indisponible : sélectionnez et copiez l’adresse ci-dessus.", "Copy unavailable: select and copy the email above."); } };
   const open = el("a", "btn btn-small", L("Ouvrir Google Tag Manager", "Open Google Tag Manager")); open.href = "https://tagmanager.google.com/"; open.target = "_blank"; open.rel = "noopener noreferrer";
-  section.append(email, el("p", "c-note", L("Dans GTM : Administration → colonne Conteneur → Gestion des utilisateurs → + → Ajouter des utilisateurs. Collez l’adresse et attribuez au minimum Lecture. Choisissez Modifier ou Publier uniquement si ces fonctions sont nécessaires, puis validez dans Google.", "In GTM: Admin → Container column → User Management → + → Add users. Paste the email and grant at least Read. Choose Edit or Publish only when needed, then confirm in Google.")), copy, open, feedback);
+  section.append(email, el("p", "c-note", L("Si nécessaire, créez d’abord un conteneur dans Google Tag Manager. Dans GTM : Administration → colonne Conteneur → Gestion des utilisateurs → + → Ajouter des utilisateurs. Collez l’adresse et attribuez au minimum Lecture. Choisissez Modifier ou Publier uniquement si ces fonctions sont nécessaires, puis validez dans Google.", "If needed, create a container in Google Tag Manager first. In GTM: Admin → Container column → User Management → + → Add users. Paste the email and grant at least Read. Choose Edit or Publish only when needed, then confirm in Google.")), copy, open, feedback);
   return section;
 }
 
@@ -235,7 +235,7 @@ export function renderTags(d) {
 }
 
 /** Paramètres du client (admin) : propriétés GSC / GA4, sites et clé Bing. */
-export function renderSettings(me, save, serviceAccount) {
+export function renderSettings(me, save, serviceAccount, api) {
   const t = me?.tenant;
   if (!t) return [el("p", "c-note c-pad", L("Aucun espace client sélectionné.", "No client space selected."))];
   const admin = me.platformAdmin || me.role === "tenant-admin";
@@ -252,10 +252,33 @@ export function renderSettings(me, save, serviceAccount) {
   const containerInput = form.querySelector('[name="gtmContainers"]');
   const containerHelp = el("p", "c-note", L("Aucun conteneur ? Renseignez le chemin API accounts/<id>/containers/<id> du conteneur autorisé pour ce client. L’identifiant public GTM-XXXX ne suffit pas à lui seul ; le compte de service doit avoir accès au conteneur.", "No container? Enter the API path accounts/<id>/containers/<id> for this client's authorized container. The public GTM-XXXX ID alone is not enough; the service account needs access to the container."));
   containerInput.closest("label").append(containerHelp);
-  if (admin) {
+  containerInput.readOnly = !me.platformAdmin;
+  if (admin && !me.platformAdmin) containerInput.closest("label").append(el("p", "c-note", L("Pour associer un nouveau conteneur, contactez l’administration de la plateforme après avoir autorisé le compte de service.", "To associate a new container, contact the platform administrator after granting access to the service account.")));
+  if (me.platformAdmin) {
     const paste = el("button", "btn btn-small", L("Coller le chemin du conteneur", "Paste container path")); paste.type = "button";
     paste.onclick = async () => { try { const raw = (await navigator.clipboard.readText()).trim(); const value = raw.match(/accounts\/\d+\/containers\/\d+/)?.[0] || raw; if (!/^accounts\/\d+\/containers\/\d+$/.test(value)) throw new Error(L("Le presse-papiers doit contenir accounts/<id>/containers/<id>.", "Clipboard must contain accounts/<id>/containers/<id>.")); const existing = containerInput.value.split(",").map((item) => item.trim()).filter(Boolean); if (!existing.includes(value)) existing.push(value); containerInput.value = existing.join(", "); containerInput.dispatchEvent(new Event("input", { bubbles: true })); msg.textContent = L("Chemin collé. Enregistrez pour l’appliquer.", "Path pasted. Save to apply."); msg.className = "c-note"; } catch (error) { msg.textContent = error?.message || L("Presse-papiers inaccessible : collez le chemin manuellement.", "Clipboard unavailable: paste the path manually."); msg.className = "c-error"; } };
     containerInput.closest("label").append(paste);
+    if (api) {
+      const discover = el("button", "btn btn-small", L("Rechercher les conteneurs accessibles", "Find accessible containers")); discover.type = "button";
+      const choices = el("div", "c-container-choices");
+      discover.onclick = async () => {
+        discover.disabled = true; choices.replaceChildren(el("p", "c-loading", L("Recherche en cours…", "Searching…")));
+        try {
+          const data = await api("/gtm/containers", {});
+          if (data.problem) { choices.replaceChildren(problemBox(data.problem)); return; }
+          choices.replaceChildren();
+          if (!data.containers?.length) choices.append(el("p", "c-note", L("Aucun conteneur accessible. Vérifiez l’autorisation du compte de service dans Google Tag Manager.", "No accessible containers. Check the service account permissions in Google Tag Manager.")));
+          for (const c of data.containers || []) {
+            if (!/^accounts\/\d+\/containers\/\d+$/.test(c.path || "")) continue;
+            const row = el("p", "c-note"); row.append(el("span", "", `${c.account || "—"} · ${c.name || "—"} · ${c.publicId || "—"} · ${c.path} `));
+            const add = el("button", "btn btn-small", L("Sélectionner", "Select")); add.type = "button";
+            add.onclick = () => { const existing = containerInput.value.split(",").map((x) => x.trim()).filter(Boolean); if (!existing.includes(c.path)) existing.push(c.path); containerInput.value = existing.join(", "); msg.textContent = L("Conteneur sélectionné. Vérifiez qu’il appartient au client, puis enregistrez.", "Container selected. Confirm it belongs to the client, then save."); };
+            row.append(add); choices.append(row);
+          }
+        } catch (error) { choices.replaceChildren(el("p", "c-error", error.message)); } finally { discover.disabled = false; }
+      };
+      containerInput.closest("label").append(discover, choices);
+    }
   }
   const msg = el("p", "c-note");
   if (admin) { const b = el("button", "btn btn-small", L("Enregistrer", "Save")); b.type = "submit"; form.append(b); }

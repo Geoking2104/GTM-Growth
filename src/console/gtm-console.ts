@@ -24,11 +24,18 @@ export function containerOf(body: Body, tenant?: Tenant): string | undefined {
 const notConfigured = { problem: { state: "not-configured", message: "Aucun conteneur GTM configuré pour ce client (accounts/<id>/containers/<id>)." } };
 
 /** Conteneurs visibles par le compte de service (tous comptes). */
-export async function gtmContainers(tenant?: Tenant, platformAdmin = false) {
+export async function gtmContainers(tenant?: Tenant, platformAdmin = false, provided?: Awaited<ReturnType<typeof tm>>) {
   try {
-    const api = await tm();
-    const accounts = (await api.accounts.list({})).data.account ?? [];
-    const all = (await Promise.all(accounts.map(async (a) => ((await api.accounts.containers.list({ parent: a.path! })).data.container ?? []).map((c) => ({ account: a.name, path: c.path, publicId: c.publicId, name: c.name, usageContext: c.usageContext, domains: c.domainName ?? [] }))))).flat();
+    const api = provided ?? await tm();
+    const accounts: Array<{ path?: string | null; name?: string | null }> = [];
+    let token: string | undefined;
+    do { const data = (await api.accounts.list({ pageToken: token })).data; accounts.push(...(data.account ?? [])); token = data.nextPageToken || undefined; } while (token);
+    const all = (await Promise.all(accounts.filter((a) => a.path).map(async (a) => {
+      const found: Array<{ account: string | null | undefined; path: string | null | undefined; publicId: string | null | undefined; name: string | null | undefined; usageContext: string[] | null | undefined; domains: string[] }> = [];
+      let pageToken: string | undefined;
+      do { const data = (await api.accounts.containers.list({ parent: a.path!, pageToken })).data; found.push(...(data.container ?? []).map((c) => ({ account: a.name, path: c.path, publicId: c.publicId, name: c.name, usageContext: c.usageContext, domains: c.domainName ?? [] }))); pageToken = data.nextPageToken || undefined; } while (pageToken);
+      return found;
+    }))).flat();
     const allowed = platformAdmin || !tenant ? all : all.filter((c) => tenant.gtmContainers?.includes(String(c.path)));
     return { containers: allowed, configured: tenant?.gtmContainers ?? [] };
   } catch (error) { return { problem: gtmProblem(error) }; }

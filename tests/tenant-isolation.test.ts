@@ -178,6 +178,15 @@ describe("isolation stricte entre tenants", () => {
     const me = await (await call("/c/me", acmeUser)).json();
     expect(me).toMatchObject({ role: "tenant-user", tenant: { id: "acme" }, accountConsole: `${ISS}/account/` });
   });
+  it("réserve l’association des conteneurs GTM au superadministrateur", async () => {
+    const container = "accounts/123/containers/456";
+    expect((await call("/c/tenant/settings", acmeAdmin, { gtmContainers: [container] })).status).toBe(403);
+    const assigned = await call("/c/tenant/settings", superAdmin, { gtmContainers: [container] }, { "X-Tenant": "acme" });
+    expect(assigned.status).toBe(200);
+    expect((await call("/c/tenant/settings", acmeAdmin, { gtmContainers: [container], branding: { primaryColor: "#112233" } })).status).toBe(200);
+    expect((await call("/c/tenant/settings", acmeAdmin, { gtmContainers: [container, "accounts/123/containers/999"] })).status).toBe(403);
+    expect(store.get("acme")?.gtmContainers).toEqual([container]);
+  });
   it("paramètres et invitations réservés au tenant-admin", async () => {
     expect((await call("/c/tenant/settings", acmeUser, { domains: ["globex.com"] })).status).toBe(403);
     expect((await call("/c/tenant/users", acmeUser, { email: "x@acme.fr" })).status).toBe(403);
