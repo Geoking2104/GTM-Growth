@@ -183,6 +183,23 @@ export function renderBing(d) {
 }
 
 const yes = (b) => (b === null || b === undefined ? "—" : b ? L("oui", "yes") : L("non", "no"));
+/** Guide the client to grant access to the credential actually used for this tenant. */
+export function renderGtmAccess(serviceAccount) {
+  const section = el("section", "c-card c-pad");
+  section.append(el("h3", "", L("Autoriser GTM Growth dans Google Tag Manager", "Grant GTM Growth access in Google Tag Manager")));
+  if (!serviceAccount?.email) {
+    section.append(el("p", "c-note", L("Adresse du compte de service indisponible. Contactez l’administration pour configurer les identifiants Google de cet espace.", "Service account email unavailable. Contact the administrator to configure Google credentials for this workspace.")));
+    return section;
+  }
+  section.append(el("p", "c-note", L("Adresse du compte de service utilisé par cet espace :", "Service account used by this workspace:")));
+  const email = el("code", "c-service-email", serviceAccount.email); const feedback = el("p", "c-note"); feedback.setAttribute("role", "status");
+  const copy = el("button", "btn btn-small", L("Copier l’adresse", "Copy email")); copy.type = "button";
+  copy.onclick = async () => { try { if (!navigator.clipboard?.writeText) throw new Error(); await navigator.clipboard.writeText(serviceAccount.email); feedback.textContent = L("Adresse copiée. Collez-la dans Google Tag Manager.", "Email copied. Paste it in Google Tag Manager."); } catch { feedback.textContent = L("Copie indisponible : sélectionnez et copiez l’adresse ci-dessus.", "Copy unavailable: select and copy the email above."); } };
+  const open = el("a", "btn btn-small", L("Ouvrir Google Tag Manager", "Open Google Tag Manager")); open.href = "https://tagmanager.google.com/"; open.target = "_blank"; open.rel = "noopener noreferrer";
+  section.append(email, el("p", "c-note", L("Dans GTM : Administration → colonne Conteneur → Gestion des utilisateurs → + → Ajouter des utilisateurs. Collez l’adresse et attribuez au minimum Lecture. Choisissez Modifier ou Publier uniquement si ces fonctions sont nécessaires, puis validez dans Google.", "In GTM: Admin → Container column → User Management → + → Add users. Paste the email and grant at least Read. Choose Edit or Publish only when needed, then confirm in Google.")), copy, open, feedback);
+  return section;
+}
+
 export function renderStatus(d, state) {
   const out = [];
   const sa = d.serviceAccount;
@@ -192,6 +209,7 @@ export function renderStatus(d, state) {
     kpi("GA4", d.ga4?.error ? L("erreur", "error") : `${d.ga4?.properties?.length ?? 0} ${L("propriété(s)", "propert(y/ies)")}`, null, { note: `${state.ga4Property || "—"} : ${yes(d.ga4?.hasAccess)}` }),
     kpi("Bing", d.bing?.keyConfigured ? (d.bing.error ? L("erreur", "error") : `${d.bing.sites?.length ?? 0} site(s)`) : L("clé absente", "no key"), null, { note: `${state.bingSite || "—"} : ${yes(d.bing?.hasAccess)}` }),
   ]));
+  out.push(renderGtmAccess(sa));
   const steps = [];
   if (sa.email && d.gsc && !d.gsc.error && d.gsc.hasAccess !== true) steps.push({ state: "no-access", message: L(`Search Console : la propriété ${state.property || "(non renseignée)"} n'est pas visible par le compte de service.`, `Search Console: property ${state.property || "(not set)"} is not visible to the service account.`), grantEmail: sa.email, steps: [L("Search Console → la propriété → Paramètres → Utilisateurs et autorisations → Ajouter un utilisateur → autorisation « Restreint ».", "Search Console → the property → Settings → Users and permissions → Add user → “Restricted” permission.")] });
   if (sa.email && d.ga4 && !d.ga4.error && d.ga4.hasAccess !== true) steps.push({ state: "no-access", message: L(`GA4 : la propriété ${state.ga4Property || "(non renseignée)"} n'est pas visible par le compte de service.`, `GA4: property ${state.ga4Property || "(not set)"} is not visible to the service account.`), grantEmail: sa.email, steps: [L("Google Analytics → Admin → Gestion des accès à la propriété → + Ajouter des utilisateurs → rôle « Lecteur ».", "Google Analytics → Admin → Property access management → + Add users → “Viewer” role."), L("Puis renseignez l'identifiant numérique de la propriété dans le sélecteur (Admin → Paramètres de la propriété).", "Then enter the numeric property id in the picker (Admin → Property settings).")] });
@@ -217,7 +235,7 @@ export function renderTags(d) {
 }
 
 /** Paramètres du client (admin) : propriétés GSC / GA4, sites et clé Bing. */
-export function renderSettings(me, save) {
+export function renderSettings(me, save, serviceAccount) {
   const t = me?.tenant;
   if (!t) return [el("p", "c-note c-pad", L("Aucun espace client sélectionné.", "No client space selected."))];
   const admin = me.platformAdmin || me.role === "tenant-admin";
@@ -248,7 +266,7 @@ export function renderSettings(me, save) {
     const key = String(fd.get("bingApiKey") ?? "").trim(); if (key) body.bingApiKey = key;
     try { await save(body); msg.textContent = L("Enregistré.", "Saved."); msg.className = "c-note"; } catch (error) { msg.textContent = error.message; msg.className = "c-error"; }
   };
-  return [form, msg];
+  return serviceAccount === undefined ? [form, msg] : [renderGtmAccess(serviceAccount), form, msg];
 }
 
 /* ── GA4 e-commerce ── */
