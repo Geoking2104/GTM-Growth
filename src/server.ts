@@ -1,4 +1,4 @@
-import { Server } from "@modelcontextprotocol/sdk/server/index.js";
+﻿import { Server } from "@modelcontextprotocol/sdk/server/index.js";
 import { StdioServerTransport } from "@modelcontextprotocol/sdk/server/stdio.js";
 import { SSEServerTransport } from "@modelcontextprotocol/sdk/server/sse.js";
 import { StreamableHTTPServerTransport } from "@modelcontextprotocol/sdk/server/streamableHttp.js";
@@ -15,6 +15,7 @@ import { logger } from "./utils/logger.js";
 import { mountPublicApi } from "./http/public-api.js";
 import { buildCompetitionMcpRouter } from "./console/competition-mcp.js";
 import { mountConsoleApi } from "./console/api.js";
+import { startScheduler } from "./console/ops-scheduler.js";
 
 function getVersion(): string {
   try {
@@ -86,7 +87,7 @@ export async function startServer(transportType: "stdio" | "http" = "stdio") {
     return;
   }
 
-  // ─── HTTP: SSE (legacy) + Streamable HTTP (modern) ──────────────────
+  // â”€â”€â”€ HTTP: SSE (legacy) + Streamable HTTP (modern) â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
   const app = express();
   app.use(cors({
     origin: "*",
@@ -98,10 +99,10 @@ export async function startServer(transportType: "stdio" | "http" = "stdio") {
   const port = parseInt(process.env.PORT || "3000", 10);
   const host = process.env.HOST || "0.0.0.0";
 
-  // sessionId → transport (SSE legacy)
+  // sessionId â†’ transport (SSE legacy)
   const sessions = new Map<string, SSEServerTransport>();
 
-  // Health / info (no auth — status only)
+  // Health / info (no auth â€” status only)
   app.get("/", (_req, res) => {
     res.json({
       name: SERVER_NAME,
@@ -118,14 +119,17 @@ export async function startServer(transportType: "stdio" | "http" = "stdio") {
     res.json({ status: "ok", sessions: sessions.size });
   });
 
-  // Public website API — free read and lead capture (no MCP session needed).
+  // Public website API â€” free read and lead capture (no MCP session needed).
   mountPublicApi(app);
 
-  // Console API — Keycloak-protected (OIDC bearer tokens validated via JWKS).
+  // Console API â€” Keycloak-protected (OIDC bearer tokens validated via JWKS).
   mountConsoleApi(app);
   app.use("/api/mcp/competition", buildCompetitionMcpRouter());
+  // Operations scheduler (T-11): periodic visibility + rank checks per tenant.
+  // Opt-in through env so tests, stdio runs and CI stay quiet.
+  if (process.env.OPS_SCHEDULER_ENABLED === "true") startScheduler();
 
-  // ── Modern: Streamable HTTP transport at /mcp (stateless) ───────────
+  // â”€â”€ Modern: Streamable HTTP transport at /mcp (stateless) â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
   app.post("/mcp", requireToken, async (req: Request, res: Response) => {
     try {
       const sessionServer = createMcpServer();
@@ -154,10 +158,10 @@ export async function startServer(transportType: "stdio" | "http" = "stdio") {
     res.status(405).json({ error: "Method not allowed. Use POST /mcp." });
   });
 
-  // ── Legacy: SSE transport at /sse (kept for older clients) ──────────
+  // â”€â”€ Legacy: SSE transport at /sse (kept for older clients) â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
   app.get("/sse", requireToken, async (req: Request, res: Response) => {
     const sessionId = randomUUID();
-    logger.info(`[sse] New connection → session ${sessionId} from ${req.ip}`);
+    logger.info(`[sse] New connection â†’ session ${sessionId} from ${req.ip}`);
 
     res.setHeader("Content-Type", "text/event-stream");
     res.setHeader("Cache-Control", "no-cache");
@@ -223,9 +227,9 @@ export async function startServer(transportType: "stdio" | "http" = "stdio") {
   // Graceful shutdown
   const httpServer = app.listen(port, host, () => {
     logger.info(`gtm-growth MCP server running on http://${host}:${port}`);
-    logger.info(`Streamable HTTP endpoint → http://${host}:${port}/mcp`);
-    logger.info(`SSE endpoint (legacy)    → http://${host}:${port}/sse`);
-    logger.info(`Messages endpoint        → http://${host}:${port}/messages`);
+    logger.info(`Streamable HTTP endpoint â†’ http://${host}:${port}/mcp`);
+    logger.info(`SSE endpoint (legacy)    â†’ http://${host}:${port}/sse`);
+    logger.info(`Messages endpoint        â†’ http://${host}:${port}/messages`);
     logger.info(`Ready for custom MCP connectors`);
   });
 
