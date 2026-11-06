@@ -157,3 +157,13 @@ a.app-side-foot { text-decoration: none; color: inherit; margin-top: auto; }
 .ai-review { display: flex; flex-wrap: wrap; gap: .5rem; align-items: end; margin: .7rem 0; }
 .ai-matrix-scroll { overflow-x: auto; }
 .ai-matrix-cell { border: 1px solid #d5dceb; border-radius: 5px; background: #eef1ff; color: #293879; padding: .45rem; cursor: pointer; white-space: nowrap; }
+.c-background { margin: 12px 20px; padding: 10px 14px; border: 1px solid #d9e2f1; border-radius: 8px; background: #f7f9fd; font-size: .85rem; }
+.c-background summary { cursor: pointer; font-weight: 600; }
+.c-background ul { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 6px 16px; margin: 10px 0 0; padding: 0; list-style: none; }
+.c-background-error { color: #9c3540; } .c-background-done { color: #17695e; }
+.c-platform { padding: 1.2rem; }
+.c-platform-metrics { display: grid; grid-template-columns: repeat(auto-fit, minmax(130px, 1fr)); gap: .7rem; margin: 1rem 0; }
+.c-platform-metric { background: #f5f7fc; border: 1px solid #dfe5ef; border-radius: 8px; padding: .9rem; }
+.c-platform-metric strong, .c-platform-metric span { display: block; }.c-platform-metric strong { font-size: 1.6rem; }
+.c-platform-list { margin-top: 1rem; }.c-platform-row { display: flex; justify-content: space-between; align-items: center; gap: 1rem; border-bottom: 1px solid #e4e9f1; padding: .8rem 0; }.c-platform-row p { margin: .2rem 0; }
+@media (max-width: 600px) { .c-platform-row { align-items: flex-start; flex-direction: column; } }

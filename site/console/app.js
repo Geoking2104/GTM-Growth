@@ -12,6 +12,8 @@ import { renderAudienceOverview } from "./audience-overview.js";
 import { renderOverview, renderPlan, renderIndexNow } from "./overview.js";
 import { renderOnboarding } from "./onboarding.js";
 import { renderAccessManagement } from "./access-management.js";
+import { createBackgroundLoader } from "./background.js";
+import { renderPlatformDashboard } from "./platform-dashboard.js";
 import { renderPlatformSetup } from "./platform-setup.js";
 import { renderTrackedQueries } from "./tracked-queries.js";
 import { openWizard, renderAgentHelp } from "./onboarding-wizard.js";
@@ -30,7 +32,7 @@ const live = (route, render, opts = {}) => ({ needsDomain: false, async: async (
 const tool = (id) => TABS.find((x) => x.id === id);
 const host = (u) => { try { return new URL(u).hostname.replace(/^www\./, ""); } catch { return u || "—"; } };
 
-export async function api(route, body, { binary = false } = {}) {
+async function fetchApi(route, body, { binary = false } = {}) {
   const token = await accessToken();
   if (!token) { await login(); throw new Error("Session expirée"); }
   const res = await fetch(`${API_BASE}${route}`, { method: "POST", headers: { "Content-Type": "application/json", ...headers(token) }, body: JSON.stringify(body) });
@@ -39,9 +41,63 @@ export async function api(route, body, { binary = false } = {}) {
   return binary ? res.blob() : res.json();
 }
 
+
+const automaticRoutes = new Set(["/overview", "/tracking/status", "/search/performance", "/search/query-pages", "/search/sitemaps", "/ga4/overview", "/ga4/ecommerce", "/ga4/technology", "/bing/performance", "/sitemap/map", "/geo/citability", "/geo/robots", "/geo/schema", "/performance/weight", "/ai-visibility/datasets", "/competition/state", "/gtm/inventory", "/search/queries", "/search/trends", "/search/losing-pages", "/keywords/opportunities", "/sitemap/audit", "/geo/llms", "/performance/pagespeed", "/performance/crux", "/audit/technical", "/audit/serp-preview"]);
+const background = createBackgroundLoader((route, body) => fetchApi(route, body), renderBackground);
+export async function api(route, body, options = {}) {
+  if (!options.binary && automaticRoutes.has(route)) return background.request(selectedTenant() || state.me?.tenant?.id || "", route, body);
+  const result = await fetchApi(route, body, options);
+  if (["/ai-visibility/import", "/ai-visibility/review", "/ai-visibility/openai-run", "/ai-visibility/gemini-run", "/competition/panel", "/competition/revise-panel", "/competition/group", "/competition/alert-config", "/competition/priority", "/competition/action", "/gtm/write", "/gtm/publish"].includes(route)) startBackground();
+  return result;
+}
+function renderBackground(jobs) {
+  const box = $("#c-background"), summary = $("#c-background-summary"), list = $("#c-background-jobs");
+  if (!box || !summary || !list) return;
+  box.hidden = jobs.length === 0;
+  const done = jobs.filter((j) => !["queued", "running"].includes(j.state)).length;
+  const errors = jobs.filter((j) => j.state === "error").length;
+  summary.textContent = LANG === "fr" ? `Analyses en arrière-plan : ${done}/${jobs.length} terminées${errors ? ` · ${errors} en erreur` : ""}` : `Background analyses: ${done}/${jobs.length} finished${errors ? ` · ${errors} failed` : ""}`;
+  const labels = LANG === "fr" ? { queued: "En attente", running: "En cours", done: "Terminé", error: "Indisponible", skipped: "Non configuré" } : { queued: "Queued", running: "Running", done: "Done", error: "Unavailable", skipped: "Not configured" };
+  list.replaceChildren(...jobs.map((job) => { const item = el("li", `c-background-${job.state}`); item.append(el("strong", "", job.label), document.createTextNode(` — ${labels[job.state]}${job.detail ? ` : ${job.detail}` : ""}`)); return item; }));
+}
+function startBackground() {
+  background.reset(); state.overview = null; state.overviewFor = "";
+  if (!state.me?.tenant) return;
+  const base = scope(); const actionBody = { url: state.url, property: state.property || undefined };
+  const missing = LANG === "fr" ? "Renseignez les paramètres dans Tracking." : "Configure the connection in Tracking.";
+  const tasks = [
+    ["GEO", "/overview", { url: state.url }, !state.url],
+    [LANG === "fr" ? "Accès" : "Connections", "/tracking/status", base, false],
+    ["Search Console", "/search/performance", base, !state.property],
+    [LANG === "fr" ? "Requêtes et pages" : "Queries and pages", "/search/query-pages", base, !state.property],
+    ["Sitemaps Search Console", "/search/sitemaps", base, !state.property],
+    ["GA4", "/ga4/overview", base, !state.ga4Property],
+    ["GA4 e-commerce", "/ga4/ecommerce", base, !state.ga4Property],
+    [LANG === "fr" ? "GA4 technologie" : "GA4 technology", "/ga4/technology", base, !state.ga4Property],
+    ["Bing", "/bing/performance", base, !state.bingSite],
+    ["Google Tag Manager", "/gtm/inventory", scope({ container: state.gtmContainer || undefined }), !state.me.tenant.gtmContainers?.length],
+    ["Sitemap", "/sitemap/map", actionBody, !state.url],
+    [LANG === "fr" ? "Citabilité" : "Citability", "/geo/citability", actionBody, !state.url],
+    ["Robots IA", "/geo/robots", actionBody, !state.url],
+    [LANG === "fr" ? "Données structurées" : "Structured data", "/geo/schema", actionBody, !state.url],
+    [LANG === "fr" ? "Poids de page" : "Page weight", "/performance/weight", actionBody, !state.url],
+    [LANG === "fr" ? "Réponses IA importées" : "Imported AI answers", "/ai-visibility/datasets", {}, false],
+    [LANG === "fr" ? "Concurrence" : "Competition", "/competition/state", {}, false],
+  ].map(([label, route, body, skip]) => ({ label, route, body, skip: skip ? missing : "" }));
+  const preload = new Set(["/search/queries", "/search/trends", "/search/losing-pages", "/keywords/opportunities", "/sitemap/audit", "/geo/llms", "/performance/pagespeed", "/performance/crux", "/audit/technical", "/audit/serp-preview"]);
+  for (const group of TABS) for (const action of group.actions) {
+    if (!preload.has(action.route)) continue;
+    const body = { ...actionBody };
+    for (const param of action.params || []) body[param.name] = String(param.value ?? (param.type === "select" ? param.options?.[0]?.[0] ?? "" : ""));
+    const skip = action.route.startsWith("/search/") || action.route.startsWith("/keywords/") ? !state.property : !state.url;
+    tasks.push({ label: tr(action.label), route: action.route, body, skip: skip ? missing : "" });
+  }
+  void background.start(selectedTenant() || state.me.tenant.id, tasks);
+}
+
 async function overview() {
   if (state.overview && state.overviewFor === state.url) return state.overview;
-  state.overview = await api("/overview", { url: state.url }); state.overviewFor = state.url; return state.overview;
+  const url = state.url; const data = await api("/overview", { url }); if (state.url === url) { state.overview = data; state.overviewFor = url; } return data;
 }
 
 async function reportsList() {
@@ -130,7 +186,9 @@ function renderAction(action) {
     } catch (error) { out.replaceChildren(el("p", "c-error", error.message)); }
     finally { btn.disabled = false; }
   };
-  card.append(form, out); return card;
+  card.append(form, out);
+  if (action.route && automaticRoutes.has(action.route) && (!action.needsUrl || state.url)) form.requestSubmit();
+  return card;
 }
 
 function wizardButton() {
@@ -154,6 +212,7 @@ async function saveSettings(body) {
   if (!state.property && data.tenant.gscProperties[0]) state.property = data.tenant.gscProperties[0];
   if (!state.ga4Property && data.tenant.ga4Properties?.[0]) state.ga4Property = data.tenant.ga4Properties[0];
   if (!state.bingSite && data.tenant.bingSites?.[0]) state.bingSite = data.tenant.bingSites[0];
+  startBackground();
   return data;
 }
 async function show(sectionId, tabId) {
@@ -292,15 +351,16 @@ async function start() {
     state.url = $("#c-url").value.trim(); state.property = $("#c-property").value.trim(); state.ga4Property = $("#c-ga4").value.trim(); state.bingSite = $("#c-bing").value.trim();
     for (const k of ["url", "property", "ga4Property", "bingSite"]) localStorage.setItem(`gtm-console-${k}`, state[k]);
     if (!$("#c-tenant-wrap").hidden && tenantSel.value && tenantSel.value !== selectedTenant()) { sessionStorage.setItem("gtm-console-selected", tenantSel.value); location.reload(); return; }
-    picker.hidden = true; sw.setAttribute("aria-expanded", "false"); refreshSite(); show(current.section, current.tab);
+    picker.hidden = true; sw.setAttribute("aria-expanded", "false"); refreshSite(); startBackground(); show(current.section, current.tab);
   };
   if (state.me?.platformAdmin) {
-    const platform = { id: "platform", icon: "tracking", build: () => custom("platform", [{ id: "setup", label: LANG === "fr" ? "Provisionnement" : "Provisioning", needsDomain: false, async: async () => renderPlatformSetup(accessToken) }]) };
+    const platform = { id: "platform", icon: "tracking", build: () => custom("platform", [{ id: "clients", label: LANG === "fr" ? "Clients" : "Clients", needsDomain: false, async: async () => renderPlatformDashboard(accessToken, (id) => { sessionStorage.setItem("gtm-console-selected", id); location.href = "#overview"; location.reload(); }) }, { id: "setup", label: LANG === "fr" ? "Provisionnement" : "Provisioning", needsDomain: false, async: async () => renderPlatformSetup(accessToken) }]) };
     SECTIONS.act.push(platform); ALL.push(platform);
   }
   refreshSite(); mountNav();
   const [s, tb] = location.hash.slice(1).split("/");
   if (!state.url) { picker.hidden = false; sw.setAttribute("aria-expanded", "true"); }
+  startBackground();
   show(s || "overview", tb);
   if (state.me?.tenant && !localStorage.getItem(`gtm-console-wizard-v1:${state.me.tenant.id}:${state.me.email || state.me.username || "user"}`)) launchWizard();
 }
