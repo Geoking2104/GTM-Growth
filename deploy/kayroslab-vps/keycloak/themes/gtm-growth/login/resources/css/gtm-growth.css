@@ -289,3 +289,16 @@ a:hover { text-decoration: underline; }
   .pf-v5-c-login__main-body,
   .pf-v5-c-login__main-footer { padding-left: 1.15rem !important; padding-right: 1.15rem !important; }
 }
+
+/* Match the site's compact product UI while retaining Keycloak's accessible controls. */
+.pf-v5-c-login__container { padding: 1.5rem 1rem !important; max-width: 440px; }
+.pf-v5-c-login__header { gap: .55rem; margin-bottom: 1rem !important; }
+.pf-v5-c-login__header::before { width: 48px; height: 48px; border-radius: 12px; box-shadow: none; }
+.pf-v5-c-login__main { border-radius: var(--radius) !important; box-shadow: var(--shadow-md) !important; }
+.pf-v5-c-login__main-header { padding: 1.4rem 1.5rem .35rem !important; }
+.pf-v5-c-login__main-body { padding: .9rem 1.5rem 1.35rem !important; }
+.pf-v5-c-login__main-header .pf-v5-c-title, #kc-page-title { font-size: 1.25rem !important; line-height: 1.25 !important; }
+.pf-v5-c-form-control, input.pf-v5-c-form-control, .pf-v5-c-form-control > input { min-height: 2.65rem; }
+#kc-login, .pf-v5-c-button.pf-m-primary { min-height: 2.65rem; padding: .58rem 1rem !important; box-shadow: none !important; }
+#kc-login:focus-visible, .pf-v5-c-button:focus-visible, a:focus-visible { outline: 3px solid var(--brand-2) !important; outline-offset: 3px; }
+@media (max-width: 480px) { .pf-v5-c-login__main-header, .pf-v5-c-login__main-body, .pf-v5-c-login__main-footer { padding-left: 1.15rem !important; padding-right: 1.15rem !important; } }
