@@ -143,7 +143,7 @@ const SECTIONS = {
     { id: "tracking", icon: "tracking", build: () => custom("tracking", [
       { id: "status", label: t("t_status"), needsDomain: false, async: async () => renderStatus(await api("/tracking/status", scope()), state) },
       { id: "tags", label: t("t_tags"), async: async () => renderTags(await api("/tracking/status", scope())) },
-      { id: "settings", label: t("t_settings"), needsDomain: false, async: async () => renderSettings(state.me, saveSettings) },
+      { id: "settings", label: t("t_settings"), needsDomain: false, async: async () => { const status = await api("/tracking/status", scope()).catch(() => null); return renderSettings(state.me, saveSettings, status?.serviceAccount ?? null); } },
       { id: "access", label: LANG === "fr" ? "Accès" : "Access", needsDomain: false, async: async () => renderAccessManagement(state.me, api) }]) },
     { id: "gtm", icon: "tracking", build: () => custom("gtm", [
       { id: "workspace", label: t("t_gtm"), needsDomain: false, async: async () => renderGtm(await api("/gtm/inventory", scope({ container: state.gtmContainer || undefined })), api, rerender) }]) },
