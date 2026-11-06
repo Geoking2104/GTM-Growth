@@ -197,6 +197,7 @@ Configuration par client (onglet **Tracking → Paramètres**, administrateur du
 
 | Mise à jour | Détail |
 | --- | --- |
+| **Console Ops — visibilité IA en direct, positions suivies, pipeline article** | Nouvelle section **Ops** dans la console : pool de prompts suivis et collectes live OpenAI/Gemini (clés du client, bornées) qui alimentent le workflow existant Concurrence (confirmation/rejet) ; suivi de mots-clés libres avec historique, détection AI Overviews et alertes de chute ; pipeline article avec briefs déterministes et **quality gates** obligatoires ; publication WordPress en brouillon (application password par client) + annonce IndexNow ; alertes et planificateur par client (`OPS_SCHEDULER_ENABLED`). Voir « Console Ops » ci-dessous — PR #24, tests `tests/console-ops.test.ts`. |
 | **Hébergement sur le VPS KayrosLab** | L'application tourne en Docker Compose (`deploy/kayroslab-vps/`) sur le VPS OVH `51.210.9.71`, port privé `127.0.0.1:4300`, derrière Nginx. Le site statique est servi depuis `/opt/gtm-growth/site`, `/api/*` et `/health` sont relayés vers le conteneur. |
 | **DNS** | Enregistrement **A** `gtm.kayroslab.com` → `51.210.9.71` créé chez **IONOS** (TTL 3600), aucun autre enregistrement modifié. |
 | **HTTPS** | Certificat **Let's Encrypt** obtenu via `certbot --nginx -d gtm.kayroslab.com --redirect` : redirection HTTP→HTTPS, renouvellement automatique (timer certbot), expiration actuelle le **2 février 2027**. |
