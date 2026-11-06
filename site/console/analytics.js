@@ -231,6 +231,14 @@ export function renderSettings(me, save) {
     field("clarityProjects", L("Projets Microsoft Clarity (ID)", "Microsoft Clarity projects (id)"), (t.clarityProjects ?? []).join(", "), "z8ln1th2sn"),
     field("bingApiKey", L(`Clé API Bing ${t.bingKeyConfigured ? "(configurée — laisser vide pour la garder)" : ""}`, `Bing API key ${t.bingKeyConfigured ? "(set — leave empty to keep it)" : ""}`), "", "••••••••", "password"),
   );
+  const containerInput = form.querySelector('[name="gtmContainers"]');
+  const containerHelp = el("p", "c-note", L("Aucun conteneur ? Renseignez le chemin API accounts/<id>/containers/<id> du conteneur autorisé pour ce client. L’identifiant public GTM-XXXX ne suffit pas à lui seul ; le compte de service doit avoir accès au conteneur.", "No container? Enter the API path accounts/<id>/containers/<id> for this client's authorized container. The public GTM-XXXX ID alone is not enough; the service account needs access to the container."));
+  containerInput.closest("label").append(containerHelp);
+  if (admin) {
+    const paste = el("button", "btn btn-small", L("Coller le chemin du conteneur", "Paste container path")); paste.type = "button";
+    paste.onclick = async () => { try { const raw = (await navigator.clipboard.readText()).trim(); const value = raw.match(/accounts\/\d+\/containers\/\d+/)?.[0] || raw; if (!/^accounts\/\d+\/containers\/\d+$/.test(value)) throw new Error(L("Le presse-papiers doit contenir accounts/<id>/containers/<id>.", "Clipboard must contain accounts/<id>/containers/<id>.")); const existing = containerInput.value.split(",").map((item) => item.trim()).filter(Boolean); if (!existing.includes(value)) existing.push(value); containerInput.value = existing.join(", "); containerInput.dispatchEvent(new Event("input", { bubbles: true })); msg.textContent = L("Chemin collé. Enregistrez pour l’appliquer.", "Path pasted. Save to apply."); msg.className = "c-note"; } catch (error) { msg.textContent = error?.message || L("Presse-papiers inaccessible : collez le chemin manuellement.", "Clipboard unavailable: paste the path manually."); msg.className = "c-error"; } };
+    containerInput.closest("label").append(paste);
+  }
   const msg = el("p", "c-note");
   if (admin) { const b = el("button", "btn btn-small", L("Enregistrer", "Save")); b.type = "submit"; form.append(b); }
   else msg.textContent = L("Réservé aux administrateurs du client.", "Client administrators only.");
