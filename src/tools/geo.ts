@@ -6,6 +6,7 @@ import { generateJsonLd, renderJsonLdScript } from "../geo/generate/schema.js";
 import { generateRobotsFix } from "../geo/generate/robots.js";
 import { fetchText } from "../geo/http.js";
 import { summarizeAudit } from "../geo/report.js";
+import { runEeatAudit } from "../geo/audit/eeat.js";
 import { runCitability } from "../geo/citability.js";
 import { getCrawlerAccess } from "../geo/crawlers.js";
 import { checkLlmsDrift } from "../geo/drift.js";
@@ -163,6 +164,14 @@ export const geoTools = [
       } catch (err) {
         return fail(err);
       }
+    },
+  },
+  {
+    name: "eeat_audit",
+    description: "Evaluate on-page E-E-A-T signals with evidence; these heuristics do not prove quality.",
+    schema: strict({ url: z.string() }),
+    handler: async (args: any) => {
+      try { return success(await runEeatAudit({ url: args.url })); } catch (err) { return fail(err); }
     },
   },
   {

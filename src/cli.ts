@@ -127,6 +127,7 @@ Usage:
                             --name <name> --url <url> [--description <text>] [--logo <url>]
                             [--same-as <url,url>] [--author <name>] [--faq-file <json>] [--out <file>]
   geo-robots                --url <url> [--sitemap <url>] [--out <file>]
+  eeat-audit                --url <url>
   geo-citability            --url <url>
   geo-crawlers              --url <url>
   geo-drift                 --url <url> [--sitemap <url>] [--max-urls <n>]   (exit 1 when stale)
@@ -438,6 +439,11 @@ async function main() {
         } else {
           print(result);
         }
+        break;
+      }
+      case "eeat-audit": {
+        const { runEeatAudit } = await import("./geo/audit/eeat.js");
+        print(await runEeatAudit({ url: req(args, "url") }));
         break;
       }
       case "geo-audit": {

@@ -18,6 +18,7 @@ import { inviteUser, provisionTenant, type ProvisionInput } from "../tenants/pro
 import { collectSitemapEntries, runSiteGeoAudit } from "../geo/site.js";
 import { buildSitemapMap } from "../freeread/sitemap-map.js";
 import { buildSitemap } from "../geosuite/sitemap-builder.js";
+import { runEeatAudit } from "../geo/audit/eeat.js";
 import { runCitability } from "../geo/citability.js";
 import { generateLlmsTxt } from "../geo/generate/llms.js";
 import { auditLlms } from "../geo/audit/llms.js";
@@ -101,6 +102,7 @@ export const phase1Routes: ConsoleRoute[] = [
   },
   { path: "/sitemap/audit", handler: async ({ url, body }) => runSiteGeoAudit({ url, sitemapUrl: str(body.sitemapUrl), maxUrls: num(body.maxUrls, 10, 1, 25) }) },
   { path: "/sitemap/build", handler: async ({ url, body }) => buildSitemap({ url, maxUrls: num(body.maxUrls, 50, 1, 500) }) },
+  { path: "/geo/eeat", handler: async ({ url }) => runEeatAudit({ url, fetcher: fetchPublicPage }) },
   { path: "/geo/citability", handler: async ({ url }) => runCitability({ url }) },
   {
     path: "/geo/llms",
