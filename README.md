@@ -812,3 +812,20 @@ Apache-2.0
 ---
 
 Built by [Geoking2104](https://github.com/Geoking2104) / **KayrosLab** for Grok, Claude, and Codex.
+## Console Ops â€” visibilitÃ© IA en direct, positions suivies, pipeline article (FR)
+
+La barre latÃ©rale **Ops** de la console regroupe les outils opÃ©rationnels introduits en novembre 2026 :
+
+| Onglet | Ce qu'il fait | Routes POST /api/console/â€¦ |
+|---|---|---|
+| **VisibilitÃ© IA en direct** | Pool de prompts suivis (200 max), exÃ©cution bornÃ©e des collectes OpenAI/Gemini (clÃ©s du client, 5 prompts par lot, 2 lots par exÃ©cution) ; chaque exÃ©cution crÃ©e un jeu de donnÃ©es Concurrence Ã  vÃ©rifier (confirmer/rejeter les mentions, comme un import manuel) | isibility/prompts, isibility/prompts/add, isibility/prompts/remove, isibility/run, isibility/runs |
+| **Positions suivies** | Mots-clÃ©s libres (200 max) avec historique de positions Google via fournisseur SERP configurable (RANK_SUPPLIER_URL + RANK_SUPPLIER_TOKEN, ou RANK_SCRAPER_URL), dÃ©tection AI Overviews et citation du domaine, alertes de chute (â‰¥ 3 positions, critique â‰¥ 10) | ank/keywords, ank/keywords/add, ank/keywords/remove, ank/check |
+| **Articles** | Brief dÃ©terministe (intention, angles, entitÃ©s, FAQ), brouillon structurÃ© (mode dÃ©terministe ou Ollama), **quality gates** obligatoires (titre, meta, rÃ©ponse d'abord, FAQ, longueur, listes, entitÃ©s) ; publication WordPress en statut *brouillon* (application password par client) puis annonce IndexNow facultative | content/brief, content/draft, content/publish |
+| **Alertes** | Chutes de position, pertes de mentions IA, Ã©vÃ©nements du pipeline article ; accusÃ© de lecture par un administrateur | ops/alerts, ops/alerts/ack, ops/automation, ops/automation/save |
+
+Le **planificateur** (OPS_SCHEDULER_ENABLED=true, OPS_SCHEDULER_MINUTES) exÃ©cute par client : les contrÃ´les de visibilitÃ© (moteurs configurÃ©s, marques du dernier jeu Concurrence) et les vÃ©rifications de positions, quand l'automatisation est activÃ©e pour ce client. DÃ©sactivÃ© par dÃ©faut ; les clÃ©s restent cÃ´tÃ© serveur, jamais renvoyÃ©es au navigateur.
+
+Configuration (voir .env.example) : AI_VISIBILITY_OPENAI_KEY_<TENANT> / AI_VISIBILITY_GEMINI_KEY_<TENANT> (collectes), RANK_SUPPLIER_URL / RANK_SUPPLIER_TOKEN / RANK_SCRAPER_URL (SERP), WP_SITE_URL_<TENANT> / WP_USERNAME_<TENANT> / WP_APP_PASSWORD_<TENANT> (publication), OLLAMA_URL / OLLAMA_MODEL (brouillons longs).
+
+Code : src/console/ops-store.ts (stockage sqlite), src/console/visibility-runner.ts, src/console/rank-tracking.ts, src/console/content-ops.ts, src/console/ops-routes.ts, src/console/ops-scheduler.ts, interface site/console/ops.js, tests 	ests/console-ops.test.ts.
+
