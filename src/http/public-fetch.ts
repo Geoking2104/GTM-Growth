@@ -22,7 +22,7 @@ type Send = (url: URL, address: string, init: { accept?: string; timeoutMs: numb
 const resolve: Resolve = async (host) => (await lookup(host, { all: true, family: 4 })).map((x) => x.address);
 const send: Send = (url, address, init) => new Promise((resolveRequest, reject) => {
   const client = url.protocol === "https:" ? httpsRequest : httpRequest;
-  const req = client(url, { signal: AbortSignal.timeout(init.timeoutMs), lookup: (_host, _opts, callback) => callback(null, address, 4), headers: { "User-Agent": "GTM-Growth/1.0", Accept: init.accept ?? "text/html,application/xhtml+xml,text/plain,*/*;q=0.8" } }, (res) => {
+  const req = client(url, { signal: AbortSignal.timeout(init.timeoutMs), family: 4, autoSelectFamily: false, lookup: (_host, _opts, callback) => callback(null, address, 4), headers: { "User-Agent": "GTM-Growth/1.0", Accept: init.accept ?? "text/html,application/xhtml+xml,text/plain,*/*;q=0.8" } }, (res) => {
     const chunks: Buffer[] = []; let total = 0;
     res.on("data", (chunk: Buffer) => { total += chunk.length; if (total > 5 * 1024 * 1024) req.destroy(new Error("Response too large")); else chunks.push(chunk); });
     res.on("error", reject);
