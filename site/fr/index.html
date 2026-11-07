@@ -1,935 +1,514 @@
-<!doctype html>
+<!DOCTYPE html>
 <html lang="fr">
 <head>
-<meta charset="utf-8">
-  <meta name="gg-api" content="https://gtm.kayroslab.com">
-  <meta name="gg-form" content="https://formspree.io/f/meaavjpa">
-<meta name="viewport" content="width=device-width, initial-scale=1">
-<title>GTM Growth — lisibilité par les moteurs IA et mesure GTM, dans un seul serveur MCP</title>
-<meta name="description" content="Saisissez votre URL pour une lecture gratuite, puis obtenez l’audit GEO complet, les correctifs llms.txt et schema, l’accès des robots IA et un plan Google Tag Manager pour mesurer la suite.">
-<link rel="canonical" href="https://geoking2104.github.io/GTM-Growth/fr/">
-<link rel="alternate" hreflang="en" href="https://geoking2104.github.io/GTM-Growth/">
-<link rel="alternate" hreflang="fr" href="https://geoking2104.github.io/GTM-Growth/fr/">
-<link rel="alternate" hreflang="x-default" href="https://geoking2104.github.io/GTM-Growth/">
-<meta name="theme-color" content="#0b1220">
-<meta property="og:type" content="website">
-<meta property="og:locale" content="fr_FR">
-<meta property="og:locale:alternate" content="en_US">
-<meta property="og:title" content="GTM Growth — rendez votre site lisible, citable et mesurable">
-<meta property="og:description" content="Lecture d’URL gratuite, puis audit GEO complet et plan de mesure GTM. Open source, Apache-2.0.">
-<meta property="og:url" content="https://geoking2104.github.io/GTM-Growth/fr/">
-<meta property="og:image" content="https://geoking2104.github.io/GTM-Growth/assets/logo.png">
-<meta name="twitter:card" content="summary">
-<link rel="icon" href="../assets/logo-64.png" type="image/png">
-<link rel="stylesheet" href="../styles.css">
-<link rel="stylesheet" href="../sitemap-map.css">
-<script type="application/ld+json">
-{
-  "@context": "https://schema.org",
-  "@graph": [
-    {
-      "@type": "WebSite",
-      "name": "GTM Growth",
-      "url": "https://geoking2104.github.io/GTM-Growth/fr/",
-      "inLanguage": "fr",
-      "description": "Serveur MCP open source pour GA4, Google Tag Manager, Search Console et la lisibilité par les moteurs de réponse IA."
-    },
-    {
-      "@type": "SoftwareApplication",
-      "name": "GTM Growth",
-      "applicationCategory": "DeveloperApplication",
-      "operatingSystem": "Node.js 20+",
-      "url": "https://geoking2104.github.io/GTM-Growth/fr/",
-      "codeRepository": "https://github.com/Geoking2104/GTM-Growth",
-      "license": "https://www.apache.org/licenses/LICENSE-2.0",
-      "offers": { "@type": "Offer", "price": "0", "priceCurrency": "EUR" }
-    },
-    {
-      "@type": "Organization",
-      "name": "GTM Growth",
-      "url": "https://geoking2104.github.io/GTM-Growth/",
-      "logo": "https://geoking2104.github.io/GTM-Growth/assets/logo.png",
-      "description": "Saisissez votre URL pour une lecture gratuite, puis obtenez l’audit GEO complet, les correctifs llms.txt et schema, l’accès des robots IA et un plan Google Tag Manager pour mesurer la suite.",
-      "sameAs": ["https://github.com/Geoking2104/GTM-Growth"]
-    },
-    {
-      "@type": "WebPage",
-      "name": "GTM Growth",
-      "url": "https://geoking2104.github.io/GTM-Growth/fr/",
-      "description": "Lecture d’URL gratuite, puis audit GEO complet et plan de mesure GTM.",
-      "dateModified": "2026-11-01",
-      "inLanguage": "fr"
-    },
-    {
-      "@type": "FAQPage",
-      "mainEntity": [
-        {
-          "@type": "Question",
-          "name": "La lecture gratuite est-elle un vrai audit ?",
-          "acceptedAnswer": {
-            "@type": "Answer",
-            "text": "Deux couches. La note d’URL tourne dans le navigateur et ne charge rien. Les tables SEO, GA4 et Search Console sont mesurées côté serveur par /api/free-read, sur la page, son robots.txt et son sitemap ; sans API connectée elles portent la mention exemple."
-          }
-        },
-        {
-          "@type": "Question",
-          "name": "GTM Growth garantit-il des citations par les IA ?",
-          "acceptedAnswer": {
-            "@type": "Answer",
-            "text": "Non. Il mesure la préparation : accès des robots, llms.txt, données structurées, citabilité et points de découverte. La visibilité IA utilise des réponses importées ou une collecte OpenAI configurée ; elle ne mesure pas toutes les conversations."
-          }
-        },
-        {
-          "@type": "Question",
-          "name": "Faut-il accéder à mon compte Google ?",
-          "acceptedAnswer": {
-            "@type": "Answer",
-            "text": "Uniquement pour les audits GA4 et Tag Manager. Ils utilisent un compte de service invité sur vos propriétés, et toute écriture reste désactivée par défaut."
-          }
-        }
-      ]
-    }
-  ]
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="theme-color" content="#06060f">
+<title>GTM Growth — Rendez votre site lisible et citable par l'IA</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap">
+<style>
+:root{--bg:#06060f;--bg2:#0d0d1f;--bg3:#12122a;--sf:rgba(255,255,255,.04);--sfh:rgba(255,255,255,.07);--bd:rgba(255,255,255,.08);--bdh:rgba(255,255,255,.16);--tx:#f0f0ff;--mt:rgba(240,240,255,.55);--dm:rgba(240,240,255,.3);--gn:#10b981;--gr:linear-gradient(135deg,#7c3aed,#ec4899);--gr2:linear-gradient(135deg,#ec4899,#f59e0b);--sh:0 20px 60px rgba(124,58,237,.14);--r:16px}
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+body{font-family:'Inter',system-ui,sans-serif;background:var(--bg);color:var(--tx);line-height:1.6;overflow-x:hidden}
+html,body{scroll-behavior:smooth;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
+@media(prefers-color-scheme:dark){:root:not([data-theme="light"]){}}
+.w{max-width:1160px;margin:0 auto;padding:0 24px}
+.sec{padding:88px 0}.ss{padding:60px 0}
+.g{background:var(--gr);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text}
+.g2{background:var(--gr2);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text}
+.ey{display:inline-block;font-size:11px;font-weight:700;letter-spacing:1px;text-transform:uppercase;color:#a78bfa;margin-bottom:10px}
+h2.sh{font-size:clamp(1.8rem,4vw,2.75rem);font-weight:900;letter-spacing:-.03em;line-height:1.15;margin-bottom:14px}
+/* NAV */
+nav{position:fixed;top:0;left:0;right:0;z-index:100;background:rgba(6,6,15,.88);backdrop-filter:blur(20px);-webkit-backdrop-filter:blur(20px);border-bottom:1px solid var(--bd);padding-top:env(safe-area-inset-top,0px)}
+body::before{content:'';position:fixed;inset:0 0 auto;height:env(safe-area-inset-top,0px);background:rgba(6,6,15,.88);z-index:101}
+.ni{display:flex;align-items:center;justify-content:space-between;padding:15px 24px;max-width:1160px;margin:0 auto}
+nav a{text-decoration:none}
+.lo{font-weight:800;font-size:16px;color:var(--tx)}
+.nl{display:flex;gap:28px;list-style:none}
+.nl a{color:var(--mt);font-size:14px;font-weight:500;transition:color .2s}
+.nl a:hover{color:var(--tx)}
+.bn{background:var(--gr);color:#fff;padding:9px 20px;border-radius:50px;font-size:13px;font-weight:700;transition:opacity .2s,transform .15s;display:inline-block}
+.bn:hover{opacity:.9;transform:translateY(-1px)}
+/* BUTTONS */
+.btn{padding:14px 28px;border-radius:50px;font-size:15px;font-weight:700;cursor:pointer;text-decoration:none;transition:all .2s;display:inline-block;border:none;line-height:1}
+.bp{background:var(--gr);color:#fff;box-shadow:0 8px 32px rgba(124,58,237,.35)}
+.bp:hover{transform:translateY(-2px);box-shadow:0 14px 44px rgba(124,58,237,.5)}
+.bg2b{background:var(--sf);color:var(--tx);border:1px solid var(--bdh)}
+.bg2b:hover{background:var(--sfh);transform:translateY(-1px)}
+/* HERO */
+.hero{min-height:100vh;display:flex;align-items:center;position:relative;overflow:hidden;padding-top:70px}
+.hero::before{content:'';position:absolute;top:-180px;left:50%;transform:translateX(-50%);width:720px;height:720px;background:radial-gradient(circle,rgba(124,58,237,.14) 0%,transparent 68%);pointer-events:none}
+.hgrid{display:grid;grid-template-columns:1fr 1fr;gap:52px;align-items:center}
+.hbdg{display:inline-flex;align-items:center;gap:7px;background:rgba(124,58,237,.1);border:1px solid rgba(124,58,237,.28);border-radius:50px;padding:5px 13px;font-size:11px;font-weight:700;letter-spacing:.5px;color:#a78bfa;text-transform:uppercase;margin-bottom:18px}
+.hbdg::before{content:'●';font-size:7px;animation:bl 2s infinite}
+@keyframes bl{0%,100%{opacity:1}50%{opacity:.3}}
+h1.hh{font-size:clamp(2.2rem,4.8vw,3.5rem);font-weight:900;line-height:1.08;letter-spacing:-.04em;margin-bottom:18px}
+p.hs{font-size:1.05rem;color:var(--mt);line-height:1.65;margin-bottom:30px;max-width:440px}
+.ha{display:flex;gap:12px;flex-wrap:wrap;margin-bottom:32px}
+.engs{display:flex;align-items:center;gap:7px;flex-wrap:wrap}
+.engs>span{font-size:12px;color:var(--dm)}
+.eb{background:var(--sf);border:1px solid var(--bd);border-radius:50px;padding:4px 11px;font-size:11px;font-weight:600;color:var(--mt);display:flex;align-items:center;gap:4px}
+.eb::before{content:'✓';color:var(--gn);font-size:9px}
+/* SCORE CARD */
+.sc{background:linear-gradient(135deg,var(--bg3),var(--bg2));border:1px solid var(--bdh);border-radius:var(--r);padding:26px;box-shadow:var(--sh);position:relative;overflow:hidden}
+.sc::before{content:'';position:absolute;top:0;left:0;right:0;height:2px;background:var(--gr)}
+.sch{display:flex;justify-content:space-between;align-items:center;margin-bottom:18px;font-size:12px}
+.sch .site{font-weight:600;color:var(--mt)}.sch .dt{color:var(--dm)}
+.gw{display:flex;gap:18px;align-items:center;margin-bottom:20px}
+.gln{flex:1}
+.gm{font-size:2rem;font-weight:900;letter-spacing:-.04em;line-height:1}
+.gs{font-size:11px;color:var(--dm);margin-top:3px}
+.gp{display:inline-flex;align-items:center;gap:4px;background:rgba(16,185,129,.1);border:1px solid rgba(16,185,129,.22);border-radius:50px;padding:3px 9px;font-size:10px;font-weight:700;color:#34d399;margin-top:8px}
+.gp::before{content:'↑'}
+.bl2{display:flex;flex-direction:column;gap:7px}
+.bi{display:flex;align-items:center;gap:8px;font-size:11px}
+.la{width:94px;color:var(--mt);flex-shrink:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.bt{flex:1;height:4px;background:var(--bd);border-radius:2px;overflow:hidden}
+.bf{height:100%;border-radius:2px;background:var(--gr)}
+.bv{width:30px;text-align:right;color:var(--tx);font-weight:700;font-size:11px}
+/* PROOF */
+.ps{background:var(--bg2);border-top:1px solid var(--bd);border-bottom:1px solid var(--bd);padding:24px 0}
+.pg{display:flex;justify-content:space-around;flex-wrap:wrap;gap:18px}
+.pi{text-align:center}
+.pn{font-size:1.8rem;font-weight:900;letter-spacing:-.04em;background:var(--gr);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text}
+.pl{font-size:11px;color:var(--dm);margin-top:2px}
+/* PROBLEM */
+.pgrid{display:grid;grid-template-columns:1fr 1fr;gap:48px;align-items:center}
+.pain{display:flex;flex-direction:column;gap:14px;margin-top:22px}
+.pi2{display:flex;gap:11px;align-items:flex-start}
+.pi2 .ico{font-size:17px;flex-shrink:0;margin-top:1px}
+.pi2 h4{font-size:13px;font-weight:700;margin-bottom:2px}
+.pi2 p{font-size:12px;color:var(--mt);line-height:1.5}
+/* RADAR CARD */
+.rc{background:linear-gradient(135deg,var(--bg3),var(--bg2));border:1px solid var(--bdh);border-radius:var(--r);padding:24px;box-shadow:var(--sh)}
+.rt{font-size:12px;font-weight:600;color:var(--mt);margin-bottom:14px}
+.rw{display:flex;justify-content:center;margin-bottom:14px}
+.rl{display:flex;flex-direction:column;gap:6px}
+.rli{display:flex;justify-content:space-between;align-items:center;font-size:11px}
+.rli .n{color:var(--mt)}
+.rli .bar{display:flex;align-items:center;gap:5px}
+.rli .bt2{width:52px;height:3px;background:var(--bd);border-radius:2px;overflow:hidden}
+.rli .bf2{height:100%;border-radius:2px;background:var(--gr)}
+.rli .v{font-weight:700;color:var(--tx)}
+/* STEPS */
+.stg{display:grid;grid-template-columns:repeat(4,1fr);gap:14px;counter-reset:st}
+.stc{background:var(--sf);border:1px solid var(--bd);border-radius:var(--r);padding:22px;position:relative;counter-increment:st;transition:all .2s}
+.stc:hover{border-color:var(--bdh);transform:translateY(-2px)}
+.stc:not(:last-child)::after{content:'→';position:absolute;top:50%;right:-14px;transform:translateY(-50%);color:var(--dm);font-size:14px;z-index:1}
+.stn{font-size:10px;font-weight:800;letter-spacing:1px;background:var(--gr);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;margin-bottom:8px}
+.stn::before{content:counter(st,decimal-leading-zero)}
+.stc h3{font-size:13px;font-weight:700;margin-bottom:5px}
+.stc p{font-size:11px;color:var(--mt);line-height:1.5}
+/* FEATURES */
+.fg{display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:18px}
+.fc{background:var(--sf);border:1px solid var(--bd);border-radius:var(--r);padding:24px;transition:all .25s;position:relative}
+.fc:hover{border-color:var(--bdh);transform:translateY(-3px);box-shadow:0 16px 36px rgba(124,58,237,.1)}
+.fi{width:40px;height:40px;border-radius:11px;display:flex;align-items:center;justify-content:center;font-size:18px;margin-bottom:14px}
+.fc h3{font-size:14px;font-weight:700;margin-bottom:7px}
+.fc p{font-size:12px;color:var(--mt);line-height:1.6}
+.fn{position:absolute;top:18px;right:18px;font-size:10px;font-weight:800;background:var(--gr);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;letter-spacing:.5px}
+/* BEFORE/AFTER */
+.ba-grid{display:grid;grid-template-columns:1fr 1fr;gap:52px;align-items:center}
+.ba-card{background:var(--sf);border:1px solid var(--bd);border-radius:var(--r);padding:24px}
+.ba-row{margin-bottom:14px}
+.ba-label{font-size:11px;color:var(--dm);margin-bottom:5px}
+.ba-bars{display:flex;flex-direction:column;gap:4px}
+.ba-b{height:7px;border-radius:4px;background:#1f2937;min-width:3px}
+.ba-a{height:7px;border-radius:4px;background:var(--gr)}
+/* OSS */
+.oss{background:linear-gradient(135deg,rgba(124,58,237,.07),rgba(6,182,212,.07));border:1px solid rgba(124,58,237,.18);border-radius:var(--r);padding:36px;text-align:center}
+.obs{display:flex;justify-content:center;gap:10px;flex-wrap:wrap;margin-top:14px}
+.ob{background:var(--sf);border:1px solid var(--bd);border-radius:50px;padding:4px 12px;font-size:11px;font-weight:600;color:var(--mt)}
+/* PRICING */
+.prg{display:grid;grid-template-columns:1fr 1fr;gap:20px;max-width:780px;margin:44px auto 0}
+.prc{border-radius:var(--r);padding:30px;border:1px solid var(--bd);background:var(--sf);position:relative;overflow:hidden}
+.prc.fe{background:linear-gradient(135deg,rgba(124,58,237,.1),rgba(236,72,153,.07));border-color:rgba(124,58,237,.35);box-shadow:0 0 50px rgba(124,58,237,.1)}
+.prc.fe::before{content:'';position:absolute;top:0;left:0;right:0;height:2px;background:var(--gr)}
+.pb{position:absolute;top:17px;right:17px;background:var(--gr);color:#fff;font-size:9px;font-weight:800;letter-spacing:.5px;text-transform:uppercase;padding:3px 9px;border-radius:50px}
+.ppr{font-size:2.5rem;font-weight:900;letter-spacing:-.04em;margin:9px 0 2px}
+.ppr small{font-size:.85rem;font-weight:400;color:var(--mt)}
+.pn2{font-size:14px;font-weight:700;margin-bottom:3px}
+.pd{font-size:12px;color:var(--mt);margin-bottom:18px}
+.pfl{list-style:none;margin-bottom:22px;display:flex;flex-direction:column;gap:7px}
+.pfl li{display:flex;align-items:flex-start;gap:7px;font-size:12px;color:var(--mt)}
+.pfl li::before{content:'✓';color:var(--gn);font-weight:800;flex-shrink:0}
+/* FORM */
+.cw{max-width:540px;margin:0 auto}
+.fg2{margin-bottom:13px}
+.fg2 label{display:block;font-size:10px;font-weight:700;color:var(--mt);margin-bottom:5px;letter-spacing:.5px;text-transform:uppercase}
+.fg2 input,.fg2 select{width:100%;padding:11px 15px;background:var(--sf);border:1px solid var(--bd);border-radius:10px;color:var(--tx);font-size:13px;font-family:inherit;outline:none;transition:border-color .2s}
+.fg2 input:focus,.fg2 select:focus{border-color:rgba(124,58,237,.5)}
+.fg2 select option{background:var(--bg2)}
+.fr{display:grid;grid-template-columns:1fr 1fr;gap:13px}
+.fsub{width:100%;padding:14px;background:var(--gr);color:#fff;border:none;border-radius:50px;font-size:14px;font-weight:800;cursor:pointer;transition:all .2s;box-shadow:0 8px 32px rgba(124,58,237,.35);font-family:inherit}
+.fsub:hover{transform:translateY(-2px);box-shadow:0 14px 44px rgba(124,58,237,.5)}
+/* FOOTER */
+footer{padding:44px 0 28px;border-top:1px solid var(--bd)}
+.ftg{display:grid;grid-template-columns:2fr 1fr 1fr;gap:36px}
+.ftg h4{font-size:10px;font-weight:700;letter-spacing:.7px;text-transform:uppercase;color:var(--mt);margin-bottom:10px}
+.ftg a{display:block;font-size:12px;color:var(--dm);text-decoration:none;margin-bottom:7px;transition:color .2s}
+.ftg a:hover{color:var(--tx)}
+.fbot{margin-top:32px;padding-top:18px;border-top:1px solid var(--bd);display:flex;justify-content:space-between;font-size:11px;color:var(--dm)}
+/* RESPONSIVE */
+@media(max-width:760px){
+  .hgrid,.pgrid,.prg,.ftg,.ba-grid{grid-template-columns:1fr}
+  .stg{grid-template-columns:1fr 1fr}
+  .nl{display:none}
+  .stc:not(:last-child)::after{display:none}
 }
-</script>
+@media(max-width:460px){.stg,.fr{grid-template-columns:1fr}}
+</style>
 </head>
 <body>
-<a class="skip-link" href="#main">Aller au contenu</a>
 
-<header class="site-header">
-  <div class="wrap header-inner">
-    <a class="brand" href="#top" aria-label="Accueil GTM Growth">
-      <img src="../assets/logo-128.png" alt="" width="32" height="32">
-      <span>GTM&nbsp;Growth</span>
-    </a>
-    <nav class="nav" aria-label="Navigation principale">
-      <details class="nav-menu"><summary>Outils</summary><div class="nav-dropdown"><a href="#tools"><strong>Outils gratuits</strong><span>Lire et analyser un site</span></a><a href="#toolkit"><strong>Toolkit GEO</strong><span>Optimiser les signaux pour l’IA</span></a><a href="#console"><strong>Console</strong><span>Suivre et agir sur vos données</span></a></div></details>
-      <details class="nav-menu"><summary>Ressources</summary><div class="nav-dropdown"><a href="#how"><strong>Premiers pas</strong><span>De l’URL au plan d’action</span></a><a href="#faq"><strong>Questions fréquentes</strong><span>Comprendre le fonctionnement</span></a><a href="https://github.com/Geoking2104/GTM-Growth"><strong>Documentation</strong><span>Guides et code source</span></a></div></details>
-      <a href="#plans">Prix</a>
-    </nav>
-    <div class="lang" role="group" aria-label="Langue">
-      <a href="../" hreflang="en">EN</a>
-      <a href="./" hreflang="fr" aria-current="true">FR</a>
+<!-- NAV -->
+<nav>
+<div class="ni">
+  <a href="#" class="lo">GTM <span class="g">Growth</span></a>
+  <ul class="nl">
+    <li><a href="#tools">Outils gratuits</a></li>
+    <li><a href="#toolkit">Toolkit</a></li>
+    <li><a href="#plans">Prix</a></li>
+  </ul>
+  <a href="#talk" class="bn">Obtenir l'audit →</a>
+</div>
+</nav>
+
+<!-- HERO -->
+<section class="hero">
+<div class="w"><div class="hgrid">
+  <div>
+    <div class="hbdg">Open source · MCP · Apache-2.0</div>
+    <h1 class="hh">Votre site est-il<br><span class="g">lisible par l'IA</span> ?</h1>
+    <p class="hs">Auditez votre préparation aux moteurs IA, corrigez les signaux manquants, mesurez l'impact. Gratuit en 30 secondes — aucune inscription.</p>
+    <div class="ha">
+      <a href="https://gtm.kayroslab.com/fr/" class="btn bp">Analyser mon site →</a>
+      <a href="https://gtm.kayroslab.com/reports/opendpe.html" class="btn bg2b">Voir un rapport exemple</a>
     </div>
-    <a class="btn btn-small" href="#top">Lecture gratuite</a>
+    <div class="engs">
+      <span>Compatible</span>
+      <div class="eb">ChatGPT</div>
+      <div class="eb">Claude</div>
+      <div class="eb">Gemini</div>
+      <div class="eb">Perplexity</div>
+      <div class="eb">Copilot</div>
+    </div>
   </div>
-</header>
+  <!-- SCORE CARD -->
+  <div class="sc">
+    <div class="sch"><span class="site">opendpe.net — exemple réel</span><span class="dt">2 nov. 2026</span></div>
+    <div class="gw">
+      <svg width="90" height="90" viewBox="0 0 90 90" style="flex-shrink:0">
+        <defs><linearGradient id="gg" x1="0%" y1="0%" x2="100%" y2="100%"><stop offset="0%" stop-color="#7c3aed"/><stop offset="100%" stop-color="#ec4899"/></linearGradient></defs>
+        <circle cx="45" cy="45" r="36" fill="none" stroke="rgba(255,255,255,.08)" stroke-width="6"/>
+        <!-- 71% → dashoffset=226.2*(1-0.71)=65.6 -->
+        <circle cx="45" cy="45" r="36" fill="none" stroke="url(#gg)" stroke-width="6" stroke-linecap="round" stroke-dasharray="226.2" stroke-dashoffset="66" transform="rotate(-90 45 45)"/>
+        <text x="45" y="40" text-anchor="middle" font-size="18" font-weight="900" fill="#f0f0ff" font-family="Inter,sans-serif">71</text>
+        <text x="45" y="52" text-anchor="middle" font-size="8.5" fill="rgba(240,240,255,.45)" font-family="Inter,sans-serif">Score GEO</text>
+      </svg>
+      <div class="gln">
+        <div class="gm"><span class="g">71</span><span style="font-size:.9rem;color:var(--dm)">/100</span></div>
+        <div class="gs">Préparation aux moteurs IA</div>
+        <div class="gp">+29 pts projetés après correctifs</div>
+      </div>
+    </div>
+    <div class="bl2">
+      <div class="bi"><span class="la">robots.txt</span><div class="bt"><div class="bf" style="width:83%"></div></div><span class="bv">15/18</span></div>
+      <div class="bi"><span class="la">llms.txt</span><div class="bt"><div class="bf" style="width:67%"></div></div><span class="bv">12/18</span></div>
+      <div class="bi"><span class="la">Schéma JSON-LD</span><div class="bt"><div class="bf" style="width:81%"></div></div><span class="bv">13/16</span></div>
+      <div class="bi"><span class="la">Marque & entité</span><div class="bt"><div class="bf" style="width:30%;background:var(--gr2)"></div></div><span class="bv" style="color:#fca5a5">3/10</span></div>
+      <div class="bi"><span class="la">Découverte IA</span><div class="bt"><div class="bf" style="width:1%;background:linear-gradient(90deg,#ef4444,#f59e0b)"></div></div><span class="bv" style="color:#fca5a5">0/6</span></div>
+    </div>
+  </div>
+</div></div>
+</section>
 
-<main id="main">
-  <!-- ── Hero ─────────────────────────────────────────────── -->
-  <section class="hero" id="top">
-    <div class="wrap hero-inner"><div class="hero-copy">
-      <p class="eyebrow"><span class="dot"></span> Open source · Apache-2.0 · MCP</p>
-      <ul class="ai-logo-stack" aria-label="Moteurs IA : ChatGPT, Gemini, Claude, Perplexity, Google, Microsoft Copilot">
-        <li class="ai-logo-badge" title="ChatGPT">
-          <span class="sr-only">ChatGPT</span>
-          <img src="../assets/ai-engines/openai.svg" alt="" width="24" height="24" decoding="async">
-        </li>
-        <li class="ai-logo-badge" title="Gemini">
-          <span class="sr-only">Gemini</span>
-          <img src="../assets/ai-engines/gemini.svg" alt="" width="24" height="24" decoding="async">
-        </li>
-        <li class="ai-logo-badge" title="Claude">
-          <span class="sr-only">Claude</span>
-          <img src="../assets/ai-engines/claude.svg" alt="" width="24" height="24" decoding="async">
-        </li>
-        <li class="ai-logo-badge" title="Perplexity">
-          <span class="sr-only">Perplexity</span>
-          <img src="../assets/ai-engines/perplexity.png" alt="" width="24" height="24" decoding="async">
-        </li>
-        <li class="ai-logo-badge" title="Google">
-          <span class="sr-only">Google</span>
-          <img src="../assets/ai-engines/google.svg" alt="" width="24" height="24" decoding="async">
-        </li>
-        <li class="ai-logo-badge" title="Microsoft Copilot">
-          <span class="sr-only">Microsoft Copilot</span>
-          <img src="../assets/ai-engines/copilot.svg" alt="" width="24" height="24" decoding="async">
-        </li>
+<!-- PROOF -->
+<div class="ps">
+<div class="w"><div class="pg">
+  <div class="pi"><div class="pn">96</div><div class="pl">outils MCP</div></div>
+  <div class="pi"><div class="pn">205</div><div class="pl">tests au vert</div></div>
+  <div class="pi"><div class="pn">5</div><div class="pl">moteurs IA couverts</div></div>
+  <div class="pi"><div class="pn">9→96</div><div class="pl">score après correctifs</div></div>
+  <div class="pi"><div class="pn">0 €</div><div class="pl">pour commencer</div></div>
+</div></div>
+</div>
+
+<!-- PROBLEM + RADAR -->
+<section class="sec" id="problem">
+<div class="w"><div class="pgrid">
+  <div>
+    <span class="ey">Le problème</span>
+    <h2 class="sh">L'IA répond. Elle ne cite pas <span class="g">tout le monde.</span></h2>
+    <p style="font-size:1rem;color:var(--mt);line-height:1.65;margin-bottom:22px">ChatGPT, Claude et Perplexity répondent à des milliers de questions par heure. La plupart des sites ne sont jamais mentionnés — parce qu'ils ne sont pas lisibles par ces moteurs.</p>
+    <div class="pain">
+      <div class="pi2"><span class="ico">⚠️</span><div><h4>Robots non configurés</h4><p>Les crawlers IA sont souvent bloqués par défaut — même involontairement.</p></div></div>
+      <div class="pi2"><span class="ico">🔇</span><div><h4>Contenu non citable</h4><p>Structure, sources, clarté : sans signaux forts, l'IA préfère un concurrent mieux préparé.</p></div></div>
+      <div class="pi2"><span class="ico">📉</span><div><h4>Mesure absente</h4><p>Sans GTM et GA4 bien configurés, vous ne savez pas si les correctifs payent.</p></div></div>
+    </div>
+  </div>
+  <!-- RADAR SVG -->
+  <div class="rc">
+    <div class="rt">Préparation par moteur IA — opendpe.net</div>
+    <div class="rw">
+      <svg width="210" height="210" viewBox="0 0 210 210">
+        <defs>
+          <linearGradient id="rfill" x1="0%" y1="0%" x2="100%" y2="100%"><stop offset="0%" stop-color="#7c3aed" stop-opacity=".3"/><stop offset="100%" stop-color="#ec4899" stop-opacity=".3"/></linearGradient>
+          <linearGradient id="rstroke" x1="0%" y1="0%" x2="100%" y2="100%"><stop offset="0%" stop-color="#7c3aed"/><stop offset="100%" stop-color="#ec4899"/></linearGradient>
+        </defs>
+        <!-- cx=105,cy=105,r=75 — 5 vertices at -90,-18,54,126,198 deg -->
+        <!-- outer: (105,30)(176,82)(149,166)(61,166)(34,82) -->
+        <polygon points="105,30 176,82 149,166 61,166 34,82" fill="none" stroke="rgba(255,255,255,.07)" stroke-width="1"/>
+        <polygon points="105,49 158,89 136,153 74,153 52,89" fill="none" stroke="rgba(255,255,255,.05)" stroke-width="1"/>
+        <polygon points="105,67 139,96 122,141 88,141 71,96" fill="none" stroke="rgba(255,255,255,.04)" stroke-width="1"/>
+        <line x1="105" y1="105" x2="105" y2="30" stroke="rgba(255,255,255,.08)" stroke-width="1"/>
+        <line x1="105" y1="105" x2="176" y2="82" stroke="rgba(255,255,255,.08)" stroke-width="1"/>
+        <line x1="105" y1="105" x2="149" y2="166" stroke="rgba(255,255,255,.08)" stroke-width="1"/>
+        <line x1="105" y1="105" x2="61" y2="166" stroke="rgba(255,255,255,.08)" stroke-width="1"/>
+        <line x1="105" y1="105" x2="34" y2="82" stroke="rgba(255,255,255,.08)" stroke-width="1"/>
+        <!-- Data: AIO=100%(105,30) ChatGPT=100%(176,82) Copilot=80%(140,154) Perplexity=65%(76,145) Gemini=60%(62,91) -->
+        <polygon points="105,30 176,82 140,154 76,145 62,91" fill="url(#rfill)" stroke="url(#rstroke)" stroke-width="2"/>
+        <circle cx="105" cy="30" r="3.5" fill="#7c3aed"/>
+        <circle cx="176" cy="82" r="3.5" fill="#9333ea"/>
+        <circle cx="140" cy="154" r="3.5" fill="#ec4899"/>
+        <circle cx="76" cy="145" r="3.5" fill="#f43f5e"/>
+        <circle cx="62" cy="91" r="3.5" fill="#a855f7"/>
+        <text x="105" y="20" text-anchor="middle" font-size="9.5" fill="#f0f0ff" font-weight="700" font-family="Inter,sans-serif">Google AIO</text>
+        <text x="186" y="85" text-anchor="start" font-size="9.5" fill="#f0f0ff" font-weight="700" font-family="Inter,sans-serif">ChatGPT</text>
+        <text x="143" y="180" text-anchor="middle" font-size="9.5" fill="#f0f0ff" font-weight="700" font-family="Inter,sans-serif">Copilot</text>
+        <text x="62" y="181" text-anchor="middle" font-size="9.5" fill="#f0f0ff" font-weight="700" font-family="Inter,sans-serif">Perplexity</text>
+        <text x="20" y="85" text-anchor="middle" font-size="9.5" fill="#f0f0ff" font-weight="700" font-family="Inter,sans-serif">Gemini</text>
+      </svg>
+    </div>
+    <div class="rl">
+      <div class="rli"><span class="n">Google AIO</span><div class="bar"><div class="bt2"><div class="bf2" style="width:100%"></div></div><span class="v">100</span></div></div>
+      <div class="rli"><span class="n">ChatGPT</span><div class="bar"><div class="bt2"><div class="bf2" style="width:100%"></div></div><span class="v">100</span></div></div>
+      <div class="rli"><span class="n">Copilot</span><div class="bar"><div class="bt2"><div class="bf2" style="width:80%"></div></div><span class="v" style="color:#f0abfc">80</span></div></div>
+      <div class="rli"><span class="n">Perplexity</span><div class="bar"><div class="bt2"><div class="bf2" style="width:65%;background:var(--gr2)"></div></div><span class="v" style="color:#fcd34d">65</span></div></div>
+      <div class="rli"><span class="n">Gemini</span><div class="bar"><div class="bt2"><div class="bf2" style="width:60%;background:var(--gr2)"></div></div><span class="v" style="color:#fca5a5">60</span></div></div>
+    </div>
+  </div>
+</div></div>
+</section>
+
+<!-- HOW IT WORKS -->
+<section class="ss" id="how" style="background:var(--bg2)">
+<div class="w">
+  <div style="text-align:center;margin-bottom:38px">
+    <span class="ey">Fonctionnement</span>
+    <h2 class="sh">D'une URL à un plan d'action <span class="g">en 4 étapes</span></h2>
+  </div>
+  <div class="stg">
+    <div class="stc"><div class="stn"></div><h3>Lecture gratuite</h3><p>Votre URL — résultats immédiats, sans inscription. 10 contrôles, tables SEO/GA4/GSC.</p></div>
+    <div class="stc"><div class="stn"></div><h3>Connecter vos accès</h3><p>Reliez Search Console et GA4 pour suivre vos vraies données dans la console.</p></div>
+    <div class="stc"><div class="stn"></div><h3>Audit complet</h3><p>Score GEO 0-100, citabilité, plateformes IA, preuves par contrôle, plan priorisé.</p></div>
+    <div class="stc"><div class="stn"></div><h3>Mise en œuvre</h3><p>Correctifs classés par points récupérables. Mesurez les progrès dans la console.</p></div>
+  </div>
+</div>
+</section>
+
+<!-- FREE TOOLS -->
+<section class="sec" id="tools">
+<div class="w">
+  <div style="text-align:center;margin-bottom:42px">
+    <span class="ey">Outils gratuits</span>
+    <h2 class="sh">Quatre outils. <span class="g">Zéro inscription.</span></h2>
+    <p style="font-size:1rem;color:var(--mt);max-width:480px;margin:10px auto 0">Une URL suffit pour examiner les premiers signaux techniques de votre site.</p>
+  </div>
+  <div class="fg">
+    <div class="fc"><span class="fn">01</span><div class="fi" style="background:rgba(124,58,237,.12)">🔍</div><h3>Lecture SEO</h3><p>Titre, description, titres et données structurées — ce qui freine votre visibilité sur Google et ChatGPT.</p></div>
+    <div class="fc"><span class="fn">02</span><div class="fi" style="background:rgba(236,72,153,.12)">📊</div><h3>Audit GTM/GA4</h3><p>Balises, doublons et signaux de consentement — avant que les chiffres soient faussés.</p></div>
+    <div class="fc"><span class="fn">03</span><div class="fi" style="background:rgba(6,182,212,.12)">🤖</div><h3>Robots & indexation</h3><p>Vérification, directives robots, couverture du sitemap. Les bases avant le moindre clic organique ou IA.</p></div>
+    <div class="fc"><span class="fn">04</span><div class="fi" style="background:rgba(16,185,129,.12)">🗺️</div><h3>Carte du sitemap</h3><p>Pages, profondeur, fraîcheur. Priorisez ce que les moteurs doivent découvrir en premier.</p></div>
+  </div>
+</div>
+</section>
+
+<!-- TOOLKIT -->
+<section class="ss" id="toolkit" style="background:var(--bg2)">
+<div class="w">
+  <div style="text-align:center;margin-bottom:38px">
+    <span class="ey">Toolkit GEO</span>
+    <h2 class="sh"><span class="g">Sept leviers</span> pour gagner en visibilité IA</h2>
+  </div>
+  <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(300px,1fr));gap:14px">
+    <div style="display:flex;gap:14px;padding:18px;background:var(--sf);border:1px solid var(--bd);border-radius:12px;transition:all .2s" onmouseover="this.style.borderColor='var(--bdh)';this.style.transform='translateY(-2px)'" onmouseout="this.style.borderColor='var(--bd)';this.style.transform=''">
+      <div style="width:28px;height:28px;border-radius:8px;background:var(--gr);display:flex;align-items:center;justify-content:center;color:#fff;font-size:11px;font-weight:800;flex-shrink:0">01</div>
+      <div><h3 style="font-size:13px;font-weight:700;margin-bottom:3px">Score GEO 0-100</h3><p style="font-size:11px;color:var(--dm);line-height:1.5">Mesurez votre préparation IA. Contrôles détaillés, correctifs priorisés par points récupérables.</p></div>
+    </div>
+    <div style="display:flex;gap:14px;padding:18px;background:var(--sf);border:1px solid var(--bd);border-radius:12px;transition:all .2s" onmouseover="this.style.borderColor='var(--bdh)';this.style.transform='translateY(-2px)'" onmouseout="this.style.borderColor='var(--bd)';this.style.transform=''">
+      <div style="width:28px;height:28px;border-radius:8px;background:var(--gr);display:flex;align-items:center;justify-content:center;color:#fff;font-size:11px;font-weight:800;flex-shrink:0">02</div>
+      <div><h3 style="font-size:13px;font-weight:700;margin-bottom:3px">Citabilité des pages</h3><p style="font-size:11px;color:var(--dm);line-height:1.5">Structure, sources, clarté : identifiez les passages que l'IA peut citer — et ceux qu'elle ignore.</p></div>
+    </div>
+    <div style="display:flex;gap:14px;padding:18px;background:var(--sf);border:1px solid var(--bd);border-radius:12px;transition:all .2s" onmouseover="this.style.borderColor='var(--bdh)';this.style.transform='translateY(-2px)'" onmouseout="this.style.borderColor='var(--bd)';this.style.transform=''">
+      <div style="width:28px;height:28px;border-radius:8px;background:var(--gr);display:flex;align-items:center;justify-content:center;color:#fff;font-size:11px;font-weight:800;flex-shrink:0">03</div>
+      <div><h3 style="font-size:13px;font-weight:700;margin-bottom:3px">Plan d'action priorisé</h3><p style="font-size:11px;color:var(--dm);line-height:1.5">Ce qui fait le plus bouger la note, d'abord. Correctifs classés par points récupérables.</p></div>
+    </div>
+    <div style="display:flex;gap:14px;padding:18px;background:var(--sf);border:1px solid var(--bd);border-radius:12px;transition:all .2s" onmouseover="this.style.borderColor='var(--bdh)';this.style.transform='translateY(-2px)'" onmouseout="this.style.borderColor='var(--bd)';this.style.transform=''">
+      <div style="width:28px;height:28px;border-radius:8px;background:var(--gr);display:flex;align-items:center;justify-content:center;color:#fff;font-size:11px;font-weight:800;flex-shrink:0">04</div>
+      <div><h3 style="font-size:13px;font-weight:700;margin-bottom:3px">Search Console + GA4</h3><p style="font-size:11px;color:var(--dm);line-height:1.5">Requêtes, pages, appareils, pays dans une seule console. Décidez où investir.</p></div>
+    </div>
+    <div style="display:flex;gap:14px;padding:18px;background:var(--sf);border:1px solid var(--bd);border-radius:12px;transition:all .2s" onmouseover="this.style.borderColor='var(--bdh)';this.style.transform='translateY(-2px)'" onmouseout="this.style.borderColor='var(--bd)';this.style.transform=''">
+      <div style="width:28px;height:28px;border-radius:8px;background:var(--gr);display:flex;align-items:center;justify-content:center;color:#fff;font-size:11px;font-weight:800;flex-shrink:0">05</div>
+      <div><h3 style="font-size:13px;font-weight:700;margin-bottom:3px">Audit GTM avant mise en ligne</h3><p style="font-size:11px;color:var(--dm);line-height:1.5">Contrôlez les tags, événements et consentement sur la préprod. Évitez de perdre des conversions.</p></div>
+    </div>
+    <div style="display:flex;gap:14px;padding:18px;background:var(--sf);border:1px solid var(--bd);border-radius:12px;transition:all .2s" onmouseover="this.style.borderColor='var(--bdh)';this.style.transform='translateY(-2px)'" onmouseout="this.style.borderColor='var(--bd)';this.style.transform=''">
+      <div style="width:28px;height:28px;border-radius:8px;background:var(--gr);display:flex;align-items:center;justify-content:center;color:#fff;font-size:11px;font-weight:800;flex-shrink:0">06</div>
+      <div><h3 style="font-size:13px;font-weight:700;margin-bottom:3px">IndexNow & Bing</h3><p style="font-size:11px;color:var(--dm);line-height:1.5">Annoncez vos nouvelles pages le jour J. Moins d'attente, plus de chances d'être indexé vite.</p></div>
+    </div>
+    <div style="display:flex;gap:14px;padding:18px;background:var(--sf);border:1px solid var(--bd);border-radius:12px;transition:all .2s" onmouseover="this.style.borderColor='var(--bdh)';this.style.transform='translateY(-2px)'" onmouseout="this.style.borderColor='var(--bd)';this.style.transform=''">
+      <div style="width:28px;height:28px;border-radius:8px;background:var(--gr);display:flex;align-items:center;justify-content:center;color:#fff;font-size:11px;font-weight:800;flex-shrink:0">07</div>
+      <div><h3 style="font-size:13px;font-weight:700;margin-bottom:3px">Positionnement IA</h3><p style="font-size:11px;color:var(--dm);line-height:1.5">Voyez où vos concurrents gagnent la conversation dans les réponses IA. Identifiez les opportunités.</p></div>
+    </div>
+  </div>
+</div>
+</section>
+
+<!-- BEFORE / AFTER -->
+<section class="sec">
+<div class="w"><div class="ba-grid">
+  <div>
+    <span class="ey">Résultats prouvés</span>
+    <h2 class="sh">De <span class="g">9/100</span> à <span class="g2">96/100</span><br>après les correctifs</h2>
+    <p style="font-size:1rem;color:var(--mt);line-height:1.65;margin-bottom:24px">Un site de départ standard (titre, H1, une phrase, sans robots.txt ni llms.txt) atteint 96/100 après les correctifs générés par GTM Growth.</p>
+    <div style="display:flex;gap:24px;margin-bottom:24px">
+      <div><div style="font-size:2.2rem;font-weight:900;letter-spacing:-.04em;color:rgba(240,240,255,.25)">9</div><div style="font-size:11px;color:var(--dm)">Score initial</div></div>
+      <div style="display:flex;align-items:center;color:var(--dm);font-size:18px">→</div>
+      <div><div class="g" style="font-size:2.2rem;font-weight:900;letter-spacing:-.04em">96</div><div style="font-size:11px;color:var(--dm)">Après correctifs</div></div>
+    </div>
+    <code style="background:var(--sf);border:1px solid var(--bd);border-radius:8px;padding:10px 14px;font-size:12px;color:#a78bfa;display:block">npm run demo:geo</code>
+  </div>
+  <div class="ba-card">
+    <div style="font-size:11px;font-weight:700;color:var(--mt);margin-bottom:16px;display:flex;gap:14px">
+      <span style="display:flex;align-items:center;gap:5px"><span style="width:9px;height:9px;border-radius:2px;background:#1f2937;display:inline-block"></span>Avant</span>
+      <span style="display:flex;align-items:center;gap:5px"><span style="width:9px;height:9px;border-radius:2px;background:linear-gradient(90deg,#7c3aed,#ec4899);display:inline-block"></span>Après</span>
+    </div>
+    <div class="ba-row"><div class="ba-label">robots.txt (0 → 18/18)</div><div class="ba-bars"><div class="ba-b" style="width:3px"></div><div class="ba-a" style="width:100%"></div></div></div>
+    <div class="ba-row"><div class="ba-label">Schéma JSON-LD (0 → 16/16)</div><div class="ba-bars"><div class="ba-b" style="width:3px"></div><div class="ba-a" style="width:100%"></div></div></div>
+    <div class="ba-row"><div class="ba-label">Métadonnées (5 → 14/14)</div><div class="ba-bars"><div class="ba-b" style="width:36%"></div><div class="ba-a" style="width:100%"></div></div></div>
+    <div class="ba-row"><div class="ba-label">Contenu (2 → 12/12)</div><div class="ba-bars"><div class="ba-b" style="width:17%"></div><div class="ba-a" style="width:100%"></div></div></div>
+    <div class="ba-row"><div class="ba-label">Marque & entité (2 → 10/10)</div><div class="ba-bars"><div class="ba-b" style="width:20%"></div><div class="ba-a" style="width:100%"></div></div></div>
+    <div class="ba-row"><div class="ba-label">Signaux (0 → 6/6)</div><div class="ba-bars"><div class="ba-b" style="width:3px"></div><div class="ba-a" style="width:100%"></div></div></div>
+  </div>
+</div></div>
+</section>
+
+<!-- OSS STRIP -->
+<div style="padding:0 24px 80px">
+<div style="max-width:1160px;margin:0 auto">
+<div class="oss">
+  <h3 style="font-size:1.2rem;font-weight:800;margin-bottom:7px">Construit à ciel ouvert, mesuré en public</h3>
+  <p style="font-size:13px;color:var(--mt);max-width:420px;margin:0 auto 14px">Chaque chiffre vient du dépôt que vous pouvez exécuter. La CI tourne sur chaque push.</p>
+  <div class="obs">
+    <div class="ob">📦 Apache-2.0</div>
+    <div class="ob">✅ 205 tests</div>
+    <div class="ob">🔧 96 outils MCP</div>
+    <div class="ob">🚫 0 dépendance externe</div>
+    <div class="ob">🔄 CI sur chaque push</div>
+  </div>
+  <div style="margin-top:14px"><a href="https://github.com/Geoking2104/GTM-Growth" style="color:#a78bfa;font-size:13px;text-decoration:none;font-weight:600">Voir le dépôt GitHub →</a></div>
+</div>
+</div>
+</div>
+
+<!-- PRICING -->
+<section class="ss" id="plans" style="background:linear-gradient(135deg,rgba(124,58,237,.06),rgba(236,72,153,.04))">
+<div class="w" style="text-align:center">
+  <span class="ey">Tarifs</span>
+  <h2 class="sh">Commencez gratuitement.<br><span class="g">Allez plus loin quand ça paie.</span></h2>
+  <div class="prg">
+    <div class="prc">
+      <div class="pn2">Lecture gratuite</div>
+      <div class="pd">Pour explorer sans engagement</div>
+      <div class="ppr">0 €<small>/mois</small></div>
+      <ul class="pfl">
+        <li>Note d'hygiène URL, 10 contrôles</li>
+        <li>Tables SEO, GA4, Search Console</li>
+        <li>Accès CLI et MCP complet</li>
+        <li>Serveur open source (Apache-2.0)</li>
+        <li>Exécutable en local, sans compte</li>
       </ul>
-      <h1>Rendez votre site plus visible. Sachez quoi améliorer.</h1>
-      <p class="lede hero-sub">
-        Analysez votre préparation aux moteurs IA et reliez vos données Search Console et GA4 à un plan d’action concret.
-      </p>
-
-      <form class="check-form" id="check-form" novalidate>
-        <label class="sr-only" for="site-url">URL de votre site</label>
-        <input id="site-url" name="url" type="text" inputmode="url" autocomplete="url"
-               placeholder="votreentreprise.com" aria-describedby="check-hint" required>
-        <button class="btn" type="submit">Analyser mon site</button>
-      </form>
-      <p class="hint" id="check-hint">Sans inscription. La première lecture note votre URL immédiatement, puis affiche les données SEO, GA4, Search Console et sitemap.</p>
-      <p class="hint"><a href="../reports/opendpe.html">Exemple de rapport complet — opendpe.net, 71/100 →</a> · <a href="../reports/opendpe.pdf" download>Télécharger le PDF (50 ko)</a></p>
-      <div class="hero-proof" aria-label="Audit public de référence">
-        <p class="hero-proof-head">Un audit public, rejouable — <strong>opendpe.net</strong>, 2 nov. 2026</p>
-        <ul class="hero-proof-grid">
-          <li><strong>71<span>/100</span></strong><em>Score GEO</em><small>100 après les 16 correctifs</small></li>
-          <li><strong>27<span>/27</span></strong><em>robots IA autorisés</em><small>aucun bloqué · 5 bots de citation</small></li>
-          <li><strong>3<span>/5</span></strong><em>moteurs prêts</em><small>AIO 100 · ChatGPT 100</small></li>
-          <li><strong>0<span>/4</span></strong><em>Liens d’entité</em><small>piliers sameAs, 7 points</small></li>
-        </ul>
-      </div>
-      <p class="form-error" id="check-error" role="alert" hidden></p>
-
-      <ul class="hero-stats" aria-label="Contenu du dépôt">
-        <li><strong>96</strong><span>outils MCP</span></li>
-        <li><strong>11</strong><span>contrôles GEO</span></li>
-        <li><strong>22</strong><span>outils GTM</span></li>
-        <li><strong>0</strong><span>dépendance</span></li>
-      </ul></div><figure class="hero-product"><img src="../assets/screens/geo-board.webp" alt="Capture de l’audit GEO d’opendpe.net : score et trajectoire projetée" width="1400" height="880"><figcaption>Exemple : trajectoire projetée, pas un historique.</figcaption></figure>
+      <a href="https://gtm.kayroslab.com/fr/" class="btn bg2b" style="width:100%;text-align:center;display:block">Lancer la lecture →</a>
     </div>
-  </section>
-
-<section class="marketing-demo" aria-labelledby="marketing-demo-title"><div class="wrap marketing-demo-inner"><div class="marketing-demo-copy"><p class="eyebrow eyebrow-dark">UNE VUE POUR DÉCIDER</p><h2 id="marketing-demo-title">Vos données. Vos priorités. Un cap clair.</h2><p>SEO, visibilité IA et actions prioritaires : vos signaux réunis dans une seule console.</p><a class="btn btn-small" href="/console/">Découvrir la console</a></div><figure class="marketing-demo-figure"><img src="../assets/screens/geo-board.webp" alt="Capture de la console : score GEO et trajectoire projetée pour opendpe.net" width="1400" height="880"><figcaption>Exemple réel : audit d’opendpe.net. La courbe montre une projection, pas un historique.</figcaption></figure></div></section>
-
-<section class="section result-section" id="free-read" aria-labelledby="result-heading" hidden>
-    <div class="wrap">
-      <div class="result-card">
-        <div class="result-head">
-          <div>
-            <p class="eyebrow eyebrow-dark">Lecture gratuite</p>
-            <h2 id="result-heading" tabindex="-1">Première lecture pour <span id="result-host">votre site</span></h2>
-            <p class="result-verdict" id="result-verdict"></p>
-          </div>
-          <div class="score" id="score" aria-hidden="true">
-            <span class="score-value" id="score-value">0</span>
-            <span class="score-label">Hygiène d’URL</span>
-          </div>
-        </div>
-
-        <ul class="check-list" id="check-list" aria-live="polite"></ul>
-
-        <div class="result-tables" id="result-tables-host">
-          <p class="tables-note" id="result-tables-note" role="status" aria-live="polite" hidden></p>
-          <div id="result-tables"></div>
-        </div>
-
-        <section class="sitemap-map-panel" aria-labelledby="sitemap-map-heading">
-          <div class="sitemap-map-head">
-            <div><p class="eyebrow eyebrow-dark">Sitemap visuel gratuit</p><h3 id="sitemap-map-heading">Votre architecture déclarée, avec ses données sitemap</h3></div>
-            <p>Pages, profondeur, couverture <code>lastmod</code> et répartition par section — mesurées depuis le sitemap XML, jamais devinées.</p>
-          </div>
-          <div id="sitemap-map" aria-live="polite"></div>
-          <p class="sitemap-credit">Langage visuel adapté de <a href="https://github.com/astuteo/slickmap/tree/master-v2-updated-skin">SlickMap CSS v2</a> par Matt Everson / Astuteo.</p>
-        </section>
-
-        <div class="result-next">
-          <h3>Ce que l’audit complet ajoute</h3>
-          <ul class="tick-list">
-            <li>Accès des robots IA dans <code>robots.txt</code>, par robot et par niveau</li>
-            <li>Présence, structure et dérive de <code>llms.txt</code> face au sitemap</li>
-            <li>Couverture JSON-LD : WebSite, Organization, FAQ, Article</li>
-            <li>Citabilité du contenu : 12 méthodes avec preuves</li>
-            <li>Signaux de marque et d’entité, liens Knowledge Graph</li>
-            <li>Points de découverte IA (<code>/.well-known/ai.txt</code>, <code>/ai/*.json</code>)</li>
-            <li>Installation GTM : loader, noscript, ordre du dataLayer, consentement</li>
-            <li>Audit du conteneur : tags en double, paramètres ecommerce manquants</li>
-          </ul>
-          <a class="btn" href="#talk">Obtenir le rapport complet</a>
-        </div>
-      </div>
-    </div>
-  </section>
-
-
-  <!-- ── How it works (onboarding) ─────────────────────────── -->
-  <section class="section" id="how" aria-labelledby="how-heading">
-    <div class="wrap">
-      <header class="section-head">
-        <p class="eyebrow eyebrow-dark">Fonctionnement</p>
-        <h2 id="how-heading">D’une URL à un plan exécutable</h2>
-        <p class="section-sub">Quatre étapes, de la lecture gratuite à la console. Chaque étape mène directement à l’outil qui la réalise.</p>
-      </header>
-      <ol class="steps steps-4">
-        <li>
-          <span class="step-num">1</span>
-          <h3>Lecture gratuite</h3>
-          <p>Saisissez votre URL pour une première lecture, sans inscription.</p>
-          <p class="step-link"><a class="btn btn-small" href="#top">Lancer la lecture</a></p>
-        </li>
-        <li>
-          <span class="step-num">2</span>
-          <h3>Connecter vos accès</h3>
-          <p>Reliez Search Console et GA4 pour suivre vos données dans la console.</p>
-          <p class="step-link"><a class="btn btn-small" href="/console/#tracking/settings">Ouvrir Tracking → Paramètres</a></p>
-        </li>
-        <li>
-          <span class="step-num">3</span>
-          <h3>Audit complet</h3>
-          <p>Analysez votre site et retrouvez les constats accompagnés de leurs preuves.</p>
-          <p class="step-link"><a class="btn btn-small" href="/console/">Ouvrir la console</a></p>
-        </li>
-        <li>
-          <span class="step-num">4</span>
-          <h3>Mise en œuvre</h3>
-          <p>Priorisez les correctifs, puis suivez vos résultats.</p>
-          <p class="step-link"><a class="btn btn-small" href="/console/#overview/plan">Voir le plan ACT</a></p>
-        </li>
-      </ol>
-    </div>
-  </section>
-
-  <!-- ── Free tools ──────────────────────────────────────── -->
-  <section class="section" id="tools" aria-labelledby="tools-heading">
-    <div class="wrap">
-      <header class="section-head">
-        <p class="eyebrow eyebrow-dark">Outils gratuits</p>
-        <h2 id="tools-heading">Quatre outils gratuits, avant toute inscription</h2>
-        <p class="section-sub">Une URL suffit pour examiner les premiers signaux techniques de votre site.</p>
-      </header>
-
-      <div class="feature-grid feature-grid-2">
-        <article class="feature-card">
-          <p class="feature-num" aria-hidden="true">01</p>
-          <h3>Voyez ce que Google et ChatGPT lisent d’abord</h3>
-          <p>Titre, description, titres et données structurées : la lecture mesure la page réelle. Vous savez immédiatement ce qui freine la visibilité.</p>
-
-
-          <figure class="feature-shot"><div class="feature-shot-panel"><img src="../assets/screens/free-seo.webp" alt="Lecture SEO de la page" loading="lazy" decoding="async"></div></figure>
-          <p class="feature-cta"><a class="btn btn-small" href="/console/#search">Aller plus loin dans la console</a></p>
-        </article>
-        <article class="feature-card">
-          <p class="feature-num" aria-hidden="true">02</p>
-          <h3>Vérifiez vos balises de mesure</h3>
-          <p>Identifiez les balises, les doublons et les signaux de consentement présents dans la page.</p>
-
-
-          <figure class="feature-shot"><div class="feature-shot-panel"><img src="../assets/screens/free-ga4.webp" alt="Contrôles des balises de mesure" loading="lazy" decoding="async"></div></figure>
-          <p class="feature-cta"><a class="btn btn-small" href="/console/#ga4">Ouvrir GA4 dans la console</a></p>
-        </article>
-        <article class="feature-card">
-          <p class="feature-num" aria-hidden="true">03</p>
-          <h3>Comprenez si Google peut indexer votre site</h3>
-          <p>Vérification, directives robots, couverture du sitemap : les bases avant le moindre clic. Puis les requêtes et pages qui amènent déjà du monde.</p>
-
-
-          <figure class="feature-shot"><div class="feature-shot-panel"><img src="../assets/screens/free-gsc.webp" alt="Contrôles Search Console" loading="lazy" decoding="async"></div></figure>
-          <p class="feature-cta"><a class="btn btn-small" href="/console/#search">Voir les performances Search</a></p>
-        </article>
-        <article class="feature-card">
-          <p class="feature-num" aria-hidden="true">04</p>
-          <h3>Visualisez l’architecture de votre site</h3>
-          <p>Le sitemap XML devient une carte claire : nombre de pages, profondeur, fraîcheur déclarée. Idéal pour prioriser ce que les moteurs doivent découvrir.</p>
-
-
-          <figure class="feature-shot"><div class="feature-shot-panel"><img src="../assets/screens/free-sitemap.webp" alt="Carte du sitemap" loading="lazy" decoding="async"></div></figure>
-          <p class="feature-cta"><a class="btn btn-small" href="/console/#sitemap">Ouvrir le sitemap dans la console</a></p>
-        </article>
-      </div>
-
-      <p class="free-note">Les sessions et les clics exigent une propriété connectée. Tant qu’aucune ne l’est, ces deux rapports portent la mention <strong>exemple</strong> — rien ici n’est estimé en silence.</p>
-    </div>
-  </section>
-
-  <!-- ── The toolkit ─────────────────────────────────────── -->
-  <section class="section section-alt" id="toolkit" aria-labelledby="toolkit-heading">
-    <div class="wrap">
-      <header class="section-head">
-        <p class="eyebrow eyebrow-dark">Le toolkit</p>
-        <h2 id="toolkit-heading">Sept leviers pour gagner en visibilité</h2>
-        <p class="section-sub">Repérez les points à améliorer, suivez vos performances et passez à l’action.</p>
-      </header>
-
-      <div class="feature-grid feature-grid-2">
-        <article class="feature-card">
-          <p class="feature-num" aria-hidden="true">01</p>
-          <h3>Mesurez votre préparation aux moteurs IA</h3>
-          <p>Un score GEO, des contrôles détaillés et des correctifs priorisés pour votre site.</p>
-
-          <figure class="feature-shot"><div class="feature-shot-panel"><picture><source type="image/webp" srcset="../assets/screens/geo-board.webp"><img src="../assets/screens/geo-board.png" alt="Tableau de bord score GEO et préparation des moteurs pour opendpe.net" width="1400" height="880" loading="lazy" decoding="async"></picture></div></figure>
-
-                  <p class="feature-cta"><a class="btn btn-small" href="/console/#overview">Voir le score GEO</a></p>
-        </article>
-        <article class="feature-card">
-          <p class="feature-num" aria-hidden="true">02</p>
-          <h3>Améliorez la citabilité de vos pages</h3>
-          <p>Structure, sources et clarté : identifiez les passages à rendre plus faciles à citer.</p>
-
-
-
-                  <figure class="feature-shot"><div class="feature-shot-panel"><img src="../assets/screens/citability-main.webp" alt="Audit de citabilité" loading="lazy" decoding="async"></div></figure>
-          <p class="feature-cta"><a class="btn btn-small" href="/console/#citability">Ouvrir Citabilité</a></p>
-        </article>
-        <article class="feature-card">
-          <p class="feature-num" aria-hidden="true">03</p>
-          <h3>Un plan priorisé : quoi corriger maintenant</h3>
-          <p>Passez des constats aux correctifs, classés par priorité.</p>
-
-
-          <figure class="feature-shot"><div class="feature-shot-panel"><img src="../assets/screens/act-plan-table.webp" alt="Plan d’actions priorisées" loading="lazy" decoding="async"></div></figure>
-          <p class="feature-cta"><a class="btn btn-small" href="/console/#overview/plan">Voir le plan ACT</a></p>
-        </article>
-        <article class="feature-card">
-          <p class="feature-num" aria-hidden="true">04</p>
-          <h3>Suivez les requêtes et pages qui amènent du monde</h3>
-          <p>Search Console et GA4 dans la même console : requêtes, pages, appareils, pays. Décidez où investir pour plus de trafic utile.</p>
-
-
-          <figure class="feature-shot"><div class="feature-shot-panel"><img src="../assets/screens/search-perf.webp" alt="Requêtes Search Console" loading="lazy" decoding="async"></div></figure>
-          <p class="feature-cta"><a class="btn btn-small" href="/console/#search">Ouvrir Recherche</a></p>
-        </article>
-        <article class="feature-card">
-          <p class="feature-num" aria-hidden="true">05</p>
-          <h3>Sécurisez vos tags avant la mise en ligne</h3>
-          <p>Contrôlez le conteneur, les événements et le consentement sur la préproduction. Évitez de perdre des conversions après un déploiement.</p>
-
-
-          <p class="feature-cta"><a class="btn btn-small" href="/console/#tracking">Ouvrir Tracking</a></p>
-        </article>
-        <article class="feature-card">
-          <p class="feature-num" aria-hidden="true">06</p>
-          <h3>Annoncez vos nouvelles pages à Bing le jour J</h3>
-          <p>Une URL modifiée, un envoi : Bing et les partenaires sont notifiés. Moins d’attente, plus de chances d’être trouvé rapidement.</p>
-
-
-                  <figure class="feature-shot"><div class="feature-shot-panel"><img src="../assets/screens/indexnow-main.webp" alt="Contrôles IndexNow" loading="lazy" decoding="async"></div></figure>
-          <p class="feature-cta"><a class="btn btn-small" href="/console/#indexnow">Ouvrir IndexNow</a></p>
-        </article>
-        <article class="feature-card">
-          <p class="feature-num" aria-hidden="true">07</p>
-          <h3>Voyez où vos concurrents gagnent la conversation</h3>
-          <p>Comparez les marques dans les réponses IA importées, puis examinez les preuves et les opportunités.</p>
-
-
-
-                  <p class="feature-cta"><a class="btn btn-small" href="/console/#competition">Voir Concurrence</a></p>
-        </article>
-      </div>
-        <p class="ink-mini-out" id="ink-out" hidden><code id="ink-key"></code><span id="ink-file"></span></p>
-        <div class="ink-mini-row">
-          <button class="btn btn-ghost btn-small" type="button" id="ink-download" hidden>Télécharger le .txt</button>
-        </div>
-      </div>
-    </div>
-  </section>
-
-
-
-  <!-- ── Analysis console ─────────────────────────────────── -->
-  <section class="section section-console" id="console" aria-labelledby="console-heading">
-    <div class="wrap">
-      <header class="section-head">
-        <p class="eyebrow eyebrow-dark">Console d’analyse</p>
-        <h2 id="console-heading">Une console pour suivre et agir</h2>
-        <p class="section-sub">Search Console, GA4, GEO et concurrence : retrouvez vos données et les actions à mener.</p>
-        <p class="console-cta"><a class="btn btn-small" href="../console/">Se connecter · Ouvrir ma console</a></p>
-      </header>
-
-      <figure class="console-real-shot"><img src="../assets/screens/geo-board.webp" alt="Capture de la vue d’ensemble GEO de la console GTM Growth" width="1400" height="880" loading="lazy"><figcaption>Extrait de la console : audit public d’opendpe.net. La trajectoire est une projection.</figcaption></figure>
-      <div class="app" hidden aria-hidden="true" role="region" aria-label="Console d’analyse, démonstration">
-        <div class="app-tabs" role="tablist" aria-label="Vues de la console">
-          <button role="tab" id="tab-overview" aria-controls="panel-overview" aria-selected="true" class="app-tab is-active"><span class="app-tab-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 17l5-6 4 4 5-7 4 5"/><path d="M3 21h18"/></svg></span>Vue d’ensemble</button>
-          <button role="tab" id="tab-geo" aria-controls="panel-geo" aria-selected="false" class="app-tab"><span class="app-tab-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 19V5"/><path d="M4 19h16"/><rect x="7" y="11" width="3" height="8"/><rect x="12" y="7" width="3" height="12"/><rect x="17" y="13" width="3" height="6"/></svg></span>GEO</button>
-          <button role="tab" id="tab-search" aria-controls="panel-search" aria-selected="false" class="app-tab"><span class="app-tab-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="11" cy="11" r="6.5"/><path d="M16 16l4.5 4.5"/></svg></span>Recherche</button>
-          <button role="tab" id="tab-indexnow" aria-controls="panel-indexnow" aria-selected="false" class="app-tab"><span class="app-tab-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M13 3L5 14h5l-1 7 8-11h-6z"/></svg></span>IndexNow</button>
-          <button role="tab" id="tab-tracking" aria-controls="panel-tracking" aria-selected="false" class="app-tab"><span class="app-tab-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 12h4l2-6 3 12 2-6h5"/></svg></span>Tracking</button>
-        </div>
-
-        <div class="app-body">
-          <aside class="app-side">
-            <div class="app-switch">
-              <img src="../assets/logo-64.png" alt="" width="20" height="20">
-              <span>opendpe.net</span>
-              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" class="chev"><path d="M9 6l6 6-6 6"/></svg>
-            </div>
-            <div class="app-search"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="11" cy="11" r="6.5"/><path d="M16 16l4.5 4.5"/></svg><span>Rechercher</span><kbd>⌘K</kbd></div>
-            <p class="app-group">Track</p>
-            <ul class="app-nav">
-              <li><a href="#console" class="is-active" aria-current="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 17l5-6 4 4 5-7 4 5"/><path d="M3 21h18"/></svg><span>Vue d’ensemble</span></a></li>
-              <li><a href="#console"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 19V5"/><path d="M4 19h16"/><rect x="7" y="11" width="3" height="8"/><rect x="12" y="7" width="3" height="12"/><rect x="17" y="13" width="3" height="6"/></svg><span>GEO</span></a></li>
-              <li><a href="#console"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3l7 3v6c0 4-3 7-7 8-4-1-7-4-7-8V6z"/><path d="M9 12l2 2 4-4"/></svg><span>Citabilité</span></a></li>
-              <li><a href="#console"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M13 3L5 14h5l-1 7 8-11h-6z"/></svg><span>IndexNow</span></a></li>
-              <li><a href="../console/#sitemap"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="9" y="3" width="6" height="5" rx="1"/><rect x="3" y="16" width="6" height="5" rx="1"/><rect x="15" y="16" width="6" height="5" rx="1"/><path d="M12 8v4M6 16v-2h12v2"/></svg><span>Sitemap</span></a></li>
-              <li><a href="../console/#performance"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 15a8 8 0 1 1 16 0"/><path d="M12 15l4-5"/><path d="M4 19h16"/></svg><span>Performance</span></a></li>
-            </ul>
-            <p class="app-group">Act</p>
-            <ul class="app-nav">
-              <li><a href="#console"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="11" cy="11" r="6.5"/><path d="M16 16l4.5 4.5"/></svg><span>Recherche</span></a></li>
-              <li><a href="#console"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 12h4l2-6 3 12 2-6h5"/></svg><span>Tracking</span></a></li>
-              <li><a href="../console/#keywords"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 7h16M4 12h10M4 17h6"/><circle cx="18" cy="16" r="3"/></svg><span>Mots-clés</span></a></li>
-              <li><a href="../console/#audit"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 4h6l1 2h3v14H5V6h3z"/><path d="M9 13l2 2 4-4"/></svg><span>Audit technique</span></a></li>
-              <li><a href="../console/#generators"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3v4M12 17v4M3 12h4M17 12h4M6 6l2.5 2.5M15.5 15.5L18 18M18 6l-2.5 2.5M8.5 15.5L6 18"/></svg><span>Générateurs</span></a></li>
-              <li><a href="../console/#calculators"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="5" y="3" width="14" height="18" rx="2"/><path d="M8 7h8M8 11h2M12 11h2M8 15h2M12 15h2M8 18h2M12 18h4"/></svg><span>Calculateurs</span></a></li>
-              <li><a href="#console"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 4h8l4 4v12H6z"/><path d="M14 4v5h4"/></svg><span>Rapport</span></a></li>
-            </ul>
-            <p class="app-side-foot"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="3"/><path d="M12 3v3M12 18v3M3 12h3M18 12h3M5.6 5.6l2 2M16.4 16.4l2 2M18.4 5.6l-2 2M7.6 16.4l-2 2"/></svg><span>Réglages</span></p>
-          </aside>
-
-          <div class="app-main">
-            <div class="app-head">
-              <p class="app-crumb">opendpe.net <span aria-hidden="true">▸</span> <strong id="app-crumb-current">Vue d’ensemble</strong></p>
-              <div class="app-filters">
-                <span class="app-pill dashed"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="4" y="5" width="16" height="15" rx="2"/><path d="M4 10h16M9 3v4M15 3v4"/></svg>Tous les moteurs</span>
-                <span class="app-pill"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="4" y="5" width="16" height="15" rx="2"/><path d="M4 10h16M9 3v4M15 3v4"/></svg>Exemple · 2 nov. 2026</span>
-              </div>
-            </div>
-
-            <section role="tabpanel" id="panel-overview" aria-labelledby="tab-overview" class="app-panel">
-              <div class="kpi-row">
-                <div class="kpi-cell">
-                  <span class="kpi-label">Score GEO</span>
-                  <div class="kpi-value"><strong>71</strong><em>/100</em></div>
-                  <div class="kpi-foot"><span class="delta up">+29</span><span class="kpi-note">projeté</span><svg class="spark" viewBox="0 0 76 26" fill="none" aria-hidden="true"><polyline points="2.0,23.0 6.5,20.9 11.0,18.9 15.5,16.8 20.0,15.4 24.5,14.0 29.0,12.7 33.5,11.3 38.0,10.6 42.5,9.9 47.0,8.5 51.5,7.1 56.0,5.8 60.5,5.1 65.0,4.4 69.5,3.7 74.0,3.0" stroke="#4f5bd5" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg></div>
-                </div>
-                <div class="kpi-cell">
-                  <span class="kpi-label">Citabilité</span>
-                  <div class="kpi-value"><strong>53</strong><em>/100</em></div>
-                  <div class="kpi-foot"><span class="delta up">+47</span><span class="kpi-note">jusqu’au max</span><svg class="spark" viewBox="0 0 76 26" fill="none" aria-hidden="true"><polyline points="2.0,23.0 16.4,19.2 30.8,15.3 45.2,11.5 59.6,7.3 74.0,3.0" stroke="#8b7bd8" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg></div>
-                </div>
-                <div class="kpi-cell">
-                  <span class="kpi-label">IndexNow</span>
-                  <div class="kpi-value"><strong>35</strong><em>/100</em></div>
-                  <div class="kpi-foot"><span class="delta up">+65</span><span class="kpi-note">4 contrôles à corriger</span><svg class="spark" viewBox="0 0 76 26" fill="none" aria-hidden="true"><polyline points="2.0,23.0 16.4,19.9 30.8,15.3 45.2,10.7 59.6,6.1 74.0,3.0" stroke="#e0b23c" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg></div>
-                </div>
-                <div class="kpi-cell">
-                  <span class="kpi-label">Moteurs prêts</span>
-                  <div class="kpi-value"><strong>3</strong><em>/5</em></div>
-                  <div class="kpi-foot"><span class="delta up">+2</span><span class="kpi-note">AIO, ChatGPT, Copilot</span><svg class="spark" viewBox="0 0 76 26" fill="none" aria-hidden="true"><polyline points="2.0,23.0 20.0,20.5 38.0,13.0 56.0,3.0 74.0,3.0" stroke="#2f9e6f" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg></div>
-                </div>
-              </div>
-
-              <div class="app-split">
-                <figure class="app-chart">
-                  <figcaption>Trajectoire du score vers le plan<span>71 → 100 · un point par correctif</span></figcaption>
-                  <svg viewBox="0 0 620 240" role="img" aria-label="Le score passe de 71 à 100 en 16 correctifs">
-                    <g stroke="#eceef3" stroke-width="1">
-                      <line x1="8" y1="36" x2="612" y2="36"/>
-                      <line x1="8" y1="96" x2="612" y2="96"/>
-                      <line x1="8" y1="156" x2="612" y2="156"/>
-                      <line x1="8" y1="216" x2="612" y2="216"/>
-                    </g>
-                    <g fill="#9aa3b2" font-size="10" font-family="var(--font)">
-                      <text x="0" y="39">100</text>
-                      <text x="0" y="99">90</text>
-                      <text x="0" y="159">80</text>
-                      <text x="0" y="219">70</text>
-                    </g>
-                    <polyline points="8.0,190.6 45.8,173.1 83.5,155.7 121.3,138.3 159.0,126.6 196.8,115.0 234.5,103.4 272.3,91.8 310.0,85.9 347.8,80.1 385.5,68.5 423.3,56.9 461.0,45.3 498.8,39.4 536.5,33.6 574.3,27.8 612.0,22.0" fill="none" stroke="#4f5bd5" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/>
-                    <circle cx="8" cy="216" r="3.5" fill="#fff" stroke="#4f5bd5" stroke-width="2"/>
-                    <circle cx="612" cy="36" r="3.5" fill="#fff" stroke="#4f5bd5" stroke-width="2"/>
-                  </svg>
-                  <div class="app-axis"><span>maintenant</span><span>+6 correctifs</span><span>+16 correctifs</span></div>
-                </figure>
-
-                <aside class="app-rank">
-                  <div class="app-rank-head">Préparation par moteur <span>sur 100</span></div>
-                  <p class="app-rank-lead">Meilleur : <strong>Google AIO 100</strong> · plus faible : <strong>Gemini 60</strong></p>
-                  <ul class="rank-list">
-                    <li>
-                      <span class="rank-dot" aria-hidden="true"></span>
-                      <span class="rank-name">Google AIO</span>
-                      <span class="rank-score">100</span>
-                      <span class="rank-delta up">0</span>
-                    </li>
-                    <li>
-                      <span class="rank-dot" aria-hidden="true"></span>
-                      <span class="rank-name">ChatGPT</span>
-                      <span class="rank-score">100</span>
-                      <span class="rank-delta up">0</span>
-                    </li>
-                    <li>
-                      <span class="rank-dot" aria-hidden="true"></span>
-                      <span class="rank-name">Copilot</span>
-                      <span class="rank-score">80</span>
-                      <span class="rank-delta down">−20</span>
-                    </li>
-                    <li>
-                      <span class="rank-dot" aria-hidden="true"></span>
-                      <span class="rank-name">Perplexity</span>
-                      <span class="rank-score">65</span>
-                      <span class="rank-delta down">−35</span>
-                    </li>
-                    <li>
-                      <span class="rank-dot" aria-hidden="true"></span>
-                      <span class="rank-name">Gemini</span>
-                      <span class="rank-score">60</span>
-                      <span class="rank-delta down">−40</span>
-                    </li>
-                  </ul>
-                  <p class="rank-foot">Écart au pentagone complet, en points.</p>
-                </aside>
-              </div>
-
-              <div class="app-strip">
-                <h3>Où sont les points</h3>
-                <ul class="strip-list">
-                  <li>
-                    <span class="strip-name">robots.txt</span>
-                    <span class="strip-bar"><i style="width:83%"></i></span>
-                    <span class="strip-value">15/18</span>
-                  </li>
-                  <li>
-                    <span class="strip-name">llms.txt</span>
-                    <span class="strip-bar"><i style="width:67%"></i></span>
-                    <span class="strip-value">12/18</span>
-                  </li>
-                  <li>
-                    <span class="strip-name">Schéma</span>
-                    <span class="strip-bar"><i style="width:81%"></i></span>
-                    <span class="strip-value">13/16</span>
-                  </li>
-                  <li>
-                    <span class="strip-name">Métadonnées</span>
-                    <span class="strip-bar"><i style="width:100%"></i></span>
-                    <span class="strip-value">14/14</span>
-                  </li>
-                  <li>
-                    <span class="strip-name">Contenu</span>
-                    <span class="strip-bar"><i style="width:92%"></i></span>
-                    <span class="strip-value">11/12</span>
-                  </li>
-                  <li>
-                    <span class="strip-name">Marque & entité</span>
-                    <span class="strip-bar"><i style="width:30%"></i></span>
-                    <span class="strip-value">3/10</span>
-                  </li>
-                  <li>
-                    <span class="strip-name">Signaux</span>
-                    <span class="strip-bar"><i style="width:50%"></i></span>
-                    <span class="strip-value">3/6</span>
-                  </li>
-                  <li>
-                    <span class="strip-name">Découverte IA</span>
-                    <span class="strip-bar"><i style="width:0%"></i></span>
-                    <span class="strip-value">0/6</span>
-                  </li>
-                </ul>
-              </div>
-            </section>
-
-            <section role="tabpanel" id="panel-geo" aria-labelledby="tab-geo" class="app-panel" hidden>
-              <table class="app-table">
-                <caption>Huit catégories, 100 points, un audit</caption>
-                <thead><tr><th scope="col">Catégorie</th><th scope="col">Points</th><th scope="col">Barre</th></tr></thead>
-                <tbody>
-                  <tr><th scope="row">robots.txt</th><td>15/18</td><td><span class="cbar"><i style="width:83%"></i></span></td></tr>
-                  <tr><th scope="row">llms.txt</th><td>12/18</td><td><span class="cbar"><i style="width:67%"></i></span></td></tr>
-                  <tr><th scope="row">Schéma</th><td>13/16</td><td><span class="cbar"><i style="width:81%"></i></span></td></tr>
-                  <tr><th scope="row">Métadonnées</th><td>14/14</td><td><span class="cbar"><i style="width:100%"></i></span></td></tr>
-                  <tr><th scope="row">Contenu</th><td>11/12</td><td><span class="cbar"><i style="width:92%"></i></span></td></tr>
-                  <tr><th scope="row">Marque & entité</th><td>3/10</td><td><span class="cbar"><i style="width:30%"></i></span></td></tr>
-                  <tr><th scope="row">Signaux</th><td>3/6</td><td><span class="cbar"><i style="width:50%"></i></span></td></tr>
-                  <tr><th scope="row">Découverte IA</th><td>0/6</td><td><span class="cbar"><i style="width:0%"></i></span></td></tr>
-                </tbody>
-              </table>
-            </section>
-
-            <section role="tabpanel" id="panel-search" aria-labelledby="tab-search" class="app-panel" hidden>
-              <div class="kpi-row">
-                <div class="kpi-cell"><span class="kpi-label">Clics</span><div class="kpi-value"><strong>2,940</strong></div><div class="kpi-foot"><span class="kpi-note">exemple</span></div></div>
-                <div class="kpi-cell"><span class="kpi-label">Impressions</span><div class="kpi-value"><strong>184K</strong></div><div class="kpi-foot"><span class="kpi-note">exemple</span></div></div>
-                <div class="kpi-cell"><span class="kpi-label">CTR</span><div class="kpi-value"><strong>1.6</strong><em>%</em></div><div class="kpi-foot"><span class="kpi-note">exemple</span></div></div>
-                <div class="kpi-cell"><span class="kpi-label">Position moy.</span><div class="kpi-value"><strong>14.2</strong></div><div class="kpi-foot"><span class="kpi-note">exemple</span></div></div>
-              </div>
-              <table class="app-table">
-                <caption>Lignes illustratives — connectez une propriété Search Console pour les vôtres</caption>
-                <thead><tr><th scope="col">Requête</th><th scope="col">Clics</th><th scope="col">Position</th></tr></thead>
-                <tbody>
-                  <tr><th scope="row">dpe maison</th><td>610</td><td>8.4</td></tr>
-                  <tr><th scope="row">diagnostic dpe en ligne</th><td>402</td><td>11.1</td></tr>
-                  <tr><th scope="row">dpe appartement</th><td>318</td><td>9.7</td></tr>
-                </tbody>
-              </table>
-            </section>
-
-            <section role="tabpanel" id="panel-indexnow" aria-labelledby="tab-indexnow" class="app-panel" hidden>
-              <div class="kpi-row">
-                <div class="kpi-cell"><span class="kpi-label">Préparation</span><div class="kpi-value"><strong>35</strong><em>/100</em></div><div class="kpi-foot"><span class="delta up">+65</span><span class="kpi-note">récupérables</span><svg class="spark" viewBox="0 0 76 26" fill="none" aria-hidden="true"><polyline points="2.0,23.0 16.4,19.9 30.8,15.3 45.2,10.7 59.6,6.1 74.0,3.0" stroke="#e0b23c" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg></div></div>
-                <div class="kpi-cell"><span class="kpi-label">Fichier de clé</span><div class="kpi-value"><strong>—</strong></div><div class="kpi-foot"><span class="rank-delta down">absent</span></div></div>
-                <div class="kpi-cell"><span class="kpi-label">Bingbot</span><div class="kpi-value"><strong>OK</strong></div><div class="kpi-foot"><span class="delta up">autorisé</span></div></div>
-                <div class="kpi-cell"><span class="kpi-label">Dernier envoi</span><div class="kpi-value"><strong>—</strong></div><div class="kpi-foot"><span class="kpi-note">jamais</span></div></div>
-              </div>
-              <table class="app-table">
-                <caption>Sept contrôles, hors barème GEO</caption>
-                <thead><tr><th scope="col">Contrôle</th><th scope="col">Verdict</th></tr></thead>
-                <tbody>
-                  <tr><th scope="row">Clé conforme au protocole</th><td><span class="pill bad">absent</span></td></tr>
-                  <tr><th scope="row">Fichier de clé publié</th><td><span class="pill bad">absent</span></td></tr>
-                  <tr><th scope="row">Le fichier contient la clé</th><td><span class="pill bad">absent</span></td></tr>
-                  <tr><th scope="row">Bingbot autorisé</th><td><span class="pill ok">pass</span></td></tr>
-                  <tr><th scope="row">Sitemap déclaré</th><td><span class="pill ok">pass</span></td></tr>
-                  <tr><th scope="row">HTTPS</th><td><span class="pill ok">pass</span></td></tr>
-                  <tr><th scope="row">Vérification Bing</th><td><span class="pill warn">absente</span></td></tr>
-                </tbody>
-              </table>
-            </section>
-
-            <section role="tabpanel" id="panel-tracking" aria-labelledby="tab-tracking" class="app-panel" hidden>
-              <div class="kpi-row">
-                <div class="kpi-cell"><span class="kpi-label">Flux GA4</span><div class="kpi-value"><strong>G-EQY…</strong></div><div class="kpi-foot"><span class="delta up">trouvé</span></div></div>
-                <div class="kpi-cell"><span class="kpi-label">Conteneur</span><div class="kpi-value"><strong>GTM-WVQ…</strong></div><div class="kpi-foot"><span class="kpi-note">2 sur la page</span></div></div>
-                <div class="kpi-cell"><span class="kpi-label">Chargeurs</span><div class="kpi-value"><strong>1</strong><em>gtag</em> <strong>2</strong><em>gtm</em></div><div class="kpi-foot"><span class="rank-delta down">doublon</span></div></div>
-                <div class="kpi-cell"><span class="kpi-label">Consentement</span><div class="kpi-value"><strong>OK</strong></div><div class="kpi-foot"><span class="delta up">déclaré</span></div></div>
-              </div>
-              <table class="app-table">
-                <caption>Lu dans le HTML servi — les chargeurs en double sont le coupable habituel</caption>
-                <thead><tr><th scope="col">Signal</th><th scope="col">Verdict</th></tr></thead>
-                <tbody>
-                  <tr><th scope="row">Deux conteneurs GTM</th><td><span class="pill warn">à surveiller</span></td></tr>
-                  <tr><th scope="row">dataLayer</th><td><span class="pill ok">pass</span></td></tr>
-                  <tr><th scope="row">Consent mode</th><td><span class="pill ok">pass</span></td></tr>
-                  <tr><th scope="row">Universal Analytics</th><td><span class="pill ok">aucun</span></td></tr>
-                </tbody>
-              </table>
-            </section>
-          </div>
-        </div>
-
-        <p class="app-foot">Les valeurs GEO, citabilité et IndexNow sont mesurées sur opendpe.net. Les lignes de recherche sont illustratives jusqu’à connexion d’une propriété — la console ne présente jamais un exemple comme le vôtre.</p>
-      </div>
-    </div>
-  </section>
-
-<section class="section section-alt" id="measurement" aria-labelledby="measurement-heading">
-    <div class="wrap measurement">
-      <div>
-        <p class="eyebrow eyebrow-dark">Mesure</p>
-        <h2 id="measurement-heading">GTM, mesuré de bout en bout</h2>
-        <p class="section-sub">Un trafic que vous ne voyez pas est un trafic que vous ne pouvez pas défendre. Le même serveur audite le conteneur qui produit les chiffres.</p>
-
-        <div class="steps-mini">
-          <div>
-            <h3>Installer</h3>
-            <p>Contrôles de page sur le loader, le noscript, l’ordre du dataLayer et le consentement — plus un générateur de snippets qui refuse les identifiants mal formés.</p>
-          </div>
-          <div>
-            <h3>Inspecter</h3>
-            <p>Tags de configuration et d’événement GA4, déclencheurs, variables, paramètres d’événement, tags en double et recherches inverses : que déclenche un trigger, quelle variable utilise un tag.</p>
-          </div>
-          <div>
-            <h3>Prouver</h3>
-            <p>Croisez les événements GTM avec ceux réellement reçus dans GA4, validez les charges ecommerce contre le schéma officiel et bloquez le déploiement sur la dérive.</p>
-          </div>
-        </div>
-      </div>
-
-      <div class="terminal" aria-label="Exemples de commandes">
-        <div class="terminal-bar"><span></span><span></span><span></span><em>terminal</em></div>
-        <pre><code>npm run cli -- gtm-audit --url https://acme.com
-npm run cli -- geo-audit --url https://acme.com
-npm run cli -- geo-drift --url https://acme.com
-npm run cli -- geo-positioning --url https://acme.com \
-  --competitors https://a.com,https://b.com
-npm run cli -- geo-report --url https://acme.com --out rapport.pdf</code></pre>
-        <button class="copy" type="button" data-copy="npm run cli -- geo-audit --url https://acme.com">Copier la commande</button>
-      </div>
-    </div>
-  </section>
-
-
-<section class="section" id="proof" aria-labelledby="proof-heading">
-    <div class="wrap">
-      <header class="section-head">
-        <p class="eyebrow eyebrow-dark">Preuve</p>
-        <h2 id="proof-heading">Construit à ciel ouvert, mesuré en public</h2>
-        <p class="section-sub">Chaque chiffre vient du dépôt que vous pouvez exécuter — et d’un audit réel que vous pouvez relancer.</p>
-      </header>
-      <ul class="proof-grid">
-        <li><strong>96</strong><span>outils MCP</span></li>
-        <li><strong>205</strong><span>tests au vert</span></li>
-        <li><strong>11</strong><span>contrôles GEO</span></li>
-        <li><strong>22</strong><span>outils GTM</span></li>
-        <li><strong>5</strong><span>plateformes IA couvertes</span></li>
-        <li><strong>Apache-2.0</strong><span>licence</span></li>
+    <div class="prc fe">
+      <div class="pb">Recommandé</div>
+      <div class="pn2">Prestation accompagnée</div>
+      <div class="pd">Avec un expert, pour aller vite</div>
+      <div class="ppr">Sur devis</div>
+      <ul class="pfl">
+        <li>Audit GEO + GTM complet avec preuves</li>
+        <li>Correctifs llms.txt, schema, robots</li>
+        <li>Nettoyage du conteneur GTM</li>
+        <li>Feuille de route 90 jours + remesure</li>
+        <li>Transfert à votre équipe — pas une boîte noire</li>
       </ul>
-      <p class="proof-note">Lecture seule par défaut · la CI exécute typecheck, lint, 205 tests, build, smoke CLI et contrôles du site à chaque push · <a href="https://github.com/Geoking2104/GTM-Growth/actions">voir les exécutions</a></p>
+      <a href="#talk" class="btn bp" style="width:100%;text-align:center;display:block">Demander l'audit →</a>
     </div>
-  </section>
-
-
-<section class="section section-alt" id="plans" aria-labelledby="plans-heading">
-    <div class="wrap">
-      <header class="section-head">
-        <p class="eyebrow eyebrow-dark">Offres</p>
-        <h2 id="plans-heading">Commencez gratuitement. Allez plus loin quand cela paie.</h2>
-      </header>
-      <div class="grid plans">
-        <article class="card plan">
-          <h3>Lecture gratuite</h3>
-          <p class="price">0 €</p>
-          <ul class="tick-list">
-            <li>Note d’hygiène d’URL, 10 contrôles</li>
-            <li><strong>Tables SEO</strong> — métadonnées, titres, liens, images, JSON-LD</li>
-            <li><strong>Rapport GA4</strong> — IDs de mesure, chargeurs, dataLayer, consentement</li>
-            <li><strong>Rapport Search Console</strong> — vérification, couverture du sitemap, indexabilité</li>
-            <li>La liste complète de l’audit</li>
-            <li>Serveur open source exécutable en local</li>
-            <li>Accès CLI et MCP, Apache-2.0</li>
-          </ul>
-          <a class="btn btn-ghost" href="#top">Lancer la lecture</a>
-        </article>
-
-        <article class="card plan plan-featured">
-          <h3>Prestation accompagnée</h3>
-          <p class="price">Sur devis</p>
-          <ul class="tick-list">
-            <li>Audit GEO + GTM complet avec preuves</li>
-            <li>Correctifs llms.txt, schema, robots et consentement</li>
-            <li>Nettoyage du conteneur et plan d’événements</li>
-            <li>Feuille de route 90 jours et remesure</li>
-            <li>Transfert à votre équipe, pas une boîte noire</li>
-          </ul>
-          <a class="btn" href="#talk">Demander le rapport</a>
-        </article>
-      </div>
-    </div>
-  </section>
-
-
-<section class="section" id="talk" aria-labelledby="talk-heading">
-    <div class="wrap talk">
-      <div>
-        <p class="eyebrow eyebrow-dark">Étape suivante</p>
-        <h2 id="talk-heading">Obtenir le rapport complet</h2>
-        <p class="section-sub">Dites-nous où l’envoyer. Nous répondons avec l’audit, les trois correctifs qui font le plus bouger la note, et ce que le volet GTM doit corriger avant que les chiffres soient fiables.</p>
-
-        <form class="lead-form" id="lead-form">
-          <div class="field">
-            <label for="lead-name">Nom</label>
-            <input id="lead-name" name="name" type="text" autocomplete="name" required>
-          </div>
-          <div class="field">
-            <label for="lead-email">E-mail professionnel</label>
-            <input id="lead-email" name="email" type="email" autocomplete="email" required>
-          </div>
-          <div class="field">
-            <label for="lead-site">Site web</label>
-            <input id="lead-site" name="website" type="text" inputmode="url" autocomplete="url" required>
-          </div>
-          <div class="field">
-            <label for="lead-goal">De quoi avez-vous besoin en premier ?</label>
-            <select id="lead-goal" name="goal">
-              <option>Audit GEO complet</option>
-              <option>Mesure GTM / GA4</option>
-              <option>Mise en œuvre llms.txt et schema</option>
-              <option>Analyse de positionnement concurrentiel</option>
-              <option>Je ne sais pas encore</option>
-            </select>
-          </div>
-          <div class="hp" aria-hidden="true">
-            <label for="lead-company">Société</label>
-            <input id="lead-company" name="company" type="text" tabindex="-1" autocomplete="off">
-          </div>
-          <p class="fineprint">Vos données servent à répondre à votre demande. <a href="./confidentialite.html">Confidentialité et droits</a>.</p>
-          <button class="btn" type="submit">Demander le rapport</button>
-          <p class="hint" id="lead-status" role="status" aria-live="polite"></p>
-          <p class="fineprint">Envoyé directement depuis cette page — aucun client mail ne s’ouvre. Réponse sous un jour ouvré.</p>
-        </form>
-      </div>
-
-      <aside class="self-serve">
-        <h3>Ou lancez-le vous-même</h3>
-        <p>Tout ce que fait l’audit est dans le dépôt. Sans compte, sans appel.</p>
-        <pre><code>git clone https://github.com/Geoking2104/GTM-Growth.git
-cd GTM-Growth &amp;&amp; npm install &amp;&amp; npm run build
-npm run cli -- geo-audit --url https://acme.com</code></pre>
-        <a class="link" href="https://github.com/Geoking2104/GTM-Growth">Lire la documentation sur GitHub →</a>
-        <p class="fineprint">Le serveur n’écrit jamais sur votre site, GA4 ou GTM sans un drapeau d’écriture <em>et</em> <code>confirm=true</code>.</p>
-      </aside>
-    </div>
-  </section>
-
-
-<section class="section section-alt" id="faq" aria-labelledby="faq-heading">
-    <div class="wrap narrow">
-      <header class="section-head">
-        <p class="eyebrow eyebrow-dark">FAQ</p>
-        <h2 id="faq-heading">Les questions qui décident de la mission</h2>
-      </header>
-
-      <details open>
-        <summary>La lecture gratuite est-elle un vrai audit ?</summary>
-        <p>Deux couches. La note d’URL s’exécute dans votre navigateur : HTTPS, forme du nom d’hôte, profondeur du chemin, paramètres de suivi, fragments, longueur, extensions — cette partie ne charge rien. Les tables SEO, GA4 et Search Console sont mesurées côté serveur par <code>/api/free-read</code>, sur la page, son <code>robots.txt</code> et son sitemap. Sans API connectée, ces tables portent la mention <strong>exemple</strong> ; <code>npm run cli -- geo-free-read --url …</code> donne les mêmes lignes en local.</p>
-      </details>
-      <details>
-        <summary>Qu’est-ce que le GEO, et en quoi diffère-t-il du SEO ?</summary>
-        <p>Le SEO optimise pour une liste de liens classés. Le GEO optimise pour être <em>cité dans une réponse</em> : un moteur doit récupérer la page, la parser, résoudre l’entité et trouver un passage qui vaut la citation. Les deux se recoupent — accès crawler, structure, métadonnées — mais une page peut bien se classer et rester incitable ; c’est pourquoi la citabilité est notée séparément.</p>
-      </details>
-      <details>
-        <summary>Combien de temps avant d’être cité par les moteurs IA ?</summary>
-        <p>Personne ne peut promettre une date, et tout outil qui le fait devine. Ce qui se mesure : les crawlers sont-ils autorisés, l’entité se résout-elle, un passage est-il citable, et à quelle vitesse un changement est-il annoncé (IndexNow). Le rapport fournit ces éléments, plus le score projeté une fois les correctifs livrés.</p>
-      </details>
-      <details>
-        <summary>Cela garantit-il que les moteurs IA me citeront ?</summary>
-        <p>Non, et tout outil qui le promet devine. L’audit mesure la préparation : accès des robots, llms.txt, données structurées, citabilité, signaux d’entité et points de découverte. Il n’interroge jamais ChatGPT, Claude ou Perplexity et ne peut donc pas affirmer qu’un moteur vous cite.</p>
-      </details>
-      <details>
-        <summary>Faut-il accéder à mon compte Google ?</summary>
-        <p>Uniquement pour les audits GA4 et Tag Manager. Ils utilisent un compte de service invité en lecture sur vos propriétés. Toute écriture — tags, sitemaps, Indexing API, secrets Measurement Protocol — est désactivée par défaut et exige un drapeau plus <code>confirm=true</code>.</p>
-      </details>
-      <details>
-        <summary>Que se passe-t-il après l’envoi du formulaire ?</summary>
-        <p>Vous recevez l’audit complet de l’URL saisie, les trois correctifs aux points récupérables les plus élevés, et une courte liste des manques de mesure qui rendraient les chiffres peu fiables. Si ce n’est pas le bon moment, l’audit reste à vous.</p>
-      </details>
-      <details>
-        <summary>Est-ce vraiment open source ?</summary>
-        <p>Oui — Apache-2.0. La grille GEO est adaptée du modèle geo-optimizer-skill sous licence MIT, crédité dans la documentation. Le serveur, la CLI, le site et les tests sont dans le même dépôt.</p>
-      </details>
-    </div>
-  </section>
-
-
-<section class="section section-alt" id="geosuite" aria-labelledby="geosuite-heading">
-    <div class="wrap">
-      <header class="section-head">
-        <p class="eyebrow eyebrow-dark">Bâti sur un toolkit MIT</p>
-        <h2 id="geosuite-heading">Cinq outils GEO, un seul serveur, rien de réinventé</h2>
-        <p class="section-sub">GeoSuite publie un toolkit GEO sans dépendance sous licence MIT. Trois de ses contrôles existaient déjà ici ; les deux manquants sont désormais natifs, pour qu’un seul audit couvre l’ensemble.</p>
-      </header>
-
-      <div class="grid cards toolkit-grid">
-        <article class="card">
-          <h3>AI Crawl Check</h3>
-          <p>Quels crawlers IA le robots.txt autorise, par bot et par palier.</p>
-          <p class="tag">natif · geo_crawler_access</p>
-        </article>
-        <article class="card">
-          <h3>llms.txt Generator</h3>
-          <p>Construire l’index depuis un sitemap, puis détecter la dérive.</p>
-          <p class="tag">natif · geo_generate_llms_txt</p>
-        </article>
-        <article class="card">
-          <h3>Schema Templates</h3>
-          <p>JSON-LD prêt à coller pour six types, validé à la sortie.</p>
-          <p class="tag">natif · geo_generate_schema</p>
-        </article>
-        <article class="card">
-          <h3>Sitemap Builder</h3>
-          <p>Explorer un site qui n’en a pas, en respectant le robots.txt.</p>
-          <p class="tag new">nouveau · geo_sitemap_build</p>
-        </article>
-        <article class="card">
-          <h3>Poppy Check</h3>
-          <p><code>/.well-known/poppy.json</code> — le fichier qu’un agent personnel lit pour trouver une entreprise et s’y connecter.</p>
-          <p class="tag new">nouveau · poppy_check · poppy_generate</p>
-        </article>
-      </div>
-
-      <p class="board-note">Porté depuis <a href="https://github.com/TryGeoSuite/geo-toolkit">TryGeoSuite/geo-toolkit</a> et <a href="https://github.com/TryGeoSuite/poppy-json">poppy-json</a>, MIT © Matteo Perino et GeoSuite. Les contrôles sont les leurs ; l’implémentation tourne ici dans le même serveur que le reste de l’audit.</p>
-    </div>
-  </section>
-</main>
-
-<footer class="site-footer">
-  <div class="wrap footer-inner">
-    <div class="footer-brand">
-      <img src="../assets/logo-128.png" alt="" width="28" height="28">
-      <div>
-        <strong>GTM Growth</strong>
-        <p>Serveur MCP open source pour GA4, GTM, Search Console et la lisibilité par les moteurs IA.</p>
-      </div>
-    </div>
-    <nav class="footer-nav" aria-label="Pied de page">
-      <div><strong>Produit</strong><a href="#tools">Outils</a><a href="#toolkit">Toolkit</a><a href="#console">Console</a><a href="#plans">Prix</a></div>
-      <div><strong>Ressources</strong><a href="#how">Fonctionnement</a><a href="#measurement">Mesure</a><a href="#proof">Preuves</a><a href="#faq">FAQ</a><a href="https://github.com/Geoking2104/GTM-Growth">GitHub</a><a href="https://github.com/Geoking2104/GTM-Growth/blob/main/docs/GEO.md">Documentation GEO</a></div>
-      <div><strong>Informations</strong><a href="#talk">Contact</a><a href="./confidentialite.html">Confidentialité et mentions légales</a><button type="button" class="privacy-settings">Préférences de confidentialité</button><a href="https://github.com/Geoking2104/GTM-Growth/blob/main/LICENSE">Licence Apache-2.0</a></div>
-    </nav>
   </div>
-  <div class="wrap fineprint">
-    Non affilié à Google. Grille GEO adaptée du modèle geo-optimizer-skill sous licence MIT.
+</div>
+</section>
+
+<!-- FORM -->
+<section class="sec" id="talk">
+<div class="w">
+  <div style="text-align:center;margin-bottom:42px">
+    <span class="ey">Contact</span>
+    <h2 class="sh">Obtenir le <span class="g">rapport complet</span></h2>
+    <p style="font-size:1rem;color:var(--mt);max-width:480px;margin:10px auto 0">Réponse avec l'audit, les 3 correctifs prioritaires et ce que le volet GTM doit corriger avant que les chiffres soient fiables.</p>
   </div>
+  <div class="cw">
+    <form action="https://formspree.io/f/meaavjpa" method="POST">
+      <div class="fr">
+        <div class="fg2"><label>Nom</label><input type="text" name="name" placeholder="Jean Martin" required></div>
+        <div class="fg2"><label>E-mail</label><input type="email" name="email" placeholder="jean@acme.fr" required></div>
+      </div>
+      <div class="fg2"><label>Site web</label><input type="url" name="url" placeholder="https://acme.fr"></div>
+      <div class="fg2"><label>Besoin prioritaire</label>
+        <select name="need">
+          <option>Audit GEO complet</option>
+          <option>Mesure GTM / GA4</option>
+          <option>Mise en œuvre llms.txt et schema</option>
+          <option>Positionnement concurrentiel IA</option>
+          <option>Je ne sais pas encore</option>
+        </select>
+      </div>
+      <div class="fg2"><label>Société (optionnel)</label><input type="text" name="company" placeholder="Acme SAS"></div>
+      <button type="submit" class="fsub">Envoyer la demande →</button>
+      <p style="text-align:center;font-size:11px;color:var(--dm);margin-top:10px">Réponse sous un jour ouvré. Sans client mail.</p>
+    </form>
+  </div>
+</div>
+</section>
+
+<!-- FOOTER -->
+<footer>
+<div class="w">
+  <div class="ftg">
+    <div>
+      <div style="font-size:16px;font-weight:800;margin-bottom:7px">GTM <span class="g">Growth</span></div>
+      <p style="font-size:12px;color:var(--dm);line-height:1.6;max-width:270px">Serveur MCP open source pour GA4, GTM, Search Console et la lisibilité par les moteurs IA.</p>
+    </div>
+    <div>
+      <h4>Produit</h4>
+      <a href="#tools">Outils gratuits</a>
+      <a href="https://gtm.kayroslab.com/console/">Console</a>
+      <a href="#plans">Tarifs</a>
+      <a href="https://gtm.kayroslab.com/reports/opendpe.html">Rapport exemple</a>
+    </div>
+    <div>
+      <h4>Ressources</h4>
+      <a href="https://github.com/Geoking2104/GTM-Growth">GitHub</a>
+      <a href="https://github.com/Geoking2104/GTM-Growth/blob/main/docs/GEO.md">Doc GEO</a>
+      <a href="https://github.com/Geoking2104/GTM-Growth/actions">CI / Tests</a>
+      <a href="https://gtm.kayroslab.com/fr/confidentialite.html">Confidentialité</a>
+    </div>
+  </div>
+  <div class="fbot">
+    <span>Non affilié à Google. © 2026 KayrosLab. Apache-2.0</span>
+    <span>Grille GEO : MIT © GeoSuite / Matteo Perino</span>
+  </div>
+</div>
 </footer>
-
-<script src="../privacy.js" defer></script>
-<script type="module" src="../app.js"></script>
 </body>
 </html>
