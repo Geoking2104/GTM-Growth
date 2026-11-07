@@ -292,19 +292,26 @@ function pendingOnboardingUrl() {
 async function showPublicRead(url) {
   const box = $("#c-public-read");
   box.hidden = false;
-  box.replaceChildren(el("h2", "", LANG === "fr" ? "Votre première analyse" : "Your first analysis"), el("p", "", url), el("p", "c-loading", LANG === "fr" ? "Analyse du site en cours…" : "Analyzing your website…"));
-  const status = box.lastChild;
+  box.replaceChildren(el("p", "public-loading c-loading", LANG === "fr" ? "Analyse du site en cours…" : "Analyzing your website…"));
   try {
     const response = await fetch(`${API_BASE.replace(/\/console$/, "")}/free-read`, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ url }) });
     if (!response.ok) throw new Error();
     const data = await response.json();
-    status.replaceWith(el("p", "", `${LANG === "fr" ? "Score GEO" : "GEO score"} : ${data.score}/100`));
-    if (data.topFixes?.length) {
-      box.append(el("h3", "", LANG === "fr" ? "Premières priorités" : "First priorities"));
-      const list = el("ol"); for (const fix of data.topFixes) list.append(el("li", "", fix.action)); box.append(list);
-    }
-    box.append(el("p", "c-note", LANG === "fr" ? "Connectez-vous à un espace autorisé pour poursuivre le démarrage guidé et accéder aux analyses détaillées." : "Sign in to an authorized workspace to continue setup and access detailed analyses."));
-  } catch { status.textContent = LANG === "fr" ? "La lecture est momentanément indisponible. Vous pouvez vous connecter et réessayer dans la console." : "The read is temporarily unavailable. Sign in and try again in the console."; }
+    box.replaceChildren();
+    const summary = el("div", "public-summary");
+    const info = el("div"); info.append(el("p", "public-eyebrow", LANG === "fr" ? "SITE ANALYSÉ" : "ANALYZED SITE"), el("h2", "public-domain", new URL(data.finalUrl || url).hostname), el("p", "public-description", LANG === "fr" ? "Préparation de votre page aux moteurs de recherche et aux assistants IA." : "Your page’s readiness for search engines and AI assistants."));
+    const score = el("div", "public-score"); score.append(el("span", "", "SCORE GEO"), el("strong", "", String(data.score)), el("small", "", "/ 100")); summary.append(info, score); box.append(summary);
+    const grid = el("div", "public-results-grid");
+    const priorities = el("section", "public-panel"); priorities.append(el("p", "public-eyebrow", LANG === "fr" ? "PLAN D’ACTION" : "ACTION PLAN"), el("h2", "", LANG === "fr" ? "Vos premières priorités" : "Your first priorities"));
+    const translations = { llms_found: "Créer un fichier llms.txt à la racine du site pour présenter vos contenus aux assistants IA.", robots_citation_ok: "Préciser les règles d’accès des robots des moteurs IA dans robots.txt.", schema_organization: "Ajouter les données structurées Organization avec le nom, l’URL et les informations de votre organisation." };
+    if (data.topFixes?.length) { const list = el("ol", "public-priorities"); for (const fix of data.topFixes) { const item = el("li"); item.append(el("span", "", LANG === "fr" && translations[fix.checkId] ? translations[fix.checkId] : fix.action), el("small", "", `+${fix.points} pts`)); list.append(item); } priorities.append(list); }
+    else priorities.append(el("p", "public-description", LANG === "fr" ? "Aucune priorité disponible pour cette lecture." : "No priorities available for this read."));
+    const metrics = el("section", "public-panel"); metrics.append(el("p", "public-eyebrow", LANG === "fr" ? "POTENTIEL" : "POTENTIAL"), el("h2", "", LANG === "fr" ? "La marge de progression" : "Room to improve"));
+    for (const [label, value] of [[LANG === "fr" ? "Score projeté" : "Projected score", `${data.projectedScore}/100`], [LANG === "fr" ? "Points récupérables" : "Recoverable points", `+${data.recoverablePoints}`]]) { const row = el("div", "public-metric"); row.append(el("span", "", label), el("strong", "", value)); metrics.append(row); }
+    metrics.append(el("p", "public-description", LANG === "fr" ? "Projection fondée sur les contrôles de cette lecture, sans garantie de résultat." : "Projection based on this read’s checks, not a guarantee.")); grid.append(priorities, metrics); box.append(grid);
+    const tables = (data.tables || []).filter((table) => !table.sample && table.rows?.length);
+    if (tables.length) { const details = el("details", "public-panel public-details"); details.append(el("summary", "", LANG === "fr" ? "Voir les contrôles de la page" : "See page checks")); for (const table of tables) { details.append(el("h3", "", table.title)); const list = el("ul"); for (const row of table.rows) list.append(el("li", "", `${row.label} : ${row.value}`)); details.append(list); } box.append(details); }
+  } catch { box.replaceChildren(el("p", "public-panel c-error", LANG === "fr" ? "La lecture est momentanément indisponible. Vous pouvez vous connecter et réessayer dans la console." : "The read is temporarily unavailable. Sign in and try again in the console.")); }
 }
 
 async function loginScreen() {

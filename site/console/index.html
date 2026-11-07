@@ -12,20 +12,31 @@
 </head>
 <body class="console-page">
 <!-- Connexion : même coque .app que la console publique -->
-<div id="c-login" class="app c-login" hidden>
-  <div class="c-login-card">
-    <img src="../assets/logo-64.png" alt="" width="44" height="44">
-    <h1 data-i18n="title">Console GTM Growth</h1>
-    <p data-i18n="loginLead">Accès réservé. Connectez-vous avec votre compte (SSO Keycloak).</p>
-    <img id="c-login-logo" class="c-logo" alt="" hidden>
-    <section id="c-public-read" class="c-public-read" hidden aria-live="polite"></section>
-    <form id="c-login-form" class="c-form">
-      <label class="c-field"><span data-i18n="email">E-mail professionnel</span><input id="c-login-email" type="email" autocomplete="username" placeholder="prenom@entreprise.fr"></label>
-      <button id="c-login-btn" class="btn btn-small" type="submit" data-i18n="continue">Continuer</button>
-    </form>
-    <p class="c-note" data-i18n="loginHelp">Votre espace client est détecté à partir de votre e-mail, du sous-domaine ou du lien ?tenant=client.</p>
-    <p id="c-login-error" class="c-error" role="alert"></p>
-    <p class="c-note"><a href="../" data-i18n="backToSite">← Retour au site</a></p>
+<div id="c-login" class="public-console" hidden>
+  <header class="public-header">
+    <a class="public-brand" href="/fr/"><img src="/fr/assets/logo-rocket.png" alt="" width="42" height="42"><span>GTM Growth</span></a>
+    <span class="public-header-label">Console · Lecture gratuite</span>
+    <a class="public-back" href="/fr/">Retour au site <span aria-hidden="true">↗</span></a>
+  </header>
+  <div class="public-layout">
+    <aside class="public-sidebar" aria-label="Navigation de la lecture">
+      <p class="public-nav-label">VOTRE ESPACE</p>
+      <a class="public-nav-active" href="#c-public-read">◉ <span>Vue d’ensemble</span></a>
+      <a href="#c-public-read">▤ <span>Analyse du site</span></a>
+      <a href="#c-login-form">↗ <span>Démarrage guidé</span></a>
+      <p class="public-sidebar-note">Analyse des signaux publics de votre site.</p>
+    </aside>
+    <main class="public-main">
+      <div class="public-heading"><div><p class="public-eyebrow">LECTURE GRATUITE</p><h1>Votre site, vu par l’IA.</h1><p>Une première lecture de votre visibilité et des pistes pour progresser.</p></div><span class="public-live">● &nbsp; Analyse du site</span></div>
+      <section id="c-public-read" class="c-public-read" hidden aria-live="polite"></section>
+      <section class="public-login-card" aria-labelledby="public-login-title">
+        <div><p class="public-eyebrow">ALLER PLUS LOIN</p><h2 id="public-login-title">Continuez dans votre espace</h2><p>Connectez-vous pour retrouver le démarrage guidé et les analyses détaillées de vos domaines autorisés.</p><img id="c-login-logo" class="c-logo" alt="" hidden></div>
+        <div><form id="c-login-form" class="c-form">
+          <label class="c-field"><span data-i18n="email">E-mail professionnel</span><input id="c-login-email" type="email" autocomplete="username" placeholder="prenom@entreprise.fr"></label>
+          <button id="c-login-btn" class="btn btn-small" type="submit" data-i18n="continue">Continuer</button>
+        </form><p id="c-login-error" class="c-error" role="alert"></p><p class="public-login-help" data-i18n="loginHelp">Votre espace client est détecté à partir de votre e-mail, du sous-domaine ou du lien ?tenant=client.</p></div>
+      </section>
+    </main>
   </div>
 </div>
 
