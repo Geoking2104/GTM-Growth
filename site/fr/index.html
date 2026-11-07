@@ -1112,20 +1112,13 @@
   function normalize(value) {
     try { const u = new URL(/^[a-z][a-z0-9+.-]*:\/\//i.test(value) ? value : 'https://' + value); return /^(https?:)$/.test(u.protocol) && u.hostname.includes('.') ? u.href : null; } catch (_) { return null; }
   }
-  document.getElementById('url-form').addEventListener('submit', async function (event) {
+  document.getElementById('url-form').addEventListener('submit', function (event) {
     event.preventDefault();
     const url = normalize(urlInput.value.trim());
     message.className = 'form-msg'; result.textContent = '';
     if (!url) { message.classList.add('err'); message.textContent = 'Entrez une URL valide, par exemple https://votre-site.fr.'; return; }
-    message.textContent = 'Analyse en cours…';
-    try {
-      const response = await fetch('/api/free-read', {method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify({url})});
-      if (!response.ok) throw new Error();
-      const data = await response.json();
-      message.classList.add('ok'); message.textContent = 'Lecture terminée pour ' + new URL(data.finalUrl || url).hostname + '.';
-      result.textContent = (typeof data.score === 'number' ? 'Score GEO : ' + data.score + '/100. ' : '') + (Array.isArray(data.headline) ? data.headline.map(item => item.label + ' : ' + item.value).join(' · ') : '');
-      document.getElementById('lead-url').value = url;
-    } catch (_) { message.classList.add('err'); message.textContent = 'La lecture est indisponible pour le moment. Vérifiez l’URL et réessayez.'; }
+    sessionStorage.setItem('gtm-console-onboarding-url', url);
+    window.location.assign('/console/');
   });
   document.getElementById('lead-form').addEventListener('submit', async function (event) {
     event.preventDefault();

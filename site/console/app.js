@@ -282,9 +282,35 @@ async function discover(query) {
 /** DÃ©couverte du tenant : sous-domaine, ?tenant=, puis e-mail saisi.
  * Le gestionnaire est attachÃ© avant tout await : un clic n'est jamais perdu, et
  * toute erreur est affichÃ©e au lieu d'Ã©chouer silencieusement. */
+const onboardingUrlKey = "gtm-console-onboarding-url";
+function pendingOnboardingUrl() {
+  try {
+    const url = new URL(sessionStorage.getItem(onboardingUrlKey));
+    return ["http:", "https:"].includes(url.protocol) && !url.username && !url.password && url.hostname.includes(".") ? url.href : "";
+  } catch { return ""; }
+}
+async function showPublicRead(url) {
+  const box = $("#c-public-read");
+  box.hidden = false;
+  box.replaceChildren(el("h2", "", LANG === "fr" ? "Votre première analyse" : "Your first analysis"), el("p", "", url), el("p", "c-loading", LANG === "fr" ? "Analyse du site en cours…" : "Analyzing your website…"));
+  const status = box.lastChild;
+  try {
+    const response = await fetch(`${API_BASE.replace(/\/console$/, "")}/free-read`, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ url }) });
+    if (!response.ok) throw new Error();
+    const data = await response.json();
+    status.replaceWith(el("p", "", `${LANG === "fr" ? "Score GEO" : "GEO score"} : ${data.score}/100`));
+    if (data.topFixes?.length) {
+      box.append(el("h3", "", LANG === "fr" ? "Premières priorités" : "First priorities"));
+      const list = el("ol"); for (const fix of data.topFixes) list.append(el("li", "", fix.action)); box.append(list);
+    }
+    box.append(el("p", "c-note", LANG === "fr" ? "Connectez-vous à un espace autorisé pour poursuivre le démarrage guidé et accéder aux analyses détaillées." : "Sign in to an authorized workspace to continue setup and access detailed analyses."));
+  } catch { status.textContent = LANG === "fr" ? "La lecture est momentanément indisponible. Vous pouvez vous connecter et réessayer dans la console." : "The read is temporarily unavailable. Sign in and try again in the console."; }
+}
+
 async function loginScreen() {
   i18nStaticLogin();
   $("#c-login").hidden = false;
+  const pending = pendingOnboardingUrl(); if (pending) void showPublicRead(pending);
   const errorBox = $("#c-login-error"); const btn = $("#c-login-btn");
   let tenant = currentTenant();
   let ready = Promise.resolve();
@@ -343,6 +369,13 @@ async function start() {
       // The picker was historically shared by all tenants on this browser.
       // Never reuse another tenant's scope after switching workspaces.
       const domains = me.tenant.domains || [];
+      const requested = pendingOnboardingUrl();
+      if (requested) {
+        const requestedHost = new URL(requested).hostname.toLowerCase().replace(/^www\./, "");
+        const authorized = domains.find((d) => { const domain = d.toLowerCase().replace(/^www\./, ""); return requestedHost === domain; });
+        if (authorized) { state.url = `https://${authorized}`; sessionStorage.removeItem(onboardingUrlKey); state.openRequestedWizard = true; }
+        else { state.requestedDomainUnavailable = requestedHost; }
+      }
       let hostname = ""; try { hostname = new URL(state.url).hostname.toLowerCase().replace(/^www\./, ""); } catch { /* no valid selection */ }
       if (!domains.some((d) => hostname === d || hostname.endsWith(`.${d}`))) state.url = domains[0] ? `https://${domains[0]}` : "";
       if (!me.tenant.gscProperties?.includes(state.property)) state.property = me.tenant.gscProperties?.[0] || "";
@@ -364,11 +397,15 @@ async function start() {
     SECTIONS.act.push(platform); ALL.push(platform);
   }
   refreshSite(); mountNav();
+  if (state.requestedDomainUnavailable) {
+    const notice = el("p", "c-error", LANG === "fr" ? `Le domaine ${state.requestedDomainUnavailable} n’est pas autorisé dans cet espace. Contactez votre administrateur pour l’ajouter.` : `The domain ${state.requestedDomainUnavailable} is not authorized in this workspace. Contact your administrator to add it.`);
+    notice.setAttribute("role", "alert"); $("#c-app").prepend(notice);
+  }
   const [s, tb] = location.hash.slice(1).split("/");
   if (!state.url) { picker.hidden = false; sw.setAttribute("aria-expanded", "true"); }
   startBackground();
   show(s || "overview", tb);
-  if (state.me?.tenant && !localStorage.getItem(`gtm-console-wizard-v1:${state.me.tenant.id}:${state.me.email || state.me.username || "user"}`)) launchWizard();
+  if (state.me?.tenant && !state.requestedDomainUnavailable && (state.openRequestedWizard || !localStorage.getItem(`gtm-console-wizard-v1:${state.me.tenant.id}:${state.me.email || state.me.username || "user"}`))) launchWizard();
 }
 window.addEventListener("hashchange", () => { const [a, b] = location.hash.slice(1).split("/"); if (a && ALL.some((x) => x.id === a)) show(a, b); });
 start().catch((error) => { console.error(error); loginScreen(); $("#c-login-error").textContent = error.message; });
