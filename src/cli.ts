@@ -120,6 +120,8 @@ Usage:
 
 ── GEO / AEO · AI search readiness ──────────────────
   geo-audit                 --url <url> [--no-ai-discovery]
+  geo-snapshot              --url <url> --out <snapshot.json>    captured evidence (not Score v2)
+  geo-replay                --in <snapshot.json>                  offline legacy audit replay
   geo-sitemap               --url <url> [--sitemap <url>] [--max-urls <n>]
   geo-llms                  --url <url> [--sitemap <url>] [--name <site>]
                             [--description <text>] [--out <file>]
@@ -450,6 +452,31 @@ async function main() {
         print(summarizeAudit(result));
         break;
       }
+      case "geo-snapshot": {
+        const { captureAuditSnapshot } = await import("./geo/proof/snapshot.js");
+        const { fetchPublicPage } = await import("./http/public-fetch.js");
+        const envelope = await captureAuditSnapshot(req(args, "url"), fetchPublicPage, new Date().toISOString());
+        const output = req(args, "out");
+        writeFileSync(output, JSON.stringify(envelope, null, 2) + "\n", { flag: "wx", mode: 0o600 });
+        print({ output, snapshotHash: envelope.snapshotHash, resources: envelope.snapshot.resources.length,
+          scripts: envelope.snapshot.scriptAssets?.length ?? 0, skippedScripts: envelope.snapshot.skippedScripts?.length ?? 0,
+          note: "Evidence snapshot only; no official GEO Score v2 computed" });
+        break;
+      }
+      case "geo-replay": {
+        const { replaySnapshot } = await import("./geo/proof/snapshot.js");
+        const { runGeoAudit } = await import("./geo/audit.js");
+        const { summarizeAudit } = await import("./geo/report.js");
+        const file = req(args, "in");
+        const { statSync } = await import("node:fs");
+        if (statSync(file).size > 20 * 1024 * 1024) throw new Error("Snapshot file exceeds 20 MiB");
+        const envelope = JSON.parse(readFileSync(file, "utf8"));
+        const fetcher = await replaySnapshot(envelope);
+        const audit = await runGeoAudit({ url: envelope.snapshot.url, fetcher });
+        print({ snapshotHash: envelope.snapshotHash, verified: true, mode: "offline",
+          note: "Legacy GEO audit replay; not official GEO Score v2", audit: summarizeAudit(audit) });
+        break;
+      }
       case "geo-sitemap": {
         const { runSiteGeoAudit } = await import("./geo/site.js");
         print(
@@ -717,6 +744,47 @@ async function main() {
         break;
       }
       case "indexnow-explain": {
+        const { explainStatus } = await import("./indexnow/client.js");
+        const status = Number(req(args, "status"));
+        print({ status, ...explainStatus(status) });
+        break;
+      }
+      case "analysis-board": {
+        const { runGeoAudit } = await import("./geo/audit.js");
+        const { buildPlatformReadiness } = await import("./geo/platforms.js");
+        const { buildAnalysisBoard } = await import("./analysis/board.js");
+        const { auditIndexNow } = await import("./indexnow/readiness.js");
+        const audit = await runGeoAudit({ url: req(args, "url") });
+        const host = new URL(audit.finalUrl).hostname;
+        let citability;
+        try {
+          const { runCitability } = await import("./geo/citability.js");
+          citability = await runCitability({ url: audit.finalUrl });
+        } catch {
+          citability = undefined;
+        }
+        const indexnow = await auditIndexNow({
+          host,
+          https: audit.finalUrl.startsWith("https:"),
+          audit,
+          key: str(args, "indexnow-key") ?? null,
+        });
+        print(buildAnalysisBoard({ audit, platforms: buildPlatformReadiness(audit), citability, indexnow }));
+        break;
+      }
+      case "serve-http": {
+        const { startServer } = await import("./server.js");
+        await startServer("http");
+        break;
+      }
+      case "serve-stdio": {
+        const { startServer } = await import("./server.js");
+        await startServer("stdio");
+        break;
+      }
+
+      default:
+        console.error(`Unknown command: ${command}\n`);     case "indexnow-explain": {
         const { explainStatus } = await import("./indexnow/client.js");
         const status = Number(req(args, "status"));
         print({ status, ...explainStatus(status) });
