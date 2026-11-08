@@ -12,18 +12,12 @@ name: Deploy worker
 # site can be pointed at it without anyone copying a URL by hand.
 
 on:
-  push:
-    branches: [main]
-    paths:
-      - "src/worker/**"
-      - "src/freeread/**"
-      - "src/geo/**"
-      - "src/leads/validate.ts"
-      - "wrangler.toml"
-      - "package.json"
-      - "package-lock.json"
-      - ".github/workflows/worker.yml"
   workflow_dispatch:
+    inputs:
+      confirmation:
+        description: 'Type DEPLOY to confirm the production Cloudflare release'
+        required: true
+        type: string
 
 permissions:
   contents: write
@@ -37,7 +31,8 @@ jobs:
     name: Deploy to Cloudflare Workers
     runs-on: ubuntu-latest
     timeout-minutes: 10
-    if: ${{ github.repository_owner == 'Geoking2104' }}
+    if: ${{ github.repository_owner == 'Geoking2104' && github.ref == 'refs/heads/main' && inputs.confirmation == 'DEPLOY' }}
+    environment: production
 
     steps:
       - name: Check secrets
