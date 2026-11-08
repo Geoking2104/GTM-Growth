@@ -69,7 +69,15 @@ const hooks = [
 ];
 for (const hook of hooks) {
   if (!html.includes(hook)) failures.push(`index.html lost hook ${hook}`);
+}
+
+// The French landing page is standalone: its own URL and lead forms are
+// handled by an inline script, not the English app.js widget identifiers.
+for (const hook of ['id="url-form"', 'id="url-input"', 'id="lead-form"', 'id="lead-name"', 'id="lead-email"', 'id="lead-url"']) {
   if (!frHtml.includes(hook)) failures.push(`fr/index.html lost hook ${hook}`);
+}
+for (const behavior of ["getElementById('url-form').addEventListener", "getElementById('lead-form').addEventListener", "fetch('/api/lead'", "window.location.assign('/console/')"]) {
+  if (!frHtml.includes(behavior)) failures.push(`fr/index.html lost form behavior ${behavior}`);
 }
 
 for (const needle of ['type="application/ld+json"', 'rel="canonical"', 'name="description"', "app.js", "styles.css"]) {
@@ -87,7 +95,6 @@ if (!js.includes("/api/lead")) failures.push("app.js no longer posts to /api/lea
 if (!js.includes("/api/free-read")) failures.push("app.js no longer calls /api/free-read");
 for (const meta of ["gg-api", "gg-form"]) {
   if (!html.includes(`name="${meta}"`)) failures.push(`index.html missing the ${meta} meta`);
-  if (!frHtml.includes(`name="${meta}"`)) failures.push(`fr/index.html missing the ${meta} meta`);
 }
 if (!js.includes("result-tables")) failures.push("app.js no longer renders the tables");
 if (!html.includes("/console/#indexnow") || !frHtml.includes("/console/#indexnow")) failures.push("landing pages no longer link to IndexNow in the console");
