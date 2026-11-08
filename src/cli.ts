@@ -784,47 +784,6 @@ async function main() {
       }
 
       default:
-        console.error(`Unknown command: ${command}\n`);     case "indexnow-explain": {
-        const { explainStatus } = await import("./indexnow/client.js");
-        const status = Number(req(args, "status"));
-        print({ status, ...explainStatus(status) });
-        break;
-      }
-      case "analysis-board": {
-        const { runGeoAudit } = await import("./geo/audit.js");
-        const { buildPlatformReadiness } = await import("./geo/platforms.js");
-        const { buildAnalysisBoard } = await import("./analysis/board.js");
-        const { auditIndexNow } = await import("./indexnow/readiness.js");
-        const audit = await runGeoAudit({ url: req(args, "url") });
-        const host = new URL(audit.finalUrl).hostname;
-        let citability;
-        try {
-          const { runCitability } = await import("./geo/citability.js");
-          citability = await runCitability({ url: audit.finalUrl });
-        } catch {
-          citability = undefined;
-        }
-        const indexnow = await auditIndexNow({
-          host,
-          https: audit.finalUrl.startsWith("https:"),
-          audit,
-          key: str(args, "indexnow-key") ?? null,
-        });
-        print(buildAnalysisBoard({ audit, platforms: buildPlatformReadiness(audit), citability, indexnow }));
-        break;
-      }
-      case "serve-http": {
-        const { startServer } = await import("./server.js");
-        await startServer("http");
-        break;
-      }
-      case "serve-stdio": {
-        const { startServer } = await import("./server.js");
-        await startServer("stdio");
-        break;
-      }
-
-      default:
         console.error(`Unknown command: ${command}\n`);
         help();
         process.exit(1);
