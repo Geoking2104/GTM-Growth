@@ -120,6 +120,8 @@ Usage:
 
 ── GEO / AEO · AI search readiness ──────────────────
   geo-audit                 --url <url> [--no-ai-discovery]
+  geo-snapshot              --url <url> --out <snapshot.json>    captured evidence (not Score v2)
+  geo-replay                --in <snapshot.json>                  offline legacy audit replay
   geo-sitemap               --url <url> [--sitemap <url>] [--max-urls <n>]
   geo-llms                  --url <url> [--sitemap <url>] [--name <site>]
                             [--description <text>] [--out <file>]
@@ -448,6 +450,31 @@ async function main() {
           includeAiDiscovery: !bool(args, "no-ai-discovery"),
         });
         print(summarizeAudit(result));
+        break;
+      }
+      case "geo-snapshot": {
+        const { captureAuditSnapshot } = await import("./geo/proof/snapshot.js");
+        const { fetchPublicPage } = await import("./http/public-fetch.js");
+        const envelope = await captureAuditSnapshot(req(args, "url"), fetchPublicPage, new Date().toISOString());
+        const output = req(args, "out");
+        writeFileSync(output, JSON.stringify(envelope, null, 2) + "\n", { flag: "wx", mode: 0o600 });
+        print({ output, snapshotHash: envelope.snapshotHash, resources: envelope.snapshot.resources.length,
+          scripts: envelope.snapshot.scriptAssets?.length ?? 0, skippedScripts: envelope.snapshot.skippedScripts?.length ?? 0,
+          note: "Evidence snapshot only; no official GEO Score v2 computed" });
+        break;
+      }
+      case "geo-replay": {
+        const { replaySnapshot } = await import("./geo/proof/snapshot.js");
+        const { runGeoAudit } = await import("./geo/audit.js");
+        const { summarizeAudit } = await import("./geo/report.js");
+        const file = req(args, "in");
+        const { statSync } = await import("node:fs");
+        if (statSync(file).size > 20 * 1024 * 1024) throw new Error("Snapshot file exceeds 20 MiB");
+        const envelope = JSON.parse(readFileSync(file, "utf8"));
+        const fetcher = await replaySnapshot(envelope);
+        const audit = await runGeoAudit({ url: envelope.snapshot.url, fetcher });
+        print({ snapshotHash: envelope.snapshotHash, verified: true, mode: "offline",
+          note: "Legacy GEO audit replay; not official GEO Score v2", audit: summarizeAudit(audit) });
         break;
       }
       case "geo-sitemap": {
