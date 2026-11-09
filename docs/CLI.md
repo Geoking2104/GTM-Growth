@@ -165,3 +165,25 @@ Full automatic scoring is gated on actual observations for all applicable
 controls. The older evidence inventory is still `not_scored` and must not
 be naively converted from v1 points. The profile-specific category reweighting
 policy remains separate from the approved general 100-point grid.
+
+## Authorized offline Playwright-to-v2 replay
+
+`replayVerifiedV2Rendering(snapshot, renderEvidence, trustedGrant, now)`
+connects the existing captured snapshot, verified-domain gate and offline
+Playwright output to the approved v2 evidence score. This library entry point:
+
+1. Checks that a **trusted-registry** grant is verified, unexpired, exact-host
+   and HTTPS-only.
+2. Verifies the immutable snapshot digest and matching rendered HTML digest.
+3. Replays the HTTP audit from that **same snapshot** without any live fetch.
+4. Translates rendering proof into P01/P02 observations only when capture is
+   complete and subresources were not blocked.
+5. Leaves P03 (live crawler identity) and P04 (runtime error/timing stability)
+   `unknown` because offline replay does not establish either result.
+
+A proven client-only page (empty initial body, populated rendered body) earns
+zero for P01, with a clear proof. On incomplete, blocked, tampered or
+unavailable renderer output, P01/P02 remain `unknown` instead of being
+mis-scored. The module neither launches Chromium nor schedules/deploys a VPS
+worker. The caller must supply a grant from the trusted registry and evidence
+from an isolated worker, **never directly from client input**.
