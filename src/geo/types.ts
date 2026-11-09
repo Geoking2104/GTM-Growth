@@ -127,6 +127,8 @@ export interface BrandAudit {
 }
 
 export interface AiDiscoveryAudit {
+  /** HTTP status 0 means no verified response (timeout/network failure). */
+  endpointStatus: { wellKnownAi: number; summary: number; faq: number; service: number };
   hasWellKnownAi: boolean;
   hasSummary: boolean;
   summaryValid: boolean;
