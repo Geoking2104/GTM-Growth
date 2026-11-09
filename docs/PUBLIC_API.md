@@ -171,3 +171,15 @@ resolved. `scoreRange` is a conservative interval, not a publication-ready
 score. `status: "failed"` applies when the audited page is inaccessible.
 The `v2Measurement` object carries measured/unknown/excluded budgets by
 category, snapshot and audit hashes and the list of unmeasured control IDs.
+
+## Auditable GEO v2 per-control results
+
+`v2Measurement.controls` returns one record for each approved control, in
+canonical rubric order. Each includes its ID, category, title, maximum points,
+status, awarded points (or null), proof (type, value, source URL), and unknown or
+N/A reason. Unknown observations expose no invented proof.
+`v2Measurement.observationHash` is a SHA-256 digest of that complete ordered
+trace; it changes when the measurements or proof change even if the snapshot
+and grid hashes remain the same. Proof URLs identify where evidence was
+observed; an extract from an HTTP response does not by itself certify any
+external claim or social backlink.
