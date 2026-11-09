@@ -14,6 +14,23 @@ The agent reads live Google data, audits setups, crosses organic search with sit
 
 ---
 
+## GEO Score v2 — verified-domain Playwright pilot (in development)
+
+The **GEO v2 scoring rubric** allocates 100 points across eight categories: robots 14, llms.txt 14, JSON-LD 14, metadata 10, content 18, brand/entity 10, AI discovery 8, and crawler rendering 12. This is the **v2 pilot**, separate from the existing live v1 examples and public free-read flow documented below.
+
+- **Domain verification:** the proposed owner-only pilot supports either a DNS TXT challenge at `_gtm-growth-verify.<hostname>` or a plain-text HTTPS file at `https://<hostname>/.well-known/gtm-growth-verification.txt`. A challenge lasts 30 minutes; a verified grant lasts seven days and must be renewed. Each exact hostname requires its own proof.
+- **Multi-tenant registry:** the Node-only SQLite implementation stores hashed challenge tokens, tenant-scoped grants, atomic single-use verification and audit events. It is **not yet connected to public/API routes**.
+- **Browser isolation:** Playwright is planned as a separate constrained VPS job (initial proposal: one browser, 1 vCPU, 1 GiB RAM, 45 seconds). The network-level anti-SSRF/egress gate is mandatory before a runnable worker or real outbound verification is enabled.
+- **Privacy and release:** scores remain private unless the owner explicitly consents to publication. No production deployment, GitHub secret update, or service restart is part of this pilot PR.
+
+See the [GEO v2 Playwright pilot architecture and security gates](docs/architecture/GEO-V2-PLAYWRIGHT-PILOT.md) and [draft PR #28](https://github.com/Geoking2104/GTM-Growth/pull/28). Implementation is staged; these safeguards are **not** claims about current public-site behavior.
+
+### Français — résumé du pilote
+
+Le Score GEO v2 est en préparation sur le VPS existant, avec audits Playwright limités aux **domaines dont le propriétaire a prouvé le contrôle** (DNS TXT ou fichier HTTPS). Le registre SQLite, les challenges à usage unique et leurs tests sont préparés, mais le moteur navigateur et ses protections réseau doivent encore être intégrés et validés. Les scores restent privés sans consentement explicite à leur publication. **Aucune mise en production n'est effectuée par cette PR.**
+
+---
+
 ## How to read this README
 
 This document has **two independent tracks**. Pick yours and ignore the other.
@@ -416,6 +433,7 @@ docs/                          # all guides (see index below)
 | [docs/DEPLOYMENT.md](docs/DEPLOYMENT.md) · [VPS_DEPLOY.md](docs/VPS_DEPLOY.md) | Docker / Fly / Railway · KayrosLab VPS |
 | [docs/CLI.md](docs/CLI.md) | All CLI commands |
 | [docs/GEO.md](docs/GEO.md) | GEO rubric, tools, limits |
+| [docs/architecture/GEO-V2-PLAYWRIGHT-PILOT.md](docs/architecture/GEO-V2-PLAYWRIGHT-PILOT.md) | GEO v2 verified-domain pilot, SQLite ownership registry and Playwright isolation gates |
 | [docs/INDEXNOW.md](docs/INDEXNOW.md) | IndexNow sequences & weights |
 | [docs/PUBLIC_API.md](docs/PUBLIC_API.md) · [WORKER.md](docs/WORKER.md) | Public API · Cloudflare Worker |
 | [site/reports/opendpe.html](site/reports/opendpe.html) | Sample full audit (71/100) |
@@ -430,6 +448,7 @@ docs/                          # all guides (see index below)
 
 | Update | Detail |
 | --- | --- |
+| **GEO v2 pilot (PR #28, draft)** | Verified-domain DNS TXT/HTTPS challenge flow; SQLite tenant-scoped single-use verification registry; Playwright isolation and SSRF gates documented. No live browser worker or production deployment yet. |
 | **Console Ops** | New **Ops** section (PR #24): tracked prompt pool + bounded BYOK visibility runs (OpenAI/Gemini, client keys) feeding the existing Competition review workflow; arbitrary keyword rank tracking with history, AI-Overview citation detection and drop alerts; article pipeline with deterministic briefs and **mandatory quality gates**; WordPress draft publishing + optional IndexNow announce; alert store and per-tenant scheduler (`OPS_SCHEDULER_ENABLED`, off by default). Tests: `tests/console-ops.test.ts`. |
 | **Live AI-visibility collection** | `/ai-visibility/openai-run` (and Gemini status) with tenant-held keys; every collection creates a reviewable dataset; mention heuristics stay provisional until confirmed/rejected. |
 | **Onboarding profiles** | Rich brand profile read from the homepage JSON-LD/meta during guided onboarding (PR #19). |
