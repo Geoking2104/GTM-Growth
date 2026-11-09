@@ -19,7 +19,7 @@ COPY --from=builder /app/node_modules ./node_modules
 COPY package*.json ./
 COPY --from=builder /app/dist ./dist
 RUN node --version && node -e "require('better-sqlite3')(':memory:').close()"
-RUN groupadd -g 1001 geo && useradd -u 1001 -g geo -m geo
+RUN useradd -m -U -s /usr/sbin/nologin geo
 USER geo
 ENV NODE_ENV=production
 ENV PLAYWRIGHT_BROWSERS_PATH=/ms-playwright
