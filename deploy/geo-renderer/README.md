@@ -19,6 +19,10 @@ The proxy **does not** grant a domain verification: grant issuance and revocatio
 4. Confirm domain grant belongs to the tenant and is not expired/revoked; use a single job at a time. Operator CLI is only for trusted administrators, not HTTP clients. Capture approval, quotas and audit trail through the tenant-authenticated API in a follow-up integration.
 5. Set environment values from approved inputs: `GEO_TENANT_ID`, `GEO_URL`, `GEO_TARGET_HOSTNAME` and `GEO_DATA_VOLUME_NAME`. Target hostname must equal the URL hostname; the egress proxy enforces the same host.
 
+## Disposable CI network verification
+
+The `scripts/smoke-geo-network-boundary.sh` probe creates and removes a throwaway isolated Docker bridge and a throwaway egress server. It checks that renderer-side direct connections to the bridge gateway, a public IPv4 address and cloud metadata are blocked, **while a TCP connection to the private egress proxy succeeds and an off-host CONNECT request is rejected with HTTP 403**. The positive check deliberately does not request a real website or issue any domain grant. Passing this test does not substitute for VPS-specific bridge/IPv6/firewall checks or a real verified-domain end-to-end trial.
+
 ## Intended manual pilot (after gates)
 
 ```bash
