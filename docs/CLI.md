@@ -92,3 +92,32 @@ and `evidenceStatus: "user_supplied_unverified"`.
 live site, verify domain ownership, attest the proofs, or publish a score.
 The published v2 production grid and automated evidence collection are separate
 follow-up deliverables. The existing `geo-audit` (v1) remains unchanged.
+
+## GEO social cross-links — website and profile references
+
+```bash
+npm run cli -- geo-social-links --url https://example.com
+npm run cli -- geo-social-links --url https://example.com --social-evidence profile-html.json
+```
+
+The command discovers website-to-profile links from page anchors and Organization
+`sameAs` JSON-LD for Instagram, X/Twitter, Reddit, Discord, TikTok, LinkedIn,
+Facebook, YouTube, Threads, Pinterest, Mastodon and Bluesky. It reports the
+exact URLs and their source. It never guesses that a social profile links back.
+
+Optionally, `profile-html.json` can be an array of owner-supplied observations:
+
+```json
+[
+  {
+    "profileUrl": "https://www.instagram.com/example/",
+    "html": "<a href=\"https://example.com\">Official website</a>"
+  }
+]
+```
+
+An inbound match is reported as `observed_in_supplied_html`, not as an
+independently authenticated backlink. Profiles requiring login or blocked by
+platform anti-bot controls remain `not_checked`. This inventory does not
+assign GEO v2 points until the corresponding controls and evidence policy have
+been published. No social-platform API is called.
