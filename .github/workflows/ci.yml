@@ -64,6 +64,13 @@ jobs:
       - name: Build isolated GEO renderer image (no deployment)
         run: docker build -f deploy/geo-renderer/Dockerfile -t gtm-geo-renderer-ci .
 
+      - name: Chromium offline smoke in isolated container (no production deployment)
+        run: |
+          docker run --rm --network none --read-only --tmpfs /tmp:rw,nosuid,size=256m \\
+            --shm-size 256m --user 1001:1001 --cap-drop ALL \\
+            --security-opt no-new-privileges:true gtm-geo-renderer-ci \\
+            node --input-type=module -e 'import { chromium } from "playwright-core"; const b = await chromium.launch({ headless: true, chromiumSandbox: false }); try { const p = await b.newPage(); await p.setContent("<title>GEO smoke</title><h1>OK</h1>"); if (await p.title() !== "GEO smoke") process.exitCode = 1; } finally { await b.close(); }'
+
       - name: Upload dist artifact
         uses: actions/upload-artifact@v4
         with:
