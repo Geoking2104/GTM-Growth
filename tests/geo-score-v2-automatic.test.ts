@@ -34,6 +34,14 @@ describe("automatic v2 HTTP collectors", () => {
     expect(result.byCategory.meta.earned).toBe(9);
     expect(result.unmeasuredControls).toContain("P01");
     expect(result.unmeasuredControls).toContain("B04");
+    expect(result.controls).toHaveLength(42);
+    expect(result.observationHash).toMatch(/^[a-f0-9]{64}$/);
+    expect(result.controls.find(control => control.controlId === "J06")).toMatchObject({
+      status: "measured", earned: 2, proof: { url: "https://acme.test/" },
+    });
+    expect(result.controls.find(control => control.controlId === "P01")).toMatchObject({
+      status: "unknown", earned: null, proof: null,
+    });
   });
 
   it("awards the last 4 llms points only above 1000 words", async () => {
