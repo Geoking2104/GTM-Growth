@@ -37,6 +37,18 @@ describe("approved 42-control GEO v2 grid", () => {
     expect(a.status).toBe("complete");
     expect(a.score).toBe(100);
     expect(a.scoreRange).toEqual({ min: 100, max: 100 });
+    expect(a.controls).toHaveLength(42);
+    expect(a.controls.every(control => control.status === "measured" && Boolean(control.proof?.url))).toBe(true);
+  });
+
+  it("binds the observation hash to earned points and proof", async () => {
+    const entries = full();
+    const first = await calculateV2Coverage(grid, { html: "same" }, entries);
+    entries[0] = { ...entries[0], status: "measured", earned: 0, proof: proof("R01") };
+    const changed = await calculateV2Coverage(grid, { html: "same" }, entries);
+    expect(first.auditHash).toBe(changed.auditHash);
+    expect(first.observationHash).not.toBe(changed.observationHash);
+    expect(changed.controls[0]).toMatchObject({ controlId: "R01", earned: 0, status: "measured" });
   });
 
   it("never awards missing evidence, nor mislabels it as a failed zero", async () => {
