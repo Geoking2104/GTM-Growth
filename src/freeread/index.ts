@@ -15,6 +15,8 @@ import { fetchText, type FetchResult, type Fetcher } from "../geo/http.js";
 import { HtmlDoc } from "../geo/html.js";
 import { analyzeSocialLinks } from "../geo/social-links.js";
 import { collectV2Evidence, type V2EvidenceInventory } from "../geo/score/v2/observations.js";
+import { collectAutomaticV2 } from "../geo/score/v2/automatic.js";
+import type { V2CoverageScore } from "../geo/score/v2/coverage.js";
 import type { SocialLink } from "../geo/social-links.js";
 import { ga4Table, gscTable, trafficTable, type TrafficSample } from "./analytics.js";
 import { seoTables, type DataTable } from "./seo.js";
@@ -49,6 +51,8 @@ export interface FreeReadResult {
   scoreVersion: "v1";
   /** Measured-vs-missing evidence only; not a GEO v2 score. */
   v2Evidence: V2EvidenceInventory;
+  /** Partial measured v2 controls; score stays null until every control is resolved. */
+  v2Measurement: V2CoverageScore;
   limitations: string[];
 }
 
@@ -119,6 +123,7 @@ export async function runFreeRead(options: FreeReadOptions): Promise<FreeReadRes
     timeoutMs,
   });
 
+  const v2Measurement = await collectAutomaticV2(audit);
   const doc = HtmlDoc.parse(page.body);
   const social = analyzeSocialLinks(finalUrl, page.body);
   const analyticsInput = {
@@ -186,6 +191,7 @@ export async function runFreeRead(options: FreeReadOptions): Promise<FreeReadRes
     sitemapMap: buildSitemapMap(sitemap?.body ?? null, sitemap?.url ?? null, host),
     scoreVersion: "v1",
     v2Evidence: collectV2Evidence(audit),
+    v2Measurement,
     socialLinks: { outboundProfiles: social.outboundProfiles, inboundObservationCount: 0, notice: social.notice },
     limitations: [
       "The GEO score is the existing v1 rubric, not the developing v2 score.",
