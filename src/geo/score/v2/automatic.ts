@@ -8,9 +8,15 @@ import type { CoverageObservation, V2CoverageScore } from "./coverage.js";
  * item is derived from an explicit v2 predicate over the observed response.
  * Unimplemented/inconclusive controls stay unknown, including all rendering.
  */
+export interface V2HttpExtras {
+  /** Only a successfully fetched, already parsed sitemap; no extra fetch. */
+  sitemap?: { url: string; valid: boolean };
+}
+
 export async function collectAutomaticV2(
   audit: GeoAuditResult,
   renderFindings: readonly CoverageObservation[] = [],
+  extras: V2HttpExtras = {},
 ): Promise<V2CoverageScore> {
   const grid = approvedV2Grid();
   const origin = new URL(audit.finalUrl).origin;
@@ -31,7 +37,7 @@ export async function collectAutomaticV2(
   const unknown = (id: string, reason: string): void => {
     values.push({ controlId: id, status: "unknown", reason });
   };
-  const { robots, llms, schema, meta, content, brand_entity: brand } = audit.details;
+  const { robots, llms, schema, meta, content, brand_entity: brand, ai_discovery: discovery } = audit.details;
 
   // A missing resource is a verified failure only when the response status
   // is known. Timeouts/network failures (status 0) remain unknown.
@@ -46,6 +52,33 @@ export async function collectAutomaticV2(
   } else {
     unknown("R01", "robots.txt fetch failed without a verified HTTP response");
     unknown("R02", "Crawler rules were not observed");
+  }
+
+  if (robots.status > 0) {
+    if (!robots.found || robots.sitemaps.length === 0) {
+      measured("R04", false, "No Sitemap directive in reachable robots.txt", robotsUrl);
+    } else if (extras.sitemap) {
+      const declared = robots.sitemaps.some(entry => {
+        try { return new URL(entry, origin).href === new URL(extras.sitemap!.url).href; }
+        catch { return false; }
+      });
+      measured("R04", declared && extras.sitemap.valid,
+        `Declared sitemaps: ${robots.sitemaps.join(", ")}; fetched ${extras.sitemap.url}; XML valid: ${extras.sitemap.valid}`,
+        extras.sitemap.url);
+    } else {
+      unknown("R04", "Sitemap declared, but its HTTP/XML content was not verified");
+    }
+  } else {
+    unknown("R04", "Cannot verify sitemap declaration without robots response");
+  }
+
+  const discoveryStatuses = Object.values(discovery.endpointStatus);
+  if (discoveryStatuses.every(status => status > 0)) {
+    measured("D01", discovery.hasWellKnownAi && discovery.summaryValid,
+      `Discovery HTTP: ${JSON.stringify(discovery.endpointStatus)}; well-known: ${discovery.hasWellKnownAi}; summary valid: ${discovery.summaryValid}`,
+      new URL("/.well-known/ai.txt", origin).href);
+  } else {
+    unknown("D01", "One or more AI discovery endpoints returned no verified HTTP status");
   }
 
   if (llms.status > 0) {
