@@ -34,6 +34,8 @@ export interface FreeReadResult {
   httpStatus: number;
   durationMs: number;
   score: number;
+  scoreBreakdown: Record<string, number>;
+  scoreMax: Record<string, number>;
   band: string;
   projectedScore: number;
   recoverablePoints: number;
@@ -161,6 +163,8 @@ export async function runFreeRead(options: FreeReadOptions): Promise<FreeReadRes
     httpStatus: page.status,
     durationMs: Date.now() - started,
     score: audit.score,
+    scoreBreakdown: audit.scoreBreakdown,
+    scoreMax: audit.scoreMax,
     band: audit.band,
     projectedScore: audit.projectedScore,
     recoverablePoints: audit.recoverablePoints,
