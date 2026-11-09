@@ -22,6 +22,14 @@ export interface V2CoverageScore {
   excludedMaximum: number;
   byCategory: Record<V2Category, { earned: number; applicable: number; unknown: number; excluded: number }>;
   unmeasuredControls: string[];
+  /** Evidence-bound observation digest, separate from the snapshot/grid audit hash. */
+  observationHash: string;
+  /** Full 42-control trace for independent review and clickable source proofs. */
+  controls: Array<{
+    controlId: string; title: string; category: V2Category; maxPoints: number;
+    status: CoverageObservation["status"]; earned: number | null;
+    proof: ObservedControl["proof"] | null; reason: string | null;
+  }>;
 }
 
 const validProof = (proof: ObservedControl["proof"] | undefined): boolean =>
@@ -57,6 +65,7 @@ export async function calculateV2Coverage(
       [key, { earned: 0, applicable: 0, unknown: 0, excluded: 0 }])
   ) as V2CoverageScore["byCategory"];
   const unmeasuredControls: string[] = [];
+  const controls: V2CoverageScore["controls"] = [];
 
   for (const control of grid.controls) {
     const entry = received.get(control.id);
@@ -65,19 +74,35 @@ export async function calculateV2Coverage(
       if (entry && !entry.reason?.trim()) throw new Error(`Missing unknown reason: ${control.id}`);
       bucket.unknown += control.maxPoints;
       unmeasuredControls.push(control.id);
+      controls.push({
+        controlId: control.id, title: control.title, category: control.category,
+        maxPoints: control.maxPoints, status: "unknown", earned: null,
+        proof: null, reason: entry?.reason ?? "No observation provided",
+      });
     } else if (entry.status === "not_applicable") {
       if (!entry.reason?.trim() || !validProof(entry.proof))
         throw new Error(`Missing applicability proof: ${control.id}`);
       bucket.excluded += control.maxPoints;
+      controls.push({
+        controlId: control.id, title: control.title, category: control.category,
+        maxPoints: control.maxPoints, status: "not_applicable", earned: null,
+        proof: entry.proof, reason: entry.reason,
+      });
     } else {
       if (!Number.isSafeInteger(entry.earned) ||
           entry.earned < 0 || entry.earned > control.maxPoints || !validProof(entry.proof))
         throw new Error(`Invalid measured observation: ${control.id}`);
       bucket.earned += entry.earned;
       bucket.applicable += control.maxPoints;
+      controls.push({
+        controlId: control.id, title: control.title, category: control.category,
+        maxPoints: control.maxPoints, status: "measured", earned: entry.earned,
+        proof: entry.proof, reason: null,
+      });
     }
   }
 
+  const observationHash = await sha256(canonicalJson(controls));
   const total = Object.values(byCategory).reduce((sum, item) => ({
     earned: sum.earned + item.earned,
     applicable: sum.applicable + item.applicable,
@@ -101,5 +126,7 @@ export async function calculateV2Coverage(
     excludedMaximum: total.excluded,
     byCategory,
     unmeasuredControls,
+    observationHash,
+    controls,
   };
 }
