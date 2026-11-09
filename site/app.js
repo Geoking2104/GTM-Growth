@@ -126,7 +126,8 @@ async function loadServerTables(url) {
       scoreEl.style.setProperty("--score", String(payload.score));
       scoreValue.textContent = String(payload.score);
       scoreEl.setAttribute("aria-label", dict.scoreLabel(payload.score));
-      scoreEl.querySelector(".score-label").textContent = dict.tables.geoScore;
+      scoreEl.querySelector(".score-label").textContent = payload.scoreVersion === "v1"
+        ? `${dict.tables.geoScore} · v1` : dict.tables.geoScore;
     }
     if (payload.finalUrl) resultHost.textContent = new URL(payload.finalUrl).hostname.replace(/^www\./, "");
     if (Array.isArray(payload.headline) && payload.headline.length) {
