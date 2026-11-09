@@ -30,7 +30,7 @@ export async function collectAutomaticV2(
   const unknown = (id: string, reason: string): void => {
     values.push({ controlId: id, status: "unknown", reason });
   };
-  const { robots, llms, schema, meta, content } = audit.details;
+  const { robots, llms, schema, meta, content, brand_entity: brand } = audit.details;
 
   // A missing resource is a verified failure only when the response status
   // is known. Timeouts/network failures (status 0) remain unknown.
@@ -69,6 +69,12 @@ export async function collectAutomaticV2(
       `JSON-LD scripts ${schema.scriptCount}; parse errors ${schema.parseErrors}; objects ${schema.objects.length}`, pageUrl);
     measured("J02", schema.hasOrganization,
       `JSON-LD types: ${schema.foundTypes.join(", ") || "none"}`, pageUrl);
+    if (schema.objects.length > 0) {
+      measured("J06", schema.visibleMatch,
+        `Structured name/headline matches visible copy: ${schema.visibleMatch}`, pageUrl);
+    } else {
+      unknown("J06", "No valid structured entity fields to compare against visible copy");
+    }
     measured("M01", Boolean(meta.title?.trim()),
       `HTML title: ${meta.title || "(absent)"}`, pageUrl);
     measured("M02", Boolean(meta.description?.trim()),
@@ -89,8 +95,16 @@ export async function collectAutomaticV2(
       `og:title=${meta.hasOgTitle}; og:description=${meta.hasOgDescription}; og:image=${meta.hasOgImage}`, pageUrl);
     measured("C03", Boolean(content.h1) && content.hasHeadingHierarchy,
       `H1: ${content.h1 || "(absent)"}; hierarchy valid: ${content.hasHeadingHierarchy}`, pageUrl);
+    if (brand.primaryName) {
+      measured("B01", brand.brandNameConsistent,
+        `Brand identity: ${brand.primaryName}; consistent: ${brand.brandNameConsistent}`, pageUrl);
+    } else {
+      unknown("B01", "A primary brand identity was not established");
+    }
+    measured("B02", brand.hasContactInfo && brand.hasAboutLink,
+      `About link: ${brand.hasAboutLink}; contact information: ${brand.hasContactInfo}`, pageUrl);
   } else {
-    for (const id of ["J01", "J02", "M01", "M02", "M03", "M04", "C03"]) {
+    for (const id of ["J01", "J02", "J06", "M01", "M02", "M03", "M04", "C03", "B01", "B02"]) {
       unknown(id, "Page HTML was not successfully fetched");
     }
   }
