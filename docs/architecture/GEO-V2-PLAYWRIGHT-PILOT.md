@@ -27,11 +27,14 @@ Status: **proposal / not deployable yet**. Applies only to ownership-verified do
 - **HTTPS file**: serve that exact value with optional single trailing newline and `Content-Type: text/plain` at `https://<hostname>/.well-known/gtm-growth-verification.txt`. Require a direct HTTP 200 response: **no redirect**, no credentialed URL and at most 128 response characters.
 - The verification service uses an injected **trusted network transport**; the evaluator itself performs no outbound I/O. The transport must restrict DNS, validate every resolved public IP, enforce address pinning/egress filtering and deny internal targets, TLS bypass, redirects, oversized HTTP bodies and unsafe ports. Merely checking the returned `finalUrl` does not mitigate SSRF if the transport follows redirects.
 - On verification success, atomically mark the challenge consumed and write an owner/tenant-bound grant (the sample domain grant expires after seven days). Prevent concurrent requests from consuming the same challenge twice. On grant expiry, domain transfer, tenant deletion or revocation, block new jobs; cancel queued jobs. Reverification is mandatory. A DNS or file proof is **not** consent to publish a score.
+- The Node-only SQLite registry (`DomainVerificationRegistry`) stores SHA-256 token hashes, not raw challenge tokens, and an event log without proof contents. Default database path is `/data/domain-verifications.sqlite3`, on the existing GTM Growth data volume. Operations use `BEGIN IMMEDIATE`/FULL synchronous commits. The frontend must not access the SQLite file or set `tenantId`/`actorId`; the authenticated console/API layer must derive both from Keycloak claims and enforce tenant-admin or platform-admin role.
+- The registry methods do not constitute an exposed API route, and the transport is still injected. Do **not** expose `/verify` or enable actual outbound checks until the secure network transport, rate limiting, CSRF protection, request authentication, and tenant ownership transfer protocol have been reviewed.
 - Do not treat a successful challenge as authorization for subdomains, other ports, HTTP, non-public addresses, or future redirects. Multi-tenant ownership conflicts and a public-suffix/eTLD+1 policy require a separate registry decision.
 
 ## Gate before implementing a runnable container or deployment
 
-- [ ] Implement trusted tenant-bound ownership registry with atomic single-use challenge consumption and revocation; review seven-day renewal interval.
+- [x] Implement isolated SQLite registry primitives with atomic single-use challenge consumption, tenant scoping and revocation.
+- [ ] Wire only through authenticated tenant-admin API handlers; define cross-tenant domain transfer, queued-job cancellation, rate limiting and seven-day re-verification policy.
 - [ ] VPS-specific egress enforcement demonstrated with DNS rebinding, redirects, IPv4/IPv6 private/metadata and subdomain tests.
 - [ ] Reproducible Playwright/Chromium image digest selected and smoke-tested without affecting current containers.
 - [ ] CPU/RAM/PIDs/time limits load-tested under concurrent production traffic; no OOM or service degradation.
