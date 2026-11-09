@@ -140,3 +140,28 @@ returns `unknown` unless another clause decisively resolves the condition;
 it cannot silently become a failed check or a zero score. This is the
 **generic evaluation mechanism**, not a publication of the final 42 approved
 control-specific applicability rules. It does not redistribute points.
+
+## Owner-approved GEO v2.0.0 grid (42 controls)
+
+`approvedV2Grid("general")` in `src/geo/score/v2/approved-grid.ts`
+provides the approved stable controls R01–R05, L01–L06, J01–J06,
+M01–M05, C01–C08, B01–B05, D01–D03 and P01–P04.
+All 42 have measurement descriptions, proof requirements, max points and effort.
+Category budgets: robots 14, llms 14, JSON-LD 14, metadata 10,
+content 18, brand 10, discovery 8, rendering 12. L05 and L06
+require strict documentation depth above 1,000 words.
+
+`calculateV2Coverage(grid, snapshot, observations, auditFailed?)` is the
+strict applicability-aware scoring gate:
+
+- `measured`: integer earned points and valid proof required.
+- `not_applicable`: explicit justification and proof required; points removed
+  from the denominator, then normalized to 100.
+- `unknown` or absent: never scored as a failure. Final `score` remains
+  `null`; a conservative `scoreRange` is reported.
+- `auditFailed`: `status: "failed"`, `score: null`.
+
+Full automatic scoring is gated on actual observations for all applicable
+controls. The older evidence inventory is still `not_scored` and must not
+be naively converted from v1 points. The profile-specific category reweighting
+policy remains separate from the approved general 100-point grid.
