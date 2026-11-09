@@ -6,11 +6,13 @@ import { addPrompt, listPrompts, removePrompt, addRankKeyword, listRankKeywords,
 import { runVisibilityCheck, engineStatuses, visibilityDelta } from "../src/console/visibility-runner.js";
 import { extractOrganicPositions, checkKeywordRank, runRankCheck, rankBoard, alertForRankDrop } from "../src/console/rank-tracking.js";
 import { buildBrief, buildDraftSkeleton, produceDraft, qualityGates, wpConfigFromEnv, publishToWordPress } from "../src/console/content-ops.js";
+import { contentRoutes } from "../src/console/ops-routes.js";
+import type { HandlerContext } from "../src/console/util.js";
 import { runDueJobs, stopScheduler, alertOnVisibilityLoss } from "../src/console/ops-scheduler.js";
 import { TenantStore, type Tenant } from "../src/tenants/store.js";
 
 const dir = () => mkdtempSync(path.join(tmpdir(), "ops-"));
-afterEach(() => { closeOpsStores(); stopScheduler(); vi.unstubAllEnvs(); });
+afterEach(() => { closeOpsStores(); stopScheduler(); vi.unstubAllEnvs(); vi.unstubAllGlobals(); });
 
 describe("ops store (T-2/T-4/T-11)", () => {
   it("manages the prompt pool with dedupe and bounds", () => {
@@ -147,6 +149,24 @@ describe("content pipeline (T-9)", () => {
 });
 
 describe("wordpress publishing (T-10)", () => {
+  it("reports a WordPress draft, not a public publication, and never announces the draft to IndexNow", async () => {
+    vi.stubEnv("OPS_STORE_PATH", dir());
+    vi.stubEnv("WP_SITE_URL_ACME", "https://acme.fr");
+    vi.stubEnv("WP_USERNAME_ACME", "editor");
+    vi.stubEnv("WP_APP_PASSWORD_ACME", "test-password");
+    const transport = vi.fn(async () => ({ ok: true, json: async () => ({ id: 43, link: "https://acme.fr/?p=43" }) }) as unknown as Response);
+    vi.stubGlobal("fetch", transport);
+    const route = contentRoutes.find(r => r.path === "/content/publish");
+    expect(route).toBeDefined();
+    const ctx = { url: "", body: { draft: { title: "Test", slug: "test", body: "Article", approved: true, gates: [] },
+      indexnowKey: "provided-but-must-not-be-used" }, tenancy: { tenant: { id: "acme" } } } as unknown as HandlerContext;
+    const result = await route!.handler(ctx);
+    expect(result).toMatchObject({ created: true, published: false, publicationStatus: "draft", postId: 43, indexNow: null });
+    expect(transport).toHaveBeenCalledTimes(1);
+    const [url, init] = transport.mock.calls[0] as [string, RequestInit];
+    expect(url).toBe("https://acme.fr/wp-json/wp/v2/posts");
+    expect(JSON.parse(String(init.body)).status).toBe("draft");
+  });
   it("reads config from env and publishes as draft via mocked transport", async () => {
     process.env.WP_SITE_URL_ACME = "https://acme.fr";
     process.env.WP_USERNAME_ACME = "editor";

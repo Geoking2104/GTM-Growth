@@ -43,6 +43,7 @@ import { competitionRoutes } from "./competition.js";
 import { operationsRoutes } from "./ops-routes.js";
 import { analyticsRoutes } from "./analytics.js";
 import { gtmRoutes } from "./gtm-console.js";
+import { applyPreviewRoutes } from "./apply-routes.js";
 import { withCredential } from "../auth/service-account.js";
 import { fetchPublicPage } from "../http/public-fetch.js";
 import { analyzePositioning } from "../geo/positioning.js";
@@ -342,7 +343,7 @@ export function buildConsoleRouter(routes: ConsoleRoute[], options: ConsoleOptio
         return res.json(data);
       } catch (error) {
         logger.info(`[console] ${route.path} failed: ${(error as Error).message}`);
-        return fail(res, 502, (error as Error).message);
+        return fail(res, error instanceof TenantAccessError ? error.status : 502, (error as Error).message);
       }
     });
   }
@@ -391,7 +392,7 @@ export function discoverTenant(store: TenantStore, query: { email?: string; host
 }
 
 export function allConsoleRoutes(): ConsoleRoute[] {
-  return [...phase1Routes, ...phase2Routes, ...phase3Routes, ...analyticsRoutes, ...gtmRoutes, ...aiVisibilityRoutes, ...competitionRoutes, ...operationsRoutes];
+  return [...phase1Routes, ...phase2Routes, ...phase3Routes, ...analyticsRoutes, ...gtmRoutes, ...aiVisibilityRoutes, ...competitionRoutes, ...operationsRoutes, ...applyPreviewRoutes];
 }
 
 export function mountConsoleApi(app: Express, options: ConsoleOptions = {}): void {

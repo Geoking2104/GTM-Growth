@@ -13,6 +13,8 @@ import { saveTenantReport } from "../src/tenants/data.js";
 import { KeycloakAdmin } from "../src/tenants/keycloak-admin.js";
 import { buildCompetitionMcpRouter } from "../src/console/competition-mcp.js";
 import { aiVisibilityRoutes } from "../src/console/ai-visibility.js";
+import { createApplyPreviewRoutes } from "../src/console/apply-routes.js";
+import type { Fetcher } from "../src/geo/http.js";
 
 const dir = mkdtempSync(join(tmpdir(), "iso-"));
 process.env.REPORTS_PATH = join(dir, "reports");
@@ -50,6 +52,11 @@ const superAdmin = { realm_access: { roles: ["platform-admin"] } };
 const app = express();
 app.use(express.json());
 const echo = { path: "/echo", needsUrl: false, handler: async ({ url, body, tenancy }: any) => ({ url, property: body.property, tenant: tenancy?.tenant?.id }) };
+const applyFetches: string[] = [];
+const applyFetcher: Fetcher = async url => {
+  applyFetches.push(url);
+  return { url, status: 200, ok: true, headers: {}, body: "User-agent: *\nAllow: /\n" };
+};
 const kcCalls: string[] = [];
 const fakeFetch = (async (u: string | URL, init?: RequestInit) => {
   const url = String(u); kcCalls.push(`${init?.method ?? "GET"} ${url}`);
@@ -60,7 +67,7 @@ const fakeFetch = (async (u: string | URL, init?: RequestInit) => {
   return new Response(null, { status: 204 });
 }) as typeof fetch;
 const keycloakAdmin = new KeycloakAdmin({ baseUrl: "http://kc", authRealm: "master", clientId: "p", clientSecret: "s", fetch: fakeFetch });
-app.use("/c", buildConsoleRouter([echo, ...aiVisibilityRoutes], { config, jwksLoader: loader, store, keycloakAdmin }));
+app.use("/c", buildConsoleRouter([echo, ...aiVisibilityRoutes, ...createApplyPreviewRoutes(applyFetcher)], { config, jwksLoader: loader, store, keycloakAdmin }));
 app.use("/mcp-competition", buildCompetitionMcpRouter({ config, jwksLoader: loader, store }));
 app.use("/p", buildPlatformRouter({ config, jwksLoader: loader, store, keycloakAdmin }));
 let server: ReturnType<typeof app.listen>; let root = "";
@@ -71,6 +78,25 @@ const call = (path: string, claims: Record<string, unknown>, body?: unknown, hea
   fetch(`${root}${path}`, { method: body === undefined ? "GET" : path.includes("settings") ? "PUT" : "POST", headers: { Authorization: `Bearer ${token(claims)}`, "Content-Type": "application/json", ...headers }, body: body === undefined ? undefined : JSON.stringify(body) });
 
 describe("isolation stricte entre tenants", () => {
+  it("protège le preview Apply Mode même si un appelant tente de contourner le scope URL commun", async () => {
+    applyFetches.length = 0;
+    const foreign = await call("/c/apply/preview", acmeUser,
+      { url: "https://globex.com", fix: "robots-ai", mode: "dry-run", usePage: "non" });
+    expect(foreign.status).toBe(403);
+    expect(applyFetches).toHaveLength(0);
+    const elevated = await call("/c/apply/preview", superAdmin,
+      { url: "https://acme.fr", fix: "robots-ai", mode: "dry-run", usePage: "non" },
+      { "X-Tenant": "globex" });
+    expect(elevated.status).toBe(403);
+    expect(applyFetches).toHaveLength(0);
+    const owned = await call("/c/apply/preview", acmeUser,
+      { url: "https://acme.fr", fix: "robots-ai", mode: "dry-run", usePage: "non" });
+    expect(owned.status).toBe(200);
+    const json = await owned.json();
+    expect(json).toMatchObject({ writesEnabled: false,
+      preview: { mode: "dry-run", tenantId: "acme", target: { url: "https://acme.fr/robots.txt" } } });
+    expect(applyFetches).toEqual(["https://acme.fr/robots.txt"]);
+  });
   it("scope l'URL au domaine du tenant", async () => {
     // public IPs needed by SSRF guard: use well-known domains? we only test the tenant rejection path with a host the guard accepts.
     const r = await call("/c/echo", acmeUser, { url: "https://globex.com" });

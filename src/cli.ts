@@ -120,6 +120,8 @@ Usage:
 
 ── GEO / AEO · AI search readiness ──────────────────
   geo-audit                 --url <url> [--no-ai-discovery]
+  geo-apply                 --url <url> --fix robots-ai [--dry-run] [--diff]
+                            Preview only; --confirm/--apply are refused until approval adapters exist
   geo-snapshot              --url <url> --out <snapshot.json>    captured evidence (not Score v2)
   geo-replay                --in <snapshot.json>                  offline legacy audit replay
   geo-sitemap               --url <url> [--sitemap <url>] [--max-urls <n>]
@@ -450,6 +452,23 @@ async function main() {
           includeAiDiscovery: !bool(args, "no-ai-discovery"),
         });
         print(summarizeAudit(result));
+        break;
+      }
+      case "geo-apply": {
+        // This is deliberately read-only. Never allow a CLI flag to bypass
+        // the future Keycloak approval, backup, verification and rollback gate.
+        const safeOptions = new Set(["url", "fix", "dry-run", "diff"]);
+        const unsupported = Object.keys(args).filter(key => !safeOptions.has(key));
+        if (unsupported.length) throw new Error(
+          `Apply writes are disabled: unsupported option(s) ${unsupported.join(", ")}; preview only`,
+        );
+        if (req(args, "fix") !== "robots-ai") {
+          throw new Error("This dry-run milestone currently supports only --fix robots-ai");
+        }
+        const { previewRobotsAiFix } = await import("./apply/preview.js");
+        const proposal = await previewRobotsAiFix({ url: req(args, "url"), tenantId: "cli-local-preview" });
+        if (bool(args, "diff")) console.log(proposal.diff || "(no changes)");
+        else print(proposal);
         break;
       }
       case "geo-snapshot": {

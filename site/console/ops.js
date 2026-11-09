@@ -96,7 +96,7 @@ export function renderOpsArticles({ api, me }) {
   const box = el("section", "app-strip ops-articles");
   const admin = me?.platformAdmin || me?.role === "tenant-admin";
   const content = el("div"); const message = el("p", "c-note"); message.setAttribute("role", "status");
-  box.append(el("h3", "", L("Pipeline article avec quality gates", "Article pipeline with quality gates")), el("p", "c-note", L("Brief déterministe, brouillon structuré, gates GEO obligatoires avant publication WordPress (statut brouillon) + IndexNow.", "Deterministic brief, structured draft, mandatory GEO gates before WordPress publishing (draft status) + IndexNow.")), content, message);
+  box.append(el("h3", "", L("Pipeline article avec quality gates", "Article pipeline with quality gates")), el("p", "c-note", L("Brief déterministe, brouillon structuré et contrôles GEO avant création d'un brouillon WordPress. Aucune publication ni annonce IndexNow.", "Deterministic brief, structured draft, and GEO checks before creating a WordPress draft. No publication or IndexNow announcement.")), content, message);
   const keywordInput = el("input"); keywordInput.placeholder = L("Mot-clé cible", "Target keyword"); keywordInput.size = 40;
   let draft = null;
   const draw = () => {
@@ -118,15 +118,14 @@ export function renderOpsArticles({ api, me }) {
       const body = el("textarea"); body.value = draft.body; body.rows = 14; body.style.width = "100%"; body.setAttribute("aria-label", "Draft body");
       draft.body = body.value;
       body.onchange = () => { draft.body = body.value; };
-      const keyInput = el("input"); keyInput.placeholder = L("Clé IndexNow (optionnelle)", "IndexNow key (optional)"); keyInput.size = 36;
       const actions = el("p");
-      actions.append(button(L("Publier sur WordPress (brouillon)", "Publish to WordPress (draft)"), async () => {
-        message.textContent = L("Publication…", "Publishing…");
+      actions.append(button(L("Créer le brouillon WordPress", "Create WordPress draft"), async () => {
+        message.textContent = L("Création du brouillon…", "Creating draft…");
         try {
-          const r = await api("/content/publish", { draft: { ...draft, approved: true }, indexnowKey: keyInput.value || undefined });
-          message.textContent = L(`Publié (post ${r.postId}). ${r.indexNow?.announced ? "IndexNow : reçu." : ""}`, `Published (post ${r.postId}). ${r.indexNow?.announced ? "IndexNow: received." : ""}`);
+          const r = await api("/content/publish", { draft: { ...draft, approved: true } });
+          message.textContent = L(`Brouillon WordPress créé (post ${r.postId}), non publié.`, `WordPress draft created (post ${r.postId}), not published.`);
         } catch (error) { message.textContent = error.message; }
-      }), document.createTextNode(" "), keyInput);
+      }));
       wrap.append(body, actions);
     }
     content.replaceChildren(wrap);
