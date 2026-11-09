@@ -52,6 +52,12 @@ export interface LlmsAudit {
   warnings: string[];
   /** First ~400 chars of the file, so an agent can sanity-check the content. */
   excerpt: string;
+  /** Bounded, parsed evidence; no second request to /llms.txt is needed for v2. */
+  siteHeading: string;
+  summary: string;
+  validLinkCount: number;
+  invalidLinkCount: number;
+  linkSamples: Array<{ label: string; href: string; valid: boolean }>;
 }
 
 export interface SchemaAudit {
@@ -127,6 +133,8 @@ export interface BrandAudit {
 }
 
 export interface AiDiscoveryAudit {
+  /** HTTP status 0 means no verified response (timeout/network failure). */
+  endpointStatus: { wellKnownAi: number; summary: number; faq: number; service: number };
   hasWellKnownAi: boolean;
   hasSummary: boolean;
   summaryValid: boolean;

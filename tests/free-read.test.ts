@@ -57,6 +57,24 @@ describe("free read", () => {
     expect(result.score).toBeGreaterThan(0);
     expect(result.score).toBeLessThanOrEqual(100);
     expect(result.topFixes.length).toBeLessThanOrEqual(3);
+    expect(result.scoreVersion).toBe("v1");
+    expect(result.v2Evidence.scoringStatus).toBe("not_scored");
+    expect(result.v2Measurement.gridVersion).toBe("v2.0.0");
+    expect(result.v2Measurement.status).toBe("incomplete");
+    expect(result.v2Measurement.score).toBeNull();
+    expect(result.v2Measurement.applicableMaximum).toBeGreaterThan(0);
+    expect(result.v2Measurement.unknownMaximum).toBeGreaterThan(0);
+    expect(result.v2Measurement.unmeasuredControls).toContain("P01");
+    expect(result.v2Measurement.controls.find(control => control.controlId === "R04")).toMatchObject({
+      status: "measured", earned: 2,
+    });
+    expect(result.v2Evidence.categories.rendering).toEqual({ budget: 12, observed: 0, unavailable: 1 });
+    expect(result.v2Evidence.categories.jsonld.observed).toBeGreaterThan(0);
+    expect(result.v2Evidence.findings.some(f => f.sourceCheckId === "rendering.playwright" && f.status === "unavailable")).toBe(true);
+    expect(Object.keys(result.scoreBreakdown)).toHaveLength(8);
+    expect(Object.keys(result.scoreMax)).toHaveLength(8);
+    expect(Object.values(result.scoreBreakdown).reduce((sum, points) => sum + points, 0)).toBe(result.score);
+    expect(Object.values(result.scoreMax).reduce((sum, points) => sum + points, 0)).toBe(100);
     expect(result.headline.find((row) => row.label === "GEO score")?.value).toMatch(/^\d+\/100$/);
   });
 
@@ -70,6 +88,18 @@ describe("free read", () => {
     expect(meta.sample).toBeFalsy();
     expect(meta.rows.find((row) => row.label === "Title")?.status).toBe("pass");
     expect(meta.rows.find((row) => row.label === "Canonical")?.status).toBe("pass");
+  });
+
+  it("includes observed social outbound links in the public URL report", async () => {
+    const result = await runFreeRead({ url: "https://acme.com/", fetcher: fakeFetcher() });
+    expect(result.scoreVersion).toBe("v1");
+    expect(result.socialLinks.outboundProfiles).toEqual([
+      expect.objectContaining({ platform: "linkedin", inbound: "not_checked" }),
+    ]);
+    expect(result.socialLinks.inboundObservationCount).toBe(0);
+    const socialTable = result.tables.find(table => table.id === "geo.social");
+    expect(socialTable?.rows[0].value).toBe("https://www.linkedin.com/company/acme");
+    expect(result.limitations.join(" ")).toContain("not automatically verified");
   });
 
   it("returns sitemap-only map metrics", async () => {

@@ -13,6 +13,11 @@
 import { runGeoAudit } from "../geo/audit.js";
 import { fetchText, type FetchResult, type Fetcher } from "../geo/http.js";
 import { HtmlDoc } from "../geo/html.js";
+import { analyzeSocialLinks } from "../geo/social-links.js";
+import { collectV2Evidence, type V2EvidenceInventory } from "../geo/score/v2/observations.js";
+import { collectAutomaticV2 } from "../geo/score/v2/automatic.js";
+import type { V2CoverageScore } from "../geo/score/v2/coverage.js";
+import type { SocialLink } from "../geo/social-links.js";
 import { ga4Table, gscTable, trafficTable, type TrafficSample } from "./analytics.js";
 import { seoTables, type DataTable } from "./seo.js";
 import { buildSitemapMap, type SitemapMap } from "./sitemap-map.js";
@@ -32,6 +37,8 @@ export interface FreeReadResult {
   httpStatus: number;
   durationMs: number;
   score: number;
+  scoreBreakdown: Record<string, number>;
+  scoreMax: Record<string, number>;
   band: string;
   projectedScore: number;
   recoverablePoints: number;
@@ -40,6 +47,12 @@ export interface FreeReadResult {
   tables: DataTable[];
   /** Sitemap architecture and freshness data for the free visual map. */
   sitemapMap: SitemapMap | null;
+  socialLinks: { outboundProfiles: SocialLink[]; inboundObservationCount: number; notice: string };
+  scoreVersion: "v1";
+  /** Measured-vs-missing evidence only; not a GEO v2 score. */
+  v2Evidence: V2EvidenceInventory;
+  /** Partial measured v2 controls; score stays null until every control is resolved. */
+  v2Measurement: V2CoverageScore;
   limitations: string[];
 }
 
@@ -110,7 +123,13 @@ export async function runFreeRead(options: FreeReadOptions): Promise<FreeReadRes
     timeoutMs,
   });
 
+  const sitemapMap = buildSitemapMap(sitemap?.body ?? null, sitemap?.url ?? null, new URL(finalUrl).hostname);
+  const v2Measurement = await collectAutomaticV2(audit, [], {
+    pageHtml: page.body,
+    ...(sitemap ? { sitemap: { url: sitemap.url, valid: Boolean(sitemapMap?.nodeCount), xml: sitemap.body } } : {}),
+  });
   const doc = HtmlDoc.parse(page.body);
+  const social = analyzeSocialLinks(finalUrl, page.body);
   const analyticsInput = {
     doc,
     finalUrl,
@@ -122,6 +141,20 @@ export async function runFreeRead(options: FreeReadOptions): Promise<FreeReadRes
   const traffic = options.traffic;
   const tables: DataTable[] = [
     ...seoTables(doc, finalUrl, page.headers),
+    {
+      id: "geo.social",
+      title: "GEO — social cross-links",
+      subtitle: "Website outbound links observed; inbound backlinks not automatically verified",
+      rows: social.outboundProfiles.length
+        ? social.outboundProfiles.map(link => ({
+            label: link.platform,
+            value: link.url,
+            status: "info" as const,
+            note: `Source: ${link.sources.join(" + ")} · Inbound: not checked`,
+          }))
+        : [{ label: "Social profiles", value: "none detected", status: "warn" as const,
+             note: "Link official profiles from your site and Organization sameAs data." }],
+    },
     ga4Table(analyticsInput, page.body),
     gscTable(analyticsInput),
     trafficTable("ga4", traffic?.ga4 ?? null, Boolean(traffic?.connected && traffic?.ga4)),
@@ -142,6 +175,8 @@ export async function runFreeRead(options: FreeReadOptions): Promise<FreeReadRes
     httpStatus: page.status,
     durationMs: Date.now() - started,
     score: audit.score,
+    scoreBreakdown: audit.scoreBreakdown,
+    scoreMax: audit.scoreMax,
     band: audit.band,
     projectedScore: audit.projectedScore,
     recoverablePoints: audit.recoverablePoints,
@@ -157,8 +192,14 @@ export async function runFreeRead(options: FreeReadOptions): Promise<FreeReadRes
       action: rec.action,
     })),
     tables,
-    sitemapMap: buildSitemapMap(sitemap?.body ?? null, sitemap?.url ?? null, host),
+    sitemapMap,
+    scoreVersion: "v1",
+    v2Evidence: collectV2Evidence(audit),
+    v2Measurement,
+    socialLinks: { outboundProfiles: social.outboundProfiles, inboundObservationCount: 0, notice: social.notice },
     limitations: [
+      "The GEO score is the existing v1 rubric, not the developing v2 score.",
+      "Social inbound backlinks are not automatically verified.",
       "The GEO score covers the audited page only, not the whole site.",
       "GA4 and Search Console traffic rows are sample data unless a property is connected.",
       "No AI engine is queried: readiness is measured, citations are not claimed.",

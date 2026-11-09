@@ -7,7 +7,7 @@ The agent reads live Google data, audits setups, crosses organic search with sit
 | | |
 |---|---|
 | **MCP tools** | 99 (GA4 · GTM/sGTM · MP · Search Console · Indexing · PageSpeed · CrUX · GEO · IndexNow · GeoSuite) |
-| **Tests** | 320 · typecheck + lint + build in CI |
+| **Tests** | 401 · typecheck + lint + build in CI |
 | **License** | Apache-2.0 · Node ≥ 20 · read-only by default |
 | **External APIs** | Free Google APIs only — no SerpApi, no DataForSEO, no commercial LLM |
 | **Website** | <https://geoking2104.github.io/GTM-Growth/> — free URL read, then the full audit |
@@ -22,6 +22,8 @@ The **GEO v2 scoring rubric** allocates 100 points across eight categories: robo
 - **Multi-tenant registry:** the Node-only SQLite implementation stores hashed challenge tokens, tenant-scoped grants, atomic single-use verification and audit events. It is **not yet connected to public/API routes**.
 - **Browser isolation:** Playwright is planned as a separate constrained VPS job (initial proposal: one browser, 1 vCPU, 1 GiB RAM, 45 seconds). The network-level anti-SSRF/egress gate is mandatory before a runnable worker or real outbound verification is enabled.
 - **Privacy and release:** scores remain private unless the owner explicitly consents to publication. No production deployment, GitHub secret update, or service restart is part of this pilot PR.
+
+**GEO v2 evidence progress (PR #30):** the 42-control grid now has deterministic collectors for **up to 35 controls** (17 initial HTTP collectors plus 18 conditional supplemental collectors). The public free-read reuses its existing HTML, robots, llms and sitemap responses; it makes **no new network requests** for v2 scoring. Some controls require optional trusted, owner-declared inputs or content-specific markup. Independent references (C04/C05/B04) and real-browser rendering proof (P01–P04) are **never inferred** from outbound links or raw HTML. An incomplete measurement reports `score: null`; the public score remains explicitly v1. See [per-control instrumentation and evidence limits](docs/PUBLIC_API.md#automatically-measured-geo-v2-controls-partial).
 
 See the [GEO v2 Playwright pilot architecture and security gates](docs/architecture/GEO-V2-PLAYWRIGHT-PILOT.md) and [draft PR #28](https://github.com/Geoking2104/GTM-Growth/pull/28). Implementation is staged; these safeguards are **not** claims about current public-site behavior.
 

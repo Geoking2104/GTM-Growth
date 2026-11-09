@@ -197,6 +197,18 @@
 
         <ul class="check-list" id="check-list" aria-live="polite"></ul>
 
+        <section class="geo-priority-panel" id="geo-priority-panel" aria-labelledby="geo-priority-heading" hidden>
+          <h3 id="geo-priority-heading">Your three highest-impact GEO fixes</h3>
+          <p>Measured from this page’s audit. Recoverable points are based on the current v1 rubric.</p>
+          <ol id="geo-priority-list" aria-live="polite"></ol>
+        </section>
+
+        <section class="geo-breakdown-panel" id="geo-breakdown-panel" aria-labelledby="geo-breakdown-heading" hidden>
+          <h3 id="geo-breakdown-heading">GEO points by category</h3>
+          <p>Measured points under the current v1 rubric. A full GEO v2 score is not yet available.</p>
+          <div class="geo-breakdown-list" id="geo-breakdown-list" aria-live="polite"></div>
+        </section>
+
         <div class="result-tables" id="result-tables-host">
           <p class="tables-note" id="result-tables-note" role="status" aria-live="polite" hidden></p>
           <div id="result-tables"></div>

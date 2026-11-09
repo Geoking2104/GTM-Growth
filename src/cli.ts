@@ -121,6 +121,8 @@ Usage:
 ── GEO / AEO · AI search readiness ──────────────────
   geo-audit                 --url <url> [--no-ai-discovery]
   geo-snapshot              --url <url> --out <snapshot.json>    captured evidence (not Score v2)
+  geo-score-v2              --in <evidence.json> [--out <score.json>]  deterministic evidence replay
+  geo-social-links          --url <url> [--social-evidence <profiles.json>]  cross-platform link inventory
   geo-replay                --in <snapshot.json>                  offline legacy audit replay
   geo-sitemap               --url <url> [--sitemap <url>] [--max-urls <n>]
   geo-llms                  --url <url> [--sitemap <url>] [--name <site>]
@@ -440,6 +442,29 @@ async function main() {
         } else {
           print(result);
         }
+        break;
+      }
+      case "geo-social-links": {
+        const { normalizeUrl } = await import("./geo/audit.js");
+        const { fetchText } = await import("./geo/http.js");
+        const { analyzeSocialLinks } = await import("./geo/social-links.js");
+        const url = normalizeUrl(req(args, "url"));
+        const result = await fetchText(url);
+        if (!result.ok) throw new Error(`Website returned HTTP ${result.status}`);
+        const source = str(args, "social-evidence");
+        const evidence = source ? JSON.parse(readFileSync(source, "utf8")) as
+          import("./geo/social-links.js").SocialEvidence[] : [];
+        if (!Array.isArray(evidence)) throw new Error("Social evidence must be an array");
+        print(analyzeSocialLinks(result.url, result.body, evidence));
+        break;
+      }
+      case "geo-score-v2": {
+        const { replayV2Evidence } = await import("./geo/score/v2/replay.js");
+        const input = JSON.parse(readFileSync(req(args, "in"), "utf8")) as unknown;
+        const report = await replayV2Evidence(input);
+        const output = str(args, "out");
+        if (output) writeFileSync(output, JSON.stringify(report, null, 2) + "\n", "utf8");
+        print(report);
         break;
       }
       case "geo-audit": {

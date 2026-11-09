@@ -46,6 +46,10 @@ const scoreValue = $("#score-value");
 const tableHost = $("#result-tables");
 const tableNote = $("#result-tables-note");
 const sitemapMapHost = $("#sitemap-map");
+const priorityPanel = $("#geo-priority-panel");
+const priorityList = $("#geo-priority-list");
+const breakdownPanel = $("#geo-breakdown-panel");
+const breakdownList = $("#geo-breakdown-list");
 
 const leadForm = $("#lead-form");
 const leadStatus = $("#lead-status");
@@ -103,10 +107,64 @@ function setTablesNote(text, tone = "") {
   tableNote.hidden = !text;
 }
 
+function renderTopFixes(fixes) {
+  if (!priorityPanel || !priorityList) return;
+  const items = Array.isArray(fixes) ? fixes.slice(0, 3) : [];
+  priorityPanel.hidden = items.length === 0;
+  priorityList.replaceChildren(...items.map((fix) => {
+    const li = document.createElement("li");
+    const name = document.createElement("strong");
+    name.textContent = fix.action || fix.checkId || "Review this check";
+    const points = document.createElement("span");
+    points.className = "geo-priority-points";
+    points.textContent = Number.isFinite(fix.points) ? `+${fix.points} pts recoverable` : "Review";
+    li.append(name, points);
+    return li;
+  }));
+}
+
+const CATEGORY_LABELS = {
+  robots: "Robots.txt", llms: "llms.txt", schema: "Schema JSON-LD",
+  meta: "Meta tags", content: "Content", brand_entity: "Brand & Entity",
+  signals: "Signals", ai_discovery: "AI discovery",
+};
+
+function renderCategoryBreakdown(breakdown, caps) {
+  if (!breakdownPanel || !breakdownList) return;
+  const entries = Object.entries(CATEGORY_LABELS).filter(([key]) =>
+    Number.isFinite(breakdown?.[key]) && Number.isFinite(caps?.[key]) && caps[key] > 0);
+  breakdownPanel.hidden = entries.length === 0;
+  breakdownList.replaceChildren(...entries.map(([key, label]) => {
+    const row = document.createElement("div");
+    row.className = "geo-breakdown-row";
+    const name = document.createElement("span");
+    name.className = "geo-breakdown-label";
+    name.textContent = label;
+    const track = document.createElement("div");
+    track.className = "geo-breakdown-track";
+    track.setAttribute("role", "meter");
+    track.setAttribute("aria-label", label);
+    track.setAttribute("aria-valuemin", "0");
+    track.setAttribute("aria-valuemax", String(caps[key]));
+    track.setAttribute("aria-valuenow", String(Math.max(0, Math.min(caps[key], breakdown[key]))));
+    const fill = document.createElement("span");
+    fill.className = "geo-breakdown-fill";
+    fill.style.width = `${Math.max(0, Math.min(100, 100 * breakdown[key] / caps[key]))}%`;
+    track.append(fill);
+    const value = document.createElement("span");
+    value.className = "geo-breakdown-value";
+    value.textContent = `${breakdown[key]} / ${caps[key]}`;
+    row.append(name, track, value);
+    return row;
+  }));
+}
+
 /** Server read: real rows, real score, top fixes. Falls back to samples. */
 async function loadServerTables(url) {
   if (!CONFIG.apiBase) {
     renderTables(tableHost, sampleTables(dict), dict);
+    renderTopFixes([]);
+    renderCategoryBreakdown(null, null);
     setTablesNote(dict.tables.noApi, "sample");
     return;
   }
@@ -126,13 +184,16 @@ async function loadServerTables(url) {
       scoreEl.style.setProperty("--score", String(payload.score));
       scoreValue.textContent = String(payload.score);
       scoreEl.setAttribute("aria-label", dict.scoreLabel(payload.score));
-      scoreEl.querySelector(".score-label").textContent = dict.tables.geoScore;
+      scoreEl.querySelector(".score-label").textContent = payload.scoreVersion === "v1"
+        ? `${dict.tables.geoScore} · v1` : dict.tables.geoScore;
     }
     if (payload.finalUrl) resultHost.textContent = new URL(payload.finalUrl).hostname.replace(/^www\./, "");
     if (Array.isArray(payload.headline) && payload.headline.length) {
       resultVerdict.textContent = payload.headline.map((item) => `${item.label}: ${item.value}`).join(" · ");
     }
 
+    renderTopFixes(payload.topFixes);
+    renderCategoryBreakdown(payload.scoreBreakdown, payload.scoreMax);
     renderTables(tableHost, payload.tables ?? [], dict);
     renderSitemapMap(sitemapMapHost, payload.sitemapMap ?? null, document.documentElement.lang);
     const measuredAt = new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit", second: "2-digit" });
@@ -140,6 +201,8 @@ async function loadServerTables(url) {
     setTablesNote(dict.tables.serverNote({ at: measuredAt, seconds }), "live");
   } catch (error) {
     renderTables(tableHost, sampleTables(dict), dict);
+    renderTopFixes([]);
+    renderCategoryBreakdown(null, null);
     renderSitemapMap(sitemapMapHost, null, document.documentElement.lang);
     setTablesNote(dict.tables.unavailable(error.message), "sample");
   }

@@ -125,3 +125,98 @@ pretending it was sent.
 npm run cli -- geo-free-read --url https://example.com   # the same payload, in the terminal
 LEADS_PATH=./data/leads.jsonl npm run cli -- leads        # read captured leads
 ```
+
+## Social cross-links in the automatic free read
+
+`POST /api/free-read` now includes `scoreVersion: "v1"` and a `socialLinks`
+object with `outboundProfiles`, `inboundObservationCount` and a limitations
+notice. The `geo.social` data table appears in the existing landing-page
+results. Outbound profile URLs are collected from page anchors and Organization
+JSON-LD `sameAs` entries, without extra social-network requests. Supported
+platforms include Instagram, X/Twitter, Reddit, Discord, TikTok, LinkedIn,
+Facebook, YouTube, Threads, Pinterest, Mastodon and Bluesky.
+
+`not_checked` means a link from that social profile back to the audited site has
+**not** been verified; it must not be interpreted as backlink attribution. The
+public score is still v1. The versioned v2 evidence-replay CLI is separate and
+is never populated with guessed points from this inventory.
+
+## GEO v2 evidence inventory (unscored)
+
+The same `POST /api/free-read` response now also carries `v2Evidence`:
+
+- `gridVersion: "v2.0.0"`, `scoringStatus: "not_scored"`, `source: "geo_v1_audit"`;
+- `categories`: approved v2 point **budgets** plus counts of observed and unavailable source checks, **not earned points**;
+- `findings`: original source-check IDs, category, evidence string and status;
+- `rendering`: explicitly unavailable until a verified-domain Playwright run produces trusted evidence.
+
+Do not display `v2Evidence.categories.*.budget` as earned points or derive a v2
+score from the number of observations. The approved 42-control applicability and
+weight allocations are a separate contract.
+
+## Automatically measured GEO v2 controls (partial)
+
+The URL free-read API includes `v2Measurement` alongside the existing
+`scoreVersion: "v1"` response. This is a separate, **partial** v2 evaluation,
+not a replacement for the public v1 score.
+
+The base collectors cover **17 controls**: R01/R02/R04, L01/L05/L06,
+J01/J02/J06, M01–M04, C03, B01/B02 and D01. The additional collectors
+can measure **18 further controls** when their inputs are conclusive:
+
+| Controls | Reused evidence and deterministic rule |
+|---|---|
+| R03/R05 | Robots rules evaluated on the audited URL, including the citation-bot groups, the wildcard fallback and indexing directives. Complex patterns or scoped headers remain `unknown`. |
+| L02/L03/L04 | Parsed llms.txt heading, substantive summary, Markdown section count and safe HTTP(S) document-link syntax. Links are **not** claimed reachable from syntax alone. |
+| J03/J04/J05 | Coherent JSON-LD entity @id/url pairs; WebSite↔WebPage relationships; matching schema for a page type inferred unambiguously. |
+| M05 | Explicitly consistent indexing directives. Intentional noindex or crawler-specific directives require an owner policy and remain `unknown`. |
+| C01/C02/C06/C07/C08 | Extractable H1/introduction, visible FAQ Q/A, paragraph plus list/table, visible updated date matching structured `dateModified`, and contextual internal anchors. C02 needs declared questions. |
+| B03/B05 | Identical social profiles declared in both site links and `sameAs`; attributed expert author on an editorial page with a matching visible Person declaration. No social backlink is inferred. |
+| D02/D03 | Trusted owner-declared key URLs compared to a fetched **page** sitemap; navigable, already-verified AI FAQ/service documentation endpoints. Sitemap indexes are not silently assumed complete. |
+
+These are **maximum instrumentable counts**, not an assertion that every URL
+passes or can be measured. `pageHtml` comes from the existing page fetch, and
+`sitemap.xml` from the existing sitemap fetch. The optional
+`ownerImportantUrls` list must be set **server-side by the verified domain
+owner** and constrained to the audited origin; the public free-read request
+cannot submit one. No new requests,
+external backlink crawling, or LLM judgments are introduced.
+
+**Still requiring additional independent evidence:** C04 (checkable cited
+claims), C05 (verified reference relevance/reachability), B04 (external entity
+references), P01/P02 (verified Playwright snapshot; an offline adapter already
+exists), P03 (isolated crawler-identity network logs), and P04 (real-browser
+stability/timing/error logs). Each unresolved control carries its own
+`unknown` reason. None receives zero or full points by guesswork.
+
+`v2Measurement.score` is `null` unless all applicable v2 controls are
+resolved. `scoreRange` is a conservative interval, not a publication-ready
+score. `status: "failed"` applies when the audited page is inaccessible.
+The `v2Measurement` object carries measured/unknown/excluded budgets by
+category, snapshot and audit hashes and the list of unmeasured control IDs.
+
+## Auditable GEO v2 per-control results
+
+`v2Measurement.controls` returns one record for each approved control, in
+canonical rubric order. Each includes its ID, category, title, maximum points,
+status, awarded points (or null), proof (type, value, source URL), and unknown or
+N/A reason. Unknown observations expose no invented proof.
+`v2Measurement.observationHash` is a SHA-256 digest of that complete ordered
+trace; it changes when the measurements or proof change even if the snapshot
+and grid hashes remain the same. Proof URLs identify where evidence was
+observed; an extract from an HTTP response does not by itself certify any
+external claim or social backlink.
+
+### Sitemap and AI discovery v2 evidence
+
+R04 reuses the already-fetched sitemap from the public free read, verifying
+that its URL is declared in `robots.txt` and that the parsed XML includes
+same-domain pages. No extra network request is issued for v2 scoring.
+If a sitemap is declared but its content could not be verified, R04 remains
+`unknown`; an absent declaration in successfully fetched `robots.txt`
+is a measured failure.
+
+D01 uses the observed HTTP status of each AI-discovery endpoint. A missing
+HTTP response (status 0) makes the control `unknown`, not a measured zero.
+With complete responses, full points require a usable well-known AI document
+and a valid AI summary; the status and validation signals are included in proof.
