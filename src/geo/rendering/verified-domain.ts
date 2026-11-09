@@ -1,5 +1,3 @@
-import { isIP } from "node:net";
-
 /** Supplied only by the trusted domain-ownership registry, never a client request. */
 export interface VerifiedDomainGrant {
   hostname: string;
@@ -37,7 +35,8 @@ export function authorizeVerifiedAuditTarget(
       target.hostname !== granted.hostname || grant.hostname !== granted.hostname ||
       granted.host !== granted.hostname ||
       grant.hostname.includes("/") || grant.hostname.includes("@") ||
-      isIP(target.hostname) !== 0 || target.hostname === "localhost" ||
+      /^\d+\.\d+\.\d+\.\d+$/.test(target.hostname) || target.hostname.startsWith("[") ||
+      target.hostname === "localhost" ||
       target.hostname.endsWith(".localhost") || !target.hostname.includes(".")) {
     throw new Error("Target must be an exact verified public HTTPS hostname");
   }
