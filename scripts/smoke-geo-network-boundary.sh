@@ -9,12 +9,13 @@ cleanup() {
 }
 trap cleanup EXIT
 
-docker network create --driver bridge --internal "$network" >/dev/null
+docker network create --driver bridge --internal \
+  --opt com.docker.network.bridge.gateway_mode_ipv4=isolated "$network" >/dev/null
 gateway="$(docker network inspect -f '{{(index .IPAM.Config 0).Gateway}}' "$network")"
 if [[ -z "$gateway" ]]; then echo "Missing bridge gateway" >&2; exit 1; fi
-# The listener deliberately runs on the disposable CI host bridge to detect
-# bypassing the intended gateway via direct container -> Docker host traffic.
-python3 -m http.server 18765 --bind "$gateway" >/dev/null 2>&1 &
+# Bind to all disposable CI host interfaces: in isolated gateway mode the
+# private Docker bridge must not have an address on the host.
+python3 -m http.server 18765 --bind 0.0.0.0 >/dev/null 2>&1 &
 server_pid="$!"
 sleep 1
 if ! kill -0 "$server_pid" 2>/dev/null; then echo "CI probe listener failed" >&2; exit 1; fi
