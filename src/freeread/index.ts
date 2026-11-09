@@ -14,6 +14,7 @@ import { runGeoAudit } from "../geo/audit.js";
 import { fetchText, type FetchResult, type Fetcher } from "../geo/http.js";
 import { HtmlDoc } from "../geo/html.js";
 import { analyzeSocialLinks } from "../geo/social-links.js";
+import { collectV2Evidence, type V2EvidenceInventory } from "../geo/score/v2/observations.js";
 import type { SocialLink } from "../geo/social-links.js";
 import { ga4Table, gscTable, trafficTable, type TrafficSample } from "./analytics.js";
 import { seoTables, type DataTable } from "./seo.js";
@@ -46,6 +47,8 @@ export interface FreeReadResult {
   sitemapMap: SitemapMap | null;
   socialLinks: { outboundProfiles: SocialLink[]; inboundObservationCount: number; notice: string };
   scoreVersion: "v1";
+  /** Measured-vs-missing evidence only; not a GEO v2 score. */
+  v2Evidence: V2EvidenceInventory;
   limitations: string[];
 }
 
@@ -182,6 +185,7 @@ export async function runFreeRead(options: FreeReadOptions): Promise<FreeReadRes
     tables,
     sitemapMap: buildSitemapMap(sitemap?.body ?? null, sitemap?.url ?? null, host),
     scoreVersion: "v1",
+    v2Evidence: collectV2Evidence(audit),
     socialLinks: { outboundProfiles: social.outboundProfiles, inboundObservationCount: 0, notice: social.notice },
     limitations: [
       "The GEO score is the existing v1 rubric, not the developing v2 score.",
