@@ -57,6 +57,11 @@ describe("free read", () => {
     expect(result.score).toBeGreaterThan(0);
     expect(result.score).toBeLessThanOrEqual(100);
     expect(result.topFixes.length).toBeLessThanOrEqual(3);
+    expect(result.scoreVersion).toBe("v1");
+    expect(Object.keys(result.scoreBreakdown)).toHaveLength(8);
+    expect(Object.keys(result.scoreMax)).toHaveLength(8);
+    expect(Object.values(result.scoreBreakdown).reduce((sum, points) => sum + points, 0)).toBe(result.score);
+    expect(Object.values(result.scoreMax).reduce((sum, points) => sum + points, 0)).toBe(100);
     expect(result.headline.find((row) => row.label === "GEO score")?.value).toMatch(/^\d+\/100$/);
   });
 
