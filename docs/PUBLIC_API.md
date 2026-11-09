@@ -125,3 +125,18 @@ pretending it was sent.
 npm run cli -- geo-free-read --url https://example.com   # the same payload, in the terminal
 LEADS_PATH=./data/leads.jsonl npm run cli -- leads        # read captured leads
 ```
+
+## Social cross-links in the automatic free read
+
+`POST /api/free-read` now includes `scoreVersion: "v1"` and a `socialLinks`
+object with `outboundProfiles`, `inboundObservationCount` and a limitations
+notice. The `geo.social` data table appears in the existing landing-page
+results. Outbound profile URLs are collected from page anchors and Organization
+JSON-LD `sameAs` entries, without extra social-network requests. Supported
+platforms include Instagram, X/Twitter, Reddit, Discord, TikTok, LinkedIn,
+Facebook, YouTube, Threads, Pinterest, Mastodon and Bluesky.
+
+`not_checked` means a link from that social profile back to the audited site has
+**not** been verified; it must not be interpreted as backlink attribution. The
+public score is still v1. The versioned v2 evidence-replay CLI is separate and
+is never populated with guessed points from this inventory.
