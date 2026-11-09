@@ -34,6 +34,8 @@ describe("automatic v2 HTTP collectors", () => {
     expect(result.byCategory.meta.earned).toBe(9);
     expect(result.unmeasuredControls).toContain("P01");
     expect(result.unmeasuredControls).toContain("B04");
+    expect(result.controls.find(control => control.controlId === "D01")).toMatchObject({ status: "measured", earned: 0 });
+    expect(result.controls.find(control => control.controlId === "R04")).toMatchObject({ status: "measured", earned: 0 });
     expect(result.controls).toHaveLength(42);
     expect(result.observationHash).toMatch(/^[a-f0-9]{64}$/);
     expect(result.controls.find(control => control.controlId === "J06")).toMatchObject({
@@ -51,6 +53,32 @@ describe("automatic v2 HTTP collectors", () => {
     audit.details.llms.wordCount = 1001;
     const aboveThreshold = await collectAutomaticV2(audit);
     expect(aboveThreshold.byCategory.llms.earned - atThreshold.byCategory.llms.earned).toBe(4);
+  });
+
+  it("only credits sitemap declaration when parsed XML is verified", async () => {
+    const audit = await runGeoAudit({ url: "https://acme.test/", fetcher });
+    audit.details.robots.sitemaps = ["https://acme.test/sitemap.xml"];
+    const good = await collectAutomaticV2(audit, [], {
+      sitemap: { url: "https://acme.test/sitemap.xml", valid: true },
+    });
+    expect(good.controls.find(control => control.controlId === "R04")).toMatchObject({
+      status: "measured", earned: 2,
+    });
+    const invalid = await collectAutomaticV2(audit, [], {
+      sitemap: { url: "https://acme.test/sitemap.xml", valid: false },
+    });
+    expect(invalid.controls.find(control => control.controlId === "R04")?.earned).toBe(0);
+    const unchecked = await collectAutomaticV2(audit);
+    expect(unchecked.controls.find(control => control.controlId === "R04")?.status).toBe("unknown");
+  });
+
+  it("does not turn unavailable AI endpoint responses into discovery failures", async () => {
+    const audit = await runGeoAudit({ url: "https://acme.test/", fetcher });
+    audit.details.ai_discovery.endpointStatus.summary = 0;
+    const result = await collectAutomaticV2(audit);
+    expect(result.controls.find(control => control.controlId === "D01")).toMatchObject({
+      status: "unknown", earned: null,
+    });
   });
 
   it("keeps missing HTTP measurements unknown instead of zero", async () => {
