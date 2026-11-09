@@ -72,6 +72,18 @@ describe("free read", () => {
     expect(meta.rows.find((row) => row.label === "Canonical")?.status).toBe("pass");
   });
 
+  it("includes observed social outbound links in the public URL report", async () => {
+    const result = await runFreeRead({ url: "https://acme.com/", fetcher: fakeFetcher() });
+    expect(result.scoreVersion).toBe("v1");
+    expect(result.socialLinks.outboundProfiles).toEqual([
+      expect.objectContaining({ platform: "linkedin", inbound: "not_checked" }),
+    ]);
+    expect(result.socialLinks.inboundObservationCount).toBe(0);
+    const socialTable = result.tables.find(table => table.id === "geo.social");
+    expect(socialTable?.rows[0].value).toBe("https://www.linkedin.com/company/acme");
+    expect(result.limitations.join(" ")).toContain("not automatically verified");
+  });
+
   it("returns sitemap-only map metrics", async () => {
     const result = await runFreeRead({ url: "https://acme.com/", fetcher: fakeFetcher() });
     expect(result.sitemapMap?.nodeCount).toBe(2);
