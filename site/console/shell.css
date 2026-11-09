@@ -218,3 +218,12 @@ body.console-page:has(.public-console:not([hidden])) { --pc-bg:#06060f; --pc-pan
 .public-login-card { display:grid; grid-template-columns:minmax(0,1fr) minmax(0,1fr); gap:2rem; margin-top:1rem; }.public-login-card .c-form { grid-template-columns:minmax(0,1fr); }.public-login-card .c-field { color:var(--pc-muted); }.public-login-card .c-field input { background:var(--pc-bg); border-color:var(--pc-border); color:var(--pc-text); padding:.8rem; }.public-login-card .btn { border:0; color:var(--pc-text); background:var(--pc-gradient); padding:.8rem 1rem; cursor:pointer; }.public-login-card .public-login-help { font-size:.75rem !important; margin-top:.8rem !important; }.public-login-card .c-error { color:#ff9eae; }.public-console :focus-visible { outline:2px solid var(--pc-accent); outline-offset:3px; }
 @media(max-width:768px) { .public-header-label,.public-sidebar { display:none; }.public-layout { grid-template-columns:minmax(0,1fr); }.public-heading { flex-wrap:wrap; }.public-results-grid,.public-login-card { grid-template-columns:minmax(0,1fr); }.public-login-card { gap:1rem; }.public-summary { align-items:flex-start; }.public-score strong { font-size:2.3rem; } }
 @media(max-width:375px) { .public-summary { flex-direction:column; }.public-header { gap:.5rem; }.public-brand { font-size:1rem; }.public-back { font-size:.75rem; } }
+
+/* Subscription management: status and pilot cards share the console card system. */
+.c-billing { display:grid; gap:1rem; max-width:940px; }
+.c-billing-plans { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:1rem; }
+.c-billing-price { font-size:1.15rem; font-weight:700; }
+.c-billing-consent { display:flex; flex-wrap:wrap; align-items:center; gap:.35rem; font-size:.88rem; line-height:1.5; }
+.c-billing-consent input { width:1rem; height:1rem; flex:none; }
+.c-billing .c-card .btn { margin:.4rem .4rem 0 0; }
+@media(max-width:720px) { .c-billing-plans { grid-template-columns:1fr; } }

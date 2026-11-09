@@ -16,6 +16,7 @@ import { mountPublicApi } from "./http/public-api.js";
 import { buildCompetitionMcpRouter } from "./console/competition-mcp.js";
 import { mountConsoleApi } from "./console/api.js";
 import { startScheduler } from "./console/ops-scheduler.js";
+import { mountBillingApi } from "./billing/api.js";
 
 function getVersion(): string {
   try {
@@ -124,6 +125,8 @@ export async function startServer(transportType: "stdio" | "http" = "stdio") {
 
   // Console API â€” Keycloak-protected (OIDC bearer tokens validated via JWKS).
   mountConsoleApi(app);
+  // Cloud-only billing: separate Mollie website profile, isolated ledger, disabled by default.
+  mountBillingApi(app);
   app.use("/api/mcp/competition", buildCompetitionMcpRouter());
   // Operations scheduler (T-11): periodic visibility + rank checks per tenant.
   // Opt-in through env so tests, stdio runs and CI stay quiet.
