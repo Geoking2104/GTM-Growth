@@ -46,6 +46,8 @@ const scoreValue = $("#score-value");
 const tableHost = $("#result-tables");
 const tableNote = $("#result-tables-note");
 const sitemapMapHost = $("#sitemap-map");
+const priorityPanel = $("#geo-priority-panel");
+const priorityList = $("#geo-priority-list");
 
 const leadForm = $("#lead-form");
 const leadStatus = $("#lead-status");
@@ -103,10 +105,27 @@ function setTablesNote(text, tone = "") {
   tableNote.hidden = !text;
 }
 
+function renderTopFixes(fixes) {
+  if (!priorityPanel || !priorityList) return;
+  const items = Array.isArray(fixes) ? fixes.slice(0, 3) : [];
+  priorityPanel.hidden = items.length === 0;
+  priorityList.replaceChildren(...items.map((fix) => {
+    const li = document.createElement("li");
+    const name = document.createElement("strong");
+    name.textContent = fix.action || fix.checkId || "Review this check";
+    const points = document.createElement("span");
+    points.className = "geo-priority-points";
+    points.textContent = Number.isFinite(fix.points) ? `+${fix.points} pts recoverable` : "Review";
+    li.append(name, points);
+    return li;
+  }));
+}
+
 /** Server read: real rows, real score, top fixes. Falls back to samples. */
 async function loadServerTables(url) {
   if (!CONFIG.apiBase) {
     renderTables(tableHost, sampleTables(dict), dict);
+    renderTopFixes([]);
     setTablesNote(dict.tables.noApi, "sample");
     return;
   }
@@ -134,6 +153,7 @@ async function loadServerTables(url) {
       resultVerdict.textContent = payload.headline.map((item) => `${item.label}: ${item.value}`).join(" · ");
     }
 
+    renderTopFixes(payload.topFixes);
     renderTables(tableHost, payload.tables ?? [], dict);
     renderSitemapMap(sitemapMapHost, payload.sitemapMap ?? null, document.documentElement.lang);
     const measuredAt = new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit", second: "2-digit" });
@@ -141,6 +161,7 @@ async function loadServerTables(url) {
     setTablesNote(dict.tables.serverNote({ at: measuredAt, seconds }), "live");
   } catch (error) {
     renderTables(tableHost, sampleTables(dict), dict);
+    renderTopFixes([]);
     renderSitemapMap(sitemapMapHost, null, document.documentElement.lang);
     setTablesNote(dict.tables.unavailable(error.message), "sample");
   }
