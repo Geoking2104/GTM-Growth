@@ -153,3 +153,21 @@ The same `POST /api/free-read` response now also carries `v2Evidence`:
 Do not display `v2Evidence.categories.*.budget` as earned points or derive a v2
 score from the number of observations. The approved 42-control applicability and
 weight allocations are a separate contract.
+
+## Automatically measured GEO v2 controls (partial)
+
+The URL free-read API includes `v2Measurement` alongside the existing
+`scoreVersion: "v1"` response. This is a separate, **partial** v2 evaluation,
+not a replacement for the public v1 score.
+
+The initial HTTP collectors explicitly measure R01/R02, L01/L05/L06,
+J01/J02, M01/M02/M03/M04 and C03 where their required HTTP/HTML evidence
+exists. They do not copy old v1 point allocations. Other v2 controls remain
+`unknown`; in particular the rendering category remains unmeasured until
+the authorized, isolated Playwright worker supplies proof.
+
+`v2Measurement.score` is `null` unless all applicable v2 controls are
+resolved. `scoreRange` is a conservative interval, not a publication-ready
+score. `status: "failed"` applies when the audited page is inaccessible.
+The `v2Measurement` object carries measured/unknown/excluded budgets by
+category, snapshot and audit hashes and the list of unmeasured control IDs.
