@@ -65,6 +65,9 @@ describe("free read", () => {
     expect(result.v2Measurement.applicableMaximum).toBeGreaterThan(0);
     expect(result.v2Measurement.unknownMaximum).toBeGreaterThan(0);
     expect(result.v2Measurement.unmeasuredControls).toContain("P01");
+    expect(result.v2Measurement.controls.find(control => control.controlId === "R04")).toMatchObject({
+      status: "measured", earned: 2,
+    });
     expect(result.v2Evidence.categories.rendering).toEqual({ budget: 12, observed: 0, unavailable: 1 });
     expect(result.v2Evidence.categories.jsonld.observed).toBeGreaterThan(0);
     expect(result.v2Evidence.findings.some(f => f.sourceCheckId === "rendering.playwright" && f.status === "unavailable")).toBe(true);
