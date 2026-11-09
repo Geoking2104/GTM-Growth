@@ -1,6 +1,7 @@
 import { CATEGORY_WEIGHTS, GRID_VERSION } from "./rubric.js";
 import type { V2Category } from "./rubric.js";
-import type { GeoAuditResult, GeoCategory, GeoCheck } from "../../types.js";
+import type { GeoAuditResult, GeoCheck } from "../../types.js";
+import type { GeoCategory } from "../../config.js";
 
 /**
  * Lossless evidence inventory for the future GEO v2 control grid.
