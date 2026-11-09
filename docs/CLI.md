@@ -69,3 +69,26 @@ npm run cli -- cutover-checklist ...
 ```
 
 See `npm run cli -- help` for the full list.
+
+
+## GEO Score v2 — deterministic evidence replay (pilot)
+
+The v2 replay command accepts a JSON envelope with `grid`, `snapshot` and
+`observations` fields, then calculates the approved eight-category 100-point
+score with reproducible snapshot/grid hashes:
+
+```bash
+npm run cli -- geo-score-v2 --in evidence.json --out score-v2.json
+```
+
+The `grid` must use version `v2.0.0` and the approved category weights
+(robots 14, llms 14, JSON-LD 14, metadata 10, content 18, brand 10,
+AI discovery 8, rendering 12). Each control must have exactly one observation
+with earned integer points and a nonempty proof. The exported report contains
+`score`, `scoreByCategory`, `topActions`, `snapshotHash`, `auditHash`
+and `evidenceStatus: "user_supplied_unverified"`.
+
+**Important:** This command replays supplied evidence; it does not inspect the
+live site, verify domain ownership, attest the proofs, or publish a score.
+The published v2 production grid and automated evidence collection are separate
+follow-up deliverables. The existing `geo-audit` (v1) remains unchanged.
