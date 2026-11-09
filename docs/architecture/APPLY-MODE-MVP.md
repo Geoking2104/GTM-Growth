@@ -1,6 +1,6 @@
 # Apply Mode — architecture and phased delivery (ADR, 2026-11-09)
 
-**Status:** proposed scope, safe foundation in progress. **No production-write adapter is enabled.**
+**Status:** Phases 0.1–0.2 read-only preview and Phase 0.3 encrypted registry foundations implemented; approval APIs and production writers are not connected. **No production-write adapter is enabled.**
 
 This ADR incorporates the [owner-supplied *Cahier des charges — Mode Appliquer v1.0*](../specs/APPLY-MODE-v1-2026-11-09.md) into the GTM Growth roadmap. The core principle is **copilot, never autopilot**: inspect the evidence, show a concrete diff, preview, obtain an authenticated approval, back up, write to one declared target, independently verify, and offer rollback. The approved GEO v2 score rubric and its incomplete-evidence safeguards remain separate.
 
@@ -28,7 +28,7 @@ flowchart TD
   G -->|Failure| J["Rollback proposal and event"]
 ```
 
-The preview stage is the only one currently enabled. The actual `execute` and `rollback` transport paths are deferred until roles, connection method and recovery guarantees have been validated.
+Only the preview stage is enabled in user-facing interfaces. The approval/snapshot registry is available as a server-side library but is not initialized by the API or console. Actual `execute` and `rollback` transport paths are deferred until credentials, roles, connection method, locking and recovery guarantees have been validated.
 
 ## 2. v1 product scope
 
@@ -57,7 +57,9 @@ verification   (id, attempt_id, observed_http, evidence_hash, checks, status, ch
 audit_events   (id, tenant_id, actor_sub, target, event, correlation_id, timestamp, digest)
 ```
 
-- Store secrets and encrypted snapshot bytes only server-side. Prefer per-tenant keys and a separately validated retention/erasure policy. Append-only *audit events* need not imply indefinite retention of secret-bearing snapshot payloads.
+- **Implemented as a Node-only library:** `ApplyRegistry` stores encrypted preview JSON, a single persisted exact-diff approval per proposal, an encrypted original-content snapshot and HMAC-chained, tenant-scoped events. It requires a trusted `TenantDomainGrantReader` supplied by the server and a 32-byte operator-provided encryption key; neither comes from client JSON. The caller must explicitly instantiate it and provide safe secret management; no API wiring or on-by-default key exists.
+- Encrypt previews and snapshots using AES-256-GCM with fresh nonces, associated tenant/proposal context and purpose-separated HKDF key material. Snapshot content is bounded to 64 KiB; proposal JSON to 256 KiB. Database file permissions are `0600`. Cryptographic integrity checks fail closed for corrupted or cross-context payloads. This is a local-at-rest protection, **not a replacement for full-disk encryption, database access control or key rotation**.
+- **Implemented but not scheduled:** `pruneExpiredPayloads` removes ciphertext for expired snapshots and previews while retaining audit metadata. The snapshot retention is configurable from 1 to 90 days (default 30); approval TTL is at most five minutes and additionally bounded by the preview expiry. Plan a scheduled purge and a separately validated key rotation/retention policy before deployment; prefer per-tenant encryption keys in later phases. The HMAC chain detects event modification but **not deletion of the terminal event** without external checkpoints.
 - Use SQLite transactions on the existing VPS (Phase 0), with unique `(tenant_id, target_kind, target_path, active_attempt)` locks and idempotency keys. Never hold a DB transaction open across an external CMS/GTM network call.
 - Capture the exact pre-write content plus version/ETag when possible. Re-fetch and compare the observed SHA-256 **just before** writing; any drift means a fresh proposal and diff are required.
 - Attempt states: `proposed → previewed → approved → backed_up → applying → verifying → verified`. Explicit branches: `to_verify`, `failed`, `uncertain` (lost ACK; reconcile **before retry**), `rollback_requested → rolled_back`. A rollback is a *new* event and needs authorization.
@@ -117,9 +119,9 @@ This is an architectural contract, **not** a claim that the methods have been wi
 | title, description, H1 | Existing audit evidence; page metadata edits pending | Scoped WordPress page/post versioning |
 | WordPress content draft | Existing adapter creates `status: draft`; legacy console now reports **draft created** and never announces it to IndexNow | New connector authorization and rollback before making it an Apply action |
 | GTM/GA4 tags, consent, duplicates | Existing inspection and write APIs; Apply draft workspace pending | Staging, tag-diff review, consent evidence and no auto-publish |
-| Reader/editor/approver/admin and tenant isolation | **Implemented as a pure deny-by-default policy**; tenant-authenticated storage and mappings pending | Keycloak-backed grants and immutable approvals |
-| Diff, preview, approval, explicit confirmation | **Implemented:** deterministic file preview, authenticated tenant-scoped preview API and console diff display, plus guard/state policy; no approval UI/API | Persistent single-use approvals and audited UX |
-| Backup, atomicity, verification, rollback | State contract documented; no live adapter | Encrypted snapshot, CAS lock, independent checks and rollback rehearsal |
+| Reader/editor/approver/admin and tenant isolation | **Implemented as a pure policy and trusted Keycloak-claims mapper**, plus tenant-scoped SQLite registry. Not yet wired into authenticated approval API | Enforce trusted role/tenant identity in the API, reject cross-tenant requests |
+| Diff, preview, approval, explicit confirmation | **Implemented:** deterministic file preview, tenant-scoped console preview, persistent exact-diff approval with explicit confirmation/expiry; no approval UI/API | API integration, displayed-diff confirmation, one-time consumption and conflict locks |
+| Backup, atomicity, verification, rollback | **Implemented:** encrypted bounded original-content snapshot with drift check, retention operation and HMAC audit chain; no live writer | Scheduled purge, one-active-attempt CAS lock, independent checks and rollback rehearsal |
 | CLI, REST and MCP interfaces | **Implemented:** `geo-apply --dry-run`, `POST /api/console/apply/preview`; no REST/MCP writers | Each interface must use the same trusted approval service |
 | Console board, 3-click path and immutable history | **Implemented:** read-only GEO fixes tab and side-by-side source/diff review; board/history pending | No writes from overview, same-tenant event history |
 | Owned/verified domain and private score publication | Existing GEO v2 verification work stays separate; no public score release | Explicit owner consent, exact-domain grant and external rescan |
@@ -130,14 +132,14 @@ The owner-approved 42-control Score GEO v2 rubric remains the measurement author
 |---|---|---|
 | 0.1 | Scoped immutable proposal, line diff, `geo-apply --dry-run`, unit tests, English-first docs | No external write, no stored secrets. |
 | 0.2 | **Partially implemented:** authenticated `POST /api/console/apply/preview`, console diff/preview and isolation tests. Next: dynamic fix list and per-tenant audit read view | Read-only API, URL SSRF guard and tenant isolation tests. |
-| 0.3 | Approval registry, four-role mapping, idempotency + locking, encrypted snapshot store | Deny by default; all negative authorization tests must pass. |
+| 0.3 | **Library implemented:** SQLite exact-diff approval registry, four-role Keycloak mapping, AES-GCM preview/snapshot encryption, drift check and tenant HMAC audit chain. **Still pending:** API/console wiring, active-attempt idempotency locks, single-use consumption, purge scheduler and staging recovery. | All negative authorization tests pass; do not enable writes until missing gates are implemented. |
 | 0.4 | WordPress draft adapter and read-only plugin conflict probe; then scoped file changes behind flag | Owner selects file management mode and connector strategy; backup and rollback smoke-tested in staging. |
 | 0.5 | GTM draft workspace/preview adapter, independent GA4 verification | No publish in MVP; separate release approval required. |
 | 0.6 | Pilot for verified owned domains, post-write external rescan and scored delta | Green verification + rollback rehearsal before wider rollout. |
 
 Implemented read-only REST: `POST /api/console/apply/preview` behind the existing Keycloak middleware. The server checks a registered exact tenant hostname (normalizing the common `www` alias) before one DNS-pinned public GET. **Registration is not ownership proof**: DNS TXT/HTTPS verification is still required before any future write. Requests supplying `apply`, `confirm` or an execution mode fail before fetch. The tab is under **Act → GEO fixes** with diff, both versions, hashes and manual-review notices; it has no execution button.
 
-Planned mutation API: `POST /api/apply/:id/approve`, `POST /api/apply/:id/execute`, `GET /api/apply/:id/verify`, `POST /api/apply/:id/rollback`. Every mutation endpoint requires server-recorded approval, not merely an HTTP parameter. The frontend must show projected and measured scores distinctly.
+Planned mutation API: `POST /api/apply/:id/approve`, `POST /api/apply/:id/execute`, `GET /api/apply/:id/verify`, `POST /api/apply/:id/rollback`. **None of these endpoints is active.** Every mutation endpoint must consult the trusted registry, check authorization and expiry, atomically consume one-time approval, and enforce target-level idempotency and a version precondition; a request `confirm=true` alone is never sufficient. The frontend must show projected and measured scores distinctly.
 
 ## 7. Working architectural defaults — site-specific validation **before enabling writes**
 
@@ -148,4 +150,4 @@ Planned mutation API: `POST /api/apply/:id/approve`, `POST /api/apply/:id/execut
 
 These are adopted as safe design defaults, **not** authorization to activate any external writer. Credentials, backup restoration, retention periods and site capabilities must be validated before switching a feature flag on.
 
-No production deployment or PR merge is authorized by this ADR. The first implementation milestone can ship as a reviewable branch independently from the GEO v2 scorer PR #30.
+This ADR does **not authorize a production deployment**. Repository merge/release decisions are made separately by the project owner. Keep the Apply Mode contract independently reviewable from the GEO v2 scorer PR #30 until the integration gates above are satisfied.

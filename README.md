@@ -7,7 +7,7 @@ The agent reads live Google data, audits setups, crosses organic search with sit
 | | |
 |---|---|
 | **MCP tools** | 99 (GA4 · GTM/sGTM · MP · Search Console · Indexing · PageSpeed · CrUX · GEO · IndexNow · GeoSuite) |
-| **Tests** | 320 · typecheck + lint + build in CI |
+| **Tests** | 389 · typecheck + lint + build in CI |
 | **License** | Apache-2.0 · Node ≥ 20 · read-only by default |
 | **External APIs** | Free Google APIs only — no SerpApi, no DataForSEO, no commercial LLM |
 | **Website** | <https://geoking2104.github.io/GTM-Growth/> — free URL read, then the full audit |
@@ -40,7 +40,11 @@ npm run cli -- geo-apply --url https://example.com --fix robots-ai --dry-run
 npm run cli -- geo-apply --url https://example.com --fix robots-ai --diff
 ```
 
-The authenticated console also exposes **Act → GEO fixes → Preview**, through `POST /api/console/apply/preview` (`url`, `fix: "robots-ai"`, `mode: "dry-run"`). This route derives the tenant from Keycloak, requires a registered HTTPS hostname, and never enables application. The CLI and console fetch public `robots.txt` with SSRF protections, generate a bounded diff and SHA-256 evidence, and flag manual conflicts. **Neither can write to a website**: CLI `--confirm` and `--apply` fail closed. The existing WordPress content route creates **drafts only** and no longer submits draft URLs to IndexNow. The approval policy and state machine are tested but are not wired to external adapters or execution endpoints. See the [full owner specification](docs/specs/APPLY-MODE-v1-2026-11-09.md) and [Apply Mode architecture/roadmap and scope register](docs/architecture/APPLY-MODE-MVP.md).
+The authenticated console also exposes **Act → GEO fixes → Preview**, through `POST /api/console/apply/preview` (`url`, `fix: "robots-ai"`, `mode: "dry-run"`). This route derives the tenant from Keycloak, requires a registered HTTPS hostname, and never enables application. The CLI and console fetch public `robots.txt` with SSRF protections, generate a bounded diff and SHA-256 evidence, and flag manual conflicts. **Neither can write to a website**: CLI `--confirm` and `--apply` fail closed. The existing WordPress content route creates **drafts only** and no longer submits draft URLs to IndexNow.
+
+**Phase 0.3 — approval and recovery foundation (library-only):** a Node/SQLite `ApplyRegistry` can persist encrypted previews and before-change snapshots (AES-256-GCM, tenant/proposal-bound authenticated context), an explicit approval bound to the reviewed diff digest and active exact-hostname verification grant, and a per-tenant HMAC-chained audit journal. Keycloak-derived reader/editor/approver/admin identities are mapped server-side; the approver/admin roles can approve only a current, conflict-free proposal. Approval validity is capped at five minutes; encrypted backups have a configurable 1–90-day retention period (30 days by default), with an explicit purge operation. Tests cover tampering, tenant isolation, drift, expiry and revocation. The storage key is operator-provided (32 random bytes); **there is no default key or production registry configuration**.
+
+**Still deliberately disabled:** the registry is not connected to the console, REST/MCP approval routes or production adapters. Purging still needs a scheduled job; exclusive write-attempt locks, consumption of single-use approvals, independent post-write verification and real rollback need implementation and staging validation. No Apply Mode feature can publish WordPress content, edit files on a remote site or publish a GTM version. The existing unrelated GTM write routes are **not** governed by this new approval mechanism. See the [full owner specification](docs/specs/APPLY-MODE-v1-2026-11-09.md) and [Apply Mode architecture, safety gates and scope register](docs/architecture/APPLY-MODE-MVP.md).
 
 ---
 
@@ -447,6 +451,7 @@ docs/                          # all guides (see index below)
 | [docs/CLI.md](docs/CLI.md) | All CLI commands |
 | [docs/GEO.md](docs/GEO.md) | GEO rubric, tools, limits |
 | [docs/architecture/GEO-V2-PLAYWRIGHT-PILOT.md](docs/architecture/GEO-V2-PLAYWRIGHT-PILOT.md) | GEO v2 verified-domain pilot, SQLite ownership registry and Playwright isolation gates |
+| [docs/architecture/APPLY-MODE-MVP.md](docs/architecture/APPLY-MODE-MVP.md) · [Apply Mode owner specification](docs/specs/APPLY-MODE-v1-2026-11-09.md) | Apply Mode roadmap, explicit approval/backup safety gates and implementation status |
 | [docs/INDEXNOW.md](docs/INDEXNOW.md) | IndexNow sequences & weights |
 | [docs/PUBLIC_API.md](docs/PUBLIC_API.md) · [WORKER.md](docs/WORKER.md) | Public API · Cloudflare Worker |
 | [site/reports/opendpe.html](site/reports/opendpe.html) | Sample full audit (71/100) |
@@ -461,8 +466,9 @@ docs/                          # all guides (see index below)
 
 | Update | Detail |
 | --- | --- |
+| **Apply Mode foundation (PR #31)** | Read-only `geo-apply` and authenticated console diff preview, plus library-only AES-GCM-encrypted approval/snapshot registry and tenant HMAC journal. No approval UI or production writers enabled. |
 | **GEO v2 pilot (PR #28, draft)** | Verified-domain DNS TXT/HTTPS challenge flow; SQLite tenant-scoped single-use verification registry; Playwright isolation and SSRF gates documented. No live browser worker or production deployment yet. |
-| **Console Ops** | New **Ops** section (PR #24): tracked prompt pool + bounded BYOK visibility runs (OpenAI/Gemini, client keys) feeding the existing Competition review workflow; arbitrary keyword rank tracking with history, AI-Overview citation detection and drop alerts; article pipeline with deterministic briefs and **mandatory quality gates**; WordPress draft publishing + optional IndexNow announce; alert store and per-tenant scheduler (`OPS_SCHEDULER_ENABLED`, off by default). Tests: `tests/console-ops.test.ts`. |
+| **Console Ops** | New **Ops** section (PR #24): tracked prompt pool + bounded BYOK visibility runs (OpenAI/Gemini, client keys) feeding the existing Competition review workflow; arbitrary keyword rank tracking with history, AI-Overview citation detection and drop alerts; article pipeline with deterministic briefs and **mandatory quality gates**; WordPress draft creation (**no IndexNow notification until independently verified publication**); alert store and per-tenant scheduler (`OPS_SCHEDULER_ENABLED`, off by default). Tests: `tests/console-ops.test.ts`. |
 | **Live AI-visibility collection** | `/ai-visibility/openai-run` (and Gemini status) with tenant-held keys; every collection creates a reviewable dataset; mention heuristics stay provisional until confirmed/rejected. |
 | **Onboarding profiles** | Rich brand profile read from the homepage JSON-LD/meta during guided onboarding (PR #19). |
 | **GTM container discovery** | Console inventory of GTM containers available to the service account (PR #23). |
