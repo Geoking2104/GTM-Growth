@@ -20,9 +20,18 @@ Status: **proposal / not deployable yet**. Applies only to ownership-verified do
 6. Check every top-level navigation, redirect, iframe, worker, script, stylesheet, font, XHR/fetch, WebSocket and service worker request against the same policy. Block third-party requests during the pilot and disable downloads and service workers. On blocked/failed resources, record `render_incomplete` rather than assuming a full render.
 7. Discard browser profile, cookies and temporary files after each job. Cap screenshot dimensions, artifacts and log bytes; never persist authentication secrets, cookies or page-injected tokens. Store evidence privately with retention/deletion rules. The scoring core remains deterministic; failures produce evidence/status rather than invented points.
 
+## Domain ownership protocol (approved: DNS TXT or HTTPS file)
+
+- A tenant administrator requests verification for an **exact** canonical public hostname. The backend creates a random 32-byte challenge, scoped to the tenant, hostname and selected method, with a 30-minute expiry. Store challenge state securely; never let the caller submit a pre-verified grant.
+- **DNS TXT**: publish the exact value `gtm-growth-verification=<64 hexadecimal characters>` at `_gtm-growth-verify.<hostname>`. The resolver must return precisely one matching TXT record at that name. Flatten DNS TXT chunks within each record before handing records to the evaluator.
+- **HTTPS file**: serve that exact value with optional single trailing newline and `Content-Type: text/plain` at `https://<hostname>/.well-known/gtm-growth-verification.txt`. Require a direct HTTP 200 response: **no redirect**, no credentialed URL and at most 128 response characters.
+- The verification service uses an injected **trusted network transport**; the evaluator itself performs no outbound I/O. The transport must restrict DNS, validate every resolved public IP, enforce address pinning/egress filtering and deny internal targets, TLS bypass, redirects, oversized HTTP bodies and unsafe ports. Merely checking the returned `finalUrl` does not mitigate SSRF if the transport follows redirects.
+- On verification success, atomically mark the challenge consumed and write an owner/tenant-bound grant (the sample domain grant expires after seven days). Prevent concurrent requests from consuming the same challenge twice. On grant expiry, domain transfer, tenant deletion or revocation, block new jobs; cancel queued jobs. Reverification is mandatory. A DNS or file proof is **not** consent to publish a score.
+- Do not treat a successful challenge as authorization for subdomains, other ports, HTTP, non-public addresses, or future redirects. Multi-tenant ownership conflicts and a public-suffix/eTLD+1 policy require a separate registry decision.
+
 ## Gate before implementing a runnable container or deployment
 
-- [ ] Ownership registry authoritative source and re-verification/expiry policy approved.
+- [ ] Implement trusted tenant-bound ownership registry with atomic single-use challenge consumption and revocation; review seven-day renewal interval.
 - [ ] VPS-specific egress enforcement demonstrated with DNS rebinding, redirects, IPv4/IPv6 private/metadata and subdomain tests.
 - [ ] Reproducible Playwright/Chromium image digest selected and smoke-tested without affecting current containers.
 - [ ] CPU/RAM/PIDs/time limits load-tested under concurrent production traffic; no OOM or service degradation.
