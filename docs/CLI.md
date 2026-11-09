@@ -47,6 +47,8 @@ npm run cli -- geo-llms --url "https://example.com" --out ./public/llms.txt
 npm run cli -- geo-schema --kind organization --name "Acme" --url "https://acme.com" --out ./schema.html
 npm run cli -- geo-schema --kind faq --name "Acme" --url "https://acme.com/faq" --faq-file ./faqs.json
 npm run cli -- geo-robots --url "https://example.com" --out ./public/robots.txt
+npm run cli -- geo-apply --url "https://example.com" --fix robots-ai --dry-run
+npm run cli -- geo-apply --url "https://example.com" --fix robots-ai --diff
 npm run cli -- geo-citability --url "https://example.com"
 npm run cli -- geo-crawlers --url "https://example.com"
 npm run cli -- geo-drift --url "https://example.com"        # exits 1 when llms.txt is stale
@@ -58,6 +60,14 @@ npm run cli -- geo-positioning --url "https://acme.com" --competitors "https://a
 recommendations ordered by recoverable points. The generators write the artifact when
 `--out` is passed, otherwise they print it. `--faq-file` takes a JSON array of
 `{"question": "...", "answer": "..."}`. Rubric: [GEO.md](GEO.md).
+
+`geo-apply` is the first **read-only Apply Mode milestone**. It fetches the
+public `robots.txt` with DNS pinning/SSRF protections, refuses ambiguous
+responses or redirects, and returns a bounded before/after diff with SHA-256
+proofs and manual-conflict notices. It does **not** modify the remote site.
+`--confirm`, `--apply` and `--mode apply` deliberately fail closed until the
+authenticated approval, backup, verification and rollback adapters exist.
+See [Apply Mode architecture](architecture/APPLY-MODE-MVP.md).
 
 ## Analytics and sGTM
 

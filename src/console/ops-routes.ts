@@ -1,5 +1,4 @@
 ﻿/** Console routes for the operations layer: prompt pool + live AI-visibility
-    articleAlert(tenantId(ctx), { title: draft.title, slug: draft.slug, body: draft.body }, "Publié sur WordPress");
  * (T-9/T-10), alerts and automation config (T-11). All tenant-scoped through
  * the standard scopeRequest guard; writes are explicit and bounded. */
 import type { ConsoleRoute } from "./util.js";
@@ -7,7 +6,7 @@ import { str } from "./util.js";
 import { addPrompt, listPrompts, removePrompt, listVisibilityRuns, addRankKeyword, removeRankKeyword, listAlerts, acknowledgeAlert, readAutomationConfig, writeAutomationConfig } from "./ops-store.js";
 import { engineStatuses, runVisibilityCheck, type EngineId } from "./visibility-runner.js";
 import { noSupplierError, rankBoard, runRankCheck, supplierFromEnv } from "./rank-tracking.js";
-import { buildBrief, produceDraft, publishToWordPress, wpConfigFromEnv, announceViaIndexNow, articleAlert, type DraftMode } from "./content-ops.js";
+import { buildBrief, produceDraft, publishToWordPress, wpConfigFromEnv, articleAlert, type DraftMode } from "./content-ops.js";
 
 const tenantId = (ctx: { tenancy?: { tenant: { id: string } | null } }) => { if (!ctx.tenancy?.tenant) throw new Error("SÃ©lectionnez un tenant."); return ctx.tenancy.tenant.id; };
 const tenantHost = (ctx: { tenancy?: { tenant: { domains: string[] } | null } }) => {
@@ -72,21 +71,18 @@ export const contentRoutes: ConsoleRoute[] = [
   { path: "/content/publish", needsUrl: false, adminOnly: true, handler: async (ctx) => {
     const draft = ctx.body.draft as { title?: string; slug?: string; body?: string; gates?: Array<{ passed: boolean }>; approved?: boolean } | undefined;
     if (!draft || typeof draft.title !== "string" || typeof draft.slug !== "string" || typeof draft.body !== "string") throw new Error("Draft requis (title, slug, body).");
-    if (draft.approved !== true) throw new Error("Le brouillon doit Ãªtre approuvÃ© explicitement (approved: true) avant publication.");
+    if (draft.approved !== true) throw new Error("Le brouillon doit être confirmé explicitement avant son enregistrement dans WordPress.");
     const failed = (draft.gates ?? []).filter((g) => !g.passed);
     if (failed.length) throw new Error(`Quality gates non passÃ©s : ${failed.map((g) => (g as { check?: string }).check ?? "?").join(", ")}. Corrigez le brouillon avant publication.`);
     const config = wpConfigFromEnv(tenantId(ctx));
     if (!config) throw new Error("WordPress non configurÃ© pour ce client (WP_SITE_URL_<TENANT>, WP_USERNAME_<TENANT>, WP_APP_PASSWORD_<TENANT>).");
     const result = await publishToWordPress(config, { title: draft.title, slug: draft.slug, body: draft.body });
-    if (!result.ok) { articleAlert(tenantId(ctx), draft, "Échec de publication WordPress"); throw new Error(result.error); }
-    let indexNow: unknown = null;
-    const key = str(ctx.body.indexnowKey);
-    if (key) {
-      const host = new URL(config.siteUrl).hostname;
-      indexNow = await announceViaIndexNow(host, result.link, key);
-    }
-    articleAlert(tenantId(ctx), draft, "PubliÃ© sur WordPress");
-    return { published: true, postId: result.postId, postUrl: routeLink(config.siteUrl, result.link), indexNow };
+    if (!result.ok) { articleAlert(tenantId(ctx), draft, "Échec de création du brouillon WordPress"); throw new Error(result.error); }
+    // The WordPress adapter always creates status=draft: never announce its URL to IndexNow.
+    // This legacy route is not the future Mode Appliquer approval/write adapter.
+    articleAlert(tenantId(ctx), draft, "Brouillon WordPress créé");
+    return { created: true, published: false, publicationStatus: "draft", postId: result.postId,
+      postUrl: routeLink(config.siteUrl, result.link), indexNow: null };
   } },
 ];
 

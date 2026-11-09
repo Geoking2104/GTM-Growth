@@ -29,6 +29,19 @@ See the [GEO v2 Playwright pilot architecture and security gates](docs/architect
 
 Le Score GEO v2 est en préparation sur le VPS existant, avec audits Playwright limités aux **domaines dont le propriétaire a prouvé le contrôle** (DNS TXT ou fichier HTTPS). Le registre SQLite, les challenges à usage unique et leurs tests sont préparés, mais le moteur navigateur et ses protections réseau doivent encore être intégrés et validés. Les scores restent privés sans consentement explicite à leur publication. **Aucune mise en production n'est effectuée par cette PR.**
 
+## Apply Mode — reviewed fixes, never autopilot (MVP foundation)
+
+The new **Apply Mode** scope extends the audit-to-action journey: select one bounded fix, inspect its before/after diff, preview, explicitly approve, snapshot, apply, independently verify and offer rollback. External writers will require exact-domain ownership, tenant-scoped Keycloak approval, a pre-write backup, drift checks and an append-only audit trail. WordPress content remains **draft-only** and GTM changes stay in a **draft workspace**, with no automatic publication.
+
+The first available milestone is a **read-only CLI preview** for AI crawler rules:
+
+```bash
+npm run cli -- geo-apply --url https://example.com --fix robots-ai --dry-run
+npm run cli -- geo-apply --url https://example.com --fix robots-ai --diff
+```
+
+This fetches public `robots.txt` with SSRF protections, produces a bounded diff and SHA-256 evidence, and flags bot rules requiring manual review. **It cannot write to a website**: `--confirm` and `--apply` fail closed. The existing WordPress content route creates **drafts only** and no longer submits draft URLs to IndexNow. The approval policy and state machine are tested but are not wired to external adapters or a production API. See the [full owner specification](docs/specs/APPLY-MODE-v1-2026-11-09.md) and [Apply Mode architecture/roadmap and scope register](docs/architecture/APPLY-MODE-MVP.md).
+
 ---
 
 ## How to read this README
