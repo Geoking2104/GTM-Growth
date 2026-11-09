@@ -123,7 +123,10 @@ export async function runFreeRead(options: FreeReadOptions): Promise<FreeReadRes
     timeoutMs,
   });
 
-  const v2Measurement = await collectAutomaticV2(audit);
+  const sitemapMap = buildSitemapMap(sitemap?.body ?? null, sitemap?.url ?? null, new URL(finalUrl).hostname);
+  const v2Measurement = await collectAutomaticV2(audit, [], sitemap
+    ? { sitemap: { url: sitemap.url, valid: Boolean(sitemapMap?.nodeCount) } }
+    : {});
   const doc = HtmlDoc.parse(page.body);
   const social = analyzeSocialLinks(finalUrl, page.body);
   const analyticsInput = {
@@ -188,7 +191,7 @@ export async function runFreeRead(options: FreeReadOptions): Promise<FreeReadRes
       action: rec.action,
     })),
     tables,
-    sitemapMap: buildSitemapMap(sitemap?.body ?? null, sitemap?.url ?? null, host),
+    sitemapMap,
     scoreVersion: "v1",
     v2Evidence: collectV2Evidence(audit),
     v2Measurement,
