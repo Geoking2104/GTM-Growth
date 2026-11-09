@@ -58,6 +58,10 @@ describe("free read", () => {
     expect(result.score).toBeLessThanOrEqual(100);
     expect(result.topFixes.length).toBeLessThanOrEqual(3);
     expect(result.scoreVersion).toBe("v1");
+    expect(result.v2Evidence.scoringStatus).toBe("not_scored");
+    expect(result.v2Evidence.categories.rendering).toEqual({ budget: 12, observed: 0, unavailable: 1 });
+    expect(result.v2Evidence.categories.jsonld.observed).toBeGreaterThan(0);
+    expect(result.v2Evidence.findings.some(f => f.sourceCheckId === "rendering.playwright" && f.status === "unavailable")).toBe(true);
     expect(Object.keys(result.scoreBreakdown)).toHaveLength(8);
     expect(Object.keys(result.scoreMax)).toHaveLength(8);
     expect(Object.values(result.scoreBreakdown).reduce((sum, points) => sum + points, 0)).toBe(result.score);
