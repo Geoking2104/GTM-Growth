@@ -1,8 +1,8 @@
 #!/usr/bin/env bash
 # Fail-closed Docker bridge boundary probe. Run on a disposable CI runner only.
 set -euo pipefail
-network="geo-boundary-ci-$"
-proxy="geo-egress-ci-$"
+network="geo-boundary-ci-${GITHUB_RUN_ID:-local}-${RANDOM}"
+proxy="geo-egress-ci-${GITHUB_RUN_ID:-local}-${RANDOM}"
 server_pid=""
 cleanup() {
   if [[ -n "$server_pid" ]]; then kill "$server_pid" 2>/dev/null || true; wait "$server_pid" 2>/dev/null || true; fi
@@ -63,7 +63,7 @@ if (!denied) process.exitCode = 1;
 
 // A deliberate off-host CONNECT must receive a 403 from the real proxy.
 const rejectedByProxy = await new Promise(resolve => {
-  const socket = net.connect({host: "geo-egress-ci-$", port: 3128, timeout: 3000});
+  const socket = net.connect({host: process.env.GEO_CI_PROXY_NAME, port: 3128, timeout: 3000});
   let response = "";
   socket.once("connect", () => socket.write("CONNECT unverified.example:443 HTTP/1.1\\r\\nHost: unverified.example:443\\r\\n\\r\\n"));
   socket.on("data", chunk => { response += chunk.toString("ascii"); if (response.includes("\\r\\n\\r\\n")) { socket.destroy(); resolve(response.startsWith("HTTP/1.1 403")); } });
