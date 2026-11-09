@@ -2,7 +2,7 @@ import { HtmlDoc } from "../../html.js";
 import { canonicalJson, sha256 } from "./calculate.js";
 import type { ObservedControl } from "./calculate.js";
 import { verifySnapshotEnvelope } from "../../proof/snapshot.js";
-import type { SnapshotEnvelope } from "../../geo/proof/snapshot.js";
+import type { SnapshotEnvelope } from "../../proof/snapshot.js";
 import type { RenderEvidence } from "../../../render/offline.js";
 import type { CoverageObservation } from "./coverage.js";
 
