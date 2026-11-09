@@ -73,6 +73,9 @@ jobs:
           gtm-geo-renderer-ci node --input-type=module -e
           'import { chromium } from "playwright-core"; const b = await chromium.launch({ headless: true, chromiumSandbox: true }); try { const p = await b.newPage(); await p.setContent("<title>GEO smoke</title><h1>OK</h1>"); if (await p.title() !== "GEO smoke") process.exitCode = 1; } finally { await b.close(); }'
 
+      - name: Assert GEO internal Docker bridge blocks direct host and internet egress
+        run: bash scripts/smoke-geo-network-boundary.sh
+
       - name: Upload dist artifact
         uses: actions/upload-artifact@v4
         with:
