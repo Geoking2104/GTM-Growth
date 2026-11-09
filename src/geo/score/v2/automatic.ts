@@ -2,16 +2,14 @@ import type { GeoAuditResult } from "../../types.js";
 import { approvedV2Grid } from "./approved-grid.js";
 import { calculateV2Coverage } from "./coverage.js";
 import type { CoverageObservation, V2CoverageScore } from "./coverage.js";
+import { collectSupplementalV2, type V2SupplementalSources } from "./supplemental.js";
 
 /**
  * First HTTP-only GEO v2 collectors. No v1 points are reused. Each measured
  * item is derived from an explicit v2 predicate over the observed response.
  * Unimplemented/inconclusive controls stay unknown, including all rendering.
  */
-export interface V2HttpExtras {
-  /** Only a successfully fetched, already parsed sitemap; no extra fetch. */
-  sitemap?: { url: string; valid: boolean };
-}
+export interface V2HttpExtras extends V2SupplementalSources {}
 
 export async function collectAutomaticV2(
   audit: GeoAuditResult,
@@ -143,6 +141,13 @@ export async function collectAutomaticV2(
     }
   }
 
+  for (const finding of collectSupplementalV2(audit, extras)) {
+    if (values.some(item => item.controlId === finding.controlId)) {
+      throw new Error(`Duplicate HTTP v2 observation: ${finding.controlId}`);
+    }
+    values.push(finding);
+  }
+
   for (const finding of renderFindings) {
     if (!["P01", "P02", "P03", "P04"].includes(finding.controlId)) {
       throw new Error(`Unexpected rendering evidence control: ${finding.controlId}`);
@@ -153,11 +158,17 @@ export async function collectAutomaticV2(
     values.push(finding);
   }
 
-  // All remaining approved controls require instruments/conditions that this
-  // HTTP-only audit cannot yet prove (including Playwright, backlinks and N/A).
+  // Rendering observations may only be supplied by a verified Playwright
+  // snapshot/replay; do not award them from a raw HTTP fetch.
+  const renderingMissing: Record<string, string> = {
+    P01: "Requires initial-HTML versus verified Playwright snapshot evidence",
+    P02: "Requires semantic HTML/DOM comparison from the same verified render snapshot",
+    P03: "Requires isolated crawler-identity network/render logs on a verified domain",
+    P04: "Requires bounded real-browser timing and error logs on a verified domain",
+  };
   for (const control of grid.controls) {
     if (!values.some(item => item.controlId === control.id)) {
-      unknown(control.id, "Collector or sufficient independent evidence not yet available");
+      unknown(control.id, renderingMissing[control.id] ?? "Collector or sufficient independent evidence not yet available");
     }
   }
 

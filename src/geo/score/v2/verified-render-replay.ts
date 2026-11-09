@@ -29,5 +29,10 @@ export async function replayVerifiedV2Rendering(
     url: envelope.snapshot.url,
     fetcher,
   });
-  return collectAutomaticV2(audit, renderFindings);
+  // Reuse the exact source HTML authenticated by the snapshot envelope.
+  // Never substitute renderer HTML for raw-document v2 evidence.
+  const source = envelope.snapshot.resources[0]?.response;
+  return collectAutomaticV2(audit, renderFindings, {
+    ...(source && (source.status === 200 || source.status === 203) ? { pageHtml: source.body } : {}),
+  });
 }

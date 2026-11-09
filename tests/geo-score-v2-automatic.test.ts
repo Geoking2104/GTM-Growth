@@ -30,8 +30,8 @@ describe("automatic v2 HTTP collectors", () => {
     expect(result.score).toBeNull();
     expect(result.applicableMaximum).toBeGreaterThan(0);
     expect(result.byCategory.rendering.unknown).toBe(12);
-    expect(result.byCategory.meta.applicable).toBe(9);
-    expect(result.byCategory.meta.earned).toBe(9);
+    expect(result.byCategory.meta.applicable).toBe(10);
+    expect(result.byCategory.meta.earned).toBe(10);
     expect(result.unmeasuredControls).toContain("P01");
     expect(result.unmeasuredControls).toContain("B04");
     expect(result.controls.find(control => control.controlId === "D01")).toMatchObject({ status: "measured", earned: 0 });

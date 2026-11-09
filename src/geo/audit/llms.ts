@@ -4,6 +4,16 @@ import type { CategoryResult, GeoCheck, LlmsAudit } from "../types.js";
 
 const LINK_RE = /\[([^\]]+)\]\(([^)]+)\)/g;
 
+function documentLinkValid(href: string): boolean {
+  if (!href || href.startsWith("#") || /[\u0000-\u001f<>\s]/.test(href)) return false;
+  try {
+    const url = new URL(href, "https://geo-v2.invalid/llms.txt");
+    return ["https:", "http:"].includes(url.protocol) && !url.username && !url.password;
+  } catch {
+    return false;
+  }
+}
+
 /**
  * Audit /llms.txt against the llmstxt.org shape the model scores: H1 first,
  * a `>` summary, H2 sections, markdown links, depth, and the optional
@@ -22,6 +32,14 @@ export function auditLlms(
   const hasBlockquote = lines.some((line) => line.startsWith("> "));
   const sections = lines.filter((line) => line.startsWith("## "));
   const links = [...(found ? text.matchAll(LINK_RE) : [])];
+  const siteHeading = lines.find((line) => line.startsWith("# "))?.slice(2).trim() ?? "";
+  const summary = lines.filter((line) => line.startsWith("> "))
+    .map((line) => line.slice(2).trim()).join(" ").slice(0, 600);
+  const linkDetails = links.map((match) => ({
+    label: match[1].trim().slice(0, 120),
+    href: match[2].trim().slice(0, 300),
+    valid: documentLinkValid(match[2].trim()),
+  }));
   const wordCount = found ? countWords(text) : 0;
   const hasFull = (fullBody ?? "").trim().length > 0;
 
@@ -49,6 +67,11 @@ export function auditLlms(
     hasFull,
     warnings,
     excerpt: found ? text.slice(0, 400) : "",
+    siteHeading,
+    summary,
+    validLinkCount: linkDetails.filter((item) => item.valid).length,
+    invalidLinkCount: linkDetails.filter((item) => !item.valid).length,
+    linkSamples: linkDetails.slice(0, 6),
   };
 
   const check = (

@@ -124,9 +124,10 @@ export async function runFreeRead(options: FreeReadOptions): Promise<FreeReadRes
   });
 
   const sitemapMap = buildSitemapMap(sitemap?.body ?? null, sitemap?.url ?? null, new URL(finalUrl).hostname);
-  const v2Measurement = await collectAutomaticV2(audit, [], sitemap
-    ? { sitemap: { url: sitemap.url, valid: Boolean(sitemapMap?.nodeCount) } }
-    : {});
+  const v2Measurement = await collectAutomaticV2(audit, [], {
+    pageHtml: page.body,
+    ...(sitemap ? { sitemap: { url: sitemap.url, valid: Boolean(sitemapMap?.nodeCount), xml: sitemap.body } } : {}),
+  });
   const doc = HtmlDoc.parse(page.body);
   const social = analyzeSocialLinks(finalUrl, page.body);
   const analyticsInput = {

@@ -37,6 +37,12 @@ describe("verified, offline Playwright-to-v2 integration", () => {
     expect(result.controls.find(control => control.controlId === "P02")).toMatchObject({
       status: "measured", earned: 3,
     });
+    expect(result.controls.find(control => control.controlId === "C01")).toMatchObject({
+      status: "measured", earned: 0,
+    });
+    expect(result.controls.find(control => control.controlId === "B03")).toMatchObject({
+      status: "measured", earned: 0,
+    });
     expect(result.controls.find(control => control.controlId === "P03")?.status).toBe("unknown");
     expect(result.status).toBe("incomplete");
     expect(result.score).toBeNull();

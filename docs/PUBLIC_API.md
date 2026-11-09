@@ -160,11 +160,34 @@ The URL free-read API includes `v2Measurement` alongside the existing
 `scoreVersion: "v1"` response. This is a separate, **partial** v2 evaluation,
 not a replacement for the public v1 score.
 
-The initial HTTP collectors explicitly measure R01/R02, L01/L05/L06,
-J01/J02, M01/M02/M03/M04 and C03 where their required HTTP/HTML evidence
-exists. They do not copy old v1 point allocations. Other v2 controls remain
-`unknown`; in particular the rendering category remains unmeasured until
-the authorized, isolated Playwright worker supplies proof.
+The base collectors cover **17 controls**: R01/R02/R04, L01/L05/L06,
+J01/J02/J06, M01–M04, C03, B01/B02 and D01. The additional collectors
+can measure **18 further controls** when their inputs are conclusive:
+
+| Controls | Reused evidence and deterministic rule |
+|---|---|
+| R03/R05 | Robots rules evaluated on the audited URL, including the citation-bot groups, the wildcard fallback and indexing directives. Complex patterns or scoped headers remain `unknown`. |
+| L02/L03/L04 | Parsed llms.txt heading, substantive summary, Markdown section count and safe HTTP(S) document-link syntax. Links are **not** claimed reachable from syntax alone. |
+| J03/J04/J05 | Coherent JSON-LD entity @id/url pairs; WebSite↔WebPage relationships; matching schema for a page type inferred unambiguously. |
+| M05 | Explicitly consistent indexing directives. Intentional noindex or crawler-specific directives require an owner policy and remain `unknown`. |
+| C01/C02/C06/C07/C08 | Extractable H1/introduction, visible FAQ Q/A, paragraph plus list/table, visible updated date matching structured `dateModified`, and contextual internal anchors. C02 needs declared questions. |
+| B03/B05 | Identical social profiles declared in both site links and `sameAs`; attributed expert author on an editorial page with a matching visible Person declaration. No social backlink is inferred. |
+| D02/D03 | Trusted owner-declared key URLs compared to a fetched **page** sitemap; navigable, already-verified AI FAQ/service documentation endpoints. Sitemap indexes are not silently assumed complete. |
+
+These are **maximum instrumentable counts**, not an assertion that every URL
+passes or can be measured. `pageHtml` comes from the existing page fetch, and
+`sitemap.xml` from the existing sitemap fetch. The optional
+`ownerImportantUrls` list must be set **server-side by the verified domain
+owner** and constrained to the audited origin; the public free-read request
+cannot submit one. No new requests,
+external backlink crawling, or LLM judgments are introduced.
+
+**Still requiring additional independent evidence:** C04 (checkable cited
+claims), C05 (verified reference relevance/reachability), B04 (external entity
+references), P01/P02 (verified Playwright snapshot; an offline adapter already
+exists), P03 (isolated crawler-identity network logs), and P04 (real-browser
+stability/timing/error logs). Each unresolved control carries its own
+`unknown` reason. None receives zero or full points by guesswork.
 
 `v2Measurement.score` is `null` unless all applicable v2 controls are
 resolved. `scoreRange` is a conservative interval, not a publication-ready
