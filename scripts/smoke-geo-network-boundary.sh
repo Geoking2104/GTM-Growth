@@ -65,8 +65,8 @@ if (!denied) process.exitCode = 1;
 const rejectedByProxy = await new Promise(resolve => {
   const socket = net.connect({host: process.env.GEO_CI_PROXY_NAME, port: 3128, timeout: 3000});
   let response = "";
-  socket.once("connect", () => socket.write("CONNECT unverified.example:443 HTTP/1.1\\r\\nHost: unverified.example:443\\r\\n\\r\\n"));
-  socket.on("data", chunk => { response += chunk.toString("ascii"); if (response.includes("\\r\\n\\r\\n")) { socket.destroy(); resolve(response.startsWith("HTTP/1.1 403")); } });
+  socket.once("connect", () => socket.write("CONNECT unverified.example:443 HTTP/1.1\r\nHost: unverified.example:443\r\n\r\n"));
+  socket.on("data", chunk => { response += chunk.toString("ascii"); if (response.includes("\r\n\r\n")) { socket.destroy(); resolve(response.startsWith("HTTP/1.1 403")); } });
   socket.once("error", () => resolve(false));
   socket.once("timeout", () => { socket.destroy(); resolve(false); });
   socket.once("close", () => resolve(response.startsWith("HTTP/1.1 403")));
