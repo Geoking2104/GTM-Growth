@@ -13,6 +13,8 @@
 import { runGeoAudit } from "../geo/audit.js";
 import { fetchText, type FetchResult, type Fetcher } from "../geo/http.js";
 import { HtmlDoc } from "../geo/html.js";
+import { analyzeSocialLinks } from "../geo/social-links.js";
+import type { SocialLink } from "../geo/social-links.js";
 import { ga4Table, gscTable, trafficTable, type TrafficSample } from "./analytics.js";
 import { seoTables, type DataTable } from "./seo.js";
 import { buildSitemapMap, type SitemapMap } from "./sitemap-map.js";
@@ -40,6 +42,8 @@ export interface FreeReadResult {
   tables: DataTable[];
   /** Sitemap architecture and freshness data for the free visual map. */
   sitemapMap: SitemapMap | null;
+  socialLinks: { outboundProfiles: SocialLink[]; inboundObservationCount: number; notice: string };
+  scoreVersion: "v1";
   limitations: string[];
 }
 
@@ -111,6 +115,7 @@ export async function runFreeRead(options: FreeReadOptions): Promise<FreeReadRes
   });
 
   const doc = HtmlDoc.parse(page.body);
+  const social = analyzeSocialLinks(finalUrl, page.body);
   const analyticsInput = {
     doc,
     finalUrl,
@@ -122,6 +127,20 @@ export async function runFreeRead(options: FreeReadOptions): Promise<FreeReadRes
   const traffic = options.traffic;
   const tables: DataTable[] = [
     ...seoTables(doc, finalUrl, page.headers),
+    {
+      id: "geo.social",
+      title: "GEO — social cross-links",
+      subtitle: "Website outbound links observed; inbound backlinks not automatically verified",
+      rows: social.outboundProfiles.length
+        ? social.outboundProfiles.map(link => ({
+            label: link.platform,
+            value: link.url,
+            status: "info" as const,
+            note: `Source: ${link.sources.join(" + ")} · Inbound: not checked`,
+          }))
+        : [{ label: "Social profiles", value: "none detected", status: "warn" as const,
+             note: "Link official profiles from your site and Organization sameAs data." }],
+    },
     ga4Table(analyticsInput, page.body),
     gscTable(analyticsInput),
     trafficTable("ga4", traffic?.ga4 ?? null, Boolean(traffic?.connected && traffic?.ga4)),
@@ -158,7 +177,11 @@ export async function runFreeRead(options: FreeReadOptions): Promise<FreeReadRes
     })),
     tables,
     sitemapMap: buildSitemapMap(sitemap?.body ?? null, sitemap?.url ?? null, host),
+    scoreVersion: "v1",
+    socialLinks: { outboundProfiles: social.outboundProfiles, inboundObservationCount: 0, notice: social.notice },
     limitations: [
+      "The GEO score is the existing v1 rubric, not the developing v2 score.",
+      "Social inbound backlinks are not automatically verified.",
       "The GEO score covers the audited page only, not the whole site.",
       "GA4 and Search Console traffic rows are sample data unless a property is connected.",
       "No AI engine is queried: readiness is measured, citations are not claimed.",
