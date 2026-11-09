@@ -64,6 +64,8 @@ const hooks = [
   'id="lead-company"',
   'id="result-heading"',
   'id="result-tables"',
+  'id="geo-priority-list"',
+  'id="geo-breakdown-list"',
   'id="tab-overview"',
   'id="panel-overview"',
 ];
@@ -97,6 +99,8 @@ for (const meta of ["gg-api", "gg-form"]) {
   if (!html.includes(`name="${meta}"`)) failures.push(`index.html missing the ${meta} meta`);
 }
 if (!js.includes("result-tables")) failures.push("app.js no longer renders the tables");
+if (!js.includes("renderTopFixes(payload.topFixes)")) failures.push("app.js no longer renders prioritized fixes");
+if (!js.includes("renderCategoryBreakdown(payload.scoreBreakdown, payload.scoreMax)")) failures.push("app.js no longer renders GEO category points");
 if (!html.includes("/console/#indexnow") || !frHtml.includes("/console/#indexnow")) failures.push("landing pages no longer link to IndexNow in the console");
 if (!read("console/app.js").includes("renderIndexNow")) failures.push("console no longer initialises IndexNow");
 if (!js.includes("initConsole")) failures.push("app.js no longer initialises the console");
