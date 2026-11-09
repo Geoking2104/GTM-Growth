@@ -121,3 +121,12 @@ independently authenticated backlink. Profiles requiring login or blocked by
 platform anti-bot controls remain `not_checked`. This inventory does not
 assign GEO v2 points until the corresponding controls and evidence policy have
 been published. No social-platform API is called.
+
+## Versioned GEO v2 grid change history
+
+The pure `diffScoreGrids(previous, next, reasons)` function in
+`src/geo/score/v2/changelog.ts` returns per-control additions, removals,
+reweightings and definition changes, including old/new points. Each changed
+control requires an explicit human-authored reason; profile or category-budget
+changes require a `$grid` reason. This is an internal library contract for
+the future `/methodology` changelog; no score is published automatically.
