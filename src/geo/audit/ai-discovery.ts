@@ -72,6 +72,12 @@ export function auditAiDiscovery(
     ((serviceData as Record<string, unknown>).capabilities as unknown[]).length > 0;
 
   const data: AiDiscoveryAudit = {
+    endpointStatus: {
+      wellKnownAi: responses.wellKnownAi.status,
+      summary: responses.summary.status,
+      faq: responses.faq.status,
+      service: responses.service.status,
+    },
     hasWellKnownAi: wellKnownOk,
     hasSummary,
     summaryValid,
