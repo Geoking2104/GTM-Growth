@@ -1,8 +1,8 @@
-import { HtmlDoc } from "../../geo/html.js";
+import { HtmlDoc } from "../../html.js";
 import { canonicalJson, sha256 } from "./calculate.js";
-import { verifySnapshotEnvelope } from "../../geo/proof/snapshot.js";
+import { verifySnapshotEnvelope } from "../../proof/snapshot.js";
 import type { SnapshotEnvelope } from "../../geo/proof/snapshot.js";
-import type { RenderEvidence } from "../../render/offline.js";
+import type { RenderEvidence } from "../../../render/offline.js";
 import type { CoverageObservation } from "./coverage.js";
 
 const normalize = (html: string): string =>
