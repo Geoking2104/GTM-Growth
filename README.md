@@ -31,16 +31,16 @@ Le Score GEO v2 est en préparation sur le VPS existant, avec audits Playwright 
 
 ## Apply Mode — reviewed fixes, never autopilot (MVP foundation)
 
-The new **Apply Mode** scope extends the audit-to-action journey: select one bounded fix, inspect its before/after diff, preview, explicitly approve, snapshot, apply, independently verify and offer rollback. External writers will require exact-domain ownership, tenant-scoped Keycloak approval, a pre-write backup, drift checks and an append-only audit trail. WordPress content remains **draft-only** and GTM changes stay in a **draft workspace**, with no automatic publication.
+The new **Apply Mode** scope extends the audit-to-action journey: select one bounded fix, inspect its before/after diff, preview, explicitly approve, snapshot, apply, independently verify and offer rollback. External writers will require exact-domain ownership, tenant-scoped Keycloak approval, a pre-write backup, drift checks and an append-only audit trail. The Apply Mode roadmap limits WordPress content to **draft-only** and GTM changes to a **draft workspace**, with no automatic publication; legacy GTM write/publish routes are not part of that workflow.
 
-The first available milestone is a **read-only CLI preview** for AI crawler rules:
+Two **read-only preview entry points** are implemented for AI crawler rules:
 
 ```bash
 npm run cli -- geo-apply --url https://example.com --fix robots-ai --dry-run
 npm run cli -- geo-apply --url https://example.com --fix robots-ai --diff
 ```
 
-This fetches public `robots.txt` with SSRF protections, produces a bounded diff and SHA-256 evidence, and flags bot rules requiring manual review. **It cannot write to a website**: `--confirm` and `--apply` fail closed. The existing WordPress content route creates **drafts only** and no longer submits draft URLs to IndexNow. The approval policy and state machine are tested but are not wired to external adapters or a production API. See the [full owner specification](docs/specs/APPLY-MODE-v1-2026-11-09.md) and [Apply Mode architecture/roadmap and scope register](docs/architecture/APPLY-MODE-MVP.md).
+The authenticated console also exposes **Act → GEO fixes → Preview**, through `POST /api/console/apply/preview` (`url`, `fix: "robots-ai"`, `mode: "dry-run"`). This route derives the tenant from Keycloak, requires a registered HTTPS hostname, and never enables application. The CLI and console fetch public `robots.txt` with SSRF protections, generate a bounded diff and SHA-256 evidence, and flag manual conflicts. **Neither can write to a website**: CLI `--confirm` and `--apply` fail closed. The existing WordPress content route creates **drafts only** and no longer submits draft URLs to IndexNow. The approval policy and state machine are tested but are not wired to external adapters or execution endpoints. See the [full owner specification](docs/specs/APPLY-MODE-v1-2026-11-09.md) and [Apply Mode architecture/roadmap and scope register](docs/architecture/APPLY-MODE-MVP.md).
 
 ---
 

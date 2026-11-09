@@ -8,6 +8,18 @@ body.console-page { margin: 0; min-height: 100vh; background: #f3f4f7; padding: 
 .c-app .app-tabs { grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); }
 .c-app .app-main { min-width: 0; }
 
+/* Apply Mode preview deliberately has no execution control. */
+.apply-preview-form { max-width: 720px; }
+.apply-preview-output { min-width: 0; }
+.apply-diff, .apply-source { max-height: 420px; overflow: auto; padding: 1rem; background: #101a27; color: #e4edf5; border-radius: 0.65rem; font-size: 0.86rem; line-height: 1.55; }
+.apply-diff span { display: block; min-height: 1.25em; white-space: pre; }
+.apply-diff .apply-added { color: #9ce9b9; background: #164c3933; }
+.apply-diff .apply-removed { color: #ffb6b6; background: #6b242433; }
+.apply-source-details { margin: 0.75rem 0; }
+.apply-source-details summary { cursor: pointer; }
+.apply-hash { font: 0.76rem/1.5 ui-monospace, SFMono-Regular, Consolas, monospace; overflow-wrap: anywhere; }
+.apply-review-warnings { color: #be4a3d; }
+
 /* Login */
 .c-login { max-width: 460px; margin: 8vh auto 0 !important; }
 .c-login-card { padding: 2rem 2rem 1.4rem; display: grid; gap: .8rem; }

@@ -118,10 +118,10 @@ This is an architectural contract, **not** a claim that the methods have been wi
 | WordPress content draft | Existing adapter creates `status: draft`; legacy console now reports **draft created** and never announces it to IndexNow | New connector authorization and rollback before making it an Apply action |
 | GTM/GA4 tags, consent, duplicates | Existing inspection and write APIs; Apply draft workspace pending | Staging, tag-diff review, consent evidence and no auto-publish |
 | Reader/editor/approver/admin and tenant isolation | **Implemented as a pure deny-by-default policy**; tenant-authenticated storage and mappings pending | Keycloak-backed grants and immutable approvals |
-| Diff, preview, approval, explicit confirmation | **Implemented:** deterministic file preview + guard/state policy; no production approval UI/API | Persistent single-use approvals and audited UX |
+| Diff, preview, approval, explicit confirmation | **Implemented:** deterministic file preview, authenticated tenant-scoped preview API and console diff display, plus guard/state policy; no approval UI/API | Persistent single-use approvals and audited UX |
 | Backup, atomicity, verification, rollback | State contract documented; no live adapter | Encrypted snapshot, CAS lock, independent checks and rollback rehearsal |
-| CLI, REST and MCP interfaces | **Implemented:** `geo-apply --dry-run`; REST/MCP writes not registered | Each interface must use the same trusted approval service |
-| Console board, 3-click path and immutable history | Product flow specified; UI/history backend pending | No writes from overview, same-tenant event history |
+| CLI, REST and MCP interfaces | **Implemented:** `geo-apply --dry-run`, `POST /api/console/apply/preview`; no REST/MCP writers | Each interface must use the same trusted approval service |
+| Console board, 3-click path and immutable history | **Implemented:** read-only GEO fixes tab and side-by-side source/diff review; board/history pending | No writes from overview, same-tenant event history |
 | Owned/verified domain and private score publication | Existing GEO v2 verification work stays separate; no public score release | Explicit owner consent, exact-domain grant and external rescan |
 
 The owner-approved 42-control Score GEO v2 rubric remains the measurement authority. Apply Mode consumes its evidence and fix recommendations **only after** a scorer result is available; it does not alter weights or award projected points as earned points. Treat PR #30 and this Apply Mode branch as two independently reviewable streams until their contracts can be integrated.
@@ -129,19 +129,23 @@ The owner-approved 42-control Score GEO v2 rubric remains the measurement author
 | Phase | Deliverable | Safety gate |
 |---|---|---|
 | 0.1 | Scoped immutable proposal, line diff, `geo-apply --dry-run`, unit tests, English-first docs | No external write, no stored secrets. |
-| 0.2 | `GET /apply/fixes`, `POST /apply/preview`, console Diff/Preview, per-tenant audit read view | Read-only API, URL SSRF guard and tenant isolation tests. |
+| 0.2 | **Partially implemented:** authenticated `POST /api/console/apply/preview`, console diff/preview and isolation tests. Next: dynamic fix list and per-tenant audit read view | Read-only API, URL SSRF guard and tenant isolation tests. |
 | 0.3 | Approval registry, four-role mapping, idempotency + locking, encrypted snapshot store | Deny by default; all negative authorization tests must pass. |
 | 0.4 | WordPress draft adapter and read-only plugin conflict probe; then scoped file changes behind flag | Owner selects file management mode and connector strategy; backup and rollback smoke-tested in staging. |
 | 0.5 | GTM draft workspace/preview adapter, independent GA4 verification | No publish in MVP; separate release approval required. |
 | 0.6 | Pilot for verified owned domains, post-write external rescan and scored delta | Green verification + rollback rehearsal before wider rollout. |
 
-Planned REST: `POST /api/apply/preview`, `POST /api/apply/:id/approve`, `POST /api/apply/:id/execute`, `GET /api/apply/:id/verify`, `POST /api/apply/:id/rollback`. Every mutation endpoint requires server-recorded approval, not merely an HTTP parameter. The frontend must show projected and measured scores distinctly.
+Implemented read-only REST: `POST /api/console/apply/preview` behind the existing Keycloak middleware. The server checks a registered exact tenant hostname (normalizing the common `www` alias) before one DNS-pinned public GET. **Registration is not ownership proof**: DNS TXT/HTTPS verification is still required before any future write. Requests supplying `apply`, `confirm` or an execution mode fail before fetch. The tab is under **Act → GEO fixes** with diff, both versions, hashes and manual-review notices; it has no execution button.
 
-## 7. Open product decisions **before enabling writes**
+Planned mutation API: `POST /api/apply/:id/approve`, `POST /api/apply/:id/execute`, `GET /api/apply/:id/verify`, `POST /api/apply/:id/rollback`. Every mutation endpoint requires server-recorded approval, not merely an HTTP parameter. The frontend must show projected and measured scores distinctly.
 
-1. **WordPress authentication:** new scoped GTM Growth connector token vs existing WordPress Application Password, plus per-site token rotation and revocation policy. Proposed default: plugin-specific scoped token with a read-only handshake.
-2. **GTM publication:** section 3 prohibits direct publishing, while section 8 permits it after another approval. Proposed MVP default: draft workspace only; consider a separate post-MVP publish flow with dedicated approval.
-3. **Snapshot retention:** requirement says history cannot be removed; privacy/security demand finite retention for secret-bearing payloads. Proposed default: append-only metadata, encrypted payloads with a configurable retention window.
-4. **WordPress robots source:** physical file vs virtual/plugin-managed rules must be detected and resolved with the owner before a writer is enabled.
+## 7. Working architectural defaults — site-specific validation **before enabling writes**
+
+1. **WordPress authentication:** use a plugin-specific scoped and revocable connector token with a read-only handshake; compare with the existing WordPress Application Password only for migration.
+2. **GTM publication:** MVP creates previewable draft workspaces only; any future publish is a separately approved action.
+3. **Snapshot retention:** append-only audit metadata with finite, configurable retention for encrypted secret-bearing payloads.
+4. **WordPress robots source:** detect physical vs virtual/plugin-managed rules and require an explicit site-specific choice before writing.
+
+These are adopted as safe design defaults, **not** authorization to activate any external writer. Credentials, backup restoration, retention periods and site capabilities must be validated before switching a feature flag on.
 
 No production deployment or PR merge is authorized by this ADR. The first implementation milestone can ship as a reviewable branch independently from the GEO v2 scorer PR #30.
