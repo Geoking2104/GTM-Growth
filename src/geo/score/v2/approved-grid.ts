@@ -22,7 +22,7 @@ const ROWS: Record<V2Category, readonly Row[]> = {
     ["L02","Site and activity identification",2,"Extract site H1 and identity statement","llms heading and excerpt",1,"llms","S"],
     ["L03","Concise LLM-readable summary",2,"Extract summary from llms.txt and validate nonempty prose","summary excerpt",1,"llms","S"],
     ["L04","Markdown structure and valid document links",3,"Parse sections and validate absolute/relative links","section/link samples",1,"llms","M"],
-    ["L05","Documentation depth > 1000 words",2,"Count words in llms.txt; strict greater-than threshold","word count and file hash",1,"llms","M"],
+    ["L05","Documentation depth > 1000 words",2,"Count words in llms.txt; strict >1000 word threshold","word count and file hash",1,"llms","M"],
     ["L06","Deep documentation structure > 1000 words",2,"Require >1000 words in llms.txt plus structured deep documentation","word count and depth/sections",1,"llms","M"],
   ],
   "jsonld": [
