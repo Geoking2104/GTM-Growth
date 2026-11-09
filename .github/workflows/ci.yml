@@ -53,6 +53,17 @@ jobs:
       - name: Build production image
         run: docker build -t gtm-growth-ci .
 
+      - name: Validate isolated GEO renderer Compose (no deployment)
+        env:
+          GEO_TENANT_ID: ci-smoke
+          GEO_URL: https://example.com/
+          GEO_TARGET_HOSTNAME: example.com
+          GEO_DATA_VOLUME_NAME: fake-volume-ci
+        run: docker compose -f deploy/geo-renderer/docker-compose.yml config --quiet
+
+      - name: Build isolated GEO renderer image (no deployment)
+        run: docker build -f deploy/geo-renderer/Dockerfile -t gtm-geo-renderer-ci .
+
       - name: Upload dist artifact
         uses: actions/upload-artifact@v4
         with:
