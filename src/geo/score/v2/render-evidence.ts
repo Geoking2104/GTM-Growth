@@ -1,5 +1,6 @@
 import { HtmlDoc } from "../../html.js";
 import { canonicalJson, sha256 } from "./calculate.js";
+import type { ObservedControl } from "./calculate.js";
 import { verifySnapshotEnvelope } from "../../proof/snapshot.js";
 import type { SnapshotEnvelope } from "../../geo/proof/snapshot.js";
 import type { RenderEvidence } from "../../../render/offline.js";
@@ -48,7 +49,7 @@ export async function mapOfflineRenderingToV2(
   }
 
   const prefix: CoverageObservation[] = [];
-  const proof = (value: string): CoverageObservation["proof"] => ({
+  const proof = (value: string): ObservedControl["proof"] => ({
     type: "extract", url: envelope.snapshot.url, value,
   });
   // P01: only strict positive parity or a proven client-only empty initial
