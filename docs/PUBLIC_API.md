@@ -183,3 +183,17 @@ trace; it changes when the measurements or proof change even if the snapshot
 and grid hashes remain the same. Proof URLs identify where evidence was
 observed; an extract from an HTTP response does not by itself certify any
 external claim or social backlink.
+
+### Sitemap and AI discovery v2 evidence
+
+R04 reuses the already-fetched sitemap from the public free read, verifying
+that its URL is declared in `robots.txt` and that the parsed XML includes
+same-domain pages. No extra network request is issued for v2 scoring.
+If a sitemap is declared but its content could not be verified, R04 remains
+`unknown`; an absent declaration in successfully fetched `robots.txt`
+is a measured failure.
+
+D01 uses the observed HTTP status of each AI-discovery endpoint. A missing
+HTTP response (status 0) makes the control `unknown`, not a measured zero.
+With complete responses, full points require a usable well-known AI document
+and a valid AI summary; the status and validation signals are included in proof.
