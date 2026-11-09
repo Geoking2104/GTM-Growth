@@ -10,6 +10,7 @@ import type { CoverageObservation, V2CoverageScore } from "./coverage.js";
  */
 export async function collectAutomaticV2(
   audit: GeoAuditResult,
+  renderFindings: readonly CoverageObservation[] = [],
 ): Promise<V2CoverageScore> {
   const grid = approvedV2Grid();
   const origin = new URL(audit.finalUrl).origin;
@@ -107,6 +108,16 @@ export async function collectAutomaticV2(
     for (const id of ["J01", "J02", "J06", "M01", "M02", "M03", "M04", "C03", "B01", "B02"]) {
       unknown(id, "Page HTML was not successfully fetched");
     }
+  }
+
+  for (const finding of renderFindings) {
+    if (!["P01", "P02", "P03", "P04"].includes(finding.controlId)) {
+      throw new Error(`Unexpected rendering evidence control: ${finding.controlId}`);
+    }
+    if (values.some(item => item.controlId === finding.controlId)) {
+      throw new Error(`Duplicate rendering observation: ${finding.controlId}`);
+    }
+    values.push(finding);
   }
 
   // All remaining approved controls require instruments/conditions that this
