@@ -464,7 +464,7 @@ async function main() {
         const result = await calculateV2Score(input.grid, input.snapshot, input.observations);
         const report = { ...result, evidenceStatus: "user_supplied_unverified" as const };
         const output = str(args, "out");
-        if (output) writeFileSync(output, JSON.stringify(report, null, 2) + "\\n", "utf8");
+        if (output) writeFileSync(output, JSON.stringify(report, null, 2) + "\n", "utf8");
         print(report);
         break;
       }
