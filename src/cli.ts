@@ -444,25 +444,9 @@ async function main() {
         break;
       }
       case "geo-score-v2": {
-        const { calculateV2Score } = await import("./geo/score/v2/calculate.js");
-        const { CATEGORY_WEIGHTS, GRID_VERSION } = await import("./geo/score/v2/rubric.js");
-        const input = JSON.parse(readFileSync(req(args, "in"), "utf8")) as {
-          grid?: import("./geo/score/v2/rubric.js").ScoreGrid;
-          snapshot?: unknown;
-          observations?: import("./geo/score/v2/calculate.js").ObservedControl[];
-        };
-        if (!input || typeof input !== "object" || !input.grid ||
-            !Object.prototype.hasOwnProperty.call(input, "snapshot") ||
-            !Array.isArray(input.observations)) {
-          throw new Error("Evidence file must contain grid, snapshot and observations");
-        }
-        if (input.grid.version !== GRID_VERSION ||
-            Object.entries(CATEGORY_WEIGHTS).some(([key, weight]) =>
-              input.grid?.categoryWeights?.[key as keyof typeof CATEGORY_WEIGHTS] !== weight)) {
-          throw new Error("Evidence grid must use the approved GEO v2.0.0 category weights");
-        }
-        const result = await calculateV2Score(input.grid, input.snapshot, input.observations);
-        const report = { ...result, evidenceStatus: "user_supplied_unverified" as const };
+        const { replayV2Evidence } = await import("./geo/score/v2/replay.js");
+        const input = JSON.parse(readFileSync(req(args, "in"), "utf8")) as unknown;
+        const report = await replayV2Evidence(input);
         const output = str(args, "out");
         if (output) writeFileSync(output, JSON.stringify(report, null, 2) + "\n", "utf8");
         print(report);
