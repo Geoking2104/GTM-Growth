@@ -38,7 +38,10 @@ services:
     tmpfs: ["/tmp:rw,nosuid,size=256m"]
     shm_size: 256m
     cap_drop: [ALL]
-    security_opt: ["no-new-privileges:true"]
+    security_opt:
+      - "no-new-privileges:true"
+      # Docker seccomp profile from microsoft/playwright; used by Chromium only.
+      - "seccomp:deploy/geo-renderer/seccomp_profile.json"
     pids_limit: 128
     mem_limit: 1g
     cpus: 1.0
