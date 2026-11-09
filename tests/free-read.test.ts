@@ -59,6 +59,12 @@ describe("free read", () => {
     expect(result.topFixes.length).toBeLessThanOrEqual(3);
     expect(result.scoreVersion).toBe("v1");
     expect(result.v2Evidence.scoringStatus).toBe("not_scored");
+    expect(result.v2Measurement.gridVersion).toBe("v2.0.0");
+    expect(result.v2Measurement.status).toBe("incomplete");
+    expect(result.v2Measurement.score).toBeNull();
+    expect(result.v2Measurement.applicableMaximum).toBeGreaterThan(0);
+    expect(result.v2Measurement.unknownMaximum).toBeGreaterThan(0);
+    expect(result.v2Measurement.unmeasuredControls).toContain("P01");
     expect(result.v2Evidence.categories.rendering).toEqual({ budget: 12, observed: 0, unavailable: 1 });
     expect(result.v2Evidence.categories.jsonld.observed).toBeGreaterThan(0);
     expect(result.v2Evidence.findings.some(f => f.sourceCheckId === "rendering.playwright" && f.status === "unavailable")).toBe(true);
