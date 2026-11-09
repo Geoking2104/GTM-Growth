@@ -140,3 +140,16 @@ Facebook, YouTube, Threads, Pinterest, Mastodon and Bluesky.
 **not** been verified; it must not be interpreted as backlink attribution. The
 public score is still v1. The versioned v2 evidence-replay CLI is separate and
 is never populated with guessed points from this inventory.
+
+## GEO v2 evidence inventory (unscored)
+
+The same `POST /api/free-read` response now also carries `v2Evidence`:
+
+- `gridVersion: "v2.0.0"`, `scoringStatus: "not_scored"`, `source: "geo_v1_audit"`;
+- `categories`: approved v2 point **budgets** plus counts of observed and unavailable source checks, **not earned points**;
+- `findings`: original source-check IDs, category, evidence string and status;
+- `rendering`: explicitly unavailable until a verified-domain Playwright run produces trusted evidence.
+
+Do not display `v2Evidence.categories.*.budget` as earned points or derive a v2
+score from the number of observations. The approved 42-control applicability and
+weight allocations are a separate contract.
