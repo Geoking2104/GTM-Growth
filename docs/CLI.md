@@ -130,3 +130,13 @@ reweightings and definition changes, including old/new points. Each changed
 control requires an explicit human-authored reason; profile or category-budget
 changes require a `$grid` reason. This is an internal library contract for
 the future `/methodology` changelog; no score is published automatically.
+
+## GEO v2 applicability evaluation
+
+The pure `evaluateApplicability(rule, facts)` helper supports explicit boolean
+facts, `all`, `any` and `not` rules. Its three outcomes are
+`applicable`, `not_applicable` and `unknown`. Missing evidence always
+returns `unknown` unless another clause decisively resolves the condition;
+it cannot silently become a failed check or a zero score. This is the
+**generic evaluation mechanism**, not a publication of the final 42 approved
+control-specific applicability rules. It does not redistribute points.
