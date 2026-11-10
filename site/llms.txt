@@ -4,10 +4,10 @@
 
 ## Product
 
-- [Landing page](https://geoking2104.github.io/GTM-Growth/): free read — URL hygiene score, then SEO tables plus GA4 and Search Console reports; full audit and assisted GTM engagement after that
-- [Version française](https://geoking2104.github.io/GTM-Growth/fr/): lecture gratuite de l’URL, puis audit complet et accompagnement GTM
-- [Sample report](https://geoking2104.github.io/GTM-Growth/reports/opendpe.html): full audit of opendpe.net, 71/100 with platform readiness and the fix plan
-- [Sample report PDF](https://geoking2104.github.io/GTM-Growth/reports/opendpe.pdf): the same audit as a client-ready 9-page PDF, with the dashboard, radar and entity graph
+- [Landing page](https://gtm.kayroslab.com/): free read — URL hygiene score, then SEO tables plus GA4 and Search Console reports; full audit and assisted GTM engagement after that
+- [Version française](https://gtm.kayroslab.com/fr/): lecture gratuite de l’URL, puis audit complet et accompagnement GTM
+- [Sample report](https://gtm.kayroslab.com/reports/opendpe.html): full audit of opendpe.net, 71/100 with platform readiness and the fix plan
+- [Sample report PDF](https://gtm.kayroslab.com/reports/opendpe.pdf): the same audit as a client-ready 9-page PDF, with the dashboard, radar and entity graph
 - [Repository](https://github.com/Geoking2104/GTM-Growth): Apache-2.0, Node.js 20+
 - [GEO rubric](https://github.com/Geoking2104/GTM-Growth/blob/main/docs/GEO.md): eight categories, 100 points, evidence per check
 - [GTM implementation guide](https://github.com/Geoking2104/GTM-Growth/blob/main/docs/GTM_IMPLEMENTATION.md): snippets, dataLayer, consent, verification
@@ -21,4 +21,4 @@
 
 ## Optional
 
-- [llms-full.txt](https://geoking2104.github.io/GTM-Growth/llms-full.txt): full reference for retrieval
+- [llms-full.txt](https://gtm.kayroslab.com/llms-full.txt): full reference for retrieval

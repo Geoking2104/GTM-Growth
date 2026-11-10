@@ -1,0 +1,192 @@
+/* Shared GTM Growth brand layer for the French and English landing pages.
+ * Both language variants use the same Inter font, purple/pink identity,
+ * navigation accents, and localized product-preview primitives. */
+@font-face {
+  font-family: Inter;
+  src: url("fr/assets/InterVariable.woff2") format("woff2");
+  font-weight: 100 900;
+  font-display: swap;
+}
+:root {
+  --gg-night: #06060f;
+  --gg-panel: #12122a;
+  --gg-accent: #7c3aed;
+  --gg-pink: #ec4899;
+  --gg-gradient: linear-gradient(135deg, var(--gg-accent), var(--gg-pink));
+  --gg-white: #f4f4f8;
+  --gg-muted: #a3a3b8;
+}
+html { scroll-padding-top: 82px; }
+html[lang="en"] {
+  --brand: #7c3aed;
+  --brand-2: #ec4899;
+  --brand-soft: #f2eaff;
+  --night: var(--gg-night);
+  --night-2: #0d0d1f;
+  --night-3: var(--gg-panel);
+  --night-line: rgba(255, 255, 255, .13);
+  --night-ink: var(--gg-white);
+  --night-muted: var(--gg-muted);
+  --night-accent: #c084fc;
+}
+html[lang="en"] .site-header {
+  background: rgba(6, 6, 15, .9);
+  border-bottom: 1px solid rgba(255, 255, 255, .12);
+  backdrop-filter: blur(14px);
+}
+html[lang="en"] .site-header .brand,
+html[lang="en"] .site-header .nav a,
+html[lang="en"] .site-header .nav-menu summary { color: var(--gg-white); }
+html[lang="en"] .site-header .nav a:hover,
+html[lang="en"] .site-header .nav-menu summary:hover { color: #d8b4fe; }
+html[lang="en"] .site-header .nav-dropdown a { color: #252342; }
+html[lang="en"] .site-header .nav-dropdown a:hover { color: var(--gg-accent); }
+html[lang="en"] .site-header .nav-dropdown a span { color: #667085; }
+html[lang="en"] .lang { border-color: rgba(255, 255, 255, .2); }
+html[lang="en"] .lang a { color: var(--gg-muted); }
+html[lang="en"] .lang a[aria-current="page"] { background: var(--gg-gradient); color: #fff; }
+html[lang="en"] .btn:not(.btn-ghost) {
+  background: var(--gg-gradient);
+  box-shadow: 0 8px 22px -12px rgba(236, 72, 153, .65);
+}
+html[lang="en"] .btn:not(.btn-ghost):hover { filter: brightness(1.1); }
+html[lang="en"] .feature-cta .btn.btn-small,
+html[lang="en"] .step-link .btn {
+  color: var(--gg-accent); background: transparent;
+  box-shadow: none; filter: none;
+}
+html[lang="en"] .hero {
+  background: radial-gradient(900px 470px at 55% -10%, rgba(124, 58, 237, .24), transparent 66%),
+    radial-gradient(700px 430px at 88% 18%, rgba(236, 72, 153, .14), transparent 62%),
+    linear-gradient(180deg, var(--gg-night), #0d0d1f);
+  border-bottom-color: rgba(255, 255, 255, .11);
+}
+html[lang="en"] .hero .eyebrow { color: #d8b4fe; }
+html[lang="en"] .hero h1 { font-weight: 900; }
+html[lang="en"] .hero .lede { color: var(--gg-muted); }
+html[lang="en"] .hero .hint a { color: #e9c8ff; }
+html[lang="en"] .hero .ai-logo-badge { border-color: rgba(255, 255, 255, .24); }
+html[lang="en"] :focus-visible { outline-color: var(--gg-pink); }
+.pricing-disclaimer { max-width: 78ch; margin: 1.5rem auto 0; line-height: 1.65; font-size: .84rem; }
+html[lang="en"] .pricing-disclaimer { color: #64607a; }
+html[lang="fr"] .pricing-disclaimer { color: var(--gg-muted); }
+html[lang="en"] .plans .price small { color: #65637c; font-size: .9rem; font-weight: 550; }
+
+/* Compact real-content previews replace screenshots with the wrong UI language. */
+.localized-snapshot {
+  display: grid; align-content: start; gap: .75rem; width: 100%; min-height: 245px;
+  background: #fff; color: #182034; border-radius: 12px;
+  padding: 1.05rem; box-shadow: 0 12px 24px -18px #10182855;
+  text-align: left; font-size: .78rem; line-height: 1.4;
+}
+.localized-snapshot strong { color: #111827; }
+.localized-snapshot .shot-head {
+  display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap;
+  gap: .5rem; border-bottom: 1px solid #e5e7eb; padding-bottom: .7rem;
+  font-weight: 750; font-size: .88rem;
+}
+.localized-snapshot .shot-label { color: #667085; font-size: .7rem; }
+.localized-snapshot .shot-score { color: #111827; font-size: 2rem; font-weight: 850; line-height: 1; }
+.localized-snapshot .shot-score small { color: #667085; font-size: .85rem; font-weight: 500; }
+.localized-snapshot .shot-rows { display: grid; gap: .45rem; }
+.localized-snapshot .shot-row {
+  display: flex; align-items: center; justify-content: space-between; gap: .6rem;
+  padding: .46rem .55rem; border: 1px solid #edf0f5; border-radius: 7px;
+}
+.localized-snapshot .shot-row span:first-child { min-width: 0; overflow-wrap: anywhere; }
+.localized-snapshot .shot-ok { color: #047857; font-weight: 750; }
+.localized-snapshot .shot-warn { color: #b45309; font-weight: 750; }
+.localized-snapshot .shot-tags { display: flex; flex-wrap: wrap; gap: .4rem; }
+.localized-snapshot .shot-tags span {
+  border-radius: 6px; background: #eef2ff; color: #4338ca;
+  padding: .35rem .6rem; font-weight: 650;
+}
+.feature-shot-panel:has(> .localized-snapshot) {
+  aspect-ratio: auto; min-height: 275px; padding: .6rem; overflow: visible;
+}
+.feature-shot-panel:has(> .localized-snapshot) .localized-snapshot { min-height: 262px; }
+
+/* FR language switch and accessible mobile navigation. */
+html[lang="fr"] .lang-switch {
+  display: inline-flex; align-items: center; padding: 3px; gap: 2px; flex-shrink: 0;
+  border: 1px solid rgba(255, 255, 255, .2); border-radius: 50px;
+}
+html[lang="fr"] .lang-switch a {
+  color: var(--gg-muted); text-decoration: none; font-size: 12px; font-weight: 750;
+  line-height: 1.2; padding: 6px 9px; border-radius: 50px;
+}
+html[lang="fr"] .lang-switch a[aria-current="page"] { color: #fff; background: var(--gg-gradient); }
+html[lang="fr"] .lang-switch a:hover { color: #fff; }
+html[lang="fr"] .mobile-nav { display: none; position: relative; flex-shrink: 0; }
+html[lang="fr"] .mobile-nav summary {
+  cursor: pointer; list-style: none; color: var(--gg-white); padding: 7px 9px;
+  border: 1px solid rgba(255,255,255,.2); border-radius: 8px; font-size: 13px;
+}
+html[lang="fr"] .mobile-nav summary::-webkit-details-marker { display: none; }
+html[lang="fr"] .mobile-nav[open] .mobile-nav-items {
+  display: grid; gap: 2px; position: absolute; top: calc(100% + 9px); right: 0;
+  width: min(250px, 80vw); padding: 10px; border: 1px solid rgba(255,255,255,.2);
+  background: #12122a; border-radius: 12px; box-shadow: 0 15px 30px #0008;
+}
+html[lang="fr"] .mobile-nav-items a {
+  color: var(--gg-white); text-decoration: none; font-size: 14px;
+  border-radius: 6px; padding: 7px 9px;
+}
+html[lang="fr"] .mobile-nav-items a:hover { background: #ffffff18; }
+
+/* The console sign-in view keeps the selected language after marketing CTA. */
+.console-page .c-public-languages {
+  display: inline-flex; gap: 2px; flex-shrink: 0; padding: 3px;
+  border: 1px solid rgba(255,255,255,.22); border-radius: 50px;
+}
+.console-page .c-public-languages a {
+  color: #b8b6d0; border-radius: 50px; padding: 4px 8px;
+  font-size: .75rem; font-weight: 750; text-decoration: none;
+}
+.console-page .c-public-languages a[aria-current="page"] { color: #fff; background: var(--gg-gradient); }
+@media (max-width: 600px) {
+  .console-page .public-header { gap: .65rem; padding-inline: .75rem; }
+  .console-page .public-back { font-size: .75rem; }
+}
+
+/* FR result area uses the same scoring engine as the EN page, without a login. */
+html[lang="fr"] .gg-free-result {
+  max-width: 1050px; margin: 2rem auto 0; text-align: left;
+  background: #12122a; border: 1px solid rgba(255,255,255,.16);
+  padding: clamp(1rem, 3vw, 2rem); border-radius: 18px;
+}
+html[lang="fr"] .gg-free-result[hidden] { display: none; }
+html[lang="fr"] .gg-free-result h2 { font-size: clamp(1.2rem, 2.5vw, 1.7rem); margin-bottom: .45rem; }
+html[lang="fr"] .gg-free-result h3 { font-size: 1rem; margin: 1.3rem 0 .5rem; }
+html[lang="fr"] .gg-free-result .gg-score { color: #d8b4fe; font-size: 1.6rem; font-weight: 850; }
+html[lang="fr"] .gg-free-result .gg-checks { display: grid; grid-template-columns: repeat(2, minmax(0,1fr)); gap: .55rem; list-style: none; padding: 0; margin: 1rem 0; }
+html[lang="fr"] .gg-free-result .gg-checks li { border: 1px solid rgba(255,255,255,.1); border-radius: 10px; padding: .7rem; font-size: .8rem; }
+html[lang="fr"] .gg-free-result .gg-checks li.pass::before { content: "✓ "; color: #34d399; font-weight: 800; }
+html[lang="fr"] .gg-free-result .gg-checks li.fail::before { content: "! "; color: #f59e0b; font-weight: 800; }
+html[lang="fr"] .gg-free-result .gg-checks small { display: block; color: #a3a3b8; overflow-wrap: anywhere; }
+html[lang="fr"] .gg-free-result .gg-checks .gg-fix { color: #fbbf24; margin-top: .35rem; }
+html[lang="fr"] .gg-free-result .gg-note { color: #a3a3b8; font-size: .83rem; margin: .7rem 0; }
+html[lang="fr"] .gg-free-result .gg-data { display: grid; gap: 1rem; margin: 1rem 0; }
+html[lang="fr"] .gg-free-result .data-figure { margin: 0; background: #0d0d1f; border: 1px solid rgba(255,255,255,.12); border-radius: 12px; padding: 1rem; min-width: 0; }
+html[lang="fr"] .gg-free-result .data-figure h3 { margin: 0; }
+html[lang="fr"] .gg-free-result .data-sub { font-size: .78rem; color: #a3a3b8; }
+html[lang="fr"] .gg-free-result .badge-sample, html[lang="fr"] .gg-free-result .badge-live { color: #d8b4fe; font-size: .7rem; }
+html[lang="fr"] .gg-free-result .table-wrap { max-width: 100%; overflow-x: auto; }
+html[lang="fr"] .gg-free-result .data-table { width: 100%; border-collapse: collapse; font-size: .78rem; }
+html[lang="fr"] .gg-free-result .data-table th, html[lang="fr"] .gg-free-result .data-table td { padding: .55rem; text-align: left; border-bottom: 1px solid rgba(255,255,255,.09); }
+html[lang="fr"] .gg-free-result .data-table .value { overflow-wrap: anywhere; }
+html[lang="fr"] .gg-free-result .pill { color: #34d399; }
+html[lang="fr"] .gg-free-result .status-warn, html[lang="fr"] .gg-free-result .status-fail { color: #f59e0b; }
+html[lang="fr"] .gg-free-result .gg-next { display: inline-block; margin-top: .8rem; padding: .7rem 1.25rem; border-radius: 50px; background: var(--gg-gradient); color: white; text-decoration: none; font-weight: 700; }
+@media (max-width: 1080px) {
+  html[lang="fr"] .mobile-nav { display: block; }
+  html[lang="fr"] .nav-links { display: none; }
+  html[lang="fr"] .lang-switch { margin-left: auto; }
+}
+@media (max-width: 860px) { html[lang="fr"] .nav-in { gap: 10px; } }
+@media (max-width: 530px) {
+  html[lang="fr"] .nav-in { gap: 8px; padding: 10px 14px; }
+  html[lang="fr"] .nav-cta { display: none; }
+  html[lang="fr"] .logo { font-size: 14px; }
+  html[lang="fr"] .gg-free-result .gg-checks { grid-template-columns: 1fr; }
+}

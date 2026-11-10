@@ -26,7 +26,14 @@ const required = [
   "index.html",
   "fr/index.html",
   "styles.css",
+  "brand.css",
+  "sitemap-map.css",
   "app.js",
+  "locale-links.js",
+  "fr/free-read.js",
+  "fr/server-tables.js",
+  "console/index.html",
+  "console/locale-shell.js",
   "preview.js",
   "i18n.js",
   "tables.js",
@@ -44,6 +51,8 @@ const required = [
   "assets/logo.png",
   "assets/logo-128.png",
   "assets/logo-64.png",
+  "fr/assets/logo-rocket.png",
+  "assets/screens/geo-board-en.svg",
   "reports/opendpe.html",
   "reports/opendpe.json",
   "reports/opendpe.pdf",
@@ -53,6 +62,7 @@ for (const file of required) read(file);
 const html = read("index.html");
 const frHtml = read("fr/index.html");
 const js = read("app.js");
+const frJs = read("fr/free-read.js");
 const sitemap = read("sitemap.xml");
 const llms = read("llms.txt");
 
@@ -71,13 +81,29 @@ for (const hook of hooks) {
   if (!html.includes(hook)) failures.push(`index.html lost hook ${hook}`);
 }
 
-// The French landing page is standalone: its own URL and lead forms are
-// handled by an inline script, not the English app.js widget identifiers.
+// The French landing uses the same read engine as English, with a separate
+// translated UI module; its lead form remains an inline handler.
 for (const hook of ['id="url-form"', 'id="url-input"', 'id="lead-form"', 'id="lead-name"', 'id="lead-email"', 'id="lead-url"']) {
   if (!frHtml.includes(hook)) failures.push(`fr/index.html lost hook ${hook}`);
 }
-for (const behavior of ["getElementById('url-form').addEventListener", "getElementById('lead-form').addEventListener", "fetch('/api/lead'", "window.location.assign('/console/')"]) {
+for (const behavior of ['id="read-result"', 'src="free-read.js"', 'class="lang-switch"', "getElementById('lead-form').addEventListener", "fetch('/api/lead'"]) {
   if (!frHtml.includes(behavior)) failures.push(`fr/index.html lost form behavior ${behavior}`);
+}
+for (const behavior of ['getElementById("url-form")', 'normalizeTarget', 'auditUrlShape', 'renderTables', 'translateLiveTables', '/api/free-read']) {
+  if (!frJs.includes(behavior)) failures.push(`fr/free-read.js lost behavior ${behavior}`);
+}
+if (frHtml.includes("window.location.assign('/console/')")) failures.push("French free read still redirects to the login console");
+if (!html.includes('href="brand.css"') || !frHtml.includes('href="../brand.css"')) failures.push("English and French must load the same brand stylesheet");
+if (!html.includes('src="locale-links.js"') || !frHtml.includes('src="../locale-links.js"')) failures.push("Both landings must preserve language through Cloud console links");
+if (!read("console/index.html").includes('src="locale-shell.js"')) failures.push("Console sign-in must localise its public shell");
+for (const [page, name, amount, locale] of [[html, "EN", "€39", "en"], [frHtml, "FR", "39&nbsp;€", "fr"]]) {
+  if (!page.includes(amount) || !page.includes(name === "FR" ? "149&nbsp;€" : "€149")) failures.push(`${name} landing must display the approved pilot Solo/Agency prices`);
+  if (!page.includes(`/console/?lang=${locale}#billing`)) failures.push(`${name} billing CTA must preserve the language`);
+}
+for (const screenshot of ["geo-board.webp", "citability-main.webp", "free-sitemap.webp", "free-seo.webp", "free-ga4.webp", "free-gsc.webp", "search-perf.webp", "indexnow-main.webp"]) {
+  if (html.includes(`src="assets/screens/${screenshot}"`) || html.includes(`srcset="assets/screens/${screenshot}"`)) {
+    failures.push(`English landing includes a French-language screenshot: ${screenshot}`);
+  }
 }
 
 for (const needle of ['type="application/ld+json"', 'rel="canonical"', 'name="description"', "app.js", "styles.css"]) {
@@ -111,6 +137,7 @@ if (placeholders.test(html) || placeholders.test(js) || placeholders.test(frHtml
 
 const canonical = html.match(/<link rel="canonical" href="([^"]+)"/)?.[1] ?? "";
 if (!canonical) failures.push("canonical URL not found");
+if (!canonical.startsWith("https://gtm.kayroslab.com/")) failures.push("English canonical must use the live GTM domain");
 if (canonical && !sitemap.includes(canonical)) failures.push(`sitemap does not list canonical ${canonical}`);
 if (!llms.startsWith("# ")) failures.push("llms.txt must start with an H1");
 
@@ -118,6 +145,7 @@ if (!llms.startsWith("# ")) failures.push("llms.txt must start with an H1");
 const frCanonical = frHtml.match(/<link rel="canonical" href="([^"]+)"/)?.[1] ?? "";
 if (!frHtml.includes('<html lang="fr">')) failures.push("fr/index.html must declare lang=fr");
 if (!frCanonical.endsWith("/fr/")) failures.push("fr/index.html canonical must end with /fr/");
+if (frCanonical !== "https://gtm.kayroslab.com/fr/") failures.push("French canonical must use the live GTM domain");
 if (!sitemap.includes(frCanonical)) failures.push(`sitemap does not list ${frCanonical}`);
 for (const page of [html, frHtml]) {
   if (!page.includes('hreflang="en"')) failures.push("missing hreflang=en alternate");
@@ -129,7 +157,7 @@ for (const [page, base] of [
   [html, ""],
   [frHtml, "fr"],
 ]) {
-  for (const match of page.matchAll(/(?:src|href)="((?:\.\.\/)?(?:assets\/|styles\.css|app\.js)[^"]*)"/g)) {
+  for (const match of page.matchAll(/(?:src|srcset|href)="((?:\.\.\/)?(?:assets\/|fr\/assets\/|styles\.css|brand\.css|sitemap-map\.css|app\.js|free-read\.js)[^"]*)"/g)) {
     const target = path.normalize(path.join(base, match[1]));
     if (!fs.existsSync(path.join(root, target))) failures.push(`broken local reference: ${match[1]} in ${base || "."}`);
   }

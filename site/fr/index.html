@@ -5,10 +5,11 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>GTM Growth — Utilisez la puissance de l’IA pour booster votre site</title>
 <meta name="description" content="Utilisez la puissance de l'IA pour booster votre site : audit GEO 0-100, citabilité, positionnement IA, boucle Ops complète. Gratuit en 30 secondes.">
-<link rel="canonical" href="https://geoking2104.github.io/GTM-Growth/fr/">
-<link rel="alternate" hreflang="en" href="https://geoking2104.github.io/GTM-Growth/">
-<link rel="alternate" hreflang="fr" href="https://geoking2104.github.io/GTM-Growth/fr/">
-<link rel="alternate" hreflang="x-default" href="https://geoking2104.github.io/GTM-Growth/">
+<link rel="canonical" href="https://gtm.kayroslab.com/fr/">
+<link rel="alternate" hreflang="en" href="https://gtm.kayroslab.com/">
+<link rel="alternate" hreflang="fr" href="https://gtm.kayroslab.com/fr/">
+<link rel="alternate" hreflang="x-default" href="https://gtm.kayroslab.com/">
+<meta name="theme-color" content="#06060f">
 <link rel="preload" href="assets/InterVariable.woff2" as="font" type="font/woff2" crossorigin>
 <style>
   @font-face {
@@ -511,6 +512,7 @@
 
   .note-inline { font-size: 12.5px; color: var(--faint); margin-top: 10px; }
 </style>
+<link rel="stylesheet" href="../brand.css">
 </head>
 <body>
 
@@ -528,7 +530,21 @@
       <a href="#offres">Offres</a>
       <a href="#faq">FAQ</a>
     </div>
+    <div class="lang-switch" role="group" aria-label="Choix de la langue">
+      <a href="../" hreflang="en" lang="en">EN</a>
+      <a href="./" hreflang="fr" lang="fr" aria-current="page">FR</a>
+    </div>
     <a class="nav-cta" href="#url-form">Analyser mon site</a>
+    <details class="mobile-nav"><summary>Menu</summary>
+      <div class="mobile-nav-items">
+        <a href="#audit">Audit</a>
+        <a href="#fonctionnement">Fonctionnement</a>
+        <a href="#ops">Boucle Ops</a>
+        <a href="#console">Console</a>
+        <a href="#offres">Offres</a>
+        <a href="#faq">FAQ</a>
+      </div>
+    </details>
   </div>
 </nav>
 
@@ -553,7 +569,8 @@
     <input id="url-input" aria-label="URL de votre site" type="text" inputmode="url" placeholder="https://votre-site.fr" autocomplete="url">
     <button type="submit">Analyser →</button>
   </form>
-  <p class="form-msg" id="form-msg" role="status" aria-live="polite"></p><div id="read-result" class="form-msg" aria-live="polite"></div>
+  <p class="form-msg" id="form-msg" role="status" aria-live="polite"></p>
+  <section id="read-result" class="gg-free-result" aria-label="Résultat de la lecture gratuite" aria-live="polite" hidden></section>
 
   <div class="cta-row">
     <a class="btn-primary" href="#url-form">Analyser mon site →</a>
@@ -565,7 +582,7 @@
 <div class="proof">
   <div class="proof-in">
     <div><div class="proof-n grad-text">96</div><div class="proof-l">outils MCP</div></div>
-    <div><div class="proof-n grad-text">320</div><div class="proof-l">tests au vert</div></div>
+    <div><div class="proof-n grad-text">CI</div><div class="proof-l">tests automatisés</div></div>
     <div><div class="proof-n grad-text">5</div><div class="proof-l">moteurs IA couverts</div></div>
     <div><div class="proof-n grad-text">9→96</div><div class="proof-l">score après correctifs</div></div>
     <div><div class="proof-n grad-text">0&nbsp;€</div><div class="proof-l">pour commencer</div></div>
@@ -976,24 +993,25 @@
   <p class="lede">Chaque chiffre vient du dépôt que vous pouvez exécuter et d'un audit réel que vous pouvez relancer.</p>
   <div class="os-stats">
     <div class="os-stat"><div class="n grad-text">96</div><div class="l">outils MCP</div></div>
-    <div class="os-stat"><div class="n grad-text">320</div><div class="l">tests au vert</div></div>
+    <div class="os-stat"><div class="n grad-text">CI</div><div class="l">tests automatisés</div></div>
     <div class="os-stat"><div class="n grad-text">42</div><div class="l">contrôles GEO</div></div>
     <div class="os-stat"><div class="n grad-text">22</div><div class="l">outils GTM</div></div>
     <div class="os-stat"><div class="n grad-text">5</div><div class="l">plateformes IA</div></div>
     <div class="os-stat"><div class="n grad-text">A2</div><div class="l">licence Apache</div></div>
   </div>
-  <p class="note-inline">Lecture seule par défaut ; la CI exécute typecheck, lint, 320 tests, build, smoke CLI et contrôles du site à chaque push.</p>
+  <p class="note-inline">Lecture seule par défaut ; la CI exécute le typage, le lint, les tests automatisés, la compilation, les vérifications CLI et les contrôles du site à chaque push.</p>
 </section>
 
 <!-- ======================= OFFRES ======================= -->
 <section class="block" id="offres">
   <span class="kicker">Offres</span>
-  <h2 class="title">Commencez gratuitement. Allez plus loin quand cela paie.</h2>
+  <h2 class="title">Open source gratuit. Cloud en abonnement mensuel.</h2>
+  <p class="lede">Le logiciel auto-hébergé reste gratuit. Le service Cloud est proposé selon les hypothèses tarifaires du pilote.</p>
   <div class="pricing-grid">
     <div class="plan">
-      <div class="pl-name">Lecture gratuite</div>
+      <div class="pl-name">Gratuit · Open source</div>
       <div class="pl-price">0&nbsp;€</div>
-      <p class="pl-target">Explorer sans engagement</p>
+      <p class="pl-target">Audit public et logiciel auto-hébergé</p>
       <ul>
         <li><span class="tick">✓</span><span>Note d'hygiène d'URL, 10 contrôles</span></li>
         <li><span class="tick">✓</span><span><b>Tables SEO</b> — métadonnées, titres, liens, images, JSON-LD</span></li>
@@ -1005,19 +1023,43 @@
       <a class="btn-primary" href="#url-form">Lancer la lecture</a>
     </div>
     <div class="plan hot">
-      <div class="pl-name">Prestation accompagnée</div>
+      <div class="pl-name">Cloud Solo · pilote</div>
+      <div class="pl-price">39&nbsp;€ <small>/ mois*</small></div>
+      <p class="pl-target">Un espace de travail Cloud hébergé</p>
+      <ul>
+        <li><span class="tick">✓</span><span>Console Cloud et rapports disponibles selon les droits du compte</span></li>
+        <li><span class="tick">✓</span><span>Audits et plan d'actions GEO / mesure</span></li>
+        <li><span class="tick">✓</span><span>Abonnement mensuel et résiliation depuis l'espace client</span></li>
+        <li><span class="tick">✓</span><span>Clés IA du client (BYOK) et coûts fournisseurs exclus</span></li>
+      </ul>
+      <a class="btn-primary" href="/console/?lang=fr#billing">Voir Solo dans la console</a>
+    </div>
+    <div class="plan">
+      <div class="pl-name">Cloud Agence · pilote</div>
+      <div class="pl-price">149&nbsp;€ <small>/ mois*</small></div>
+      <p class="pl-target">Pour les équipes qui suivent plusieurs clients</p>
+      <ul>
+        <li><span class="tick">✓</span><span>Vue multi-espaces et gestion des domaines autorisés</span></li>
+        <li><span class="tick">✓</span><span>Audit, suivi et priorisation dans la console</span></li>
+        <li><span class="tick">✓</span><span>Cadence mensuelle, sans frais IA inclus (BYOK)</span></li>
+        <li><span class="tick">✓</span><span>Quotas et droits définitifs à publier avant ouverture</span></li>
+      </ul>
+      <a class="btn-ghost" href="/console/?lang=fr#billing">Voir Agence dans la console</a>
+    </div>
+    <div class="plan">
+      <div class="pl-name">Accompagnement expert</div>
       <div class="pl-price">Sur devis</div>
-      <p class="pl-target">Aller vite avec un expert</p>
+      <p class="pl-target">Audit, correctifs et transfert à votre équipe</p>
       <ul>
         <li><span class="tick">✓</span><span>Audit GEO + GTM complet avec preuves</span></li>
         <li><span class="tick">✓</span><span>Correctifs llms.txt, schéma, robots et consentement</span></li>
-        <li><span class="tick">✓</span><span>Nettoyage du contenu et plan d'événements</span></li>
-        <li><span class="tick">✓</span><span>Feuille de route 90 jours et remesure</span></li>
-        <li><span class="tick">✓</span><span>Transfert à votre équipe — pas une boîte noire</span></li>
+        <li><span class="tick">✓</span><span>Plan d'événements et feuille de route 90 jours</span></li>
+        <li><span class="tick">✓</span><span>Transmission des livrables et remesure</span></li>
       </ul>
-      <a class="btn-ghost" href="#contact">Demander le rapport</a>
+      <a class="btn-ghost" href="#contact">Demander un devis</a>
     </div>
   </div>
+  <p class="pricing-disclaimer">* Prix mensuels pilotes indicatifs : statut HT/TTC et montant prélevé à confirmer avant commercialisation. Reconduction mensuelle ; aucune transaction n'est activée tant que les vérifications Mollie, les CGV et les quotas ne sont pas validés. Le code open source reste gratuit.</p>
 </section>
 
 <!-- ======================= LEAD ======================= -->
@@ -1108,23 +1150,14 @@
   </div>
 </footer>
 
+  <script type="module" src="../locale-links.js"></script>
+  <script type="module" src="free-read.js"></script>
 <script>
 (function () {
   const started = Date.now();
-  const urlInput = document.getElementById('url-input');
-  const message = document.getElementById('form-msg');
-  const result = document.getElementById('read-result');
   function normalize(value) {
     try { const u = new URL(/^[a-z][a-z0-9+.-]*:\/\//i.test(value) ? value : 'https://' + value); return /^(https?:)$/.test(u.protocol) && u.hostname.includes('.') ? u.href : null; } catch (_) { return null; }
   }
-  document.getElementById('url-form').addEventListener('submit', function (event) {
-    event.preventDefault();
-    const url = normalize(urlInput.value.trim());
-    message.className = 'form-msg'; result.textContent = '';
-    if (!url) { message.classList.add('err'); message.textContent = 'Entrez une URL valide, par exemple https://votre-site.fr.'; return; }
-    sessionStorage.setItem('gtm-console-onboarding-url', url);
-    window.location.assign('/console/');
-  });
   document.getElementById('lead-form').addEventListener('submit', async function (event) {
     event.preventDefault();
     const name = document.getElementById('lead-name').value.trim();
