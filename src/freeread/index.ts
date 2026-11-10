@@ -17,6 +17,22 @@ import { ga4Table, gscTable, trafficTable, type TrafficSample } from "./analytic
 import { seoTables, type DataTable } from "./seo.js";
 import { buildSitemapMap, type SitemapMap } from "./sitemap-map.js";
 
+export interface FreeReadOpportunity {
+  checkId: string;
+  category: string;
+  priority: "critical" | "high" | "medium" | "low";
+  status: "fail" | "partial";
+  points: number;
+  action: string;
+  evidence: string;
+}
+
+export interface FreeReadSocialProfile {
+  platform: string;
+  url: string;
+  source: "page" | "schema";
+}
+
 export interface FreeReadOptions {
   url: string;
   /** Injected for tests; defaults to the real fetcher. */
@@ -37,6 +53,11 @@ export interface FreeReadResult {
   recoverablePoints: number;
   headline: { label: string; value: string }[];
   topFixes: { checkId: string; points: number; action: string }[];
+  /** A bounded, evidence-backed set of choices for the public recommendation assistant. */
+  opportunities: FreeReadOpportunity[];
+  checksSummary: { passed: number; toImprove: number; total: number };
+  /** Outbound social profile links only; inbound backlinks are never inferred. */
+  socialProfiles: FreeReadSocialProfile[];
   tables: DataTable[];
   /** Sitemap architecture and freshness data for the free visual map. */
   sitemapMap: SitemapMap | null;
@@ -44,6 +65,36 @@ export interface FreeReadResult {
 }
 
 const SITEMAP_CANDIDATES = ["/sitemap.xml", "/sitemap_index.xml"];
+
+const SOCIAL_DOMAINS: Record<string, string[]> = {
+  LinkedIn: ["linkedin.com"],
+  Instagram: ["instagram.com"],
+  "X / Twitter": ["x.com", "twitter.com"],
+  TikTok: ["tiktok.com"],
+  Reddit: ["reddit.com"],
+  Discord: ["discord.gg", "discord.com"],
+  YouTube: ["youtube.com", "youtu.be"],
+  Facebook: ["facebook.com"],
+};
+
+function socialProfiles(doc: HtmlDoc, sameAs: string[]): FreeReadSocialProfile[] {
+  const found = new Map<string, FreeReadSocialProfile>();
+  const hrefs = doc.all("a").map((anchor) => anchor.attrs.href ?? "");
+  for (const [source, urls] of [["schema", sameAs], ["page", hrefs]] as const) {
+    for (const candidate of urls) {
+      try {
+        const url = new URL(candidate);
+        if (url.protocol !== "https:" && url.protocol !== "http:") continue;
+        const host = url.hostname.toLowerCase();
+        const match = Object.entries(SOCIAL_DOMAINS).find(([, domains]) =>
+          domains.some((domain) => host === domain || host.endsWith(`.${domain}`))
+        );
+        if (match && !found.has(match[0])) found.set(match[0], { platform: match[0], url: url.href, source });
+      } catch { /* Ignore relative/non-HTTP links and malformed schema values. */ }
+    }
+  }
+  return [...found.values()];
+}
 
 const keyOf = (value: string): string => {
   try {
@@ -136,6 +187,17 @@ export async function runFreeRead(options: FreeReadOptions): Promise<FreeReadRes
     }
   })();
 
+  const byId = new Map(audit.checks.map((check) => [check.id, check]));
+  const opportunities: FreeReadOpportunity[] = audit.recommendations.slice(0, 12).map((rec) => ({
+    checkId: rec.checkId,
+    category: rec.category,
+    priority: rec.priority,
+    status: byId.get(rec.checkId)?.status === "partial" ? "partial" : "fail",
+    points: rec.points,
+    action: rec.action,
+    evidence: byId.get(rec.checkId)?.evidence ?? "No evidence available",
+  }));
+
   return {
     url: options.url,
     finalUrl,
@@ -156,6 +218,13 @@ export async function runFreeRead(options: FreeReadOptions): Promise<FreeReadRes
       points: rec.points,
       action: rec.action,
     })),
+    opportunities,
+    checksSummary: {
+      passed: audit.checks.filter((check) => check.status === "pass").length,
+      toImprove: audit.checks.filter((check) => check.status === "fail" || check.status === "partial").length,
+      total: audit.checks.filter((check) => check.status !== "info").length,
+    },
+    socialProfiles: socialProfiles(doc, audit.details.schema.sameAsUrls),
     tables,
     sitemapMap: buildSitemapMap(sitemap?.body ?? null, sitemap?.url ?? null, host),
     limitations: [

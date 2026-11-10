@@ -30,6 +30,15 @@
     </aside>
     <main class="public-main">
       <div class="public-heading"><div><p class="public-eyebrow">LECTURE GRATUITE</p><h1>Votre site, vu par l’IA.</h1><p>Une première lecture de votre visibilité et des pistes pour progresser.</p></div><span class="public-live">● &nbsp; Analyse du site</span></div>
+      <form id="c-public-url-form" class="public-url-form" aria-label="Analyse gratuite d’un site">
+        <label for="c-public-url">Adresse de la page à analyser</label>
+        <div class="public-url-controls">
+          <input id="c-public-url" name="url" type="text" inputmode="url" autocomplete="url" placeholder="https://www.exemple.fr/" required>
+          <button type="submit" class="public-url-button">Analyser gratuitement <span aria-hidden="true">↗</span></button>
+        </div>
+        <p class="public-micro public-url-help">Sans compte · page publique uniquement · recommandations basées sur des mesures.</p>
+        <p id="c-public-url-error" class="c-error" role="alert" aria-live="polite"></p>
+      </form>
       <section id="c-public-read" class="c-public-read" hidden aria-live="polite"></section>
       <section class="public-login-card" aria-labelledby="public-login-title">
         <div><p class="public-eyebrow">ALLER PLUS LOIN</p><h2 id="public-login-title">Continuez dans votre espace</h2><p>Connectez-vous pour retrouver le démarrage guidé et les analyses détaillées de vos domaines autorisés.</p><img id="c-login-logo" class="c-logo" alt="" hidden></div>

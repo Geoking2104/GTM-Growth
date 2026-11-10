@@ -58,6 +58,19 @@ describe("free read", () => {
     expect(result.score).toBeLessThanOrEqual(100);
     expect(result.topFixes.length).toBeLessThanOrEqual(3);
     expect(result.headline.find((row) => row.label === "GEO score")?.value).toMatch(/^\d+\/100$/);
+    expect(result.opportunities.length).toBeGreaterThan(result.topFixes.length);
+    expect(result.opportunities.length).toBeLessThanOrEqual(12);
+    expect(result.opportunities.every((entry) => entry.checkId && entry.action && entry.evidence)).toBe(true);
+    expect(result.checksSummary.total).toBeGreaterThan(0);
+    expect(result.checksSummary.passed + result.checksSummary.toImprove).toBe(result.checksSummary.total);
+  });
+
+  it("reports only outbound social identities actually present in the measured HTML/schema", async () => {
+    const result = await runFreeRead({ url: "https://acme.com/", fetcher: fakeFetcher() });
+    expect(result.socialProfiles).toEqual([
+      { platform: "LinkedIn", url: "https://www.linkedin.com/company/acme", source: "schema" },
+    ]);
+    expect(JSON.stringify(result.socialProfiles)).not.toMatch(/backlink|inbound/i);
   });
 
   it("includes the SEO tables", async () => {

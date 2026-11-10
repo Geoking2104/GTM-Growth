@@ -10,7 +10,8 @@ const strings = en ? {
   title: "Your website, seen through AI.", description: "A first read of your visibility and a way to improve it.",
   live: "●  Site analysis", next: "GO FURTHER", loginTitle: "Continue in your workspace",
   loginInfo: "Sign in to find guided onboarding and detailed analyses of your authorised domains.",
-  emailPlaceholder: "name@company.com",
+  emailPlaceholder: "name@company.com", urlLabel: "Page URL to analyse", urlButton: "Run free analysis ↗",
+  urlHelp: "No account · public page only · evidence-based recommendations.", urlForm: "Free website analysis", urlPlaceholder: "https://www.example.com/",
 } : {
   header: "Console · Lecture gratuite", back: "Retour au site ", workspace: "VOTRE ESPACE",
   navOverview: "Vue d’ensemble", navRead: "Analyse du site", navStart: "Démarrage guidé",
@@ -18,7 +19,8 @@ const strings = en ? {
   title: "Votre site, vu par l’IA.", description: "Une première lecture de votre visibilité et des pistes pour progresser.",
   live: "●  Analyse du site", next: "ALLER PLUS LOIN", loginTitle: "Continuez dans votre espace",
   loginInfo: "Connectez-vous pour retrouver le démarrage guidé et les analyses détaillées de vos domaines autorisés.",
-  emailPlaceholder: "prenom@entreprise.fr",
+  emailPlaceholder: "prenom@entreprise.fr", urlLabel: "Adresse de la page à analyser", urlButton: "Analyser gratuitement ↗",
+  urlHelp: "Sans compte · page publique uniquement · recommandations basées sur des mesures.", urlForm: "Analyse gratuite d’un site", urlPlaceholder: "https://www.exemple.fr/",
 };
 
 function set(selector, value) {
@@ -39,6 +41,13 @@ set(".public-heading .public-live", strings.live);
 set(".public-login-card .public-eyebrow", strings.next);
 set(".public-login-card h2", strings.loginTitle);
 set(".public-login-card h2 + p", strings.loginInfo);
+set(".public-url-form label", strings.urlLabel);
+set(".public-url-form .public-url-button", strings.urlButton);
+set(".public-url-form .public-url-help", strings.urlHelp);
+const urlForm = document.getElementById("c-public-url-form");
+if (urlForm) urlForm.setAttribute("aria-label", strings.urlForm);
+const urlInput = document.getElementById("c-public-url");
+if (urlInput) urlInput.placeholder = strings.urlPlaceholder;
 
 const home = en ? "/" : "/fr/";
 for (const selector of [".public-brand", ".public-back"]) {

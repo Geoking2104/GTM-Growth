@@ -7,10 +7,27 @@ The agent reads live Google data, audits setups, crosses organic search with sit
 | | |
 |---|---|
 | **MCP tools** | 99 (GA4 · GTM/sGTM · MP · Search Console · Indexing · PageSpeed · CrUX · GEO · IndexNow · GeoSuite) |
-| **Tests** | 389 · typecheck + lint + build in CI |
+| **Tests** | Automated Vitest suite · typecheck + lint + build in CI |
 | **License** | Apache-2.0 · Node ≥ 20 · read-only by default |
 | **External APIs** | Free Google APIs only — no SerpApi, no DataForSEO, no commercial LLM |
 | **Website** | <https://geoking2104.github.io/GTM-Growth/> — free URL read, then the full audit |
+
+---
+
+## Public console — evidence and actionable free recommendations
+
+The unauthenticated `/console/?lang=en#c-public-read` and `?lang=fr` flow now accepts a **public page URL directly**. The read returns a bounded set of observed on-page SEO/GEO checks, a GEO **v1 page-readiness** score, technical evidence, explicitly outbound social-profile references, and up to twelve evidence-backed opportunities (with six presented at a time). The assistant button **“AI recommends” / “L’IA recommande”** ranks actual failures in three explainable modes: quick wins, potential rubric impact, and AI discoverability. Every option describes the expected technical effect and effort, links to the observed evidence, and offers a guided sign-in CTA.
+
+- The public read is a **single-page diagnostic**; it is not the GEO v2 42-check crawler or a Google/Bing/ChatGPT visibility measurement. The ranking is a **deterministic algorithm**, not an LLM call or a prediction of traffic, citation or revenue. Recoverable GEO points are conditional rubric points, not promised search results.
+- Google, Bing, ChatGPT, Gemini, Perplexity and Claude are represented by branded visual cues; the logos indicate relevance only, **not live engine API access or endorsement**.
+- `POST /api/free-read` remains the server-side measurement source, with existing rate limits, anti-SSRF and caching. No public Playwright scan, site write, or score publication is introduced. Social profiles are discovered from the page's outbound links and schema `sameAs`; inbound backlinks cannot be inferred from these signals.
+- Cloud Solo (€39/month) and Cloud Agency (€149/month) remain pilot hypotheses; the **self-hosted Apache-2.0 product stays free**. Connected data, multi-page analysis, history, automations and approved Apply Mode are differentiated cloud capabilities, not prerequisites for a one-page public read.
+
+See [Free console: market comparison, screenshots and next experiments](docs/product/FREE-CONSOLE-VALUE-PLAN.md).
+
+### Français — lecture gratuite et assistant de recommandations
+
+La console publique propose la saisie d’une URL, des constats vérifiables et plusieurs pistes de correction classées par un algorithme explicable. **« L’IA recommande »** présente l’effet technique potentiel, l’effort et la preuve ; les corrections restent soumises à une validation humaine. Le score public actuel est **GEO v1, limité à la page lue** : ni position Google/Bing ni citation ChatGPT n’est prétendue mesurée.
 
 ---
 

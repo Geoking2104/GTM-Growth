@@ -71,6 +71,65 @@ async function visit(browserContext, locale, label, viewport) {
   return page;
 }
 
+/** Public console smoke: response fixture means no external domain is crawled. */
+async function visitPublicConsole(browserInstance, locale, viewport, label) {
+  const context = await browserInstance.newContext();
+  const payload = {
+    finalUrl: "https://example.com/", httpStatus: 200, score: 71, recoverablePoints: 29,
+    checksSummary: { passed: 22, toImprove: 13, total: 35 },
+    opportunities: [
+      { checkId: "robots.citation_bots", category: "robots", priority: "high", status: "partial", points: 3, evidence: "5 citation crawlers need explicit rules", action: "Add explicit crawler rules" },
+      { checkId: "schema.article", category: "schema", priority: "medium", status: "fail", points: 3, evidence: "No Article found", action: "Add Article schema" },
+      { checkId: "brand.kg_readiness", category: "brand_entity", priority: "medium", status: "partial", points: 3, evidence: "1 sameAs link", action: "Add official sameAs profiles" },
+      { checkId: "llms.found", category: "llms", priority: "high", status: "fail", points: 3, evidence: "No /llms.txt (HTTP 404)", action: "Publish llms.txt" },
+      { checkId: "content.links", category: "content", priority: "low", status: "fail", points: 2, evidence: "0 external links", action: "Cite sources" },
+    ],
+    socialProfiles: [{ platform: "LinkedIn", url: "https://www.linkedin.com/company/example", source: "schema" }],
+    tables: [
+      { id: "seo.meta", title: "SEO — metadata", rows: [
+        { label: "Title", value: "48 chars", status: "pass" },
+        { label: "Canonical", value: "https://example.com/", status: "pass" },
+        { label: "Robots meta", value: "index, follow (default)", status: "pass" },
+      ] },
+      { id: "gsc.readiness", title: "Search Console — indexation readiness", rows: [
+        { label: "Sitemap", value: "15 URL(s)", status: "pass" },
+        { label: "Indexability", value: "indexable", status: "pass" },
+      ] },
+    ],
+  };
+  await context.route("**/api/free-read", (route) => route.fulfill({ status: 200, contentType: "application/json", body: JSON.stringify(payload) }));
+  const page = await context.newPage();
+  const errors = [];
+  page.on("pageerror", (error) => errors.push(error.message));
+  await page.setViewportSize(viewport);
+  const response = await page.goto(`${origin}/console/?lang=${locale}#c-public-read`, { waitUntil: "networkidle" });
+  assert.equal(response?.status(), 200, `${label}: console loads`);
+  await page.locator("#c-public-url").fill("https://example.com/");
+  await page.locator("#c-public-url-form button").click();
+  await page.locator(".public-domain").waitFor();
+  assert.equal(await page.locator(".public-domain").innerText(), "example.com");
+  assert.equal(await page.locator(".public-signal").count(), 4);
+  const screenshotPrefix = `${locale}-console-${label}`;
+  await page.screenshot({ path: path.join(outputDir, `${screenshotPrefix}-overview.png`), fullPage: true });
+  const recommend = page.locator(".public-recommend-button");
+  await recommend.click();
+  assert.equal(await recommend.getAttribute("aria-expanded"), "true");
+  assert.equal(await page.locator(".public-action-card").count(), 5);
+  await page.locator('.public-rank-mode[data-mode="impact"]').click();
+  await page.locator(".public-action-details summary").first().click();
+  const copy = await page.locator(".public-recommendations").innerText();
+  assert.match(copy, locale === "fr" ? /L’IA recommande|points|effet/i : /AI recommends|points|effect/i);
+  if (locale === "fr") assert.doesNotMatch(copy, /Add explicit crawler rules|Add Article schema/);
+  const engines = page.locator(".public-engine img");
+  assert.equal(await engines.count(), 6);
+  assert.equal(await engines.evaluateAll((imgs) => imgs.every((img) => img.complete && img.naturalWidth > 0)), true, `${label}: engine logos load`);
+  const sizing = await page.evaluate(() => ({ width: innerWidth, scrollWidth: document.documentElement.scrollWidth }));
+  assert.ok(sizing.scrollWidth <= sizing.width + 2, `${label}: horizontal overflow ${JSON.stringify(sizing)}`);
+  await page.screenshot({ path: path.join(outputDir, `${screenshotPrefix}-recommendations.png`), fullPage: true });
+  assert.deepEqual(errors, [], `${label}: no browser runtime errors`);
+  await context.close();
+}
+
 try {
   await fs.mkdir(outputDir, { recursive: true });
   await ready();
@@ -116,6 +175,11 @@ try {
   assert.match(await frMeasured.locator("#read-result").innerText(), /48 caractères/);
   await frMeasured.screenshot({ path: path.join(outputDir, "fr-measured.png") });
 
+  await visitPublicConsole(browser, "fr", desktop, "desktop");
+  await visitPublicConsole(browser, "en", desktop, "desktop");
+  await visitPublicConsole(browser, "fr", mobile, "mobile");
+  await visitPublicConsole(browser, "en", mobile, "mobile");
+
   const enMobile = await visit(context, "en", "en-mobile", mobile);
   const frMobile = await visit(context, "fr", "fr-mobile", mobile);
   await frMobile.locator(".mobile-nav summary").click();
@@ -131,7 +195,7 @@ try {
   for (const page of [en, fr, frMeasured, enMobile, frMobile]) await page.close();
   await measured.close();
   await context.close();
-  console.log(`QA OK: FR/EN desktop + mobile, URL read, measured/fallback states, language toggles. Screenshots: ${outputDir}`);
+  console.log(`QA OK: FR/EN landing + public console on desktop/mobile, recommended actions, evidence, logos, and language toggles. Screenshots: ${outputDir}`);
 } catch (error) {
   failures.push(error.stack || String(error));
 } finally {
