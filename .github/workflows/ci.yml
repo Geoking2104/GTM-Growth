@@ -59,3 +59,38 @@ jobs:
           name: dist
           path: dist/
           retention-days: 7
+
+  landing-visual-qa:
+    name: Landing · FR/EN browser QA and screenshots
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Install headless Chromium
+        run: npx playwright-core install --with-deps chromium
+
+      - name: Check French and English journeys
+        env:
+          LANDING_QA_OUTPUT_DIR: qa-landing
+        run: node scripts/qa-landing.mjs
+
+      - name: Upload bilingual screenshots
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: landing-fr-en-screenshots
+          path: qa-landing/
+          if-no-files-found: warn
+          retention-days: 14

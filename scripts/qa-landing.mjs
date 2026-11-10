@@ -3,8 +3,10 @@
  * Run: node scripts/qa-landing.mjs
  * Screenshots are generated outside the git worktree by default. */
 import assert from "node:assert/strict";
+import { existsSync } from "node:fs";
 import fs from "node:fs/promises";
 import path from "node:path";
+import { get as httpGet } from "node:http";
 import { spawn } from "node:child_process";
 import { setTimeout as wait } from "node:timers/promises";
 import { chromium } from "playwright-core";
@@ -21,8 +23,11 @@ async function ready() {
   for (let attempts = 0; attempts < 50; attempts++) {
     if (server.exitCode !== null) throw new Error("Static preview server exited unexpectedly");
     try {
-      const response = await fetch(origin);
-      if (response.ok) return;
+      const status = await new Promise((resolve, reject) => {
+        const request = httpGet(origin, (response) => { response.resume(); resolve(response.statusCode); });
+        request.on("error", reject);
+      });
+      if (status === 200) return;
     } catch { /* startup in progress */ }
     await wait(100);
   }
@@ -53,7 +58,8 @@ async function visit(browserContext, locale, label, viewport) {
 try {
   await fs.mkdir(outputDir, { recursive: true });
   await ready();
-  browser = await chromium.launch({ executablePath: process.env.CHROMIUM_BIN || "/usr/bin/chromium", headless: true, args: ["--no-sandbox", "--disable-dev-shm-usage"] });
+  const browserExecutable = process.env.CHROMIUM_BIN || (existsSync(chromium.executablePath()) ? chromium.executablePath() : "/usr/bin/chromium");
+  browser = await chromium.launch({ executablePath: browserExecutable, headless: true, args: ["--no-sandbox", "--disable-dev-shm-usage"] });
   const context = await browser.newContext({ locale: "fr-FR" });
   await context.route("**/api/free-read", (route) => route.fulfill({ status: 503, contentType: "application/json", body: '{"error":"preview unavailable"}' }));
 
