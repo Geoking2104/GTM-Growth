@@ -59,6 +59,14 @@ async function visit(browserContext, locale, label, viewport) {
   await privacy.getByRole("button", { name: locale === "fr" ? "Refuser" : "Reject" }).click();
   await privacy.waitFor({ state: "hidden" });
   await page.screenshot({ path: path.join(outputDir, `${label}.png`) });
+  const plans = page.locator(locale === "fr" ? "#offres" : "#plans");
+  const pricingCopy = await plans.innerText();
+  assert.match(pricingCopy, /39/, `${label}: Solo pilot price`);
+  assert.match(pricingCopy, /149/, `${label}: Agency pilot price`);
+  assert.match(pricingCopy, locale === "fr" ? /HT\/TTC/ : /VAT/, `${label}: VAT status is explicit`);
+  const consoleLink = await plans.locator('a[href*="/console/"]').first().getAttribute("href");
+  assert.match(consoleLink ?? "", new RegExp(`lang=${locale}`), `${label}: checkout CTA preserves language`);
+  if (viewport.width > 1000) await plans.screenshot({ path: path.join(outputDir, `${label}-pricing.png`) });
   assert.deepEqual(errors, [], `${label}: no JS runtime exceptions`);
   return page;
 }

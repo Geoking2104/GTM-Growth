@@ -215,6 +215,8 @@ html[lang="fr"] .gg-free-result .gg-next { display: inline-block; margin-top: .8
 }
 html[lang="fr"] .nav .logo { flex-shrink: 0; white-space: nowrap; }
 html[lang="fr"] .url-form input::placeholder { color: var(--gg-muted); }
+html[lang="fr"] .foot-links { max-width: 100%; flex-wrap: wrap; row-gap: .6rem; }
+html[lang="fr"] .foot-links .privacy-settings { color: var(--gg-muted); font-size: 13px; }
 @media (max-width: 860px) { html[lang="fr"] .nav-in { gap: 10px; } }
 @media (max-width: 530px) {
   html[lang="fr"] .nav-in { gap: 8px; padding: 10px 14px; }
