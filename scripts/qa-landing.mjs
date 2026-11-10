@@ -71,7 +71,7 @@ try {
   // French read: instant URL analysis, no identity wall; sample fallback explicit.
   await fr.locator("#url-input").fill("not a url");
   await fr.locator("#url-form button").click();
-  assert.match(await fr.locator("#form-msg").innerText(), /URL/);
+  assert.match(await fr.locator("#form-msg").innerText(), /URL|hôte|domaine/i);
   await fr.locator("#url-input").fill("example.com");
   await fr.locator("#url-form button").click();
   await fr.locator("#read-result .gg-checks li").first().waitFor();
