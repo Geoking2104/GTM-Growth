@@ -14,6 +14,24 @@ The agent reads live Google data, audits setups, crosses organic search with sit
 
 ---
 
+## Cloud subscriptions — Mollie integration (staged, not live)
+
+**Self-hosted GTM Growth remains free under Apache-2.0.** The optional KayrosLab-operated Cloud service has two *pilot pricing hypotheses*: **Cloud Solo €39/month** and **Cloud Agence €149/month**. Tax treatment (VAT inclusive/exclusive), contractual entitlements/quotas and legally chargeable totals are **not yet approved**; these figures are not a live checkout offer.
+
+- The Node/Express billing module uses a **dedicated GTM Mollie website profile and API keys**, never the openDPE API key or payment backend. Reuse of the Mollie *merchant organization* is conditional on confirming the same legal entity.
+- The authenticated console includes **Act → Cloud subscription**: plan/status display, hosted Mollie checkout with recurring-payment consent, subscription management and next-renewal plan changes. Keycloak tenant admins manage payments; users may view their own tenant's status.
+- The isolated SQLite ledger has migrations, payment/tenant correlation, checked webhook retrieval via the Mollie API, idempotency, first-payment/recurring-mandate sequencing, renewal handling, cancellation and optional daily reconciliation. An unverified redirect never grants Cloud entitlements.
+- **Safe-by-default:** `BILLING_MODE=disabled`, `BILLING_CHECKOUT_ENABLED=false`, no credentials in Git; a separate explicit approval is required for live charges. No merge, deployment, customer debit or openDPE modification is implied by this implementation.
+- Cloud quota enforcement, final plan entitlements, tax/legal pages, invoices, backups and staging/end-to-end Mollie certification remain go-live dependencies. **Existing self-hosted features are not subscription-gated.**
+
+See the [English implementation/configuration guide](docs/billing/MOLLIE-SUBSCRIPTIONS-IMPLEMENTATION.md) and [French owner-approved go-live checklist](docs/billing/MOLLIE-SUBSCRIPTIONS-GO-LIVE.md). Run the offline payment simulations with `npx vitest run tests/billing.test.ts`.
+
+### Français — abonnements Cloud
+
+**Open source toujours gratuit.** Les tarifs pilotes Cloud Solo **39 €/mois** et Cloud Agence **149 €/mois** sont intégrés au catalogue, mais la TVA, les prestations/quotas et les CGV restent à valider. Le paiement Mollie est **désactivé par défaut**. La mise en production et les prélèvements réels nécessitent une autorisation explicite et le passage de tous les critères du cahier des charges.
+
+---
+
 ## GEO Score v2 — verified-domain Playwright pilot (in development)
 
 The **GEO v2 scoring rubric** allocates 100 points across eight categories: robots 14, llms.txt 14, JSON-LD 14, metadata 10, content 18, brand/entity 10, AI discovery 8, and crawler rendering 12. This is the **v2 pilot**, separate from the existing live v1 examples and public free-read flow documented below.

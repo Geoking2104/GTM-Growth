@@ -18,6 +18,7 @@ import { renderPlatformSetup } from "./platform-setup.js";
 import { renderTrackedQueries } from "./tracked-queries.js";
 import { renderOpsPrompts, renderOpsRank, renderOpsArticles, renderOpsAlerts } from "./ops.js";
 import { renderApplyMode } from "./apply.js";
+import { renderBilling } from "./billing.js";
 import { openWizard, renderAgentHelp } from "./onboarding-wizard.js";
 import { toolbar, renderSearchPerformance, renderQueryPages, renderSitemaps, renderGa4, renderRealtime, renderEcommerce, renderTechnology, renderGtm, renderBing, renderStatus, renderTags, renderSettings } from "./analytics.js";
 
@@ -41,6 +42,19 @@ async function fetchApi(route, body, { binary = false } = {}) {
   if (res.status === 401) { await login(); throw new Error("Session expirÃ©e"); }
   if (!res.ok) { const e = await res.json().catch(() => ({})); throw new Error(e.error || `Erreur ${res.status}`); }
   return binary ? res.blob() : res.json();
+}
+
+async function billingRequest(route, body) {
+  const token = await accessToken();
+  if (!token) { await login(); throw new Error("Session expirée"); }
+  const res = await fetch(`/api/billing${route}`, {
+    method: body === undefined ? "GET" : "POST",
+    headers: { "Content-Type": "application/json", ...headers(token) },
+    body: body === undefined ? undefined : JSON.stringify(body), cache: "no-store",
+  });
+  const data = await res.json().catch(() => ({}));
+  if (!res.ok) throw new Error(data.error || `Erreur ${res.status}`);
+  return data;
 }
 
 
@@ -140,6 +154,7 @@ const SECTIONS = {
     { id: "performance", icon: "performance", build: fromTool("performance") },
   ],
   act: [
+    { id: "billing", icon: "billing", build: () => custom("billing", [{ id: "subscription", label: LANG === "fr" ? "Mon abonnement" : "My subscription", needsDomain: false, async: async () => renderBilling({ me: state.me, request: billingRequest, fr: LANG === "fr" }) }]) },
     { id: "apply_mode", icon: "audit", build: () => custom("apply_mode", [
       { id: "preview", label: LANG === "fr" ? "Correctifs GEO" : "GEO fixes", needsDomain: false, async: async () => renderApplyMode({ api, me: state.me, url: state.url }) }]) },
     { id: "search", icon: "search", build: fromTool("search") },
@@ -414,7 +429,8 @@ async function start() {
   const [s, tb] = location.hash.slice(1).split("/");
   if (!state.url) { picker.hidden = false; sw.setAttribute("aria-expanded", "true"); }
   startBackground();
-  show(s || "overview", tb);
+  const checkoutReturn = new URLSearchParams(location.search).get("checkout") === "return";
+  show(checkoutReturn ? "billing" : (s || "overview"), checkoutReturn ? undefined : tb);
   if (state.me?.tenant && !state.requestedDomainUnavailable && (state.openRequestedWizard || !localStorage.getItem(`gtm-console-wizard-v1:${state.me.tenant.id}:${state.me.email || state.me.username || "user"}`))) launchWizard();
 }
 window.addEventListener("hashchange", () => { const [a, b] = location.hash.slice(1).split("/"); if (a && ALL.some((x) => x.id === a)) show(a, b); });
