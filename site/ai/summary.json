@@ -1,7 +1,7 @@
 {
   "name": "GTM Growth",
   "description": "Open-source MCP server for GA4, Google Tag Manager, Search Console and AI-search readiness audits.",
-  "url": "https://geoking2104.github.io/GTM-Growth/",
+  "url": "https://gtm.kayroslab.com/",
   "repository": "https://github.com/Geoking2104/GTM-Growth",
   "license": "Apache-2.0",
   "capabilities": ["geo-audit", "citability", "gtm-installation", "llms-txt", "structured-data"]
