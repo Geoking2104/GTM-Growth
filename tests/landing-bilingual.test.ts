@@ -18,6 +18,17 @@ describe("French and English landing pages", () => {
     expect(fr).toContain('aria-current="page">FR');
   });
 
+  it("shares privacy controls while displaying consent in the visitor's language", () => {
+    expect(en).toContain('src="./privacy.js"');
+    expect(fr).toContain('src="../privacy.js"');
+    expect(fr).toContain('class="privacy-settings"');
+    const privacy = siteFile("privacy.js");
+    expect(privacy).toContain('Vos préférences de confidentialité');
+    expect(privacy).toContain('Your privacy preferences');
+    expect(privacy).toContain('text("Refuser", "Reject")');
+    expect(siteFile("brand.css")).toContain('.privacy-banner .btn.btn-ghost');
+  });
+
   it("runs the free read in French without requiring a console login", () => {
     expect(fr).toContain('src="free-read.js"');
     expect(fr).toContain('id="read-result"');

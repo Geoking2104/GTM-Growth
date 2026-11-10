@@ -38,6 +38,8 @@ async function visit(browserContext, locale, label, viewport) {
   const page = await browserContext.newPage();
   const errors = [];
   page.on("pageerror", (error) => errors.push(error.message));
+  // Check the first-visit consent journey independently for every locale.
+  await page.addInitScript(() => localStorage.removeItem("gtm-growth-privacy-v1"));
   await page.setViewportSize(viewport);
   const response = await page.goto(`${origin}/${locale === "fr" ? "fr/" : ""}`, { waitUntil: "networkidle" });
   assert.equal(response?.status(), 200, `${label} homepage loaded`);
@@ -50,6 +52,12 @@ async function visit(browserContext, locale, label, viewport) {
   assert.ok(await logo.evaluate((img) => img.complete && img.naturalWidth > 0), `${label}: logo must load`);
   const langTarget = locale === "fr" ? "en" : "fr";
   assert.equal(await page.locator(`a[hreflang="${langTarget}"]`).count() > 0, true);
+  const privacy = page.locator(".privacy-banner");
+  await privacy.waitFor({ state: "visible" });
+  assert.equal(await privacy.locator("strong").textContent(), locale === "fr" ? "Vos préférences de confidentialité" : "Your privacy preferences");
+  await page.screenshot({ path: path.join(outputDir, `${label}-privacy.png`) });
+  await privacy.getByRole("button", { name: locale === "fr" ? "Refuser" : "Reject" }).click();
+  await privacy.waitFor({ state: "hidden" });
   await page.screenshot({ path: path.join(outputDir, `${label}.png`) });
   assert.deepEqual(errors, [], `${label}: no JS runtime exceptions`);
   return page;
