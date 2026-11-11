@@ -1,6 +1,7 @@
 /** Unauthenticated, evidence-led free read shared by French and English shells. */
 import { normalisePublicUrl, rankRecommendations, explainRecommendation } from "./public-read-model.js";
 import { translateLiveTables } from "../fr/server-tables.js";
+import { renderJourneyPreview } from "./customer-journey.js";
 
 const COPY = {
   fr: {
@@ -16,7 +17,7 @@ const COPY = {
     engines: "Moteurs et assistants concernés", enginesNote: "Logos indicatifs. Aucun moteur n’a été interrogé ; citations, positions et trafic ne sont pas mesurés.",
     actionEyebrow: "VOTRE PLAN PERSONNALISÉ", actionTitle: "Que corriger en premier ?", actionIntro: "Plusieurs pistes sont calculées à partir des échecs réellement observés.",
     recommend: "✨ L’IA recommande", recommends: "L’IA recommande", algorithmNote: "Classement automatique et explicable des contrôles mesurés, sans génération de réponse par un LLM.",
-    quick: "Gains rapides", impact: "Impact potentiel", ai: "Découverte IA", fixCount: "options analysées", noFixes: "Aucun correctif étayé par cette lecture.",
+    quick: "Gains rapides", blockers: "Blocages", journey: "Intentions clients", impact: "Impact potentiel", ai: "Découverte IA", topThree: "3 actions à examiner en priorité", copyFix: "Copier la correction", copiedFix: "Correction copiée", copyFailed: "Impossible de copier", fixCount: "options analysées", noFixes: "Aucun correctif étayé par cette lecture.",
     possible: "Effet possible", points: "pts GEO possibles", blocker: "Blocage prioritaire", effort: "Effort", easy: "Faible", medium: "Modéré", hard: "Élevé",
     proof: "Voir la preuve et l’effet", proofSource: "Constat technique du contrôle", doThis: "Comment agir", continue: "Me guider pour corriger", consent: "Toute modification exige votre validation dans votre espace.",
     limitation: "Diagnostic public : une page et ses ressources accessibles. Pas d’accès Google Analytics, Search Console ou Bing Webmaster sans connexion autorisée.",
@@ -35,7 +36,7 @@ const COPY = {
     engines: "Relevant engines and assistants", enginesNote: "Illustrative logos. No engine was queried; citations, rankings and traffic were not measured.",
     actionEyebrow: "YOUR PERSONAL ACTION PLAN", actionTitle: "What should you fix first?", actionIntro: "Multiple options are calculated from the actual observed failures.",
     recommend: "✨ AI recommends", recommends: "AI recommends", algorithmNote: "Automatic, explainable ranking of measured checks. No LLM response is generated.",
-    quick: "Quick wins", impact: "Potential impact", ai: "AI discovery", fixCount: "options assessed", noFixes: "No evidence-backed fixes from this read.",
+    quick: "Quick wins", blockers: "Blockers", journey: "Customer intent", impact: "Potential impact", ai: "AI discovery", topThree: "3 actions to review first", copyFix: "Copy fix", copiedFix: "Fix copied", copyFailed: "Could not copy", fixCount: "options assessed", noFixes: "No evidence-backed fixes from this read.",
     possible: "Possible effect", points: "possible GEO pts", blocker: "Priority blocker", effort: "Effort", easy: "Low", medium: "Moderate", hard: "High",
     proof: "See evidence and effect", proofSource: "Raw technical finding", doThis: "How to act", continue: "Guide me through the fix", consent: "Any change requires your approval in your workspace.",
     limitation: "Public diagnostic: one page and accessible resources. No Google Analytics, Search Console or Bing Webmaster access without authorised sign-in.",
@@ -152,6 +153,15 @@ function recommendationCard(fix, lang, copy, index) {
     const value = el("span", "", fix.evidence); value.lang = "en"; proof.append(value); details.append(proof);
   }
   card.append(details);
+  const copyButton = el("button", "public-rank-mode", copy.copyFix);
+  copyButton.type = "button";
+  copyButton.onclick = async () => {
+    try {
+      await navigator.clipboard.writeText(`${info.title}\n${info.steps}\n${copy.proofSource}: ${fix.evidence || "—"}\n${copy.possible}: ${info.effect}`);
+      copyButton.textContent = copy.copiedFix;
+    } catch { copyButton.textContent = copy.copyFailed; }
+  };
+  card.append(copyButton);
   const link = el("a", "public-action-cta", `${copy.continue} ↗`);
   link.href = "#c-login-form"; card.append(link);
   return card;
@@ -165,7 +175,12 @@ function recommendations(data, lang, copy) {
   const opportunities = Array.isArray(data.opportunities) ? data.opportunities : (data.topFixes || []).map((fix) => ({
     ...fix, status: "fail", category: fix.checkId?.startsWith("brand.") ? "brand_entity" : fix.checkId?.split(".")[0], priority: "high",
   }));
-  section.append(trigger, el("p", "public-micro", `${opportunities.length} ${copy.fixCount} · ${copy.algorithmNote}`));
+  const top = el("div", "public-top-fixes");
+  const topLabel = el("h3", "", copy.topThree);
+  const topList = el("ol", "public-action-list");
+  topList.replaceChildren(...rankRecommendations(opportunities, "quick", 3).map((fix, index) => recommendationCard(fix, lang, copy, index)));
+  if (topList.children.length) top.append(topLabel, topList);
+  section.append(top, trigger, el("p", "public-micro", `${opportunities.length} ${copy.fixCount} · ${copy.algorithmNote}`));
   const ranked = el("div", "public-ranked"); ranked.id = "c-public-ranked"; ranked.hidden = true;
   const modes = el("div", "public-rank-modes"); modes.setAttribute("role", "group"); modes.setAttribute("aria-label", copy.recommends);
   const list = el("ol", "public-action-list");
@@ -174,7 +189,7 @@ function recommendations(data, lang, copy) {
     list.replaceChildren(...rankRecommendations(opportunities, mode).map((fix, index) => recommendationCard(fix, lang, copy, index)));
     if (!list.children.length) list.append(el("li", "public-description", copy.noFixes));
   }
-  for (const [mode, label] of [["quick", copy.quick], ["impact", copy.impact], ["ai", copy.ai]]) {
+  for (const [mode, label] of [["quick", copy.quick], ["blockers", copy.blockers], ["journey", copy.journey], ["impact", copy.impact], ["ai", copy.ai]]) {
     const button = el("button", "public-rank-mode", label); button.type = "button"; button.dataset.mode = mode;
     button.onclick = () => choose(mode); modes.append(button);
   }
@@ -211,6 +226,11 @@ function renderResult(box, data, url, lang) {
   box.append(el("p", "public-micro", `${copy.scoreNote} ${copy.gainsNote}`));
   box.append(diagnostic(data, lang, copy));
   box.append(recommendations(data, lang, copy));
+  box.append(renderJourneyPreview({
+    language: lang,
+    mode: "public",
+    data: { url: finalUrl, finalUrl, pageSignals: data.pageSignals || {}, opportunities: data.opportunities || [] },
+  }));
   const enginePanel = el("section", "public-panel public-engine-panel");
   enginePanel.append(el("h2", "", copy.engines));
   const logos = el("div", "public-engines");

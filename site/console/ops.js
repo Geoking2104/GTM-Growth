@@ -25,6 +25,7 @@ export function renderOpsPrompts({ api, me }) {
     for (const p of data?.prompts ?? []) {
       const li = el("li");
       li.append(el("span", "", `${p.prompt} `), el("span", "c-note", `(${p.group})`));
+      if (p.sourceKind) li.append(el("span", "c-note", p.sourceKind === "inferred" ? L(" · hypothèse non observée", " · unobserved hypothesis") : L(" · formulé par vous", " · user-provided")));
       if (admin) li.append(button(L("Retirer", "Remove"), async () => { try { await api("/visibility/prompts/remove", { id: p.id }); await load(); } catch (error) { message.textContent = error.message; } }));
       list.append(li);
     }

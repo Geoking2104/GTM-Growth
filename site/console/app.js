@@ -21,6 +21,7 @@ import { renderApplyMode } from "./apply.js";
 import { openWizard, renderAgentHelp } from "./onboarding-wizard.js";
 import { toolbar, renderSearchPerformance, renderQueryPages, renderSitemaps, renderGa4, renderRealtime, renderEcommerce, renderTechnology, renderGtm, renderBing, renderStatus, renderTags, renderSettings } from "./analytics.js";
 import { mountPublicRead } from "./public-read.js";
+import { renderCustomerJourneyWorkspace } from "./customer-journey-workspace.js";
 
 const $ = (s) => document.querySelector(s);
 const selectedTenant = () => sessionStorage.getItem("gtm-console-selected") || currentTenant()?.id || "";
@@ -112,6 +113,10 @@ const custom = (id, tabs) => ({ id, tabs });
 const fromTool = (id, filter = () => true, intro) => () => { const x = tool(id); return { intro: intro ?? tr(x.intro), tabs: x.actions.filter(filter).map((a) => ({ id: a.id, label: actionLabel(a), action: a })) }; };
 const SECTIONS = {
   track: [
+    { id: "journey", icon: "geo", build: () => custom("journey", [
+      { id: "map", label: LANG === "fr" ? "Mon parcours client" : "My customer journey", needsDomain: false, async: async () => renderCustomerJourneyWorkspace({ state, api }) },
+      { id: "prompts", label: LANG === "fr" ? "Questions suivies" : "Tracked questions", needsDomain: false, async: async () => renderOpsPrompts({ api, me: state.me }) },
+    ]) },
     { id: "overview", icon: "overview", build: () => custom("overview", [
       { id: "board", label: t("s_overview"), async: async () => {
         const [ov, status, reports] = await Promise.all([overview().catch(() => null), api("/tracking/status", scope()).catch(() => null), reportsList()]);
@@ -252,7 +257,7 @@ async function show(sectionId, tabId) {
 function mountNav() {
   for (const [group, list] of Object.entries(SECTIONS)) {
     const ul = $(`#c-nav-${group}`);
-    for (const s of list) { const li = el("li"); const a = el("a"); a.href = `#${s.id}`; a.dataset.section = s.id; a.innerHTML = icon(s.icon); a.append(el("span", "", (s.id === "platform" ? (LANG === "fr" ? "Administration plateforme" : "Platform administration") : s.id === "competition" ? (LANG === "fr" ? "Concurrence" : "Competition") : s.id === "ai_visibility" ? (LANG === "fr" ? "VisibilitÃ© IA" : "AI visibility") : t(`s_${s.id}`)))); a.onclick = (e) => { e.preventDefault(); show(s.id); }; li.append(a); ul.append(li); }
+    for (const s of list) { const li = el("li"); const a = el("a"); a.href = `#${s.id}`; a.dataset.section = s.id; a.innerHTML = icon(s.icon); a.append(el("span", "", (s.id === "platform" ? (LANG === "fr" ? "Administration plateforme" : "Platform administration") : s.id === "competition" ? (LANG === "fr" ? "Concurrence" : "Competition") : s.id === "ai_visibility" ? (LANG === "fr" ? "VisibilitÃ© IA" : "AI visibility") : s.id === "journey" ? (LANG === "fr" ? "Parcours client" : "Customer journey") : t(`s_${s.id}`)))); a.onclick = (e) => { e.preventDefault(); show(s.id); }; li.append(a); ul.append(li); }
   }
   const search = $("#c-search");
   search.oninput = () => { const q = search.value.trim().toLowerCase(); document.querySelectorAll(".app-nav li").forEach((li) => { li.hidden = q && !li.textContent.toLowerCase().includes(q); }); };

@@ -65,6 +65,17 @@ describe("free read", () => {
     expect(result.checksSummary.passed + result.checksSummary.toImprove).toBe(result.checksSummary.total);
   });
 
+  it("exposes bounded, observed page headings for hypothetical buyer questions", async () => {
+    const result = await runFreeRead({ url: "https://acme.com/", fetcher: fakeFetcher() });
+    expect(result.pageSignals).toEqual({
+      title: "Acme analytics for B2B teams",
+      description: "Acme measures what search and AI assistants do with your pages, with evidence for every number in the report.",
+      htmlLang: "en",
+      h1: ["Acme"],
+      h2: ["What we measure", "How it works"],
+    });
+  });
+
   it("reports only outbound social identities actually present in the measured HTML/schema", async () => {
     const result = await runFreeRead({ url: "https://acme.com/", fetcher: fakeFetcher() });
     expect(result.socialProfiles).toEqual([

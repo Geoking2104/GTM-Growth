@@ -6,7 +6,7 @@ import path from "node:path";
 import Database from "better-sqlite3";
 import { validTenantId } from "../tenants/store.js";
 
-export interface TrackedPrompt { id: string; prompt: string; group: string; createdAt: string }
+export interface TrackedPrompt { id: string; prompt: string; group: string; createdAt: string; sourceKind?: "inferred" | "provided:user"; sourceRef?: string; locale?: "fr" | "en"; targetUrl?: string }
 export interface VisibilityRun { id: string; ranAt: string; engine: string; prompts: number; succeeded: number; failed: number; datasetId: string | null; error: string | null }
 export interface RankKeyword { id: string; keyword: string; locale: string; createdAt: string }
 export interface RankSnapshot { id: string; keywordId: string; checkedAt: string; position: number | null; url: string | null; aiOverview: boolean; citedInAiOverview: boolean }
@@ -39,13 +39,13 @@ export function listPrompts(tenantId: string): TrackedPrompt[] {
   validateTenant(tenantId);
   return (database().prepare("SELECT payload FROM prompts WHERE tenant_id = ? ORDER BY created_at, id").all(tenantId) as Row[]).map(parse<TrackedPrompt>);
 }
-export function addPrompt(tenantId: string, prompt: string, group = "general"): TrackedPrompt {
+export function addPrompt(tenantId: string, prompt: string, group = "general", metadata: Pick<TrackedPrompt, "sourceKind" | "sourceRef" | "locale" | "targetUrl"> = {}): TrackedPrompt {
   validateTenant(tenantId); const clean = prompt.trim();
   if (!clean || clean.length > 2000) throw new Error("Prompt invalide (1–2000 caractères).");
   const existing = listPrompts(tenantId);
   if (existing.some((p) => p.prompt === clean)) throw new Error("Prompt déjà suivi.");
   if (existing.length >= 200) throw new Error("Limite de 200 prompts suivis atteinte.");
-  const row: TrackedPrompt = { id: crypto.randomUUID(), prompt: clean, group: group.trim().slice(0, 60) || "general", createdAt: now() };
+  const row: TrackedPrompt = { id: crypto.randomUUID(), prompt: clean, group: group.trim().slice(0, 60) || "general", createdAt: now(), ...metadata };
   database().prepare("INSERT INTO prompts (tenant_id, id, created_at, payload) VALUES (?, ?, ?, ?)").run(tenantId, row.id, row.createdAt, JSON.stringify(row));
   return row;
 }
