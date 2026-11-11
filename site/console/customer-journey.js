@@ -63,7 +63,7 @@ export function makeJourneyPlanMarkdown(journey, states, opportunities, language
     const prompt = line(selected.custom || stage.prompts[selected.index]?.text || stage.prompts[0].text);
     if (!prompt) continue;
     lines.push("## " + (i + 1) + ". " + stage.title, "", "- " + w.mind + ": " + stage.mindset,
-      "- " + w.hypothetical + ": " + prompt,
+      "- " + (selected.custom ? w.provided : w.hypothetical) + ": " + prompt,
       "- Target URL: " + journey.url,
       "- " + (stage.heading ? w.matched + ": " + stage.heading.level + " " + stage.heading.text : w.unknown), "");
   }
@@ -131,8 +131,9 @@ export function renderJourneyPreview({ data, language = "fr", mode = "public", s
       const state = states.get(stage.id);
       const item = el("li", "journey-stage" + (state.enabled ? "" : " journey-stage-discarded"));
       const heading = el("div", "journey-stage-head");
+      const sourceBadge = el("span", "public-pill", state.custom ? w.provided : w.hypothetical);
       heading.append(el("strong", "journey-stage-number", String(index + 1)),
-        el("h3", "", stage.title), el("span", "public-pill", w.hypothetical));
+        el("h3", "", stage.title), sourceBadge);
       item.append(heading, el("p", "journey-mindset", stage.mindset));
       if (stage.prompts.length > 1) {
         const label = el("label", "journey-question-label", w.alternative);
@@ -148,7 +149,11 @@ export function renderJourneyPreview({ data, language = "fr", mode = "public", s
       edit.type = "text"; edit.maxLength = 240;
       edit.value = state.custom || stage.prompts[state.index]?.text || stage.prompts[0].text;
       edit.disabled = !state.enabled;
-      edit.onchange = () => { state.custom = edit.value.trim().slice(0, 240); };
+      edit.oninput = () => {
+        const value = edit.value.trim().slice(0, 240);
+        state.custom = value === stage.prompts[state.index]?.text ? "" : value;
+        sourceBadge.textContent = state.custom ? w.provided : w.hypothetical;
+      };
       editLabel.append(edit); item.append(editLabel);
       const coverage = el("p", "journey-evidence",
         stage.heading ? w.matched + " : " + stage.heading.level + " — " + stage.heading.text
