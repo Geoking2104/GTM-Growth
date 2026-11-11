@@ -21,6 +21,7 @@ import { renderApplyMode } from "./apply.js";
 import { openWizard, renderAgentHelp } from "./onboarding-wizard.js";
 import { toolbar, renderSearchPerformance, renderQueryPages, renderSitemaps, renderGa4, renderRealtime, renderEcommerce, renderTechnology, renderGtm, renderBing, renderStatus, renderTags, renderSettings } from "./analytics.js";
 import { mountPublicRead } from "./public-read.js";
+import { renderLocalSeoWorkspace } from "./local-seo.js";
 import { renderCustomerJourneyWorkspace } from "./customer-journey-workspace.js";
 
 const $ = (s) => document.querySelector(s);
@@ -113,6 +114,7 @@ const custom = (id, tabs) => ({ id, tabs });
 const fromTool = (id, filter = () => true, intro) => () => { const x = tool(id); return { intro: intro ?? tr(x.intro), tabs: x.actions.filter(filter).map((a) => ({ id: a.id, label: actionLabel(a), action: a })) }; };
 const SECTIONS = {
   track: [
+    { id: "local_seo", icon: "geo", build: () => custom("local_seo", [{ id: "business", label: t("s_local_seo"), needsDomain: false, async: async () => renderLocalSeoWorkspace({ state }) }]) },
     { id: "journey", icon: "geo", build: () => custom("journey", [
       { id: "map", label: LANG === "fr" ? "Mon parcours client" : "My customer journey", needsDomain: false, async: async () => renderCustomerJourneyWorkspace({ state, api }) },
       { id: "prompts", label: LANG === "fr" ? "Questions suivies" : "Tracked questions", needsDomain: false, async: async () => renderOpsPrompts({ api, me: state.me }) },

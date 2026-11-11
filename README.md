@@ -14,6 +14,10 @@ The agent reads live Google data, audits setups, crosses organic search with sit
 
 ---
 
+## Local SEO workspace
+
+The console now includes a French/English **Local SEO** planning workspace: business reference information, comparison of manually entered NAP citations, local query hypotheses, Markdown action plans, JSON dossier import/export and a public-address-only LocalBusiness draft. All inputs remain user declarations; this does not connect Google Business Profile, crawl directories or measure Maps rankings. Export the dossier before leaving the view. Implementation and connector roadmap: [Local SEO integration](docs/product/LOCAL-SEO-INTEGRATION.md). This branch is not evidence of a production deployment.
+
 ## Public console — evidence and actionable free recommendations
 
 The unauthenticated `/console/?lang=en#c-public-read` and `?lang=fr` flow now accepts a **public page URL directly**. The read returns a bounded set of observed on-page SEO/GEO checks, a GEO **v1 page-readiness** score, technical evidence, explicitly outbound social-profile references, and up to twelve evidence-backed opportunities (with six presented at a time). The assistant button **“AI recommends” / “L’IA recommande”** ranks actual failures in three explainable modes: quick wins, potential rubric impact, and AI discoverability. Every option describes the expected technical effect and effort, links to the observed evidence, and offers a guided sign-in CTA.
