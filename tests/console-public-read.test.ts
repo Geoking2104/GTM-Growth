@@ -32,6 +32,16 @@ describe("public recommendation assistant", () => {
     expect(quick.slice(1).map((fix) => fix.checkId)).not.toEqual(impact.slice(1).map((fix) => fix.checkId));
   });
 
+  it("offers blocker and customer-intent rankings without inventing new fixes", () => {
+    for (const mode of ["blockers", "journey"]) {
+      const ranked = rankRecommendations(fixes, mode, 3);
+      expect(ranked).toHaveLength(3);
+      expect(ranked[0].checkId).toBe("meta.x_robots_noindex");
+      expect(ranked.every((fix) => fixes.some((source) => source.checkId === fix.checkId))).toBe(true);
+    }
+    expect(rankRecommendations(fixes, "journey").map((f) => f.checkId)).not.toEqual(rankRecommendations(fixes, "ai").map((f) => f.checkId));
+  });
+
   it("localises every observed GEO v1 recommendation, including three real opendpe examples", () => {
     for (const fix of fixes) {
       const fr = explainRecommendation(fix, "fr");

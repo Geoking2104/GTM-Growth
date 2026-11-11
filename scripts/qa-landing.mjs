@@ -77,6 +77,7 @@ async function visitPublicConsole(browserInstance, locale, viewport, label) {
   const payload = {
     finalUrl: "https://example.com/", httpStatus: 200, score: 71, recoverablePoints: 29,
     checksSummary: { passed: 22, toImprove: 13, total: 35 },
+    pageSignals: { title: "Example services for professionals", description: "Independent services for companies", htmlLang: "en", h1: ["Example services"], h2: ["How our services work", "Compare services"] },
     opportunities: [
       { checkId: "robots.citation_bots", category: "robots", priority: "high", status: "partial", points: 3, evidence: "5 citation crawlers need explicit rules", action: "Add explicit crawler rules" },
       { checkId: "schema.article", category: "schema", priority: "medium", status: "fail", points: 3, evidence: "No Article found", action: "Add Article schema" },
@@ -114,7 +115,16 @@ async function visitPublicConsole(browserInstance, locale, viewport, label) {
   const recommend = page.locator(".public-recommend-button");
   await recommend.click();
   assert.equal(await recommend.getAttribute("aria-expanded"), "true");
-  assert.equal(await page.locator(".public-action-card").count(), 5);
+  assert.equal(await page.locator(".public-top-fixes .public-action-card").count(), 3);
+  assert.equal(await page.locator(".public-action-card").count(), 8);
+  assert.equal(await page.locator(".journey-stage").count(), 5);
+  const intro = await page.locator(".journey-panel").innerText();
+  assert.match(intro, locale === "fr" ? /hypothèses modifiables/ : /editable hypotheses/);
+  await page.locator(".journey-context summary").click();
+  await page.locator(".journey-context-fields input").first().fill(locale === "fr" ? "professionnels indépendants" : "independent professionals");
+  await page.locator(".journey-context-fields button").click();
+  assert.equal(await page.locator(".journey-stage").count(), 5);
+  await page.screenshot({ path: path.join(outputDir, `${screenshotPrefix}-journey.png`), fullPage: true });
   await page.locator('.public-rank-mode[data-mode="impact"]').click();
   await page.locator(".public-action-details summary").first().click();
   const copy = await page.locator(".public-recommendations").innerText();

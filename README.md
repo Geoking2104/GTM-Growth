@@ -31,6 +31,14 @@ La console publique propose la saisie d’une URL, des constats vérifiables et 
 
 ---
 
+## Customer journey — first read and tracked questions (review-stage L1)
+
+The customer-journey integration adapts the **five awareness stages** (unaware, problem-aware, solution-aware, product-aware, most aware) from Illyism's open Agent Skills methodology. After the public one-page read, visitors can inspect and edit **hypothetical** buyer questions, see tentative matches to measured page headings, copy a local action plan and compare the three leading evidence-backed technical fixes. Expanded recommendations preserve six observed options with quick-wins, blockers, customer-intent, potential-rubric-impact and AI-discovery ordering. No assistant is queried for the free journey.
+
+In the authenticated console, **Customer journey / Parcours client** lets tenant admins explicitly add selected questions to the existing prompt pool without triggering paid engine collection. Inferred, user-provided and observed sources remain distinct; tenant scope is enforced on target URLs. The feature does not publish content or modify customer sites.
+
+This is a staged code feature, **not evidence of a live production deployment**. Cloud entitlements, scheduled SEO Autopilot, multi-page mapping and Mollie billing are separate increments. Details, testing and third-party attribution: [Customer Journey integration](docs/product/CUSTOMER-JOURNEY-INTEGRATION.md).
+
 ## GEO Score v2 — verified-domain Playwright pilot (in development)
 
 The **GEO v2 scoring rubric** allocates 100 points across eight categories: robots 14, llms.txt 14, JSON-LD 14, metadata 10, content 18, brand/entity 10, AI discovery 8, and crawler rendering 12. This is the **v2 pilot**, separate from the existing live v1 examples and public free-read flow documented below.

@@ -58,6 +58,8 @@ export interface FreeReadResult {
   checksSummary: { passed: number; toImprove: number; total: number };
   /** Outbound social profile links only; inbound backlinks are never inferred. */
   socialProfiles: FreeReadSocialProfile[];
+  /** Observed page facts for a clearly hypothetical customer journey. */
+  pageSignals: { title: string; description: string; htmlLang: string; h1: string[]; h2: string[] };
   tables: DataTable[];
   /** Sitemap architecture and freshness data for the free visual map. */
   sitemapMap: SitemapMap | null;
@@ -225,6 +227,13 @@ export async function runFreeRead(options: FreeReadOptions): Promise<FreeReadRes
       total: audit.checks.filter((check) => check.status !== "info").length,
     },
     socialProfiles: socialProfiles(doc, audit.details.schema.sameAsUrls),
+    pageSignals: {
+      title: (doc.title() ?? "").replace(/\s+/g, " ").trim().slice(0, 130),
+      description: (doc.metaByName("description")?.attrs.content ?? "").replace(/\s+/g, " ").trim().slice(0, 180),
+      htmlLang: (doc.htmlLang() ?? "").slice(0, 20),
+      h1: doc.all("h1").slice(0, 4).map((node) => doc.textOf(node).replace(/\s+/g, " ").trim().slice(0, 130)),
+      h2: doc.all("h2").slice(0, 8).map((node) => doc.textOf(node).replace(/\s+/g, " ").trim().slice(0, 130)),
+    },
     tables,
     sitemapMap: buildSitemapMap(sitemap?.body ?? null, sitemap?.url ?? null, host),
     limitations: [

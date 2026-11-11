@@ -7,6 +7,7 @@ import { addPrompt, listPrompts, removePrompt, listVisibilityRuns, addRankKeywor
 import { engineStatuses, runVisibilityCheck, type EngineId } from "./visibility-runner.js";
 import { noSupplierError, rankBoard, runRankCheck, supplierFromEnv } from "./rank-tracking.js";
 import { buildBrief, produceDraft, publishToWordPress, wpConfigFromEnv, articleAlert, type DraftMode } from "./content-ops.js";
+import { tenantOwnsUrl } from "../tenants/store.js";
 
 const tenantId = (ctx: { tenancy?: { tenant: { id: string } | null } }) => { if (!ctx.tenancy?.tenant) throw new Error("SÃ©lectionnez un tenant."); return ctx.tenancy.tenant.id; };
 const tenantHost = (ctx: { tenancy?: { tenant: { domains: string[] } | null } }) => {
@@ -19,7 +20,20 @@ const tenantHost = (ctx: { tenancy?: { tenant: { domains: string[] } | null } })
 
 export const visibilityRoutes: ConsoleRoute[] = [
   { path: "/visibility/prompts", needsUrl: false, handler: async (ctx) => ({ prompts: listPrompts(tenantId(ctx)), engines: engineStatuses(tenantId(ctx)) }) },
-  { path: "/visibility/prompts/add", needsUrl: false, adminOnly: true, handler: async (ctx) => { const prompt = str(ctx.body.prompt); if (!prompt) throw new Error("Prompt requis."); return { prompt: addPrompt(tenantId(ctx), prompt, str(ctx.body.group) ?? "general") }; } },
+  { path: "/visibility/prompts/add", needsUrl: false, adminOnly: true, handler: async (ctx) => {
+    const prompt = str(ctx.body.prompt);
+    if (!prompt) throw new Error("Prompt requis.");
+    const sourceKind = ctx.body.sourceKind;
+    if (sourceKind !== undefined && sourceKind !== "inferred" && sourceKind !== "provided:user") throw new Error("Provenance non autorisée.");
+    const locale = ctx.body.locale;
+    if (locale !== undefined && locale !== "fr" && locale !== "en") throw new Error("Langue non autorisée.");
+    const targetUrl = str(ctx.body.targetUrl);
+    if (targetUrl && (!ctx.tenancy?.tenant || !tenantOwnsUrl(ctx.tenancy.tenant, targetUrl))) throw new Error("Domaine hors périmètre client.");
+    const sourceRef = sourceKind ? "gtm-journey-template:1.0.0" : undefined;
+    return { prompt: addPrompt(tenantId(ctx), prompt, str(ctx.body.group) ?? "general", {
+      ...(sourceKind ? { sourceKind, sourceRef } : {}), ...(locale ? { locale } : {}), ...(targetUrl ? { targetUrl } : {}),
+    }) };
+  } },
   { path: "/visibility/prompts/remove", needsUrl: false, adminOnly: true, handler: async (ctx) => { const id = str(ctx.body.id); if (!id) throw new Error("id requis."); if (!removePrompt(tenantId(ctx), id)) throw new Error("Prompt introuvable."); return { removed: true }; } },
   { path: "/visibility/run", needsUrl: false, adminOnly: true, handler: async (ctx) => {
     const raw = ctx.body.engines;

@@ -91,6 +91,8 @@ export function rankRecommendations(input, mode = "quick", limit = 6) {
     const points = Math.max(0, Math.min(20, Number(fix.points) || 0));
     const cost = effort[effortOf(fix.checkId)] || 2;
     if (mode === "impact") return base + points * 20 - cost * 3;
+    if (mode === "blockers") return base + points * 3 + (["meta", "robots"].includes(fix.category) ? 200 : 0) - cost * 4;
+    if (mode === "journey") return base + points * 3 + (["content", "meta", "brand_entity"].includes(fix.category) ? 120 : 0) - cost * 7;
     if (mode === "ai") return base + points * 6 + (["robots", "llms", "schema", "brand_entity", "ai_discovery"].includes(fix.category) ? 42 : 0) - cost * 5;
     return base + points * 6 - cost * 16;
   };

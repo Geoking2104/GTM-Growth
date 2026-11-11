@@ -266,3 +266,34 @@ body.console-page:has(.public-console:not([hidden])) { --pc-bg:#06060f; --pc-pan
 @media(max-width:900px) { .public-signal-grid { grid-template-columns:repeat(2,minmax(0,1fr)); } }
 @media(max-width:650px) { .public-url-controls { flex-direction:column; }.public-read-metrics { grid-template-columns:1fr; }.public-action-list { grid-template-columns:1fr; }.public-engine { font-size:.74rem; }.public-recommend-button,.public-url-button { width:100%; } }
 @media(max-width:375px) { .public-summary { flex-direction:column; }.public-header { gap:.5rem; }.public-brand { font-size:1rem; }.public-back { font-size:.75rem; } }
+
+
+/* Customer journey: reuses the existing public palette and console cards. */
+.journey-panel { min-width:0; }
+.journey-panel .public-description { margin-bottom:1rem; }
+.journey-context { margin-bottom:1rem; }
+.journey-context summary { color:var(--pc-accent,var(--app-accent,#7c3aed)); cursor:pointer; font-weight:700; font-size:.85rem; }
+.journey-context-fields { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)) auto; gap:.75rem; align-items:end; margin:1rem 0; }
+.journey-context-fields label,.journey-question-label { display:grid; gap:.4rem; font-size:.8rem; color:var(--pc-muted,#667085); }
+.journey-context-fields input,.journey-question-label input,.journey-question-label select { width:100%; min-width:0; padding:.7rem; font:inherit; color:var(--pc-text,#1d2939); background:var(--pc-bg,#fff); border:1px solid var(--pc-border,#d1d5db); border-radius:9px; }
+.journey-context-fields button { white-space:normal; }
+.journey-stages { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:.8rem; padding:0; margin:1rem 0; list-style:none; }
+.journey-stage { min-width:0; padding:1.1rem; border:1px solid var(--pc-border,#d1d5db); border-radius:12px; background:var(--pc-panel,#f8f9fc); display:grid; gap:.65rem; align-content:start; }
+.journey-stage-head { display:flex; align-items:center; gap:.6rem; flex-wrap:wrap; }
+.journey-stage-head h3 { margin:0; flex:1; min-width:6rem; color:var(--pc-text,#1d2939); }
+.journey-stage-number { display:inline-grid; place-items:center; width:1.7rem; height:1.7rem; border-radius:50%; background:rgba(183,148,246,.18); color:var(--pc-accent,#7c3aed); }
+.journey-mindset { margin:0; color:var(--pc-text,#1d2939); font-size:.85rem; line-height:1.5; }
+.journey-evidence { margin:0; color:var(--pc-muted,#667085); font-size:.76rem; line-height:1.5; overflow-wrap:anywhere; }
+.journey-card-actions,.journey-actions { display:flex; flex-wrap:wrap; gap:.6rem; align-items:center; }
+.journey-stage-discarded { opacity:.65; }
+.journey-status { min-height:1.2rem; }
+.journey-panel button:focus-visible,.journey-panel input:focus-visible,.journey-panel select:focus-visible,.journey-panel summary:focus-visible { outline:2px solid var(--pc-accent,#7c3aed); outline-offset:2px; }
+.journey-workspace .journey-stages { grid-template-columns:repeat(2,minmax(0,1fr)); }
+.journey-workspace .journey-stage { background:var(--app-surface,#f8f9fc); }
+.journey-workspace .journey-stage-head h3,.journey-workspace .journey-mindset { color:var(--app-text,#1d2939); }
+.journey-workspace .journey-question-label input,.journey-workspace .journey-question-label select,.journey-workspace .journey-context-fields input { color:var(--app-text,#1d2939); background:var(--app-surface,#fff); }
+.public-top-fixes { margin:1rem 0; }
+.public-top-fixes h3 { color:var(--pc-text); font-size:.9rem; margin-bottom:.8rem; }
+.public-top-fixes .public-action-list { grid-template-columns:repeat(3,minmax(0,1fr)); }
+@media(max-width:950px) { .public-top-fixes .public-action-list { grid-template-columns:1fr; } }
+@media(max-width:700px) { .journey-stages,.journey-workspace .journey-stages,.journey-context-fields { grid-template-columns:1fr; } .journey-actions>* { width:100%; text-align:center; } }
