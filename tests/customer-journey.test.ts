@@ -73,8 +73,8 @@ describe("five-stage customer journey preview", () => {
     expect(publicUi).toContain("renderJourneyPreview");
     expect(publicUi).toContain("public-top-fixes");
     expect(publicUi).toContain("rankRecommendations(opportunities, mode)");
-    expect(ui).toContain("Hypothetical questions");
-    expect(ui).toContain("Questions hypothétiques");
+    expect(ui).toContain("editable hypotheses");
+    expect(ui).toContain("hypothèses modifiables");
     expect(ui).toContain("navigator.clipboard.writeText");
     expect(workspace).toContain("ownedUrl(state.me?.tenant, url)");
     expect(workspace).toContain('api("/visibility/prompts/add", prompt)');
