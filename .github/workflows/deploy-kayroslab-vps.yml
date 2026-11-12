@@ -2,7 +2,8 @@ name: Deploy GTM Growth to KayrosLab VPS
 
 # The VPS is shared with OpenDPE and KayrosLab. GTM Growth stays isolated in
 # /opt/gtm-growth and binds only to 127.0.0.1:4300; Nginx is the public edge.
-# Required repository secrets: VPS_SSH_USER, VPS_SSH_KEY, VPS_SSH_FINGERPRINT.
+# Required repository secrets: VPS_SSH_USER, VPS_SSH_KEY.
+# The public ED25519 host fingerprint is versioned below; credentials stay secret.
 # Configure required reviewers on the GitHub `production` environment before enabling.
 on:
   workflow_dispatch:
@@ -17,13 +18,16 @@ jobs:
     if: ${{ github.ref == 'refs/heads/main' && inputs.confirmation == 'DEPLOY' }}
     runs-on: ubuntu-latest
     environment: production
+    env:
+      # Verified from the operator's strict SSH session on 2026-11-08.
+      VPS_HOST_FINGERPRINT: 'SHA256:iWJ+4asSlFAKA9UllEF2ZjYneUzm9OeRfZaUqQf9Ruc'
     steps:
       - name: Require pinned VPS SSH host fingerprint
         env:
-          HOST_FINGERPRINT: ${{ secrets.VPS_SSH_FINGERPRINT }}
+          HOST_FINGERPRINT: ${{ env.VPS_HOST_FINGERPRINT }}
         run: |
-          if [ -z "$HOST_FINGERPRINT" ]; then
-            echo 'Missing VPS_SSH_FINGERPRINT; refusing unverified SSH connection.' >&2
+          if [[ ! "$HOST_FINGERPRINT" =~ ^SHA256:[A-Za-z0-9+/]{43}$ ]]; then
+            echo 'Invalid VPS host fingerprint; refusing unverified SSH connection.' >&2
             exit 1
           fi
       - name: Deploy through the shared OVH VPS
@@ -32,7 +36,7 @@ jobs:
           host: 51.210.9.71
           username: ${{ secrets.VPS_SSH_USER }}
           key: ${{ secrets.VPS_SSH_KEY }}
-          fingerprint: ${{ secrets.VPS_SSH_FINGERPRINT }}
+          fingerprint: ${{ env.VPS_HOST_FINGERPRINT }}
           port: 22
           command_timeout: 30m
           script: |
