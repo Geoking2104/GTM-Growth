@@ -119,7 +119,7 @@ async function visitPublicConsole(browserInstance, locale, viewport, label) {
   assert.equal(await page.locator(".public-signal").count(), 4);
   const screenshotPrefix = `${locale}-console-${label}`;
   await page.screenshot({ path: path.join(outputDir, `${screenshotPrefix}-overview.png`), fullPage: true });
-  const recommend = page.locator(".public-recommend-button");
+  const recommend = page.locator('.public-recommend-button[aria-controls="c-public-ranked"]');
   await recommend.click();
   assert.equal(await recommend.getAttribute("aria-expanded"), "true");
   assert.equal(await page.locator(".public-top-fixes .public-action-card").count(), 3);
