@@ -4,6 +4,10 @@
 
 ### Added
 
+- Offline-first global/local SEO workspace: tenant-scoped registry previews, CSV/JSON imports, exact local access grants, deterministic rank metrics and comparisons, durable manual actions with independent approval, and scoped JSON exports.
+- Free FR/EN local presence planner for physical, service-area and web-only businesses. No paid provider or external publication is introduced. See `docs/product/GLOBAL-LOCAL-SEO.md` for remaining specification scope.
+- FR/EN regression coverage, locale-aware console number formatting and repaired console text encoding.
+
 - **Richer brand profile in guided onboarding**: `/api/console/onboarding/profile` now prefers the JSON-LD `name` (source shown in the wizard: “name read from structured data”), falls back to `og:site_name`, then `title`; description falls back meta description → og:description → schema; and surfaces `lang` and detected schema types as hints in the wizard. No LLM, no paid API — pure HTML reading.
 - **Keycloak multi-tenant for GTM Growth clients**:
   - Keycloak 26 Organizations, one per client, in the shared realm `gtm-growth`, with an optional dedicated realm `tenant-<id>`.

@@ -25,13 +25,17 @@ Reproduction: download that public HTML, extract nonempty executable inline scri
 
 ## Shipped behaviour
 
-Console → Track → Local SEO, available in French and English. Existing console components and CSS are reused. This is a browser-local planning workspace; no data is sent to directories and no credentials are requested. Export the JSON dossier before navigating away; import it to resume. There is no server or browser-storage persistence, so dossiers do not silently carry across tenants.
+Console → Track → Global and local SEO → Plan my business, available in French and English. Existing console components and CSS are reused. This is a browser-local planning workspace; no data is sent to directories and no credentials are requested. Export the JSON dossier before navigating away; import it to resume. There is no server or browser-storage persistence, so dossiers do not silently carry across tenants.
 
 All checks describe completeness of user declarations. A declared GBP URL does not prove ownership. Citation comparisons distinguish match, review and unknown; address comparison is not applicable for private/service-area addresses. Phone comparison removes formatting only, without guessing country equivalence. Name and address comparison retains meaningful punctuation and accents. These are text comparisons, not entity resolution or verified rankings.
 
 JSON-LD export requires name, a valid HTTP(S) URL and a complete address explicitly marked public. Service-area-only businesses receive no LocalBusiness address export in this increment. Review the draft against visible page content before publication. The general GEO score is unchanged. No external publication is performed.
 
-## Next integration architecture
+## Follow-up network increment
+
+The persistent network registry, exact local grants, rank imports and manual approval workflow are now implemented alongside this original planning tab. See [Global and local SEO](GLOBAL-LOCAL-SEO.md) for the current contract and remaining scope. The business dossier described above remains browser-local and is not silently uploaded. Any provider proposed below must comply with the v1.1 free-only module policy; paid provider collection is excluded.
+
+## Original integration architecture proposal
 
 1. Persist locations under `tenantId + locationId`, with role checks, domain grants, audit events and a revision counter. Reuse the existing tenant registry rather than adding unscoped local storage.
 2. Add Google Business Profile OAuth using server-held encrypted tokens. First implement read-only listing and performance import, timestamp every observation and distinguish API failure from zero metrics. Google requires project approval before API access: [prerequisites](https://developers.google.com/my-business/content/prereqs).

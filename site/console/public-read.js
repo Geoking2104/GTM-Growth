@@ -1,3 +1,4 @@
+import { renderLocalSeoPreview } from "../local-seo-preview.js";
 /** Unauthenticated, evidence-led free read shared by French and English shells. */
 import { normalisePublicUrl, rankRecommendations, explainRecommendation } from "./public-read-model.js";
 import { translateLiveTables } from "../fr/server-tables.js";
@@ -225,6 +226,7 @@ function renderResult(box, data, url, lang) {
   if (metrics.children.length) box.append(metrics);
   box.append(el("p", "public-micro", `${copy.scoreNote} ${copy.gainsNote}`));
   box.append(diagnostic(data, lang, copy));
+  box.append(renderLocalSeoPreview(lang));
   box.append(recommendations(data, lang, copy));
   box.append(renderJourneyPreview({
     language: lang,

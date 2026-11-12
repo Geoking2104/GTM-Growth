@@ -1,5 +1,5 @@
 /* Rendu générique des résultats : métriques, tableaux, blocs de code. */
-import { tr } from "./i18n.js";
+import { tr, LANG } from "./i18n.js";
 const el = (tag, cls, text) => { const n = document.createElement(tag); if (cls) n.className = cls; if (text !== undefined) n.textContent = tag === "h4" || tag === "p" ? tr(text) : text; return n; };
 export { el };
 
@@ -17,7 +17,7 @@ export function table(rows, columns) {
   t.append(head);
   for (const row of rows) {
     const tr = el("tr");
-    for (const c of cols) { const key = Array.isArray(c) ? c[0] : c; const v = typeof key === "function" ? key(row) : row[key]; tr.append(el("td", "", v === null || v === undefined ? "—" : typeof v === "number" ? (Number.isInteger(v) ? v.toLocaleString("fr-FR") : v.toFixed(2)) : String(v))); }
+    for (const c of cols) { const key = Array.isArray(c) ? c[0] : c; const v = typeof key === "function" ? key(row) : row[key]; tr.append(el("td", "", v === null || v === undefined ? "—" : typeof v === "number" ? (Number.isInteger(v) ? v.toLocaleString(LANG) : v.toLocaleString(LANG, { maximumFractionDigits: 2 })) : String(v))); }
     t.append(tr);
   }
   const wrap = el("div", "c-table-wrap"); wrap.append(t); return wrap;

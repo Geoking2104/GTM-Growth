@@ -2,18 +2,20 @@
  * de paramètres en français ; la navigation, le tableau de bord et les actions sont traduits. */
 const param = new URLSearchParams(location.search).get("lang");
 if (param === "fr" || param === "en") localStorage.setItem("gtm-console-lang", param);
-export const LANG = localStorage.getItem("gtm-console-lang") || (document.documentElement.lang === "en" ? "en" : "fr");
+const saved = localStorage.getItem("gtm-console-lang");
+export const LANG = saved === "fr" || saved === "en" ? saved : (document.documentElement.lang === "en" ? "en" : "fr");
 document.documentElement.lang = LANG;
 
 const DICT = {
   fr: {
+    s_local_seo: "SEO global et local",
     title: "Console GTM Growth", loginLead: "Accès réservé. Connectez-vous avec votre compte (SSO Keycloak).", email: "E-mail professionnel",
     continue: "Continuer", redirecting: "Redirection…", loginHelp: "Votre espace client est détecté à partir de votre e-mail, du sous-domaine (client.gtm.kayroslab.com) ou du lien ?tenant=client. Sinon, connexion au compte GTM Growth.",
     loginFail: "Connexion impossible", backToSite: "← Retour au site", search: "Rechercher", track: "Track", act: "Act", settings: "Mon compte", logout: "Déconnexion",
     client: "Client", domain: "Domaine analysé", property: "Propriété Search Console", apply: "Appliquer", noDomain: "Choisissez un domaine dans le sélecteur en haut à gauche.",
     run: "Lancer", running: "Analyse en cours…", download: "Télécharger le PDF", live: "Données en direct", allEngines: "Tous les moteurs", superAdmin: "super-admin",
-    s_local_seo: "SEO local", s_overview: "Vue d’ensemble", s_geo: "GEO", s_citability: "Citabilité", s_indexnow: "IndexNow", s_sitemap: "Sitemap", s_performance: "Performance",
-    s_search: "Recherche", s_keywords: "Mots-clés", s_tracking: "Tracking", s_audit: "Audit technique", s_generators: "Générateurs", s_calculators: "Calculateurs", s_report: "Rapport", s_ops: "OpÃ©rations", s_apply_mode: "Correctifs GEO",
+    s_overview: "Vue d’ensemble", s_geo: "GEO", s_citability: "Citabilité", s_indexnow: "IndexNow", s_sitemap: "Sitemap", s_performance: "Performance",
+    s_search: "Recherche", s_keywords: "Mots-clés", s_tracking: "Tracking", s_audit: "Audit technique", s_generators: "Générateurs", s_calculators: "Calculateurs", s_report: "Rapport", s_ops: "Opérations", s_apply_mode: "Correctifs GEO",
     t_plan: "Plan d’action", kGeo: "Score GEO", hGeo: "Un moteur peut-il récupérer, parser et croire la page ? Huit catégories, 42 contrôles, une preuve par point.", hCit: "Un passage survivrait-il à une citation ? Douze méthodes — statistiques, citations, structure, auteur, fraîcheur (0–3 chacune).", hIdx: "Quand la page change, en combien de temps Bing et ses partenaires le savent ? Clé, vérification, accès crawler, sitemap — 7 contrôles, hors barème GEO.", hEng: "La préparation par moteur, à partir des mêmes preuves — pas un second avis sur le score.", hBoard: "Trois scores, parce qu’une page peut échouer de trois façons : lisible sans jamais être citée, citable mais ignorée pendant des jours. Le tableau mesure chaque couche séparément, puis classe un seul plan à travers les trois ; les blocages d’indexation passent en premier.", kCit: "Citabilité", kIdx: "IndexNow", kEng: "Moteurs prêts", projected: "projeté", toMax: "jusqu’au max", toFix: "contrôles à corriger",
     trajectory: "Trajectoire du score vers le plan", perFix: "un point par correctif", now: "maintenant", fixes: "correctifs", engines: "Préparation par moteur", outOf: "sur 100",
     best: "Meilleur", weakest: "plus faible", gapFoot: "Écart au pentagone complet, en points.", where: "Où sont les points", loadingOverview: "Audit du domaine en cours (≈ 20 s)…",
@@ -28,12 +30,13 @@ const DICT = {
     t_status: "Statut des accès", t_tags: "Balises GA4 / GTM", t_settings: "Paramètres", ga4Property: "Propriété GA4 (ID)", bingSite: "Site Bing Webmaster",
   },
   en: {
+    s_local_seo: "Global and local SEO",
     title: "GTM Growth console", loginLead: "Restricted access. Sign in with your account (Keycloak SSO).", email: "Work email",
     continue: "Continue", redirecting: "Redirecting…", loginHelp: "Your client space is detected from your email, the subdomain (client.gtm.kayroslab.com) or the ?tenant=client link. Otherwise you sign in to the GTM Growth account.",
     loginFail: "Sign-in failed", backToSite: "← Back to site", search: "Search", track: "Track", act: "Act", settings: "My account", logout: "Sign out",
     client: "Client", domain: "Analysed domain", property: "Search Console property", apply: "Apply", noDomain: "Pick a domain in the selector at the top left.",
     run: "Run", running: "Analysing…", download: "Download PDF", live: "Live data", allEngines: "All engines", superAdmin: "super-admin",
-    s_local_seo: "Local SEO", s_overview: "Overview", s_geo: "GEO", s_citability: "Citability", s_indexnow: "IndexNow", s_sitemap: "Sitemap", s_performance: "Performance",
+    s_overview: "Overview", s_geo: "GEO", s_citability: "Citability", s_indexnow: "IndexNow", s_sitemap: "Sitemap", s_performance: "Performance",
     s_search: "Search", s_keywords: "Keywords", s_tracking: "Tracking", s_audit: "Technical audit", s_generators: "Generators", s_calculators: "Calculators", s_report: "Report", s_ops: "Operations", s_apply_mode: "GEO fixes",
     t_plan: "Action plan", kGeo: "GEO score", hGeo: "Can an engine fetch, parse and trust the page? Eight categories, 42 checks, evidence per point.", hCit: "Would a passage survive being quoted? Twelve methods — statistics, quotations, structure, authorship, freshness (0–3 each).", hIdx: "Once the page changes, how fast can Bing and its partners know? Key file, verification, crawler access, sitemap — 7 checks, outside the GEO rubric.", hEng: "Readiness per engine, from the same evidence — not a second opinion on the score.", hBoard: "Three scores, because a page can fail in three different ways: readable and never quoted, quotable and still unnoticed for days. The board measures each layer separately, then ranks one plan across all three; indexing blockers come first.", kCit: "Citability", kIdx: "IndexNow", kEng: "Engines ready", projected: "projected", toMax: "to max", toFix: "checks to fix",
     trajectory: "Score trajectory to plan", perFix: "one point per fix", now: "now", fixes: "fixes", engines: "Readiness by engine", outOf: "out of 100",

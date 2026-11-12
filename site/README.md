@@ -1,7 +1,9 @@
 # Landing site
 
 Static page for `gtm-growth`, published with GitHub Pages from this folder.
-No build step: HTML, CSS, four ES modules.
+No build step: HTML, CSS and ES modules.
+
+The FR/EN landing pages and public console share `local-seo-preview.js` and `local-seo.css` for a free, declaration-based local presence checklist. The authenticated workspace is implemented by `console/local-seo-network.js` and uses tenant-scoped backend commands. See [Global and local SEO](../docs/product/GLOBAL-LOCAL-SEO.md) for the delivered scope and unavailable connectors.
 
 ```
 site/
@@ -22,7 +24,7 @@ site/
 
 ## Publish
 
-1. Push to `main` — `.github/workflows/pages.yml` uploads `site/` and deploys.
+1. Run `.github/workflows/pages.yml` manually on `main` with `confirmation: DEPLOY` to publish GitHub Pages. The OVH site has a separate manual deployment workflow. A push alone does not deploy.
 2. **Settings → Pages → Build and deployment → Source** must be **GitHub Actions**.
    If it is set to *Deploy from a branch*, the workflow stops at **Configure Pages**
    and the URL keeps serving the repository README through the default theme.
