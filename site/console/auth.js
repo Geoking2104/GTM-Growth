@@ -1,10 +1,11 @@
-/* Connexion Keycloak : OpenID Connect Authorization Code + PKCE (S256), sans
- * bibliothèque. Les jetons restent en sessionStorage (fermeture d'onglet = déconnexion). */
+/* Keycloak sign-in: OpenID Connect Authorization Code + PKCE (S256).
+ * Tokens stay in sessionStorage and are removed when the tab closes. */
 import { OIDC } from "./config.js";
+import { LANG } from "./i18n.js";
 
 const KEY = "gtm-console-tokens";
 const TENANT_KEY = "gtm-console-tenant";
-/** Tenant découvert (id, issuer, organisation, branding) : détermine l'émetteur utilisé. */
+/** The discovered tenant determines the issuer and organisation branding. */
 export const currentTenant = () => { try { return JSON.parse(sessionStorage.getItem(TENANT_KEY) || "null"); } catch { return null; } };
 export const setTenant = (t) => (t ? sessionStorage.setItem(TENANT_KEY, JSON.stringify(t)) : sessionStorage.removeItem(TENANT_KEY));
 const issuer = () => currentTenant()?.issuer || OIDC.issuer;
@@ -28,9 +29,9 @@ export async function login(loginHint) {
   const challenge = b64url(await crypto.subtle.digest("SHA-256", new TextEncoder().encode(verifier)));
   sessionStorage.setItem("gtm-console-pkce", JSON.stringify({ verifier, state }));
   const tenant = currentTenant();
-  // organization:<alias> : Keycloak affiche la connexion de l'organisation (IdP du client, thème).
+  // organization:<alias> selects the tenant's identity provider and theme.
   const scope = tenant?.organization ? `${OIDC.scope} organization:${tenant.organization}` : `${OIDC.scope} organization`;
-  const params = new URLSearchParams({ client_id: OIDC.clientId, response_type: "code", scope, redirect_uri: redirectUri(), state, code_challenge: challenge, code_challenge_method: "S256", ui_locales: "fr" });
+  const params = new URLSearchParams({ client_id: OIDC.clientId, response_type: "code", scope, redirect_uri: redirectUri(), state, code_challenge: challenge, code_challenge_method: "S256", ui_locales: LANG });
   if (loginHint) params.set("login_hint", loginHint);
   location.assign(`${endpoint("auth")}?${params}`);
 }
@@ -41,7 +42,7 @@ async function tokenRequest(body) {
   return save(await res.json());
 }
 
-/** À appeler au chargement : termine le retour de Keycloak si besoin. */
+/** Complete the Keycloak callback when the console loads. */
 export async function handleRedirect() {
   const params = new URLSearchParams(location.search);
   const code = params.get("code");
@@ -49,7 +50,7 @@ export async function handleRedirect() {
   const pkce = JSON.parse(sessionStorage.getItem("gtm-console-pkce") || "{}");
   sessionStorage.removeItem("gtm-console-pkce");
   history.replaceState(null, "", redirectUri());
-  if (!pkce.state || pkce.state !== params.get("state")) throw new Error("État OIDC invalide, reconnectez-vous.");
+  if (!pkce.state || pkce.state !== params.get("state")) throw new Error(LANG === "en" ? "Invalid OIDC state; please sign in again." : "État OIDC invalide, reconnectez-vous.");
   return tokenRequest({ grant_type: "authorization_code", code, redirect_uri: redirectUri(), code_verifier: pkce.verifier });
 }
 
