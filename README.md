@@ -24,7 +24,7 @@ Repository documentation is maintained in English; the product interface remains
 
 Production releases use the manual [OVH deployment workflow](.github/workflows/deploy-kayroslab-vps.yml), the `DEPLOY` confirmation and the protected `production` environment. The workflow pins the verified public SSH host fingerprint in source; `VPS_SSH_USER` and `VPS_SSH_KEY` remain repository secrets. The legacy fingerprint secret is no longer used. Enabling Google's Business Information API also requires separate GBP project approval: a zero requests-per-minute quota blocks live synchronization. See [local SEO operations](docs/product/LOCAL-SEO-OPERATIONS.md) for the OAuth and approval gates.
 
-The optional `sync_login_titles` deployment input synchronizes only the FR/EN Keycloak login headings when realm overrides shadow the theme translations. It uses existing credentials inside the Keycloak container, without changing accounts, access settings or restarting SSO; an unavailable admin credential stops this optional maintenance step.
+The optional `sync_login_titles` deployment input synchronizes only the FR/EN Keycloak login headings when realm overrides shadow the theme translations. It uses the existing provisioner service account inside the application container, verifies each saved heading, and does not change accounts, access settings or restart SSO. Missing credentials or insufficient permissions stop this optional maintenance step; the retired bootstrap admin account is not used.
 
 ## Public console — evidence and actionable free recommendations
 
