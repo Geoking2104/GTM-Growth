@@ -11,11 +11,15 @@ services:
     mem_limit: 256m
     cpus: 0.5
     pids_limit: 100
+    # Upstream HTTP health probe is incompatible with runtime-only mode.
+    healthcheck:
+      disable: true
     environment:
+      FLOWS: ""
       NODE_RED_CREDENTIAL_SECRET: ${NODE_RED_CREDENTIAL_SECRET:?Set a random secret}
       LOCAL_SEO_WORKER_TOKEN: ${LOCAL_SEO_WORKER_TOKEN:?Set a tenant-bound worker token}
       LOCAL_SEO_BACKEND: http://gtm-growth:3000/api/internal/local-seo/tick
-    command: [node-red, --settings, /flows/settings.cjs]
+    command: [--settings, /flows/settings.cjs]
     volumes:
       - ./settings.cjs:/flows/settings.cjs:ro
       - ./local-seo.json:/flows/local-seo.json:ro

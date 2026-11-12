@@ -21,6 +21,8 @@ const server=createServer(async(req,res)=>{try {
  }catch(error){res.writeHead(400);res.end();fail(error);}});
 await new Promise(resolve=>server.listen(0,'127.0.0.1',resolve));
 const endpoint=`http://127.0.0.1:${server.address().port}/api/internal/local-seo/tick`;
+const compose=await readFile('deploy/node-red/compose.yaml','utf8');
+assert.match(compose,/FLOWS: ""/);assert.match(compose,/command: \[--settings, \/flows\/settings.cjs\]/);assert.match(compose,/healthcheck:\s+disable: true/);
 const flows=JSON.parse(await readFile('deploy/node-red/local-seo.json','utf8'));
 assert.equal(flows.filter(f=>f.type==='tab').length,10);
 assert.equal(flows.filter(f=>f.type==='http request').length,5);
