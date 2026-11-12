@@ -6,6 +6,8 @@ This increment provides code and optional deployment assets, not an activated Go
 
 The operator must obtain Google Business Profile API project approval, enable Business Information and My Business APIs, and obtain offline OAuth authorization with `https://www.googleapis.com/auth/business.manage` from an authorized listing manager. This release has no self-service OAuth callback. A service-account JSON file used elsewhere in the application is not reused.
 
+API enablement, OAuth branding, OAuth client creation and listing-manager consent are separate steps. In Google Cloud, check Business Information API's **Quotas and system limits → Requests per minute**: `0` means the project has not received GBP API approval; Google documents `300` QPM as the approved state. An enabled API or a configured consent screen alone does not make synchronization operational. Follow Google's [basic API access request](https://support.google.com/business/workflow/16726127) with a verified profile managed by the applicant and active for at least 60 days. Do not request a routine quota increase to bypass this approval gate.
+
 Mount a read-only secrets directory and set `GBP_CREDENTIALS_DIR` to it. For tenant `acme`, create `acme.json` with restrictive permissions, using real values only in the secret store:
 
 ```json

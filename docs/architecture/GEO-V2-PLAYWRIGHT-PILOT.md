@@ -39,7 +39,7 @@ Status: **proposal / not deployable yet**. Applies only to ownership-verified do
 - [ ] Reproducible Playwright/Chromium image digest selected and smoke-tested without affecting current containers.
 - [ ] CPU/RAM/PIDs/time limits load-tested under concurrent production traffic; no OOM or service degradation.
 - [ ] Private evidence storage, retention and error semantics approved.
-- [ ] GitHub `VPS_SSH_FINGERPRINT` configured as `SHA256:iWJ+4asSlFAKA9UlEF2ZjYneUzm9OeRfZaUqQf9Ruc` **after** reviewing the exact action input format; never put an SSH private key in source control.
+- [ ] GitHub `VPS_SSH_FINGERPRINT` configured as `SHA256:iWJ+4asSlFAKA9UllEF2ZjYneUzm9OeRfZaUqQf9Ruc` and a pinned connection succeeds. This ED25519 public-host fingerprint was read from the operator's successful strict SSH session on 2026-11-08; the earlier documentation omitted one lowercase `l` after `9U`. The SHA-256 digest has 43 unpadded Base64 characters. If it does not match, verify `/etc/ssh/ssh_host_ed25519_key.pub` through the authenticated OVH KVM before changing the pin; never disable verification or put an SSH private key in source control.
 - [ ] `VPS_SSH_USER` and `VPS_SSH_KEY` checked against current authorized deploy credentials; the working local `root` key is not to be copied into GitHub without a separate least-privilege key decision.
 
 ## Rollout and rollback
