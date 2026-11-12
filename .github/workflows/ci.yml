@@ -94,3 +94,19 @@ jobs:
           path: qa-landing/
           if-no-files-found: warn
           retention-days: 14
+
+  local-seo-flows:
+    name: Local SEO · Node-RED runtime smoke
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+      - name: Install pinned optional runtime
+        run: npm install --prefix /tmp/gtm-node-red --ignore-scripts --no-audit --no-fund node-red@4.1.17
+      - name: Execute exported pollers against a local fixture
+        env:
+          NODE_RED_ENTRY: /tmp/gtm-node-red/node_modules/node-red/red.js
+        run: node scripts/qa-local-seo-flows.mjs

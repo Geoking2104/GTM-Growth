@@ -1,0 +1,21 @@
+/* Shared local SEO components use the existing dark brand palette. */
+#local-seo-free { max-width: 1120px; margin: 48px auto; padding: 0 24px; }
+#local-seo-planner { padding: clamp(20px, 4vw, 40px); border: 1px solid rgba(160,160,200,.22); border-radius: 20px; background: rgba(120,100,210,.06); color: inherit; }
+#local-seo-planner h2 { font-size: clamp(24px,3vw,36px); line-height: 1.2; margin: 0 0 16px; }
+#local-seo-planner p, #local-seo-planner li { line-height: 1.65; }
+#local-seo-planner label { display: grid; gap: 8px; margin: 24px 0; max-width: 480px; }
+#local-seo-planner select { font: inherit; color: inherit; background: var(--pc-panel, var(--surface, #141425)); border: 1px solid var(--pc-border, var(--line, #55516b)); border-radius: 8px; padding: 12px; max-width: 100%; }
+#local-seo-planner a { display: inline-block; margin-top: 16px; }
+#local-seo-planner :focus-visible, .local-seo-workspace :focus-visible { outline: 3px solid #a88eff; outline-offset: 3px; }
+.local-seo-workspace { min-width: 0; color: var(--app-ink, #1f2430); }
+.local-seo-workspace h2, .local-seo-workspace h3, .local-seo-workspace h4 { color: inherit; margin: 20px 0 12px; }
+.local-seo-workspace summary::after { content: none; }
+.local-seo-workspace button:disabled { opacity: .45; cursor: not-allowed; }
+.local-seo-workspace details { margin: 24px 0; }
+.local-seo-workspace summary { cursor: pointer; font-weight: 600; padding: 12px 0; }
+.local-seo-workspace .c-field { display: grid; gap: 8px; margin: 14px 0; }
+.local-seo-workspace input, .local-seo-workspace textarea { width: 100%; max-width: 100%; box-sizing: border-box; font: inherit; padding: 10px; color: inherit; background: var(--app-bg, #fff); border: 1px solid var(--app-line, #d0d5dd); border-radius: 8px; }
+.local-seo-workspace textarea, .local-seo-workspace pre { overflow-wrap: anywhere; white-space: pre-wrap; }
+.local-seo-workspace button { margin: 6px 10px 6px 0; }
+.local-seo-workspace td { overflow-wrap: anywhere; max-width: 280px; }
+.local-seo-workspace .c-table-wrap { max-width: 100%; overflow-x: auto; }

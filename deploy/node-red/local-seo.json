@@ -1,0 +1,517 @@
+[
+  {
+    "id": "local-1",
+    "type": "tab",
+    "label": "WF-01 Console/manual or unavailable",
+    "disabled": false,
+    "info": "Backend owns tenant scope, persistent jobs, quota and approval. This flow never publishes."
+  },
+  {
+    "id": "local-1-note",
+    "type": "comment",
+    "z": "local-1",
+    "name": "Registry preview and confirmation use the authenticated console.",
+    "x": 360,
+    "y": 80,
+    "wires": []
+  },
+  {
+    "id": "local-2",
+    "type": "tab",
+    "label": "WF-02 GBP sync",
+    "disabled": false,
+    "info": "Backend owns tenant scope, persistent jobs, quota and approval. This flow never publishes."
+  },
+  {
+    "id": "local-2-poll",
+    "type": "inject",
+    "z": "local-2",
+    "name": "WF-02 poll queued work",
+    "props": [
+      {
+        "p": "payload"
+      }
+    ],
+    "repeat": "60",
+    "once": false,
+    "onceDelay": 0.1,
+    "payload": "",
+    "payloadType": "date",
+    "x": 160,
+    "y": 80,
+    "wires": [
+      [
+        "local-2-request"
+      ]
+    ]
+  },
+  {
+    "id": "local-2-request",
+    "type": "function",
+    "z": "local-2",
+    "name": "Build fixed backend request",
+    "func": "const token = env.get(\"LOCAL_SEO_WORKER_TOKEN\");\nconst endpoint = env.get(\"LOCAL_SEO_BACKEND\");\nif (!token || endpoint !== \"http://gtm-growth:3000/api/internal/local-seo/tick\") return null;\nreturn {url:endpoint, method:\"POST\", headers:{\"Authorization\":\"Bearer \"+token,\"Content-Type\":\"application/json\"}, payload:{workflow:\"WF-02\"}};",
+    "outputs": 1,
+    "timeout": 0,
+    "noerr": 0,
+    "initialize": "",
+    "finalize": "",
+    "libs": [],
+    "x": 400,
+    "y": 80,
+    "wires": [
+      [
+        "local-2-http"
+      ]
+    ]
+  },
+  {
+    "id": "local-2-http",
+    "type": "http request",
+    "z": "local-2",
+    "name": "Claim and run bounded job",
+    "method": "use",
+    "ret": "obj",
+    "paytoqs": "ignore",
+    "url": "",
+    "tls": "",
+    "persist": false,
+    "proxy": "",
+    "insecureHTTPParser": false,
+    "authType": "",
+    "senderr": false,
+    "headers": [],
+    "x": 680,
+    "y": 80,
+    "wires": [
+      []
+    ]
+  },
+  {
+    "id": "local-2-catch",
+    "type": "catch",
+    "z": "local-2",
+    "name": "Drop transient transport errors; next poll resumes backend state",
+    "scope": [
+      "local-2-http"
+    ],
+    "uncaught": false,
+    "x": 400,
+    "y": 160,
+    "wires": [
+      []
+    ]
+  },
+  {
+    "id": "local-3",
+    "type": "tab",
+    "label": "WF-03 Review queue",
+    "disabled": false,
+    "info": "Backend owns tenant scope, persistent jobs, quota and approval. This flow never publishes."
+  },
+  {
+    "id": "local-3-poll",
+    "type": "inject",
+    "z": "local-3",
+    "name": "WF-03 poll queued work",
+    "props": [
+      {
+        "p": "payload"
+      }
+    ],
+    "repeat": "60",
+    "once": false,
+    "onceDelay": 0.1,
+    "payload": "",
+    "payloadType": "date",
+    "x": 160,
+    "y": 80,
+    "wires": [
+      [
+        "local-3-request"
+      ]
+    ]
+  },
+  {
+    "id": "local-3-request",
+    "type": "function",
+    "z": "local-3",
+    "name": "Build fixed backend request",
+    "func": "const token = env.get(\"LOCAL_SEO_WORKER_TOKEN\");\nconst endpoint = env.get(\"LOCAL_SEO_BACKEND\");\nif (!token || endpoint !== \"http://gtm-growth:3000/api/internal/local-seo/tick\") return null;\nreturn {url:endpoint, method:\"POST\", headers:{\"Authorization\":\"Bearer \"+token,\"Content-Type\":\"application/json\"}, payload:{workflow:\"WF-03\"}};",
+    "outputs": 1,
+    "timeout": 0,
+    "noerr": 0,
+    "initialize": "",
+    "finalize": "",
+    "libs": [],
+    "x": 400,
+    "y": 80,
+    "wires": [
+      [
+        "local-3-http"
+      ]
+    ]
+  },
+  {
+    "id": "local-3-http",
+    "type": "http request",
+    "z": "local-3",
+    "name": "Claim and run bounded job",
+    "method": "use",
+    "ret": "obj",
+    "paytoqs": "ignore",
+    "url": "",
+    "tls": "",
+    "persist": false,
+    "proxy": "",
+    "insecureHTTPParser": false,
+    "authType": "",
+    "senderr": false,
+    "headers": [],
+    "x": 680,
+    "y": 80,
+    "wires": [
+      []
+    ]
+  },
+  {
+    "id": "local-3-catch",
+    "type": "catch",
+    "z": "local-3",
+    "name": "Drop transient transport errors; next poll resumes backend state",
+    "scope": [
+      "local-3-http"
+    ],
+    "uncaught": false,
+    "x": 400,
+    "y": 160,
+    "wires": [
+      []
+    ]
+  },
+  {
+    "id": "local-4",
+    "type": "tab",
+    "label": "WF-04 Console/manual or unavailable",
+    "disabled": false,
+    "info": "Backend owns tenant scope, persistent jobs, quota and approval. This flow never publishes."
+  },
+  {
+    "id": "local-4-note",
+    "type": "comment",
+    "z": "local-4",
+    "name": "GBP/GSC performance aggregation is not implemented by this flow.",
+    "x": 360,
+    "y": 80,
+    "wires": []
+  },
+  {
+    "id": "local-5",
+    "type": "tab",
+    "label": "WF-05 Console/manual or unavailable",
+    "disabled": false,
+    "info": "Backend owns tenant scope, persistent jobs, quota and approval. This flow never publishes."
+  },
+  {
+    "id": "local-5-note",
+    "type": "comment",
+    "z": "local-5",
+    "name": "Verified-domain crawler remains a separate pilot; no public scan.",
+    "x": 360,
+    "y": 80,
+    "wires": []
+  },
+  {
+    "id": "local-6",
+    "type": "tab",
+    "label": "WF-06 Console/manual or unavailable",
+    "disabled": false,
+    "info": "Backend owns tenant scope, persistent jobs, quota and approval. This flow never publishes."
+  },
+  {
+    "id": "local-6-note",
+    "type": "comment",
+    "z": "local-6",
+    "name": "Evidence and rank imports use the authenticated console.",
+    "x": 360,
+    "y": 80,
+    "wires": []
+  },
+  {
+    "id": "local-7",
+    "type": "tab",
+    "label": "WF-07 Deterministic findings",
+    "disabled": false,
+    "info": "Backend owns tenant scope, persistent jobs, quota and approval. This flow never publishes."
+  },
+  {
+    "id": "local-7-poll",
+    "type": "inject",
+    "z": "local-7",
+    "name": "WF-07 poll queued work",
+    "props": [
+      {
+        "p": "payload"
+      }
+    ],
+    "repeat": "60",
+    "once": false,
+    "onceDelay": 0.1,
+    "payload": "",
+    "payloadType": "date",
+    "x": 160,
+    "y": 80,
+    "wires": [
+      [
+        "local-7-request"
+      ]
+    ]
+  },
+  {
+    "id": "local-7-request",
+    "type": "function",
+    "z": "local-7",
+    "name": "Build fixed backend request",
+    "func": "const token = env.get(\"LOCAL_SEO_WORKER_TOKEN\");\nconst endpoint = env.get(\"LOCAL_SEO_BACKEND\");\nif (!token || endpoint !== \"http://gtm-growth:3000/api/internal/local-seo/tick\") return null;\nreturn {url:endpoint, method:\"POST\", headers:{\"Authorization\":\"Bearer \"+token,\"Content-Type\":\"application/json\"}, payload:{workflow:\"WF-07\"}};",
+    "outputs": 1,
+    "timeout": 0,
+    "noerr": 0,
+    "initialize": "",
+    "finalize": "",
+    "libs": [],
+    "x": 400,
+    "y": 80,
+    "wires": [
+      [
+        "local-7-http"
+      ]
+    ]
+  },
+  {
+    "id": "local-7-http",
+    "type": "http request",
+    "z": "local-7",
+    "name": "Claim and run bounded job",
+    "method": "use",
+    "ret": "obj",
+    "paytoqs": "ignore",
+    "url": "",
+    "tls": "",
+    "persist": false,
+    "proxy": "",
+    "insecureHTTPParser": false,
+    "authType": "",
+    "senderr": false,
+    "headers": [],
+    "x": 680,
+    "y": 80,
+    "wires": [
+      []
+    ]
+  },
+  {
+    "id": "local-7-catch",
+    "type": "catch",
+    "z": "local-7",
+    "name": "Drop transient transport errors; next poll resumes backend state",
+    "scope": [
+      "local-7-http"
+    ],
+    "uncaught": false,
+    "x": 400,
+    "y": 160,
+    "wires": [
+      []
+    ]
+  },
+  {
+    "id": "local-8",
+    "type": "tab",
+    "label": "WF-08 Console/manual or unavailable",
+    "disabled": false,
+    "info": "Backend owns tenant scope, persistent jobs, quota and approval. This flow never publishes."
+  },
+  {
+    "id": "local-8-note",
+    "type": "comment",
+    "z": "local-8",
+    "name": "Publication requires the approving human to execute from the console. Worker tokens cannot publish.",
+    "x": 360,
+    "y": 80,
+    "wires": []
+  },
+  {
+    "id": "local-9",
+    "type": "tab",
+    "label": "WF-09 Post-write verification",
+    "disabled": false,
+    "info": "Backend owns tenant scope, persistent jobs, quota and approval. This flow never publishes."
+  },
+  {
+    "id": "local-9-poll",
+    "type": "inject",
+    "z": "local-9",
+    "name": "WF-09 poll queued work",
+    "props": [
+      {
+        "p": "payload"
+      }
+    ],
+    "repeat": "60",
+    "once": false,
+    "onceDelay": 0.1,
+    "payload": "",
+    "payloadType": "date",
+    "x": 160,
+    "y": 80,
+    "wires": [
+      [
+        "local-9-request"
+      ]
+    ]
+  },
+  {
+    "id": "local-9-request",
+    "type": "function",
+    "z": "local-9",
+    "name": "Build fixed backend request",
+    "func": "const token = env.get(\"LOCAL_SEO_WORKER_TOKEN\");\nconst endpoint = env.get(\"LOCAL_SEO_BACKEND\");\nif (!token || endpoint !== \"http://gtm-growth:3000/api/internal/local-seo/tick\") return null;\nreturn {url:endpoint, method:\"POST\", headers:{\"Authorization\":\"Bearer \"+token,\"Content-Type\":\"application/json\"}, payload:{workflow:\"WF-09\"}};",
+    "outputs": 1,
+    "timeout": 0,
+    "noerr": 0,
+    "initialize": "",
+    "finalize": "",
+    "libs": [],
+    "x": 400,
+    "y": 80,
+    "wires": [
+      [
+        "local-9-http"
+      ]
+    ]
+  },
+  {
+    "id": "local-9-http",
+    "type": "http request",
+    "z": "local-9",
+    "name": "Claim and run bounded job",
+    "method": "use",
+    "ret": "obj",
+    "paytoqs": "ignore",
+    "url": "",
+    "tls": "",
+    "persist": false,
+    "proxy": "",
+    "insecureHTTPParser": false,
+    "authType": "",
+    "senderr": false,
+    "headers": [],
+    "x": 680,
+    "y": 80,
+    "wires": [
+      []
+    ]
+  },
+  {
+    "id": "local-9-catch",
+    "type": "catch",
+    "z": "local-9",
+    "name": "Drop transient transport errors; next poll resumes backend state",
+    "scope": [
+      "local-9-http"
+    ],
+    "uncaught": false,
+    "x": 400,
+    "y": 160,
+    "wires": [
+      []
+    ]
+  },
+  {
+    "id": "local-10",
+    "type": "tab",
+    "label": "WF-10 Scope report",
+    "disabled": false,
+    "info": "Backend owns tenant scope, persistent jobs, quota and approval. This flow never publishes."
+  },
+  {
+    "id": "local-10-poll",
+    "type": "inject",
+    "z": "local-10",
+    "name": "WF-10 poll queued work",
+    "props": [
+      {
+        "p": "payload"
+      }
+    ],
+    "repeat": "60",
+    "once": false,
+    "onceDelay": 0.1,
+    "payload": "",
+    "payloadType": "date",
+    "x": 160,
+    "y": 80,
+    "wires": [
+      [
+        "local-10-request"
+      ]
+    ]
+  },
+  {
+    "id": "local-10-request",
+    "type": "function",
+    "z": "local-10",
+    "name": "Build fixed backend request",
+    "func": "const token = env.get(\"LOCAL_SEO_WORKER_TOKEN\");\nconst endpoint = env.get(\"LOCAL_SEO_BACKEND\");\nif (!token || endpoint !== \"http://gtm-growth:3000/api/internal/local-seo/tick\") return null;\nreturn {url:endpoint, method:\"POST\", headers:{\"Authorization\":\"Bearer \"+token,\"Content-Type\":\"application/json\"}, payload:{workflow:\"WF-10\"}};",
+    "outputs": 1,
+    "timeout": 0,
+    "noerr": 0,
+    "initialize": "",
+    "finalize": "",
+    "libs": [],
+    "x": 400,
+    "y": 80,
+    "wires": [
+      [
+        "local-10-http"
+      ]
+    ]
+  },
+  {
+    "id": "local-10-http",
+    "type": "http request",
+    "z": "local-10",
+    "name": "Claim and run bounded job",
+    "method": "use",
+    "ret": "obj",
+    "paytoqs": "ignore",
+    "url": "",
+    "tls": "",
+    "persist": false,
+    "proxy": "",
+    "insecureHTTPParser": false,
+    "authType": "",
+    "senderr": false,
+    "headers": [],
+    "x": 680,
+    "y": 80,
+    "wires": [
+      []
+    ]
+  },
+  {
+    "id": "local-10-catch",
+    "type": "catch",
+    "z": "local-10",
+    "name": "Drop transient transport errors; next poll resumes backend state",
+    "scope": [
+      "local-10-http"
+    ],
+    "uncaught": false,
+    "x": 400,
+    "y": 160,
+    "wires": [
+      []
+    ]
+  }
+]
