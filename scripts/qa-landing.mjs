@@ -157,7 +157,7 @@ async function visitLocalSeoWorkspace(browser, locale) {
   const page = await context.newPage();
   const errors = [];
   page.on("pageerror", e => errors.push(e.message));
-  await page.route("**/local-seo-qa.html*", route => route.fulfill({ contentType: "text/html", body: `<!doctype html><html lang="${locale}"><head><link rel="stylesheet" href="/styles.css"><link rel="stylesheet" href="/brand.css"><link rel="stylesheet" href="/console/shell.css"><link rel="stylesheet" href="/local-seo.css"></head><body style="background:#0b0b15;color:#eee;font:16px sans-serif;padding:24px"><main id="qa"></main></body></html>` }));
+  await page.route("**/local-seo-qa.html*", route => route.fulfill({ contentType: "text/html", body: `<!doctype html><html lang="${locale}"><head><meta charset="utf-8"><link rel="stylesheet" href="/styles.css"><link rel="stylesheet" href="/brand.css"><link rel="stylesheet" href="/console/shell.css"><link rel="stylesheet" href="/local-seo.css"></head><body class="console-page"><main class="app c-app"><section class="c-panel" id="qa"></section></main></body></html>` }));
   await page.goto(`${origin}/local-seo-qa.html?lang=${locale}`);
   await page.evaluate(async () => {
     const { renderLocalSeo } = await import("/console/local-seo-network.js");
