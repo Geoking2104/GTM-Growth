@@ -139,6 +139,11 @@ async function visitPublicConsole(browserInstance, locale, viewport, label) {
   if (locale === "fr") assert.doesNotMatch(copy, /Add explicit crawler rules|Add Article schema/);
   const engines = page.locator(".public-engine img");
   assert.equal(await engines.count(), 6);
+  // Lazy images below the longer mobile journey load when brought into view.
+  for (const engine of await engines.all()) {
+    await engine.scrollIntoViewIfNeeded();
+    await engine.evaluate(img => img.decode());
+  }
   assert.equal(await engines.evaluateAll((imgs) => imgs.every((img) => img.complete && img.naturalWidth > 0)), true, `${label}: engine logos load`);
   const sizing = await page.evaluate(() => ({ width: innerWidth, scrollWidth: document.documentElement.scrollWidth }));
   assert.ok(sizing.scrollWidth <= sizing.width + 2, `${label}: horizontal overflow ${JSON.stringify(sizing)}`);
