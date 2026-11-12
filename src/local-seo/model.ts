@@ -27,8 +27,8 @@ export type Observation = z.infer<typeof observationSchema> & { id: string; auth
 export type Action = { id: string; siteId: string; title: string; content: string; language: string; owner: string; due: string; evidence: string[]; author: string; version: number; status: "draft" | "submitted" | "approved" | "rejected" | "manual-pending"; approval?: { author: string; hash: string; at: string }; };
 export type LocalState = { sites: Site[]; grants: Record<string, string[]>; observations: Observation[]; actions: Action[]; audit: Array<{ at: string; actor: string; event: string; target: string }> };
 export const hash = (value: unknown) => createHash("sha256").update(JSON.stringify(value)).digest("hex");
-export function metrics(o: Pick<Observation, "points" | "depth">) {
-  const valid = o.points.filter(p => p.status === "found" || p.status === "not-found");
+export function metrics(o: Pick<Observation, "points" | "depth" | "identity">) {
+  const valid = o.identity ? o.points.filter(p => p.status === "found" || p.status === "not-found") : [];
   const ranks = valid.filter(p => p.status === "found").map(p => p.rank!).sort((a,b) => a-b);
   const n = valid.length, r = ranks.length;
   return { planned: o.points.length, valid: n, found: r, coverage: o.points.length ? 100*n/o.points.length : null,

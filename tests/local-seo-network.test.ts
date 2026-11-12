@@ -26,6 +26,7 @@ describe("Local SEO evidence and authorization",()=>{
   expect(compare(a as any,b as any).comparable).toBe(true);
   expect(compare(a as any,{...b,language:"nl-BE"} as any).comparable).toBe(false);
   expect(series({...a,language:undefined})).toBeNull();
+  expect(metrics({...a,identity:undefined})).toMatchObject({valid:0,top3:null,median:null});
   expect(series({...a,points:[{...a.points[0],latitude:51}]})).not.toBe(series(a));
  });
  it("previews imports, isolates rejects and persists stable IDs across restart",async()=>{
