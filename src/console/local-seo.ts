@@ -4,7 +4,7 @@ import { z } from "zod";
 import { TenantAccessError } from "../tenants/context.js";
 import { tenantOwnsUrl } from "../tenants/store.js";
 import { readState, updateState } from "../local-seo/store.js";
-import { siteSchema, observationSchema, metrics, series, compare, hash, approvalHash, type LocalState, type Action } from "../local-seo/model.js";
+import { siteSchema, observationSchema, metrics, series, hash, approvalHash, type LocalState, type Action } from "../local-seo/model.js";
 import type { ConsoleRoute, HandlerContext } from "./util.js";
 function identity(ctx: HandlerContext) {
   if (ctx.user?.preferred_username?.startsWith("service-account-") || ctx.user?.realm_access?.roles?.includes("ai-agent") || !ctx.user?.sub || !ctx.tenancy?.tenant || ctx.tenancy.tenant.status !== "active" || ctx.tenancy.platformAdmin) throw new TenantAccessError("LOCAL_ACCESS");
@@ -24,12 +24,17 @@ function state(ctx: HandlerContext) {
   const who = identity(ctx), s = readState(who.tenant.id);
   const sites = s.sites.filter(x => who.admin || (s.grants[who.actor] ?? []).includes(x.id)); const ids = new Set(sites.map(x => x.id));
   const observations = s.observations.filter(x => ids.has(x.siteId));
-  const comparisons = observations.flatMap(current => {
-    const previous = observations.filter(x => x.id !== current.id && compare(x, current).comparable)
-      .sort((a,b) => Date.parse(b.observedAt)-Date.parse(a.observedAt))[0];
-    return previous ? [{ siteId: current.siteId, previousId: previous.id, currentId: current.id, ...compare(previous,current) }] : [];
-  });
-  return { sites, comparisons, observations: s.observations.filter(x => ids.has(x.siteId)).map(x => ({ ...x, metrics: metrics(x), comparableSeries: series(x) })), actions: s.actions.filter(x => ids.has(x.siteId)),
+  const enriched = observations.map(x => ({ ...x, metrics: metrics(x), comparableSeries: series(x) }));
+  const previousBySeries = new Map<string, typeof enriched[number]>();
+  const comparisons: Array<{ siteId: string; previousId: string; currentId: string; comparable: boolean; deltaTop3: number | null }> = [];
+  for (const current of [...enriched].sort((a,b) => Date.parse(a.observedAt)-Date.parse(b.observedAt) || a.id.localeCompare(b.id, "en"))) {
+    if (!current.comparableSeries) continue;
+    const previous = previousBySeries.get(current.comparableSeries);
+    if (previous && Date.parse(current.observedAt) > Date.parse(previous.observedAt)) comparisons.push({ siteId: current.siteId, previousId: previous.id, currentId: current.id,
+      comparable: true, deltaTop3: previous.metrics.top3 !== null && current.metrics.top3 !== null ? current.metrics.top3-previous.metrics.top3 : null });
+    previousBySeries.set(current.comparableSeries,current);
+  }
+  return { sites, comparisons, observations: enriched, actions: s.actions.filter(x => ids.has(x.siteId)),
     audit: s.audit.filter(x => who.admin || ids.has(x.target)).slice(-500), grants: who.admin ? s.grants : undefined,
     capabilities: { registry: "available", rankImport: "available", manualActions: "available", gbp: "unavailable", nodeRed: "unavailable", localModel: "unavailable", paidFallback: false } };
 }
