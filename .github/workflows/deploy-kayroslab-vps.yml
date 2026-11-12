@@ -12,6 +12,11 @@ on:
         description: 'Type DEPLOY to confirm the production VPS release'
         required: true
         type: string
+      sync_login_titles:
+        description: 'Synchronize the FR/EN login title overrides in the GTM Growth realm'
+        required: false
+        default: false
+        type: boolean
 
 jobs:
   deploy:
@@ -34,6 +39,7 @@ jobs:
         env:
           VPS_DEPLOY_USER: ${{ secrets.VPS_SSH_USER }}
           VPS_DEPLOY_KEY: ${{ secrets.VPS_SSH_KEY }}
+          SYNC_LOGIN_TITLES: ${{ inputs.sync_login_titles }}
         run: |
           set -euo pipefail
           ssh_dir="$(mktemp -d)"
@@ -55,7 +61,7 @@ jobs:
             -o StrictHostKeyChecking=yes -o HostKeyAlgorithms=ssh-ed25519 \
             -o UserKnownHostsFile="$ssh_dir/known_hosts" -o GlobalKnownHostsFile=/dev/null \
             -o ConnectTimeout=30 -o ServerAliveInterval=30 -o ServerAliveCountMax=3 \
-            "$VPS_DEPLOY_USER@51.210.9.71" 'bash -se' <<'REMOTE'
+            "$VPS_DEPLOY_USER@51.210.9.71" "bash -se -- ${SYNC_LOGIN_TITLES:-false}" <<'REMOTE'
             set -euo pipefail
             git config --global --add safe.directory /opt/gtm-growth
             cd /opt/gtm-growth
@@ -66,4 +72,7 @@ jobs:
             git fetch origin main
             git merge --ff-only origin/main
             bash deploy/kayroslab-vps/deploy.sh
+            if [ "${1:-false}" = true ]; then
+              bash deploy/kayroslab-vps/sync-login-titles.sh
+            fi
           REMOTE

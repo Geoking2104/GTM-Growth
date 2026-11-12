@@ -6,6 +6,7 @@ const en = LANG === "en";
 const strings = en ? {
   header: "Console · Free read", back: "Back to site ", workspace: "YOUR WORKSPACE",
   navOverview: "Overview", navRead: "Site analysis", navStart: "Guided setup",
+  navigation: "Free analysis navigation",
   sidebar: "Public-signal analysis for your website.", eyebrow: "FREE READ",
   title: "Your website, seen through AI.", description: "A first read of your visibility and a way to improve it.",
   live: "●  Site analysis", next: "GO FURTHER", loginTitle: "Continue in your workspace",
@@ -15,6 +16,7 @@ const strings = en ? {
 } : {
   header: "Console · Lecture gratuite", back: "Retour au site ", workspace: "VOTRE ESPACE",
   navOverview: "Vue d’ensemble", navRead: "Analyse du site", navStart: "Démarrage guidé",
+  navigation: "Navigation de la lecture",
   sidebar: "Analyse des signaux publics de votre site.", eyebrow: "LECTURE GRATUITE",
   title: "Votre site, vu par l’IA.", description: "Une première lecture de votre visibilité et des pistes pour progresser.",
   live: "●  Analyse du site", next: "ALLER PLUS LOIN", loginTitle: "Continuez dans votre espace",
@@ -30,6 +32,7 @@ function set(selector, value) {
 
 set(".public-header-label", strings.header);
 set(".public-nav-label", strings.workspace);
+document.querySelector("#c-login .public-sidebar")?.setAttribute("aria-label", strings.navigation);
 for (const [index, label] of [strings.navOverview, strings.navRead, strings.navStart].entries()) {
   set(`.public-sidebar > a:nth-of-type(${index + 1}) span`, label);
 }
