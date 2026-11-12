@@ -19,9 +19,12 @@ it.each(["fr","en"])("renders the free planner and workspace in %s without chang
  const select=flatten(planner).find(n=>n.tagName==="select")!;select.value="web-only";select.onchange!();
  expect(flatten(planner).map(n=>n.textContent).join(" ")).toContain(lang==="fr"?"non applicables":"not applicable");
  const {renderLocalSeo}=await import("../site/console/local-seo-network.js");
- const api=vi.fn(async()=>({sites:[{id:"one",name:"One",country:"BE",languages:["nl-BE"],kind:"physical",timezone:"Europe/Brussels"}],observations:[],actions:[]}));
+ const api=vi.fn(async()=>({sites:[{id:"one",name:"One",country:"BE",languages:["nl-BE"],kind:"physical",timezone:"Europe/Brussels"}],observations:[],actions:[],controls:[{siteId:"one",summary:{coverage:0,reliable:false},findings:Array.from({length:24},(_,i)=>({id:`LOC-${String(i+1).padStart(2,"0")}`,status:"unknown",reason:"missing-evidence",evidence:[],provenance:[]}))}],publications:[{id:"diff",siteId:"one",language:"nl-BE",status:"draft",before:"https://example.com/old",change:{field:"websiteUri",value:"https://example.com/new"},digest:"abc"}]}));
  const root=await renderLocalSeo({api,me:{role:"tenant-admin",tenant:{name:"Acme",domains:["example.com"]}}}) as unknown as ElementStub;
  expect(flatten(root).map(n=>n.textContent).join(" ")).toContain(lang==="fr"?"SEO global et local":"Global and local SEO");
  expect(flatten(root).map(n=>n.textContent).join(" ")).toContain("BE · nl-BE");
+ expect(flatten(root).filter(n=>n.tagName==="li"&&n.textContent.startsWith("LOC-"))).toHaveLength(24);
+ expect(flatten(root).map(n=>n.textContent).join(" ")).toContain(lang==="fr"?"Approuver ce diff":"Approve this diff");
+ expect(flatten(root).map(n=>n.textContent).join(" ")).toContain(lang==="fr"?"Preuve manquante":"Missing evidence");
  expect(api).toHaveBeenCalledWith("/local-seo/state",{});
 });

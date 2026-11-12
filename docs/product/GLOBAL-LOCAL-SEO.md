@@ -75,24 +75,11 @@ A source label is provenance supplied by the importer, never an instruction to e
 
 No scheduler, Node-RED container, model download, secret change, payment change or production restart is bundled. Existing paid AI tools elsewhere in GTM Growth are unchanged and are not called by this module. The free local SEO path has no paid dependency.
 
-## Remaining specification scope
+## Operations increment and remaining scope
 
-| Area | Status and dependency |
-| --- | --- |
-| H.O./local access | Tenant admin and exact local grants implemented; country/region roles, cross-tenant franchise delegation and expiring mandates remain pending |
-| LOC-01–LOC-24 | Full diagnostic rules catalogue and qualified snapshot sources remain pending; rank formulas and evidence checks here are not a substitute for the catalogue |
-| WF-01 | Registry preview/confirmation and persistence implemented; no deployed Node-RED flow |
-| WF-06 | Rank import and comparison implemented; citation import remains pending |
-| WF-07 | Manual evidence-backed drafts implemented; deterministic recommendation engine and qualified local inference remain pending |
-| WF-02/03/04 | GBP profiles, reviews and performance adapters and authorized Google access remain pending; existing GSC tools are separate |
-| WF-05 | Existing verified-domain audit pilot remains separate; this module cannot launch unrestricted Playwright |
-| WF-08/09 | External publication, reconciliation, verification and compensation remain disabled; manual-pending is never called verified |
-| WF-10 | Scoped JSON export available; cohort reports, scheduled summaries and localized narrative reports remain pending |
-| Node-RED | Selected architecture, not installed or deployed; authenticated job contracts, durable queue, resource reservations and flow fixtures still required |
-| Local model | Optional, unavailable; requires pinned licensed artifacts, hardware capacity and per-language qualification |
-| Maps grid acquisition | Not provided; declared imports only, no paid fallback or scraping |
-| Multi-site campaigns | Frozen target sets, per-language review, DST-aware scheduling and batch reconciliation remain pending |
-| Privacy | Structured private addresses rejected; full free-text redaction and publication/export privacy checks still required before external publishing |
+[GBP, LOC and Node-RED operations](LOCAL-SEO-OPERATIONS.md) documents the subsequent implementation: all 24 deterministic rules, operator-configured profile/review reads, durable worker jobs, and separately approved phone/URL writes with readback. Those features require explicit runtime configuration; they are not active merely because this code is present. The original manual action workflow remains separate and never claims external verification.
+
+Remaining work includes country/region and expiring mandate roles, automated sources for all LOC facts, performance collection, citation acquisition, qualified local inference, bulk/DST-aware campaigns, public-visibility verification, automatic compensation, and cohort/narrative reports. Node-RED exports ten documented tabs, of which five are functional read/evaluation pollers; the operations guide identifies each. Private free-text/address publication is not supported.
 
 Do not market pending capabilities as available. Do not activate a connector merely because a key exists in the environment. The v1.1 no-paid-provider constraint supersedes earlier DataForSEO/Anthropic integration ideas for this module. Node-RED is the selected open-source orchestrator; n8n is not a runtime dependency.
 
@@ -100,4 +87,4 @@ Do not market pending capabilities as available. Do not activate a connector mer
 
 `tests/local-seo-network.test.ts` covers deterministic denominators, comparison boundaries, invalid imports, preview confirmation, stable IDs, persistence after reopening SQLite, tenant isolation, exact grants and immediate revocation, evidence deduplication, separate approval, stale-version refusal, approval invalidation and web-only applicability. `tests/local-seo-network-ui.test.ts` covers CSV quoting/hostile columns and FR/EN rendering without changing research language. The landing browser QA checks the free planner on desktop/mobile in both languages.
 
-This increment covers portions of REC-01/02/03/04/05/06/07/11/13/23/25/30. It does not claim full acceptance of those scenarios or the complete specification. In particular, revocation tests cover synchronous commands, not future jobs, since no local SEO job executor is shipped.
+This increment covers portions of REC-01/02/03/04/05/06/07/11/13/23/25/30. It does not claim full acceptance of those scenarios or the complete specification. The subsequent operations increment adds durable job revocation and supervised write tests; see its separate qualification scope.

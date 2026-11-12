@@ -1,3 +1,6 @@
+import type { Snapshot } from "./controls.js";
+import type { findingsFor, Binding, LocalJob } from "./operations.js";
+import type { Publication } from "./publication.js";
 import { createHash } from "node:crypto";
 import { z } from "zod";
 const text = z.string().trim().min(1).max(200);
@@ -25,7 +28,7 @@ export const observationSchema = z.object({
 });
 export type Observation = z.infer<typeof observationSchema> & { id: string; author: string; importedAt: string; hash: string };
 export type Action = { id: string; siteId: string; title: string; content: string; language: string; owner: string; due: string; evidence: string[]; author: string; version: number; status: "draft" | "submitted" | "approved" | "rejected" | "manual-pending"; approval?: { author: string; hash: string; at: string }; };
-export type LocalState = { sites: Site[]; grants: Record<string, string[]>; observations: Observation[]; actions: Action[]; audit: Array<{ at: string; actor: string; event: string; target: string }> };
+export type LocalState = { controlReports?: Record<string, ReturnType<typeof findingsFor>>; snapshots?: Snapshot[]; bindings?: Record<string,Binding>; publications?: Publication[]; jobs?: LocalJob[]; scopeVersion?: number; gbpUsage?: {period:number;count:number};  sites: Site[]; grants: Record<string, string[]>; observations: Observation[]; actions: Action[]; audit: Array<{ at: string; actor: string; event: string; target: string }> };
 export const hash = (value: unknown) => createHash("sha256").update(JSON.stringify(value)).digest("hex");
 export function metrics(o: Pick<Observation, "points" | "depth" | "identity">) {
   const valid = o.identity ? o.points.filter(p => p.status === "found" || p.status === "not-found") : [];

@@ -1,0 +1,29 @@
+# Optional private poller; attach the backend to this internal network before enabling.
+services:
+  local-seo-flows:
+    image: nodered/node-red:4.1.17
+    profiles: [local-seo]
+    restart: unless-stopped
+    read_only: true
+    user: "1000:1000"
+    cap_drop: [ALL]
+    security_opt: [no-new-privileges:true]
+    mem_limit: 256m
+    cpus: 0.5
+    pids_limit: 100
+    environment:
+      NODE_RED_CREDENTIAL_SECRET: ${NODE_RED_CREDENTIAL_SECRET:?Set a random secret}
+      LOCAL_SEO_WORKER_TOKEN: ${LOCAL_SEO_WORKER_TOKEN:?Set a tenant-bound worker token}
+      LOCAL_SEO_BACKEND: http://gtm-growth:3000/api/internal/local-seo/tick
+    command: [node-red, --settings, /flows/settings.cjs]
+    volumes:
+      - ./settings.cjs:/flows/settings.cjs:ro
+      - ./local-seo.json:/flows/local-seo.json:ro
+      - local-seo-flow-data:/data
+    tmpfs: [/tmp:size=32m]
+    networks: [local-seo-internal]
+networks:
+  local-seo-internal:
+    internal: true
+volumes:
+  local-seo-flow-data:

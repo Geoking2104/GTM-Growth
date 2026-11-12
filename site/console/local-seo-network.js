@@ -1,9 +1,20 @@
+import { renderLocalOperations } from "./local-seo-operations.js";
 import { parseRegistryCsv } from "./local-seo-csv.js";
 /** Local SEO workspace. All dynamic content uses text nodes. */
 import { LANG } from "./i18n.js";
 import { el } from "./render.js";
 const L = (fr,en) => LANG === "fr" ? fr : en;
 const labels = {
+  GBP_UNAVAILABLE: ["Connexion GBP indisponible. Contactez l’exploitation.","GBP connection unavailable. Contact operations."],
+  GBP_ACCESS: ["Accès Google refusé ou révoqué.","Google access denied or revoked."],
+  GBP_UNBOUND: ["Confirmez la correspondance de la fiche Google.","Confirm the Google listing mapping."],
+  GBP_QUOTA: ["Quota atteint. La reprise sera limitée.","Quota reached. Retries are bounded."],
+  GBP_WRITE_DISABLED: ["Publication désactivée par l’exploitation.","Publishing is disabled by operations."],
+  GBP_IDENTITY: ["Identité Google ambiguë ou déjà liée.","Google identity ambiguous or already mapped."],
+  GBP_TARGET_BUSY: ["Une écriture sur cette fiche est en attente de vérification.","A write to this listing awaits verification."],
+  GBP_ALREADY_DISPATCHED: ["Cette version a déjà été traitée. Utilisez la relecture.","This version was already processed. Use readback."],
+  GBP_NO_CHANGE: ["La valeur Google est déjà identique.","Google already has this value."],
+  GBP_REMOTE: ["Google n’a pas confirmé la requête.","Google did not confirm the request."],
   draft: ["Brouillon","Draft"], submitted: ["À valider","Awaiting approval"], approved: ["Approuvée","Approved"], rejected: ["Refusée","Rejected"], "manual-pending": ["Application manuelle à vérifier","Manual application awaiting verification"],
   physical: ["Établissement physique","Physical location"], "service-area": ["Zone desservie","Service area"], "web-only": ["Web uniquement","Web only"],
   LOCAL_ACCESS: ["Accès refusé. Vérifiez votre périmètre et vos droits.","Access denied. Check your scope and permissions."],
@@ -36,7 +47,8 @@ export async function renderLocalSeo({ api, me }) {
   const content=el("div");root.append(content);
   async function refresh() {
     const data=await call("state");content.replaceChildren();
-    content.append(el("p","c-note",L("Observations déclarées, règles calculées et validation humaine. Les API GBP, l’orchestration et l’IA locale ne sont pas connectées. Aucun repli payant.","Declared observations, calculated rules and human approval. GBP APIs, orchestration and local AI are not connected. No paid fallback.")));
+    content.append(el("p","c-note",L("Observations déclarées, règles calculées et validation humaine. GBP et Node-RED nécessitent une configuration serveur. L’IA locale reste indisponible. Aucun repli payant.","Declared observations, calculated rules and human approval. GBP and Node-RED require server configuration. Local AI remains unavailable. No paid fallback.")));
+    content.append(renderLocalOperations({data,admin,call,run,refresh}));
     const filters=el("div","c-fields"); const country=field(filters,L("Filtrer par pays","Filter by country"));const language=field(filters,L("Filtrer par langue de recherche","Filter by search language"));content.append(filters);
     const list=el("div");content.append(list);
     const date=v=>new Intl.DateTimeFormat(LANG,{dateStyle:"medium",timeStyle:"short"}).format(new Date(v));

@@ -4,8 +4,10 @@
 
 ### Added
 
+- LOC-01–24 deterministic evidence rules; operator-configured tenant-specific GBP profile/review reads; durable private Node-RED jobs; supervised phone/URL publication with separate approval, conflict checks and readback. FR/EN console, tests and activation guide included. Live Google access and publication remain opt-in.
+
 - Offline-first global/local SEO workspace: tenant-scoped registry previews, CSV/JSON imports, exact local access grants, deterministic rank metrics and comparisons, durable manual actions with independent approval, and scoped JSON exports.
-- Free FR/EN local presence planner for physical, service-area and web-only businesses. No paid provider or external publication is introduced. See `docs/product/GLOBAL-LOCAL-SEO.md` for remaining specification scope.
+- Free FR/EN local presence planner for physical, service-area and web-only businesses. The public free planner introduces no paid provider or external publication. See `docs/product/GLOBAL-LOCAL-SEO.md` for remaining specification scope.
 - FR/EN regression coverage, locale-aware console number formatting and repaired console text encoding.
 
 - **Richer brand profile in guided onboarding**: `/api/console/onboarding/profile` now prefers the JSON-LD `name` (source shown in the wizard: “name read from structured data”), falls back to `og:site_name`, then `title`; description falls back meta description → og:description → schema; and surfaces `lang` and detected schema types as hints in the wizard. No LLM, no paid API — pure HTML reading.

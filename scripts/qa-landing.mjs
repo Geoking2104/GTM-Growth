@@ -161,13 +161,17 @@ async function visitLocalSeoWorkspace(browser, locale) {
   await page.goto(`${origin}/local-seo-qa.html?lang=${locale}`);
   await page.evaluate(async () => {
     const { renderLocalSeo } = await import("/console/local-seo-network.js");
-    const state = { sites: [{id:"brussels",name:"Brussels",country:"BE",languages:["fr-BE","nl-BE"],kind:"physical",timezone:"Europe/Brussels"}], observations: [], actions: [], comparisons: [] };
+    const state = { sites: [{id:"brussels",name:"Brussels",country:"BE",languages:["fr-BE","nl-BE"],kind:"physical",timezone:"Europe/Brussels"}], observations: [], actions: [], comparisons: [], controls: [{siteId:"brussels",summary:{coverage:0,reliable:false},findings:Array.from({length:24},(_,i)=>({id:`LOC-${String(i+1).padStart(2,"0")}`,status:"unknown",reason:"missing-evidence",evidence:[],provenance:[]}))}], publications:[{id:"fixture",siteId:"brussels",language:"fr-BE",status:"draft",before:"https://example.com/old",change:{field:"websiteUri",value:"https://example.com/new"},digest:"fixture"}] };
     document.getElementById("qa").append(await renderLocalSeo({ me: {role:"tenant-admin",tenant:{name:"QA network",domains:["example.com"]}}, api: async () => state }));
   });
   const root = page.locator(".local-seo-workspace");
   assert.match(await root.innerText(), locale === "fr" ? /SEO global et local/ : /Global and local SEO/);
   assert.match(await root.innerText(), /BE · fr-BE, nl-BE/);
-  await root.locator("details").first().locator("summary").click();
+  await root.locator("summary").filter({hasText: /Brussels — 24/}).click();
+  assert.equal(await root.locator(".local-seo-operations li").count(),24);
+  assert.match(await root.innerText(),locale === "fr" ? /Preuve manquante/ : /Missing evidence/);
+  assert.ok(await root.getByRole("button",{name:locale === "fr" ? "Approuver ce diff" : "Approve this diff",exact:true}).isVisible());
+  await root.locator("summary").filter({hasText: locale === "fr" ? "Importer et organiser" : "Import and organise"}).click();
   assert.ok(await root.locator('input[type="file"]').isVisible());
   await root.screenshot({ path: path.join(outputDir, `${locale}-local-seo-workspace.png`) });
   assert.deepEqual(errors, []);

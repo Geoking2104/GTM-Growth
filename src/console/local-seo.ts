@@ -1,4 +1,9 @@
-/** Local SEO offline-first commands. No external provider calls or paid fallback. */
+import { snapshotSchema } from "../local-seo/controls.js";
+import { addSnapshot, findingsFor, enqueue, synchronize } from "../local-seo/operations.js";
+import { gbpCapability, GoogleBusinessProfile } from "../local-seo/gbp.js";
+import { preparePublication, approvePublication, executePublication, verifyPublication, cancelPublication } from "../local-seo/publication.js";
+import { workflows } from "../local-seo/worker.js";
+/** Tenant-scoped local SEO commands. Official GBP access is opt-in; no paid fallback. */
 import { randomUUID } from "node:crypto";
 import { z } from "zod";
 import { TenantAccessError } from "../tenants/context.js";
@@ -34,9 +39,14 @@ function state(ctx: HandlerContext) {
       comparable: true, deltaTop3: previous.metrics.top3 !== null && current.metrics.top3 !== null ? current.metrics.top3-previous.metrics.top3 : null });
     previousBySeries.set(current.comparableSeries,current);
   }
-  return { sites, comparisons, observations: enriched, actions: s.actions.filter(x => ids.has(x.siteId)),
+  return { sites, comparisons, observations: enriched,
+    controls: sites.map(site=>findingsFor(s,site)),
+    snapshots: (s.snapshots??[]).filter(x=>ids.has(x.siteId)).map(x=>({id:x.id,siteId:x.siteId,observedAt:x.observedAt,source:x.source})),
+    bindings: Object.values(s.bindings??{}).filter(x=>ids.has(x.siteId)),
+    publications: (s.publications??[]).filter(x=>ids.has(x.siteId)), jobs: (s.jobs??[]).filter(x=>ids.has(x.siteId)),
+    gbp: who.admin?gbpCapability(who.tenant.id):{state:"restricted"}, actions: s.actions.filter(x => ids.has(x.siteId)),
     audit: s.audit.filter(x => who.admin || ids.has(x.target)).slice(-500), grants: who.admin ? s.grants : undefined,
-    capabilities: { registry: "available", rankImport: "available", manualActions: "available", gbp: "unavailable", nodeRed: "unavailable", localModel: "unavailable", paidFallback: false } };
+    capabilities: { registry: "available", rankImport: "available", manualActions: "available", gbp: gbpCapability(who.tenant.id).state, nodeRed: process.env.LOCAL_SEO_WORKERS_FILE?"configured":"unavailable", supervisedPublication: process.env.LOCAL_SEO_PUBLISH_ENABLED==="true"?"enabled":"disabled", localModel: "unavailable", paidFallback: false } };
 }
 const actionSchema = z.object({ siteId: z.string().max(80), title: z.string().trim().min(1).max(200), content: z.string().trim().min(1).max(5000), language: z.string().max(35), owner: z.string().trim().min(1).max(200), due: z.string().datetime({ offset: true }), evidence: z.array(z.string().max(100)).min(1).max(20) }).strict();
 function route(path: string, handler: ConsoleRoute["handler"]): ConsoleRoute {
@@ -45,6 +55,34 @@ function route(path: string, handler: ConsoleRoute["handler"]): ConsoleRoute {
   } };
 }
 export const localSeoRoutes: ConsoleRoute[] = [
+  route("evidence/import",async ctx=>{
+    const who=admin(ctx),input=snapshotSchema.parse(ctx.body.snapshot);
+    return updateState(who.tenant.id,s=>{requireSite(ctx,s,input.siteId);if(input.facts.claims)input.facts.claims.accessibleEvidenceIds=[...s.observations,...(s.snapshots??[])].filter(x=>x.siteId===input.siteId).map(x=>x.id);const snap=addSnapshot(s,{...input,source:"declared",author:who.actor});audit(s,who.actor,"evidence-import",input.siteId);return snap;});
+  }),
+  route("evidence/read",async ctx=>{const who=identity(ctx),s=readState(who.tenant.id),snap=s.snapshots?.find(x=>x.id===ctx.body.id);if(!snap)throw new TenantAccessError("LOCAL_ACCESS");requireSite(ctx,s,snap.siteId);return snap;}),
+  route("gbp/bind",async ctx=>{
+    const who=admin(ctx),siteId=z.string().parse(ctx.body.siteId),location=z.string().regex(/^locations\/[0-9]+$/).parse(ctx.body.location);
+    const s=readState(who.tenant.id),site=requireSite(ctx,s,siteId),version=s.scopeVersion??0;if(site.kind==="web-only")throw new Error("LOCAL_NOT_APPLICABLE");
+    const listing=await new GoogleBusinessProfile(who.tenant.id).read(location);
+    if(ctx.body.confirm!==true)return {siteId,location,title:listing.title??"",websiteUri:listing.websiteUri??"",hash:hash([siteId,location,listing.title,listing.websiteUri,version])};
+    if(ctx.body.hash!==hash([siteId,location,listing.title,listing.websiteUri,version]))throw new Error("LOCAL_CHANGED");
+    return updateState(who.tenant.id,current=>{requireSite(ctx,current,siteId);if((current.scopeVersion??0)!==version)throw new Error("LOCAL_CHANGED");
+      if(Object.values(current.bindings??{}).some(b=>b.siteId!==siteId&&b.location===location))throw new Error("GBP_IDENTITY");
+      current.bindings??={};current.bindings[siteId]={siteId,location,confirmedBy:who.actor,confirmedAt:new Date().toISOString()};current.scopeVersion=version+1;audit(current,who.actor,"gbp-bound",siteId);return {saved:true};});
+  }),
+  route("gbp/unbind",async ctx=>{const who=admin(ctx),siteId=z.string().parse(ctx.body.siteId);return updateState(who.tenant.id,s=>{requireSite(ctx,s,siteId);delete s.bindings?.[siteId];s.scopeVersion=(s.scopeVersion??0)+1;audit(s,who.actor,"gbp-unbound",siteId);return {saved:true};});}),
+  route("gbp/sync",async ctx=>{const who=admin(ctx),siteId=z.string().parse(ctx.body.siteId);requireSite(ctx,readState(who.tenant.id),siteId);return synchronize(who.tenant.id,siteId,who.actor,undefined,ctx.body.reviews===true);}),
+  route("jobs/enqueue",async ctx=>{const who=admin(ctx),siteId=z.string().parse(ctx.body.siteId),workflow=z.enum(workflows).parse(ctx.body.workflow);return updateState(who.tenant.id,s=>{requireSite(ctx,s,siteId);return enqueue(s,siteId,workflow,who.actor);});}),
+  route("publication/preview",async ctx=>{const who=admin(ctx),siteId=z.string().parse(ctx.body.siteId),language=z.string().parse(ctx.body.language);requireSite(ctx,readState(who.tenant.id),siteId);
+    const raw=ctx.body.change as {field?:string;value?:string};if(raw?.field==="websiteUri"&&(!raw.value||!tenantOwnsUrl(who.tenant,raw.value)))throw new TenantAccessError("LOCAL_ACCESS");
+    return preparePublication(who.tenant.id,siteId,language,ctx.body.change,who.actor);}),
+  ...(["approve","execute","verify","cancel"] as const).map(op=>route(`publication/${op}`,async ctx=>{
+    const who=admin(ctx),id=z.string().parse(ctx.body.id),s=readState(who.tenant.id),p=s.publications?.find(x=>x.id===id);if(!p)throw new TenantAccessError("LOCAL_ACCESS");requireSite(ctx,s,p.siteId);
+    if(op==="approve")return approvePublication(who.tenant.id,id,z.string().parse(ctx.body.digest),who.actor);
+    if(op==="execute")return executePublication(who.tenant.id,id,z.string().parse(ctx.body.digest),who.actor);
+    if(op==="verify")return verifyPublication(who.tenant.id,id,who.actor);
+    return cancelPublication(who.tenant.id,id,who.actor);
+  })),
   route("state", async ctx => state(ctx)),
   route("export", async ctx => state(ctx)),
   route("registry", async ctx => {
@@ -61,13 +99,14 @@ export const localSeoRoutes: ConsoleRoute[] = [
     updateState(who.tenant.id, s => {
       for (const site of accepted) { const i = s.sites.findIndex(x => x.id === site.id); if (i < 0) s.sites.push(site); else s.sites[i] = site; }
       if (s.sites.length > 1000) throw new Error("LOCAL_CAPACITY");
+      s.scopeVersion=(s.scopeVersion??0)+1;
       audit(s, who.actor, "registry-import", "registry");
     }); return { ...preview, saved: accepted.length };
   }),
   route("grant", async ctx => {
     const who = admin(ctx); const user = z.string().min(1).max(200).parse(ctx.body.user);
     const sites = z.array(z.string()).max(1000).parse(ctx.body.sites);
-    updateState(who.tenant.id, s => { sites.forEach(id => requireSite(ctx,s,id)); s.grants[user] = [...new Set(sites)]; audit(s,who.actor,"grant",user); });
+    updateState(who.tenant.id, s => { sites.forEach(id => requireSite(ctx,s,id)); s.grants[user] = [...new Set(sites)]; s.scopeVersion=(s.scopeVersion??0)+1; audit(s,who.actor,"grant",user); });
     return { saved: true };
   }),
   route("import", async ctx => {
@@ -89,7 +128,7 @@ export const localSeoRoutes: ConsoleRoute[] = [
     return updateState(who.tenant.id, s => {
       const site = requireSite(ctx,s,input.siteId);
       if (!site.languages.includes(input.language)) throw new TenantAccessError("LOCAL_LANGUAGE",400);
-      if (input.evidence.some(id => !s.observations.some(x => x.id === id && x.siteId === input.siteId))) throw new TenantAccessError("LOCAL_EVIDENCE",400);
+      if (input.evidence.some(id => !s.observations.some(x => x.id === id && x.siteId === input.siteId) && !(s.snapshots??[]).some(x => x.id === id && x.siteId === input.siteId))) throw new TenantAccessError("LOCAL_EVIDENCE",400);
       let a: Action | undefined;
       if (ctx.body.id !== undefined) {
         a = s.actions.find(x => x.id === ctx.body.id); if (!a) throw new TenantAccessError("LOCAL_ACCESS"); requireSite(ctx,s,a.siteId);
