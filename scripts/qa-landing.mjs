@@ -45,6 +45,13 @@ async function visit(browserContext, locale, label, viewport) {
   assert.equal(response?.status(), 200, `${label} homepage loaded`);
   assert.equal(await page.locator("html").getAttribute("lang"), locale, `${label} correct html lang`);
   assert.equal(await page.locator('link[rel="canonical"]').getAttribute("href"), `https://gtm.kayroslab.com/${locale === "fr" ? "fr/" : ""}`);
+  const planner = page.locator("#local-seo-planner");
+  await planner.waitFor();
+  await planner.locator("select").selectOption("web-only");
+  assert.match(await planner.innerText(), locale === "fr" ? /non applicables/ : /not applicable/);
+  assert.match(await planner.locator("a").getAttribute("href"), new RegExp(`lang=${locale}`));
+  await planner.locator("select").selectOption("service-area");
+  assert.match(await planner.innerText(), locale === "fr" ? /adresse privée/ : /private address/);
   await page.evaluate(() => document.fonts.ready);
   const sizing = await page.evaluate(() => ({ width: innerWidth, documentWidth: document.documentElement.scrollWidth }));
   assert.ok(sizing.documentWidth <= sizing.width + 2, `${label}: horizontal overflow ${JSON.stringify(sizing)}`);
@@ -140,11 +147,35 @@ async function visitPublicConsole(browserInstance, locale, viewport, label) {
   await context.close();
 }
 
+async function visitLocalSeoWorkspace(browser, locale) {
+  const context = await browser.newContext();
+  const page = await context.newPage();
+  const errors = [];
+  page.on("pageerror", e => errors.push(e.message));
+  await page.route("**/local-seo-qa.html*", route => route.fulfill({ contentType: "text/html", body: `<!doctype html><html lang="${locale}"><head><link rel="stylesheet" href="/console/shell.css"><link rel="stylesheet" href="/local-seo.css"></head><body style="background:#0b0b15;color:#eee;font:16px sans-serif;padding:24px"><main id="qa"></main></body></html>` }));
+  await page.goto(`${origin}/local-seo-qa.html?lang=${locale}`);
+  await page.evaluate(async () => {
+    const { renderLocalSeo } = await import("/console/local-seo.js");
+    const state = { sites: [{id:"brussels",name:"Brussels",country:"BE",languages:["fr-BE","nl-BE"],kind:"physical",timezone:"Europe/Brussels"}], observations: [], actions: [], comparisons: [] };
+    document.getElementById("qa").append(await renderLocalSeo({ me: {role:"tenant-admin",tenant:{name:"QA network",domains:["example.com"]}}, api: async () => state }));
+  });
+  const root = page.locator(".local-seo-workspace");
+  assert.match(await root.innerText(), locale === "fr" ? /SEO global et local/ : /Global and local SEO/);
+  assert.match(await root.innerText(), /BE · fr-BE, nl-BE/);
+  await root.locator("details").first().locator("summary").click();
+  assert.ok(await root.locator('input[type="file"]').isVisible());
+  await root.screenshot({ path: path.join(outputDir, `${locale}-local-seo-workspace.png`) });
+  assert.deepEqual(errors, []);
+  await context.close();
+}
+
 try {
   await fs.mkdir(outputDir, { recursive: true });
   await ready();
   const browserExecutable = process.env.CHROMIUM_BIN || (existsSync(chromium.executablePath()) ? chromium.executablePath() : "/usr/bin/chromium");
   browser = await chromium.launch({ executablePath: browserExecutable, headless: true, args: ["--no-sandbox", "--disable-dev-shm-usage"] });
+  await visitLocalSeoWorkspace(browser, "fr");
+  await visitLocalSeoWorkspace(browser, "en");
   const context = await browser.newContext({ locale: "fr-FR" });
   await context.route("**/api/free-read", (route) => route.fulfill({ status: 503, contentType: "application/json", body: '{"error":"preview unavailable"}' }));
 

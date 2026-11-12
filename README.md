@@ -14,6 +14,14 @@ The agent reads live Google data, audits setups, crosses organic search with sit
 
 ---
 
+## Global and local SEO — offline-first workspace
+
+The console now includes a bilingual **Global and local SEO** workspace: CSV/JSON registry imports with preview, exact location access grants, declared rank observations with deterministic metrics, comparable-series changes, evidence-backed manual actions, separate approval and scoped exports. SQLite persists records and audit events. The landing pages and free console add a business-type checklist without requiring signup or a paid provider.
+
+**Delivered scope:** registry/import/manual-action foundation. GBP synchronization, the complete LOC controls catalogue, Node-RED orchestration, qualified local AI and external publication/verification are not connected. They are shown as unavailable, never simulated. The existing GEO v2 verified-domain pilot remains separate. No new runtime dependency or paid fallback is introduced, and Mollie plans are unchanged.
+
+Repository documentation is maintained in English; the product interface remains French/English. See the [implementation contract, examples, acceptance coverage and remaining scope](docs/product/GLOBAL-LOCAL-SEO.md). This source change alone does not establish a production deployment.
+
 ## Public console — evidence and actionable free recommendations
 
 The unauthenticated `/console/?lang=en#c-public-read` and `?lang=fr` flow now accepts a **public page URL directly**. The read returns a bounded set of observed on-page SEO/GEO checks, a GEO **v1 page-readiness** score, technical evidence, explicitly outbound social-profile references, and up to twelve evidence-backed opportunities (with six presented at a time). The assistant button **“AI recommends” / “L’IA recommande”** ranks actual failures in three explainable modes: quick wins, potential rubric impact, and AI discoverability. Every option describes the expected technical effect and effort, links to the observed evidence, and offers a guided sign-in CTA.
@@ -24,10 +32,6 @@ The unauthenticated `/console/?lang=en#c-public-read` and `?lang=fr` flow now ac
 - Cloud Solo (€39/month) and Cloud Agency (€149/month) remain pilot hypotheses; the **self-hosted Apache-2.0 product stays free**. Connected data, multi-page analysis, history, automations and approved Apply Mode are differentiated cloud capabilities, not prerequisites for a one-page public read.
 
 See [Free console: market comparison, screenshots and next experiments](docs/product/FREE-CONSOLE-VALUE-PLAN.md).
-
-### Français — lecture gratuite et assistant de recommandations
-
-La console publique propose la saisie d’une URL, des constats vérifiables et plusieurs pistes de correction classées par un algorithme explicable. **« L’IA recommande »** présente l’effet technique potentiel, l’effort et la preuve ; les corrections restent soumises à une validation humaine. Le score public actuel est **GEO v1, limité à la page lue** : ni position Google/Bing ni citation ChatGPT n’est prétendue mesurée.
 
 ---
 
@@ -49,10 +53,6 @@ The **GEO v2 scoring rubric** allocates 100 points across eight categories: robo
 - **Privacy and release:** scores remain private unless the owner explicitly consents to publication. No production deployment, GitHub secret update, or service restart is part of this pilot PR.
 
 See the [GEO v2 Playwright pilot architecture and security gates](docs/architecture/GEO-V2-PLAYWRIGHT-PILOT.md) and [draft PR #28](https://github.com/Geoking2104/GTM-Growth/pull/28). Implementation is staged; these safeguards are **not** claims about current public-site behavior.
-
-### Français — résumé du pilote
-
-Le Score GEO v2 est en préparation sur le VPS existant, avec audits Playwright limités aux **domaines dont le propriétaire a prouvé le contrôle** (DNS TXT ou fichier HTTPS). Le registre SQLite, les challenges à usage unique et leurs tests sont préparés, mais le moteur navigateur et ses protections réseau doivent encore être intégrés et validés. Les scores restent privés sans consentement explicite à leur publication. **Aucune mise en production n'est effectuée par cette PR.**
 
 ## Apply Mode — reviewed fixes, never autopilot (MVP foundation)
 

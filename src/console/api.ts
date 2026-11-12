@@ -43,6 +43,7 @@ import { competitionRoutes } from "./competition.js";
 import { operationsRoutes } from "./ops-routes.js";
 import { analyticsRoutes } from "./analytics.js";
 import { gtmRoutes } from "./gtm-console.js";
+import { localSeoRoutes } from "./local-seo.js";
 import { applyPreviewRoutes } from "./apply-routes.js";
 import { withCredential } from "../auth/service-account.js";
 import { fetchPublicPage } from "../http/public-fetch.js";
@@ -392,7 +393,7 @@ export function discoverTenant(store: TenantStore, query: { email?: string; host
 }
 
 export function allConsoleRoutes(): ConsoleRoute[] {
-  return [...phase1Routes, ...phase2Routes, ...phase3Routes, ...analyticsRoutes, ...gtmRoutes, ...aiVisibilityRoutes, ...competitionRoutes, ...operationsRoutes, ...applyPreviewRoutes];
+  return [...phase1Routes, ...phase2Routes, ...phase3Routes, ...analyticsRoutes, ...gtmRoutes, ...aiVisibilityRoutes, ...competitionRoutes, ...operationsRoutes, ...applyPreviewRoutes, ...localSeoRoutes];
 }
 
 export function mountConsoleApi(app: Express, options: ConsoleOptions = {}): void {
