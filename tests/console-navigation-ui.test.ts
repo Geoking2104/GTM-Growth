@@ -44,7 +44,7 @@ it.each(["fr", "en"])("opens every navigation entry with content or recovery ste
   await vi.waitFor(() => expect(document.querySelector(".c-out .c-raw")).toBeTruthy());
   expect(memory.get("gtm-console-selected")).toBe("acme");
   const nav = [...document.querySelectorAll<HTMLAnchorElement>(".app-nav a")];
-  expect(nav.length).toBe(25);
+  expect(nav.length).toBe(26);
   expect(document.querySelector("#c-nav-act a")?.getAttribute("href")).toBe("#journey");
   for (const link of nav) {
     link.click();
@@ -62,6 +62,6 @@ it.each(["fr", "en"])("opens every navigation entry with content or recovery ste
   const languageUrl = new URL(String(location.replace.mock.calls[0][0]));
   expect(languageUrl.searchParams.get("lang")).toBe(lang === "fr" ? "en" : "fr");
   expect(languageUrl.hash).toBe("#catalog");
-// This is a complete 25-screen journey, with an assertion for every entry.
+// This is a complete 26-screen journey, with an assertion for every entry.
 // Keep individual readiness waits bounded while allowing slower shared CI CPUs.
 }, 20000);

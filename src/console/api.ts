@@ -51,6 +51,7 @@ import { fetchPublicPage } from "../http/public-fetch.js";
 import { analyzePositioning } from "../geo/positioning.js";
 import { extractOnboardingProfile } from "./onboarding-profile.js";
 import { visualCatalogRoutes } from "./visual-catalog.js";
+import { commerceRoutes } from "./commerce.js";
 
 import { str, num, type Body, type ConsoleRoute } from "./util.js";
 export type { ConsoleRoute, Handler } from "./util.js";
@@ -395,7 +396,7 @@ export function discoverTenant(store: TenantStore, query: { email?: string; host
 }
 
 export function allConsoleRoutes(): ConsoleRoute[] {
-  return [...phase1Routes, ...phase2Routes, ...phase3Routes, ...analyticsRoutes, ...gtmRoutes, ...aiVisibilityRoutes, ...aiProviderRoutes, ...competitionRoutes, ...operationsRoutes, ...applyPreviewRoutes, ...localSeoRoutes, ...visualCatalogRoutes];
+  return [...phase1Routes, ...phase2Routes, ...phase3Routes, ...analyticsRoutes, ...gtmRoutes, ...aiVisibilityRoutes, ...aiProviderRoutes, ...competitionRoutes, ...operationsRoutes, ...applyPreviewRoutes, ...localSeoRoutes, ...visualCatalogRoutes, ...commerceRoutes];
 }
 
 export function mountConsoleApi(app: Express, options: ConsoleOptions = {}): void {

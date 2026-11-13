@@ -29,6 +29,7 @@ import { resolveWorkspace } from "./workspace-context.js";
 import { renderGlobalSeo } from "./global-seo.js";
 import { renderCustomerJourneyWorkspace } from "./customer-journey-workspace.js";
 import { renderCatalog } from "./catalog.js";
+import { renderCommerce } from "./commerce.js";
 import { clearVisualEntities, setVisualEntities, visualBrief, sectionHeading } from "./visuals.js";
 
 const $ = (s) => document.querySelector(s);
@@ -165,6 +166,7 @@ const SECTIONS = {
       { id: "plan", label: t("t_plan"), async: async () => renderPlan(await overview()) }]) },
     { id: "local_seo", icon: "geo", build: () => custom("local_seo", [{ id: "website", label: LANG === "fr" ? "SEO du site" : "Website SEO", needsDomain: false, async: async () => renderGlobalSeo({ state, api, scope }) }, { id: "network", label: LANG === "fr" ? "Réseau et établissements" : "Network and locations", needsDomain: false, async: async () => renderLocalSeo({ api, me: state.me }) }, { id: "planning", label: LANG === "fr" ? "Préparer mon établissement" : "Plan my business", needsDomain: false, async: async () => renderLocalSeoWorkspace({ state }) }]) },
     { id: "catalog", icon: "products", build: () => custom("catalog", [{ id: "library", label: LANG === "fr" ? "Catalogue visuel" : "Visual catalogue", needsDomain: false, async: async () => catalogWorkspace() }]) },
+    { id: "commerce", icon: "products", build: () => custom("commerce", [{ id: "connect", label: LANG === "fr" ? "Boutiques et revenus" : "Stores and revenue", needsDomain: false, async: async () => renderCommerce({ api, me: state.me }) }]) },
     { id: "competition", icon: "geo", build: () => custom("competition", [{ id: "board", label: LANG === "fr" ? "Concurrence" : "Competition", needsDomain: false, async: async () => renderCompetition({ api, me: state.me, property: state.property, days: state.days }) }]) },
     { id: "ai_visibility", icon: "geo", build: () => custom("ai_visibility", [{ id: "board", label: LANG === "fr" ? "Réponses IA" : "AI answers", needsDomain: false, async: async () => renderAiVisibility({ api, me: state.me }) }]) },
     { id: "gsc", icon: "google", build: () => custom("gsc", [

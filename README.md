@@ -1,6 +1,6 @@
 # GTM Growth
 
-**Open-source SEO/GEO and analytics workspace**, available through a bilingual web console, an MCP server and a CLI. Connect Google Analytics 4, Google Tag Manager (web and server-side), Measurement Protocol, Search Console, PageSpeed Insights and CrUX; turn measured evidence into reviewed actions.
+**Open-source SEO/GEO, analytics and commerce workspace**, available through a bilingual web console, an MCP server and a CLI. Connect Google Analytics 4, Google Tag Manager (web and server-side), Measurement Protocol, Search Console, PageSpeed Insights and CrUX; connect **Shopify and PrestaShop stores** to attribute orders — including orders coming from AI assistants — to their acquisition channel; turn measured evidence into reviewed actions.
 
 **Website: [https://gtm.kayroslab.com/](https://gtm.kayroslab.com/)** · [Français](https://gtm.kayroslab.com/fr/) · [Console EN](https://gtm.kayroslab.com/console/?lang=en#c-public-read) · [Console FR](https://gtm.kayroslab.com/console/?lang=fr#c-public-read)
 
@@ -8,7 +8,7 @@ Start with a public page read without signup, explore customer questions, then c
 
 | Project | Current reference |
 | --- | --- |
-| **Documentation updated** | 13 November 2026; English-first documentation, French/English product interface |
+| **Documentation updated** | 14 November 2026; English-first documentation, French/English product interface |
 | **Package / runtime** | `gtm-growth` 0.22.0 · Node.js ≥ 20 · TypeScript |
 | **License** | Apache-2.0; self-hosted software remains free |
 | **Data and costs** | Public checks and local SEO workflows need no paid data provider. Optional live OpenAI/Gemini checks use tenant-supplied keys and may incur provider charges. |
@@ -29,13 +29,14 @@ The latest successful [OVH deployment run](https://github.com/Geoking2104/GTM-Gr
 | **FR/EN and SSO** | Localized navigation, language passed to Keycloak, optional login-title override synchronization | Business language and time zone stay separate from interface language |
 | **GEO v2** | Category budgets, ownership-verification primitives and isolation architecture on `main`; foundation PR #28 merged | [PR #30](https://github.com/Geoking2104/GTM-Growth/pull/30) remains open: 42-control integration and expanded instrumentation are not in the deployed release; no live isolated Playwright worker |
 | **Apply Mode** | Read-only CLI/console diff preview; encrypted approval/snapshot registry and HMAC audit primitives | Registry integration, production writers, independent verification and real rollback remain pending |
+| **E-commerce connectors** | Shopify (GraphQL Admin API, custom app) and PrestaShop (webservice) connectors: sealed credentials, idempotent webhook ingestion, deterministic attribution, Commerce console tab, four read-only MCP tools, feed readiness; 23 dedicated tests | Live store pilots pending; PrestaShop real-time needs the companion PHP module (polling fallback works without it); App Store distribution is a later phase |
 | **Cloud / Mollie** | Bilingual pilot offer displayed; self-hosted option remains free | Checkout disabled pending payment profile, terms, tax treatment, plan limits and subscription implementation |
 
 ## How to read this README
 
 | You are… | Read | You will find |
 | --- | --- | --- |
-| **Marketing / growth / agency / decision-maker** | [Track 1 — Marketing](#track-1--marketing--what-gtm-growth-does-for-you) | Customer value, free-to-connected journey, local SEO, pilot offer and product limits |
+| **Marketing / growth / agency / decision-maker** | [Track 1 — Marketing](#track-1--marketing--what-gtm-growth-does-for-you) | Customer value, free-to-connected journey, commerce attribution, local SEO, pilot offer and product limits |
 | **Developer / integrator / DevOps** | [Track 2 — Technical](#track-2--technical--how-it-works-and-how-to-run-it) | Architecture, installation, tool catalog, tenant isolation, operations, activation gates and deployment |
 
 Shared reference: [Recent updates](#recent-updates--november-2026).
@@ -44,9 +45,9 @@ Shared reference: [Recent updates](#recent-updates--november-2026).
 
 # Track 1 · Marketing — what GTM Growth does for you
 
-## 1. From evidence to an action plan
+## 1. From evidence to an action plan — now down to the order
 
-GTM Growth brings public-page checks, authorized analytics and search data, customer-journey hypotheses and local-business operations into one workspace. An agency can review several clients while keeping each tenant's domains, properties and records separate.
+GTM Growth brings public-page checks, authorized analytics and search data, customer-journey hypotheses, local-business operations **and connected storefronts** into one workspace. An agency can review several clients while keeping each tenant's domains, properties and records separate.
 
 | Business question | What you receive | What the result means |
 | --- | --- | --- |
@@ -54,6 +55,8 @@ GTM Growth brings public-page checks, authorized analytics and search data, cust
 | **What should I fix first?** | Three leading fixes, with up to six observed recommendations shown at a time | Deterministic ordering by quick wins, blockers, customer intent, rubric impact or AI discoverability |
 | **What might buyers ask?** | Five awareness stages with editable questions and tentative matches to page headings | Hypotheses for review, not observed queries, search volumes or proven demand |
 | **Where does useful traffic come from?** | GA4 / Search Console reports after authorized connection; PageSpeed and CrUX where data exists | Provider results with evidence; disconnected examples are labelled as samples |
+| **Did AI assistants actually sell?** | With a connected Shopify/PrestaShop store: revenue by channel, AI-assistant share, per-engine detail, per-order attribution with method and confidence | Correlation to a referrer or UTM, deterministically derived and always explained — never a causal claim |
+| **Which product pages should I optimize first?** | Catalogue sync plus feed readiness (id, title, link, image, availability, price, brand, gtin) with missing-field counts | Prioritization input for catalogue-level GEO work |
 | **Are my locations consistent?** | Location registry, 24 local controls, evidence coverage, declared rank comparisons and assigned actions | Declared evidence remains distinct from Google reads; unknowns do not become passes |
 | **Does an AI engine mention my brand?** | Optional bounded OpenAI/Gemini collections and reviewable Competition datasets | Tenant keys required; automated mention detection remains provisional until reviewed |
 | **Can I prepare content and fixes?** | Generated assets, article briefs, quality-gated WordPress drafts and read-only Apply Mode previews | Drafts and previews require human review; Apply Mode cannot yet change a remote site |
@@ -66,11 +69,27 @@ Outbound profiles can be detected in page links and schema `sameAs`, including I
 2. **Inspect evidence:** review the GEO v1 score, observed SEO issues and the leading technical fixes. The public flow diagnoses one page; it does not run the GEO v2 crawler.
 3. **Explore intent:** review the five stages—unaware, problem-aware, solution-aware, product-aware and most aware. Edit hypothetical questions, inspect tentative heading coverage and copy the action plan locally.
 4. **Connect authorized data:** sign in through the FR/EN Keycloak flow, use your tenant's registered domains and connect the relevant Google properties. A tenant administrator can explicitly add selected journey questions to the prompt pool.
-5. **Track and act:** review collected data, maintain local evidence, assign actions and prepare drafts. Adding a prompt does not trigger a paid AI run; scheduled checks and external writes require their own configuration and authority.
+5. **Connect the store:** an administrator connects Shopify or PrestaShop in **Commerce**; the catalogue and orders sync, webhooks keep them current, and each order is attributed to a channel with its method displayed.
+6. **Track and act:** review collected data, maintain local evidence, assign actions and prepare drafts. Adding a prompt does not trigger a paid AI run; scheduled checks and external writes require their own configuration and authority.
 
-The **“AI recommends” / “L’IA recommande”** interface ranks measured failures with an explainable algorithm. It does not call an LLM for the free read or forecast traffic, revenue or citations. Search-engine and assistant logos indicate relevance, not endorsement or live API access.
+The **“AI recommends” / “L'IA recommande”** interface ranks measured failures with an explainable algorithm. It does not call an LLM for the free read or forecast traffic, revenue or citations. Search-engine and assistant logos indicate relevance, not endorsement or live API access.
 
-## 3. Global and local SEO — head office, agencies and locations
+## 3. Commerce — from visibility to revenue
+
+The e-commerce connectors close the biggest gap of GEO measurement: proving what a citation in ChatGPT, Perplexity or Copilot is worth in orders.
+
+| Capability | What you get |
+| --- | --- |
+| **Store connection** | Shopify via custom app (domain `*.myshopify.com` + Admin API token) or PrestaShop via webservice key; scopes checked at connection with actionable errors |
+| **Catalogue & orders** | Paginated backfill, then webhook-driven updates; out-of-order and replayed events never duplicate a row |
+| **Attribution** | Every order carries channel (`organic`, `paid`, `direct`, `email`, `social`, `ai_assistant`, `referral`, `unknown`), engine (ChatGPT, Claude, Perplexity, Copilot, Gemini, Grok), method (UTM, referrer, GA4 join) and confidence |
+| **Commerce tab** | Revenue by channel over 30 days, AI share, attributed share, latest orders with their explained attribution, feed readiness |
+| **MCP tools** | `commerce_dashboard`, `commerce_orders`, `commerce_products`, `ecommerce_feed_readiness` — same data for agents |
+| **Privacy** | No customer name, e-mail, phone or address is ever stored: a keyed-HMAC pseudonym replaces the customer id at ingestion; credentials are AES-256-GCM sealed per tenant |
+
+What attribution does **not** claim: an order attributed to ChatGPT was not “caused” by ChatGPT — it correlates with a referrer or UTM, and the method is displayed everywhere so the report survives scrutiny. Masked referrers stay `unknown`; they are never silently reclassified.
+
+## 4. Global and local SEO — head office, agencies and locations
 
 The free business-type checklist adapts to physical, service-area and web-only businesses. It is a preparation plan rather than a measured Maps ranking.
 
@@ -87,13 +106,9 @@ In the authenticated workspace, head-office or agency administrators import a CS
 
 A verified API readback does not establish public Maps visibility. Performance collection, qualified local AI and automatic evidence collection for every control remain pending. See [Global/Local SEO](docs/product/GLOBAL-LOCAL-SEO.md) and [operations](docs/product/LOCAL-SEO-OPERATIONS.md).
 
-## 4. The client console
+## 5. The client console
 
-AI visibility includes explicit Claude, Mistral and Grok API collectors alongside
-OpenAI and the existing Gemini panel. Tenant-specific keys, setup guidance,
-bounded calls, citations and saved-answer imports are described in
-[AI visibility provider setup](docs/product/AI-VISIBILITY-PROVIDERS.md). Gemini
-collection remains disabled pending safe Search Suggestions display.
+AI visibility includes explicit Claude, Mistral and Grok API collectors alongside OpenAI and the existing Gemini panel. Tenant-specific keys, setup guidance, bounded calls, citations and saved-answer imports are described in [AI visibility provider setup](docs/product/AI-VISIBILITY-PROVIDERS.md). Gemini collection remains disabled pending safe Search Suggestions display.
 
 Open [the English console](https://gtm.kayroslab.com/console/?lang=en#c-public-read) or [the French console](https://gtm.kayroslab.com/console/?lang=fr#c-public-read). Public reading is available before sign-in; connected workspaces use tenant-scoped SSO.
 
@@ -102,6 +117,7 @@ Open [the English console](https://gtm.kayroslab.com/console/?lang=en#c-public-r
 | **Public read** | One-page evidence, technical recommendations and free journey exploration |
 | **Overview / Audit / Generators** | Readiness, technical checks and assets to review |
 | **Products & pages** | Real product/page thumbnails, completeness gauges, filters and table/card views; public metadata read or previewed administrator JSON import |
+| **Commerce** | Connect Shopify/PrestaShop, sync catalogue and orders, revenue by channel with AI-assistant share, feed readiness |
 | **Customer journey** | Selected questions added to the tenant prompt pool by an administrator |
 | **Global and local SEO** | Location registry, evidence, controls, actions, approvals and exports |
 | **Track / Keywords** | Authorized GA4, Search Console and configured Bing data; search opportunities |
@@ -112,7 +128,7 @@ Open [the English console](https://gtm.kayroslab.com/console/?lang=en#c-public-r
 | **Act / GEO fixes** | Read-only before/after preview; no Apply Mode writer |
 | **Reports** | Evidence-based exports and PDF reports; see the [sample report](site/reports/opendpe.html) |
 
-## 5. Open source and the Cloud pilot
+## 6. Open source and the Cloud pilot
 
 | Offer | Current position |
 | --- | --- |
@@ -122,9 +138,10 @@ Open [the English console](https://gtm.kayroslab.com/console/?lang=en#c-public-r
 
 The Cloud offer is intended to package hosted connected data, history, multi-client work and configured operations. Prices and plan limits are not active subscription entitlements. **Mollie checkout remains disabled** until the payment profile, terms, tax treatment, amounts and limits are validated and the billing lifecycle is implemented. Optional BYOK AI calls may have separate provider costs.
 
-## 6. Evidence, control and next steps
+## 7. Evidence, control and next steps
 
 - **Measured, declared and inferred stay distinct.** Scores express technical readiness; unknown evidence is not a success. Historical examples and demo values are not current customer results.
+- **Commerce attribution is explained, not causal.** Channel, engine, method and confidence are stored on every order; `unknown` stays `unknown`.
 - **Writes require their own explicit controls.** WordPress receives drafts only. Creating a draft does not send an IndexNow notification; a published URL must be independently verified before a separate submission.
 - **GEO v2 remains a separate pilot.** Exact-domain verification and owner consent for score publication are separate requirements. The 42-control integration is still under review in PR #30.
 - **Local publication is narrowly scoped.** Google access and writes must be deliberately enabled; one administrator prepares a phone/website change and another approves it.
@@ -149,13 +166,36 @@ flowchart TD
   API --> DB["SQLite and optional Redis"]
   CORE --> GOOGLE["Authorized Google APIs"]
   CORE --> PUBLIC["Public-page reads"]
+  API --> ECOM["E-commerce connectors"]
+  ECOM --> SHOPIFY["Shopify Admin API + webhooks"]
+  ECOM --> PRESTA["PrestaShop webservice + module"]
 ```
 
-Keycloak uses Postgres; tenant registries, local evidence, operations and audit events use their respective stores. Optional Node-RED pollers access private tenant-scoped job routes. PDF reports use pdfkit. The Cloudflare Worker is an alternative public API deployment, not the full Node/Keycloak/SQLite console.
+Keycloak uses Postgres; tenant registries, local evidence, operations, commerce data and audit events use their respective stores. Optional Node-RED pollers access private tenant-scoped job routes. PDF reports use pdfkit. The Cloudflare Worker is an alternative public API deployment, not the full Node/Keycloak/SQLite console.
+
+### E-commerce connector architecture
+
+One normalized ingestion path serves both platforms: providers only map into canonical types (`src/ecommerce/types.ts`), so quota handling (Shopify), XML quirks (PrestaShop) and status mappings stay in their mappers and never leak into ingestion.
+
+```text
+Shopify webhooks (HMAC-SHA256)  ──┐
+PrestaShop module (HMAC)        ──┼─► /webhooks/* ──► ingest.ts ──► store (tenant-scoped SQLite)
+Backfill: GraphQL / webservice  ──┘        (idempotence,     │
+                                            attribution)     ├─► Console /commerce/* routes
+                                                              ├─► MCP commerce tools
+                                                              └─► Feed readiness
+```
+
+- **Ingestion** is idempotent on `provider:event_id` and upserts by canonical order id — a replayed webhook or `orders/paid` arriving before `orders/create` never duplicates a row.
+- **Attribution** (`src/ecommerce/attribute.ts`) is deterministic: explicit UTM first, then referrer hostname (AI-engine matcher table), then GA4 session join, else `unknown`/`direct`. Confidence is stored; masked referrers are never reclassified.
+- **Privacy**: the customer id is replaced at the boundary by a keyed-HMAC pseudonym; no name, e-mail, phone or address column exists. Connector credentials and webhook secrets are AES-256-GCM sealed with an operator-provided 32-byte key (`ECOMMERCE_DATA_KEY_B64`, HKDF-derived per purpose, bound to tenant+store context).
+- **Webhooks** verify HMAC-SHA256 over the raw body, respond 200 in under five seconds, and reject invalid signatures silently (200 + log) so the endpoint is not a probing oracle.
+- **Shopify**: GraphQL Admin API (pinned `2026-01`), leaky-bucket cost watched before 429s, cursor pagination; v1 targets a merchant-installed custom app (no App Store review); OAuth structure ready for a later public app.
+- **PrestaShop**: webservice `/api/` with `output_format=JSON`, Basic auth (key as user, empty password — never the key in the URL), `date_upd` incremental filters, one concurrent request per shop; real-time pushes come from a companion module (hooks `actionValidateOrder`, `actionOrderStatusPostUpdate`, …) or fall back to polling every 5–15 minutes.
 
 ## 2. Quick start
 
-**Prerequisites:** Google Cloud project with the Analytics Data/Admin, Tag Manager and Search Console APIs enabled · a Service Account JSON key · the SA granted *Viewer* on GA4, *Read* on GTM, user access on Search Console · Node ≥ 20. Optional: `PAGESPEED_API_KEY` / `CRUX_API_KEY` / `GOOGLE_API_KEY`, Redis.
+**Prerequisites:** Google Cloud project with the Analytics Data/Admin, Tag Manager and Search Console APIs enabled · a Service Account JSON key · the SA granted *Viewer* on GA4, *Read* on GTM, user access on Search Console · Node ≥ 20. Optional: `PAGESPEED_API_KEY` / `CRUX_API_KEY` / `GOOGLE_API_KEY`, Redis. For commerce: `ECOMMERCE_DATA_KEY_B64` (32 random bytes, base64) to seal store credentials.
 
 ```bash
 git clone https://github.com/Geoking2104/GTM-Growth.git
@@ -163,16 +203,24 @@ cd GTM-Growth
 npm ci
 cp .env.example .env          # set GOOGLE_APPLICATION_CREDENTIALS
 npm run build
-npm run start:stdio           # or start:http → :3000/mcp + /sse
+npm run start:stdio           # or start:http → :3000/mcp + /sse + /webhooks/*
 ```
 
 Scopes: `analytics.readonly[.edit]`, `tagmanager.readonly[.edit.containers]`, `webmasters[.readonly]`, `indexing` (gated).
 
-Write controls are adapter-specific: Google mutation tools use their documented enablement/confirmation gates; `indexnow_submit` explicitly requires `confirm=true`. The authenticated WordPress route requires tenant-admin rights, configured credentials, `approved: true` and passing quality gates, and always creates a **draft** without IndexNow submission. Local GBP publication has its separate two-administrator approval and enablement gates described below. Read-only Apply Mode previews cannot enable a writer.
+Write controls are adapter-specific: Google mutation tools use their documented enablement/confirmation gates; `indexnow_submit` explicitly requires `confirm=true`. The authenticated WordPress route requires tenant-admin rights, configured credentials, `approved: true` and passing quality gates, and always creates a **draft** without IndexNow submission. Local GBP publication has its separate two-administrator approval and enablement gates described below. Read-only Apply Mode previews cannot enable a writer. Commerce connection and sync routes are tenant-admin only; MCP commerce tools are read-only and never expose credentials.
 
 These service-account prerequisites apply to the connected Google analytics/tagging tools. Public-page reads do not need Google credentials. GBP requires separate listing-manager OAuth; do not reuse the analytics service-account JSON for it.
 
 Reliability: zod validation on every tool, enriched Google errors (`[status | reason]`), gaxios retry/pagination, optional `MCP_API_TOKEN` bearer auth, stderr-only logging.
+
+### Connecting a store
+
+1. Generate the sealing key: `openssl rand -base64 32` → `ECOMMERCE_DATA_KEY_B64`.
+2. **Shopify**: create a custom app in the merchant admin (scopes `read_products`, `read_orders` — `read_all_orders` needs Shopify approval for history beyond 60 days), install, copy the Admin API token.
+3. **PrestaShop**: enable the webservice, create a key with rights on `products`, `orders`, `order_details`, `order_states`; serve the shop over HTTPS.
+4. In the console: **Track → Commerce → Connect** (administrator). Scope problems surface as `insufficient_scopes` with the exact missing rights.
+5. Run **Sync catalogue** then **Sync orders** (paginated, resumable); register the webhook endpoint `https://<server>/webhooks/shopify` (or `/webhooks/prestashop` for the module) with the store's webhook secret for real-time updates.
 
 ## 3. Connect your client
 
@@ -202,6 +250,7 @@ CLI for validation workflows: `npm run cli -- geo-audit --url https://example.co
 | **GEO** | `geo_audit`, `geo_audit_sitemap`, `geo_citability`, `geo_crawler_access`, `geo_llms_drift`, `geo_content_risks`, `geo_positioning`, `geo_platform_readiness`, `geo_generate_llms_txt`, `geo_generate_schema`, `geo_generate_robots` |
 | **GeoSuite** | `poppy_check`, `poppy_generate` (Personal Agent Protocol `/.well-known/poppy.json`), `geo_sitemap_build` |
 | **IndexNow** | `indexnow_keygen`, `indexnow_verify`, `indexnow_submit` (gated), `indexnow_readiness`, `indexnow_explain` |
+| **Commerce** | `commerce_dashboard` (revenue by channel + AI share, per-engine), `commerce_orders` (with attribution), `commerce_products`, `ecommerce_feed_readiness` — read-only, tenant-scoped |
 | **Boards** | `analysis_board` — GEO + citability + platforms + IndexNow with a ranked action list (indexation blockers outrank copy fixes) |
 
 Full agent-facing catalog: [`skills/gtm-growth/references/tools.md`](skills/gtm-growth/references/tools.md) · Rubric & limits: [docs/GEO.md](docs/GEO.md).
@@ -211,6 +260,7 @@ Full agent-facing catalog: [`skills/gtm-growth/references/tools.md`](skills/gtm-
 - **Weekly briefing** — `list_properties` → `get_traffic_overview` → acquisition/pages/devices → events → ecommerce.
 - **SEO & performance audit** — `get_top_search_pages` → `query_crux` → `run_pagespeed` → `inspect_url` → priority table.
 - **GEO audit** — `geo_audit` (homepage) → `geo_audit_sitemap` (≤25 pages) → generate what is missing → re-audit and diff. Readiness only: the audit never queries ChatGPT/Claude/Perplexity to claim a citation — live checks are the Ops layer below, with client keys.
+- **AI revenue review** — connect the store → `commerce_dashboard` → per-engine revenue → `commerce_orders` to audit individual attributions → feed readiness for the catalogue gaps.
 - **Growth dashboard** — 28 days vs previous 28, cross-channel KPI scorecard, 10+ watch points, exactly 3 horizon-scoped priorities with measurement plans; estimates are ranges from stated assumptions, never invented forecasts.
 - **IndexNow rollout** — keygen → publish key file → `indexnow_verify` (must pass) → `indexnow_submit` (`confirm=true`) → `analysis_board`.
 - **GTM install check** — `gtm_audit_installation` → fix checks → `gtm_generate_snippet` if needed.
@@ -236,11 +286,11 @@ Example report shapes: [`skills/gtm-growth/references/examples.md`](skills/gtm-g
 
 | Role | Granted by | Rights |
 |---|---|---|
-| `tenant-user` | group `/tenants/<id>/tenant-user` | console tools on **own** domains/properties, leads, reports |
-| `tenant-admin` | group `/tenants/<id>/tenant-admin` | + tenant settings, user invites, Ops writes |
+| `tenant-user` | group `/tenants/<id>/tenant-user` | console tools on **own** domains/properties, leads, reports, commerce reads |
+| `tenant-admin` | group `/tenants/<id>/tenant-admin` | + tenant settings, user invites, Ops writes, store connection/sync/disconnect |
 | `platform-admin` | realm role (hosting side) | Platform provisioning and supported tenant administration via `X-Tenant`; no implicit local SEO editorial/publication access |
 
-**API-side isolation:** every request resolves to a tenant; any `url`/`inspectUrl` outside the tenant's domains → **403 before DNS resolution**; properties/containers outside the tenant → 403; leads and PDF reports are stored and served per tenant. Covered by `tests/tenant-isolation.test.ts`.
+**API-side isolation:** every request resolves to a tenant; any `url`/`inspectUrl` outside the tenant's domains → **403 before DNS resolution**; properties/containers outside the tenant → 403; leads and PDF reports are stored and served per tenant. Commerce data (stores, products, orders) is stored under the tenant id and every query is tenant-scoped; the webhook router resolves the tenant from the verified shop domain, never from client input. Covered by `tests/tenant-isolation.test.ts` and `tests/ecommerce.test.ts`.
 
 **Onboarding a client** (prerequisites: DNS + Keycloak SMTP once — see `deploy/kayroslab-vps/README.md`):
 
@@ -261,12 +311,30 @@ Provisioning creates the organization (or realm), role groups, console redirect 
 | Phase 2 | Search · Keywords · Calculators · PDF | `search/{queries,trends,losing-pages,inspect}`, `keywords/opportunities`, `calc/{ctr,traffic-value,roi,budget}`, `report/pdf` |
 | Phase 3 | Technical audit · Generators | `audit/{technical,serp-preview}`, `generate/{titles,meta,outline}` |
 | Track | GSC · GA4 · Bing · Status | `search/performance`, `search/query-pages`, `ga4/{overview,ecommerce,technology,realtime}`, `bing/performance`, `tracking/status` |
+| **Commerce** | Stores & revenue | `commerce/{connect,stores,disconnect}`, `commerce/sync/{products,orders}`, `commerce/{dashboard,orders,products,feed/readiness}` |
 | Competition | AI answers | `ai-visibility/*`, `competition/*` (+ read-only per-tenant MCP at `/api/mcp/competition`) |
 | Ops / Journey | Visibility · Rankings · Articles · Alerts · Customer journey | `visibility/*`, `rank/*`, `content/*`, `ops/*`; selected journey prompts reuse the existing tenant prompt pool |
 | Global / Local SEO | Registry · Evidence · Controls · Jobs · Publication | `local-seo/*`; see the exact contracts in the operations guide |
 | Apply Mode | GEO fix preview | `apply/preview` (`robots-ai`, dry-run only) |
 
-Code: `src/console/` (API, auth, modules) · `site/console/` (app-shell UI) · tests `tests/console-*.test.ts`.
+Public webhook endpoints (no OIDC — authenticated by HMAC): `POST /webhooks/shopify`, `POST /webhooks/prestashop`.
+
+Code: `src/console/` (API, auth, modules, `commerce.ts`, `ecommerce-webhooks.ts`) · `src/ecommerce/` (types, store, ingest, attribute, secrets, feed, providers) · `site/console/` (app-shell UI) · tests `tests/console-*.test.ts`, `tests/ecommerce.test.ts`.
+
+### E-commerce connectors — details and limits
+
+| Area | Behavior |
+|---|--- |
+| **Connection** | Admin-only; Shopify domain validated `*.myshopify.com`, token never returned to the browser; PrestaShop requires HTTPS (HTTP only with explicit `PRESTASHOP_ALLOW_HTTP=true` for local tests) |
+| **Scopes** | Checked at connect: Shopify `read_products`/`read_orders` (GraphQL `shopifyAppInstallation.accessTokenScopes`); PrestaShop resource permissions on `products`, `orders`, `order_details` — missing rights surface as `insufficient_scopes` with an actionable message |
+| **Backfill** | Cursor-paginated (`commerce/sync/products`, `commerce/sync/orders`), resumable via stored sync cursors; Shopify batch ≤ 250, PrestaShop ≤ 500 with `date_upd` filters |
+| **Real time** | Shopify webhooks (`orders/*`, `products/*`, `refunds/create`, `app/uninstalled`, compliance topics logged); PrestaShop module pushes or 5–15 min polling |
+| **Idempotence** | `webhook_events` table keyed `provider:event_id`; order upsert keyed by canonical id — replay-safe by construction and by test |
+| **Money** | Shopify string amounts converted explicitly (`shopMoney`); PrestaShop stores both tax-inclusive and tax-exclusive totals, tax-inclusive used for revenue |
+| **Limits** | Shopify `read_all_orders` (history > 60 days) requires Shopify approval — partial backfill is reported, never silently truncated; per-request timeout with exponential backoff |
+| **Retention & erasure** | Compliance webhooks (`customers/redact`, `shop/redact`) logged for operator action; console erasure order planned; 13-month rolling orders / 25-month aggregates per the specification |
+
+Specification: [docs/specs/ECOMMERCE-CONNECTORS-v1-2026-11-13.md](docs/specs/ECOMMERCE-CONNECTORS-v1-2026-11-13.md) (French, source of truth).
 
 ### Global/local SEO operations and activation gates
 
@@ -298,7 +366,7 @@ Live Playwright execution still requires a separate isolated job, network-level 
 
 ### Apply Mode — reviewed fixes (MVP foundation)
 
-The new **Apply Mode** scope extends the audit-to-action journey: select one bounded fix, inspect its before/after diff, preview, explicitly approve, snapshot, apply, independently verify and offer rollback. External writers will require exact-domain ownership, tenant-scoped Keycloak approval, a pre-write backup, drift checks and an append-only audit trail. The Apply Mode roadmap limits WordPress content to **draft-only** and GTM changes to a **draft workspace**, with no automatic publication; legacy GTM write/publish routes are not part of that workflow.
+The **Apply Mode** scope extends the audit-to-action journey: select one bounded fix, inspect its before/after diff, preview, explicitly approve, snapshot, apply, independently verify and offer rollback. External writers will require exact-domain ownership, tenant-scoped Keycloak approval, a pre-write backup, drift checks and an append-only audit trail. The Apply Mode roadmap limits WordPress content to **draft-only** and GTM changes to a **draft workspace**, with no automatic publication; legacy GTM write/publish routes are not part of that workflow.
 
 Two **read-only preview entry points** are implemented for AI crawler rules:
 
@@ -333,10 +401,10 @@ flowchart TD
 |---|---|
 | **Prompt pool / runs** | 200 prompts, deduped; runs bounded (5 prompts × 2 lots per engine per run); unconfigured engines degrade with a clear message; every run lands as a reviewable Competition dataset |
 | **Rank tracking** | 200 keywords; SERP supplier via `RANK_SUPPLIER_URL`+`RANK_SUPPLIER_TOKEN` (JSON API) or `RANK_SCRAPER_URL` (HTML profile); AI-Overview presence + tenant-citation detection on the same payload; drop alerts warn ≥ 3 positions, critical ≥ 10 |
-| **Article pipeline** | Deterministic brief/outline (FR/EN); optional Ollama (`OLLAMA_URL`); WordPress creation requires `approved: true` + all gates passed and produces a **draft**. The route returns `published: false` and `indexNow: null`; it never announces a draft URL. |
+| **Article pipeline** | Deterministic brief/outline (FR/EN); optional Ollama (`OLLAMA_URL`); WordPress creation requires `approved: true` + all gates passed and produces a **draft**. The route returns `published: false` and `indexnow: null`; it never announces a draft URL. |
 | **Alerts & scheduler** | alert store with acknowledge; visibility-loss and rank-drop detection; per-tenant automation config; scheduler opt-in (`OPS_SCHEDULER_ENABLED`, default off — stdio/CI stay quiet) |
 
-Env (all optional, documented in `.env.example`): `AI_VISIBILITY_{OPENAI,GEMINI}_KEY_<TENANT>` · `RANK_SUPPLIER_URL/TOKEN` or `RANK_SCRAPER_URL` · `WP_{SITE_URL,USERNAME,APP_PASSWORD}_<TENANT>` · `OLLAMA_URL/MODEL` · `OPS_SCHEDULER_ENABLED/MINUTES`.
+Env (all optional, documented in `.env.example`): `AI_VISIBILITY_{OPENAI,GEMINI}_KEY_<TENANT>` · `RANK_SUPPLIER_URL/TOKEN` or `RANK_SCRAPER_URL` · `WP_{SITE_URL,USERNAME,APP_PASSWORD}_<TENANT>` · `OLLAMA_URL/MODEL` · `OPS_SCHEDULER_ENABLED/MINUTES` · `ECOMMERCE_DATA_KEY_B64` · `ECOMMERCE_STORE_PATH` · `SHOPIFY_API_VERSION` · `PRESTASHOP_ALLOW_HTTP`.
 
 Code: `src/console/{ops-store,visibility-runner,rank-tracking,content-ops,ops-routes,ops-scheduler}.ts` · UI `site/console/ops.js` · tests `tests/console-ops.test.ts`.
 
@@ -360,6 +428,7 @@ Operating rules: submit **changes**, not the archive; one batch per publish; nev
 |---|---|
 | `POST /api/free-read` | Bounded public-page GEO v1/SEO evidence, page signals and social references with SSRF protection, caching and rate limits. GA4/GSC traffic rows are samples unless authorized data is connected; this endpoint does not grant access to a site's private analytics. |
 | `POST /api/lead` | Contact capture (JSONL + optional `LEAD_WEBHOOK_URL`); no mail client — PDF emailing would need an SMTP/API provider, intentionally not configured |
+| `POST /webhooks/shopify` · `POST /webhooks/prestashop` | Signed store events (HMAC-SHA256, raw body); idempotent ingestion into tenant-scoped commerce storage; invalid signatures answered 200 and logged |
 
 Same shared code runs on Node or as a **Cloudflare Worker**: [docs/PUBLIC_API.md](docs/PUBLIC_API.md) · [docs/WORKER.md](docs/WORKER.md).
 
@@ -391,7 +460,10 @@ scripts/install-skill.sh       # skill → .claude / .codex
 src/
   google/                      # data-api, gtm, search-console, indexing, pagespeed, crux
   geo/                         # GEO engine: audit/*, generate/*, citability, platforms, risks…
-  console/                     # console API, Keycloak auth, competition, ops-*
+  ecommerce/                   # Shopify & PrestaShop connectors: types, store, ingest,
+                               # attribution, sealed secrets, feed readiness, providers/
+  console/                     # console API, Keycloak auth, competition, ops-*, commerce,
+                               # ecommerce-webhooks
   local-seo/                   # registry, controls, GBP, durable jobs, publication
   apply/                       # read-only previews, encrypted registry and audit primitives
   indexnow/ geosuite/ freeread/ leads/ tenants/ report/ http/ worker/
@@ -408,6 +480,7 @@ docs/                          # all guides (see index below)
 | [skills/gtm-growth/SKILL.md](skills/gtm-growth/SKILL.md) | **Shared agent skill** |
 | [docs/CLAUDE_SETUP.md](docs/CLAUDE_SETUP.md) · [CODEX_SETUP.md](docs/CODEX_SETUP.md) · [GROK_SETUP.md](docs/GROK_SETUP.md) | Client setup |
 | [skills/gtm-growth/references/setup.md](skills/gtm-growth/references/setup.md) | Connect — 3 options |
+| [E-commerce connectors specification](docs/specs/ECOMMERCE-CONNECTORS-v1-2026-11-13.md) | Source-of-truth functional/technical spec (French): US, canonical model, Shopify/PrestaShop integration sheets, attribution rules, delivery plan |
 | [docs/PRESENTATION.md](docs/PRESENTATION.md) | Background pitch; use this README for current delivery and offer status |
 | [Free console value plan](docs/product/FREE-CONSOLE-VALUE-PLAN.md) | Public-read evidence, screenshots and experiments |
 | [Customer Journey integration](docs/product/CUSTOMER-JOURNEY-INTEGRATION.md) | Five-stage journey, provenance, acceptance and future increments |
@@ -432,6 +505,7 @@ docs/                          # all guides (see index below)
 
 | Date / reference | Update |
 | --- | --- |
+| **14 November — e-commerce connectors** | Shopify (GraphQL Admin API, custom app) and PrestaShop (webservice) connectors: canonical ingestion with idempotence and upsert, deterministic AI-aware attribution, AES-256-GCM sealed credentials, HMAC-verified webhook endpoints, Commerce console tab (FR/EN), feed readiness, four read-only MCP tools, 23 tests. Live pilots and the PrestaShop module follow; see the [specification](docs/specs/ECOMMERCE-CONNECTORS-v1-2026-11-13.md). |
 | **13 November — bilingual landing** | Shared English visual layout, complete original French homepage content translated into English, localized illustrations and identical forms; static generation and parity checks prevent language drift. See [landing maintenance](site/README.md). |
 | **13 November — documentation** | Primary website changed to [gtm.kayroslab.com](https://gtm.kayroslab.com/); both tracks aligned with merged code, the successful OVH release and the remaining activation/development gates |
 | **12 November — OVH / SSO** | Successful deployment of `5c83519`; FR/EN navigation/sign-in and optional login-title maintenance using the provisioner service account; corrected and pinned SSH host fingerprint |
