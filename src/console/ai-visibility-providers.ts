@@ -1,4 +1,5 @@
 /** Explicit, bounded API observations; never consumer-app visibility estimates. */
+import { resolveAIAccount, accountHeaders, type AICredential } from "./ai-connections.js";
 import type { ConsoleRoute } from "./util.js";
 import { validTenantId } from "../tenants/store.js";
 import { normalizeImport } from "./ai-visibility.js";
@@ -90,7 +91,7 @@ export function providerConfig(provider: AIProvider, tenantId: string) {
   return { key: process.env[keyVariable] || "", keyVariable, model };
 }
 
-export async function collectProvider(provider: AIProvider, input: unknown, key: string, model: string = AI_PROVIDERS[provider].model, transport: typeof fetch = fetch) {
+export async function collectProvider(provider: AIProvider, input: unknown, key: string, model: string = AI_PROVIDERS[provider].model, transport: typeof fetch = fetch, account?: AICredential) {
   const body = object(input);
   if (body.confirmed !== true || !Array.isArray(body.prompts) || body.prompts.length < 1 || body.prompts.length > 5) throw new Error("Confirm 1–5 prompts before collection");
   const prompts = body.prompts.map(v => text(v).trim());
@@ -101,7 +102,7 @@ export async function collectProvider(provider: AIProvider, input: unknown, key:
   const successes = [], failures: Array<{ prompt: string; reason: string }> = [];
   for (const prompt of prompts) {
     try {
-      const headers: Record<string, string> = { "Content-Type": "application/json", ...(provider === "claude" ? { "x-api-key": key, "anthropic-version": "2023-06-01" } : { Authorization: `Bearer ${key}` }) };
+      const headers: Record<string, string> = { "Content-Type": "application/json", ...accountHeaders(provider, account || { key }) };
       const payload = provider === "claude" ? { model, max_tokens: 1500, messages: [{ role: "user", content: prompt }], tools: [{ type: "web_search_20250305", name: "web_search", max_uses: 3 }] }
         : provider === "mistral" ? { model, inputs: prompt, store: false, stream: false, tools: [{ type: "web_search" }], completion_args: { max_tokens: 1500 } }
         : { model, input: [{ role: "user", content: prompt }], store: false, max_output_tokens: 1500, tools: [{ type: "web_search" }] };
@@ -128,7 +129,8 @@ export const aiProviderRoutes: ConsoleRoute[] = (Object.keys(AI_PROVIDERS) as AI
     if (running.has(lock)) throw new Error("A collection is already running for this provider and workspace");
     const config = providerConfig(provider, id); running.add(lock);
     try {
-      const result = await collectProvider(provider, ctx.body, config.key, config.model);
+      const account = resolveAIAccount(id, provider, ctx.body.accountId);
+      const result = await collectProvider(provider, ctx.body, account.key, config.model, fetch, account);
       if (!result.successes.length) return { id: null, succeeded: 0, failed: result.failures };
       const dataset = normalizeImport({ brands: result.brands, responses: result.successes }); insertDataset(id, dataset);
       return { id: dataset.id, succeeded: result.successes.length, failed: result.failures };

@@ -348,3 +348,16 @@ body.console-page:has(.public-console:not([hidden])) { --pc-bg:#06060f; --pc-pan
 .public-top-fixes .public-action-list { grid-template-columns:repeat(3,minmax(0,1fr)); }
 @media(max-width:950px) { .public-top-fixes .public-action-list { grid-template-columns:1fr; } }
 @media(max-width:700px) { .journey-stages,.journey-workspace .journey-stages,.journey-context-fields { grid-template-columns:1fr; } .journey-actions>* { width:100%; text-align:center; } }
+
+/* API account onboarding: every action has a visible outcome. */
+.ai-provider-actions { display:flex; flex-wrap:wrap; gap:.6rem; align-items:center; margin:.7rem 0; }
+.ai-account-setup { margin:1rem 0; padding:1rem; border:1px solid var(--app-border,#e2e5ed); border-radius:12px; background:var(--app-surface,#fff); }
+.ai-account-setup[hidden] { display:none; }
+.ai-provider .c-field { margin:.75rem 0; }
+.ai-provider .c-field input,.ai-provider .c-field textarea,.ai-provider .c-field select { width:100%; max-width:100%; min-width:0; box-sizing:border-box; }
+.ai-provider .ai-consent { display:flex; gap:.5rem; align-items:flex-start; margin:.8rem 0; line-height:1.5; }
+.ai-provider .ai-consent input { flex:0 0 auto; margin-top:.25rem; }
+.ai-provider .ai-feedback { white-space:pre-wrap; overflow-wrap:anywhere; min-height:1.3em; }
+.ai-provider .ai-advanced { margin:1rem 0; }
+.ai-provider button:disabled { opacity:.45; cursor:not-allowed; box-shadow:none; }
+@media(max-width:600px) { .ai-provider-actions>* { width:100%; text-align:center; white-space:normal; } .ai-account-setup { padding:.8rem; } }

@@ -16,7 +16,8 @@ function database(): Database.Database {
   try { const fd = fs.openSync(file, "wx", 0o600); fs.closeSync(fd); } catch (error) { if ((error as NodeJS.ErrnoException).code !== "EEXIST") throw error; }
   const db = new Database(file, { timeout: 10000 });
   db.pragma("busy_timeout = 10000"); db.pragma("journal_mode = DELETE"); db.pragma("synchronous = FULL");
-  db.exec(`CREATE TABLE IF NOT EXISTS datasets (tenant_id TEXT NOT NULL, id TEXT NOT NULL, created_at TEXT NOT NULL, payload TEXT NOT NULL, PRIMARY KEY (tenant_id, id));
+  db.exec(`CREATE TABLE IF NOT EXISTS ai_accounts (tenant_id TEXT NOT NULL, id TEXT NOT NULL, payload TEXT NOT NULL, PRIMARY KEY (tenant_id, id));
+           CREATE TABLE IF NOT EXISTS datasets (tenant_id TEXT NOT NULL, id TEXT NOT NULL, created_at TEXT NOT NULL, payload TEXT NOT NULL, PRIMARY KEY (tenant_id, id));
            CREATE TABLE IF NOT EXISTS legacy_imports (tenant_id TEXT PRIMARY KEY, imported_at TEXT NOT NULL);
            CREATE TABLE IF NOT EXISTS competition_state (tenant_id TEXT PRIMARY KEY, payload TEXT NOT NULL);
            CREATE TABLE IF NOT EXISTS visual_catalog (tenant_id TEXT NOT NULL, origin TEXT NOT NULL, payload TEXT NOT NULL, PRIMARY KEY (tenant_id, origin));`);
@@ -90,3 +91,17 @@ export function updateDataset<T extends StoredDataset>(tenantId: string, id: str
 }
 /** Used by tests and orderly shutdown. */
 export function closeVisibilityStores() { for (const db of connections.values()) db.close(); connections.clear(); }
+
+export function readAIConnections<T>(tenantId: string): T[] {
+  validateTenant(tenantId); return (database().prepare("SELECT payload FROM ai_accounts WHERE tenant_id = ? ORDER BY rowid").all(tenantId) as Row[]).map(parse<T>);
+}
+export function writeAIConnection(tenantId: string, id: string, account: unknown) {
+  validateTenant(tenantId); const db = database();
+  db.transaction(() => {
+    if ((db.prepare("SELECT COUNT(*) AS n FROM ai_accounts WHERE tenant_id = ?").get(tenantId) as { n: number }).n >= 20) throw new Error("Workspace limit: disconnect an unused API account first (20 maximum)");
+    db.prepare("INSERT INTO ai_accounts (tenant_id, id, payload) VALUES (?, ?, ?)").run(tenantId, id, JSON.stringify(account));
+  }).immediate();
+}
+export function removeAIConnection(tenantId: string, id: string) {
+  validateTenant(tenantId); database().prepare("DELETE FROM ai_accounts WHERE tenant_id = ? AND id = ?").run(tenantId, id);
+}

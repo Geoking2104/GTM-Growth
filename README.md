@@ -90,10 +90,15 @@ A verified API readback does not establish public Maps visibility. Performance c
 ## 4. The client console
 
 AI visibility includes explicit Claude, Mistral and Grok API collectors alongside
-OpenAI and the existing Gemini panel. Tenant-specific keys, setup guidance,
-bounded calls, citations and saved-answer imports are described in
+OpenAI and the existing Gemini panel. Connect named API accounts through the
+provider portal, save keys encrypted on the server and explicitly choose which
+account funds each run. Missing credentials open setup instead of an inactive
+button; model-list verification never generates an answer. Native ChatGPT OAuth
+is not enabled: it needs a registered application and eligible API scopes.
+Bounded calls, citations and saved-answer imports are described in
 [AI visibility provider setup](docs/product/AI-VISIBILITY-PROVIDERS.md). Gemini
-collection remains disabled pending safe Search Suggestions display.
+collection remains disabled pending safe Search Suggestions display. Every
+left-navigation destination, including the account link, has a distinct icon.
 
 Open [the English console](https://gtm.kayroslab.com/console/?lang=en#c-public-read) or [the French console](https://gtm.kayroslab.com/console/?lang=fr#c-public-read). Public reading is available before sign-in; connected workspaces use tenant-scoped SSO.
 
