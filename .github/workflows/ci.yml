@@ -53,6 +53,29 @@ jobs:
       - name: Build production image
         run: docker build -t gtm-growth-ci .
 
+      - name: Validate isolated GEO renderer Compose (no deployment)
+        env:
+          GEO_TENANT_ID: ci-smoke
+          GEO_URL: https://example.com/
+          GEO_TARGET_HOSTNAME: example.com
+          GEO_DATA_VOLUME_NAME: fake-volume-ci
+        run: docker compose -f deploy/geo-renderer/docker-compose.yml config --quiet
+
+      - name: Build isolated GEO renderer image (no deployment)
+        run: docker build -f deploy/geo-renderer/Dockerfile -t gtm-geo-renderer-ci .
+
+      - name: Chromium sandboxed offline smoke in isolated container (no deployment)
+        run: >-
+          docker run --rm --network none --read-only
+          --tmpfs /tmp:rw,nosuid,size=256m --shm-size 256m
+          --security-opt seccomp=deploy/geo-renderer/seccomp_profile.json
+          -e HOME=/tmp --cap-drop ALL --security-opt=no-new-privileges
+          gtm-geo-renderer-ci node --input-type=module -e
+          'import { chromium } from "playwright-core"; const b = await chromium.launch({ headless: true, chromiumSandbox: true }); try { const p = await b.newPage(); await p.setContent("<title>GEO smoke</title><h1>OK</h1>"); if (await p.title() !== "GEO smoke") process.exitCode = 1; } finally { await b.close(); }'
+
+      - name: Assert GEO internal Docker bridge blocks direct host and internet egress
+        run: bash scripts/smoke-geo-network-boundary.sh
+
       - name: Upload dist artifact
         uses: actions/upload-artifact@v4
         with:
