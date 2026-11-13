@@ -1,5 +1,5 @@
-/**
- * Console API — /api/console/* — protected by Keycloak (OIDC bearer tokens).
+﻿/**
+ * Console API â€” /api/console/* â€” protected by Keycloak (OIDC bearer tokens).
  *
  * Every route takes JSON with a `url` (the domain or page to analyse) and, for
  * Google-backed routes, an optional `property` (Search Console siteUrl such as
@@ -53,6 +53,7 @@ import { analyzePositioning } from "../geo/positioning.js";
 import { extractOnboardingProfile } from "./onboarding-profile.js";
 import { visualCatalogRoutes } from "./visual-catalog.js";
 import { dataAgentRoutes } from "./data-agent.js";
+import { commerceRoutes } from "./commerce.js";
 
 import { str, num, type Body, type ConsoleRoute } from "./util.js";
 export type { ConsoleRoute, Handler } from "./util.js";
@@ -61,9 +62,9 @@ export type { ConsoleRoute, Handler } from "./util.js";
 export const phase1Routes: ConsoleRoute[] = [
   {
     path: "/onboarding/profile",
-    // Démarrage guidé : profil de marque lu sur la page d'accueil. Nom depuis le
-    // JSON-LD en priorité (avec la source), puis og:site_name ; description depuis
-    // la meta, puis og:description, puis le schema ; langue et types détectés.
+    // DÃ©marrage guidÃ© : profil de marque lu sur la page d'accueil. Nom depuis le
+    // JSON-LD en prioritÃ© (avec la source), puis og:site_name ; description depuis
+    // la meta, puis og:description, puis le schema ; langue et types dÃ©tectÃ©s.
     handler: async ({ url }) => {
       const page = await fetchPublicPage(url);
       if (!page.ok) throw new Error(`HTTP ${page.status}`);
@@ -79,8 +80,8 @@ export const phase1Routes: ConsoleRoute[] = [
     },
   },
   {
-    // Vue d'ensemble : même charge utile que l'outil MCP analysis-board (audit GEO,
-    // préparation par moteur, citabilité, IndexNow) pour le tableau de bord de la console.
+    // Vue d'ensemble : mÃªme charge utile que l'outil MCP analysis-board (audit GEO,
+    // prÃ©paration par moteur, citabilitÃ©, IndexNow) pour le tableau de bord de la console.
     path: "/overview",
     handler: async ({ url, body }) => {
       const audit = await runGeoAudit({ url, fetcher: fetchPublicPage });
@@ -193,8 +194,8 @@ export function tenancyMiddleware(config: OidcConfig | null, store: TenantStore)
 /** Data scoping: every url / property in the request must belong to the tenant. */
 async function scopeRequest(route: ConsoleRoute, body: Body, tenancy: TenantContext): Promise<{ url: string } | { status: number; error: string }> {
   const { tenant, platformAdmin } = tenancy;
-  if (!platformAdmin && !tenant) return { status: 403, error: "Aucun tenant sélectionné." };
-  if (route.adminOnly && !(platformAdmin || tenancy.role === "tenant-admin")) return { status: 403, error: "Réservé aux administrateurs du tenant." };
+  if (!platformAdmin && !tenant) return { status: 403, error: "Aucun tenant sÃ©lectionnÃ©." };
+  if (route.adminOnly && !(platformAdmin || tenancy.role === "tenant-admin")) return { status: 403, error: "RÃ©servÃ© aux administrateurs du tenant." };
   let url = "";
   const wantsUrl = route.needsUrl !== false || str(body.url) !== undefined;
   if (wantsUrl && !(route.needsUrl === false && body.usePage === "non")) {
@@ -210,16 +211,16 @@ async function scopeRequest(route: ConsoleRoute, body: Body, tenancy: TenantCont
     }
   }
   const inspect = str(body.inspectUrl);
-  if (inspect && tenant && !platformAdmin && !tenantOwnsUrl(tenant, inspect)) return { status: 403, error: "URL à inspecter hors du périmètre du tenant." };
+  if (inspect && tenant && !platformAdmin && !tenantOwnsUrl(tenant, inspect)) return { status: 403, error: "URL Ã  inspecter hors du pÃ©rimÃ¨tre du tenant." };
   const property = str(body.property);
   if (property) {
-    if (tenant && !platformAdmin && !tenantOwnsProperty(tenant, property)) return { status: 403, error: `La propriété ${property} n'appartient pas au tenant ${tenant.id}.` };
+    if (tenant && !platformAdmin && !tenantOwnsProperty(tenant, property)) return { status: 403, error: `La propriÃ©tÃ© ${property} n'appartient pas au tenant ${tenant.id}.` };
   } else if (tenant?.gscProperties.length && !route.path.startsWith("/data-agent/")) {
     body.property = tenant.gscProperties[0];
   }
   const ga4 = str(body.ga4Property);
   if (ga4) {
-    if (tenant && !platformAdmin && !tenantOwnsGa4(tenant, ga4)) return { status: 403, error: `La propriété GA4 ${ga4} n'appartient pas au tenant ${tenant.id}.` };
+    if (tenant && !platformAdmin && !tenantOwnsGa4(tenant, ga4)) return { status: 403, error: `La propriÃ©tÃ© GA4 ${ga4} n'appartient pas au tenant ${tenant.id}.` };
   } else if (tenant?.ga4Properties?.length && !route.path.startsWith("/data-agent/")) {
     body.ga4Property = tenant.ga4Properties[0];
   }
@@ -259,17 +260,17 @@ export function buildConsoleRouter(routes: ConsoleRoute[], options: ConsoleOptio
 
   router.get("/leads", (_req, res) => {
     const { tenancy } = res.locals as Locals;
-    if (!tenancy?.tenant) return fail(res, 400, "Sélectionnez un tenant.");
+    if (!tenancy?.tenant) return fail(res, 400, "SÃ©lectionnez un tenant.");
     return res.json({ leads: tenantLeads(tenancy.tenant) });
   });
   router.get("/reports", (_req, res) => {
     const { tenancy } = res.locals as Locals;
-    if (!tenancy?.tenant) return fail(res, 400, "Sélectionnez un tenant.");
+    if (!tenancy?.tenant) return fail(res, 400, "SÃ©lectionnez un tenant.");
     return res.json({ reports: listTenantReports(tenancy.tenant.id) });
   });
   router.get("/reports/:file", (req, res) => {
     const { tenancy } = res.locals as Locals;
-    if (!tenancy?.tenant) return fail(res, 400, "Sélectionnez un tenant.");
+    if (!tenancy?.tenant) return fail(res, 400, "SÃ©lectionnez un tenant.");
     try { return res.type("application/pdf").send(readTenantReport(tenancy.tenant.id, req.params.file)); } catch { return fail(res, 404, "Rapport introuvable."); }
   });
 
@@ -277,27 +278,27 @@ export function buildConsoleRouter(routes: ConsoleRoute[], options: ConsoleOptio
   const isAdmin = (t?: TenantContext) => Boolean(t && (t.platformAdmin || t.role === "tenant-admin"));
   router.put("/tenant/settings", (req, res) => {
     const { tenancy } = res.locals as Locals;
-    if (!tenancy?.tenant) return fail(res, 400, "Sélectionnez un tenant.");
-    if (!isAdmin(tenancy)) return fail(res, 403, "Réservé aux administrateurs du tenant.");
+    if (!tenancy?.tenant) return fail(res, 400, "SÃ©lectionnez un tenant.");
+    if (!isAdmin(tenancy)) return fail(res, 403, "RÃ©servÃ© aux administrateurs du tenant.");
     const body = (req.body ?? {}) as Body;
     const list = (v: unknown) => (Array.isArray(v) ? v.filter((x): x is string => typeof x === "string" && x.trim().length > 0).slice(0, 50) : undefined);
     const branding = (body.branding ?? {}) as Record<string, unknown>;
     const color = str(branding.primaryColor);
     const logo = str(branding.logoUrl);
     if (color && !/^#[0-9a-f]{6}$/i.test(color)) return fail(res, 400, "Couleur invalide (#rrggbb).");
-    if (logo && !/^https:\/\//.test(logo)) return fail(res, 400, "Le logo doit être une URL https.");
+    if (logo && !/^https:\/\//.test(logo)) return fail(res, 400, "Le logo doit Ãªtre une URL https.");
     const t = tenancy.tenant;
     const ga4List = list(body.ga4Properties)?.map((x) => x.replace(/^properties\//, ""));
-    if (ga4List?.some((x) => !/^\d{5,15}$/.test(x))) return fail(res, 400, "Propriété GA4 invalide (identifiant numérique).");
+    if (ga4List?.some((x) => !/^\d{5,15}$/.test(x))) return fail(res, 400, "PropriÃ©tÃ© GA4 invalide (identifiant numÃ©rique).");
     const gtmList = list(body.gtmContainers);
     if (gtmList?.some((x) => !/^accounts\/\d+\/containers\/\d+$/.test(x))) return fail(res, 400, "Conteneur GTM invalide (accounts/<id>/containers/<id>).");
-    if (!tenancy.platformAdmin && gtmList?.some((x) => !(tenancy.tenant?.gtmContainers ?? []).includes(x))) return fail(res, 403, "L’association d’un nouveau conteneur doit être validée par l’administration de la plateforme.");
+    if (!tenancy.platformAdmin && gtmList?.some((x) => !(tenancy.tenant?.gtmContainers ?? []).includes(x))) return fail(res, 403, "Lâ€™association dâ€™un nouveau conteneur doit Ãªtre validÃ©e par lâ€™administration de la plateforme.");
     const clarityList = list(body.clarityProjects);
     if (clarityList?.some((x) => !/^[a-z0-9]{6,16}$/i.test(x))) return fail(res, 400, "Projet Clarity invalide.");
     const bingList = list(body.bingSites);
-    if (bingList?.some((x) => !/^https?:\/\//.test(x))) return fail(res, 400, "Site Bing invalide (URL https://…/).");
+    if (bingList?.some((x) => !/^https?:\/\//.test(x))) return fail(res, 400, "Site Bing invalide (URL https://â€¦/).");
     const bingKey = typeof body.bingApiKey === "string" ? body.bingApiKey.trim() : undefined;
-    if (bingKey && !/^[A-Za-z0-9]{16,64}$/.test(bingKey)) return fail(res, 400, "Clé API Bing invalide.");
+    if (bingKey && !/^[A-Za-z0-9]{16,64}$/.test(bingKey)) return fail(res, 400, "ClÃ© API Bing invalide.");
     let usageType = t.usageType;
     if (body.usageType !== undefined) {
       if (body.usageType !== "company" && body.usageType !== "agency") return fail(res, 400, "Usage invalide.");
@@ -306,7 +307,7 @@ export function buildConsoleRouter(routes: ConsoleRoute[], options: ConsoleOptio
     let watchedQueries = t.watchedQueries;
     if (body.watchedQueries !== undefined) {
       const selection = body.watchedQueries as Record<string, unknown>;
-      if (!selection || typeof selection !== "object" || Array.isArray(selection) || typeof selection.property !== "string" || !t.gscProperties.includes(selection.property) || !Array.isArray(selection.queries) || selection.queries.length > 10 || selection.queries.some((q) => typeof q !== "string" || !q.trim() || q.length > 200)) return fail(res, 400, "Sélection de requêtes invalide.");
+      if (!selection || typeof selection !== "object" || Array.isArray(selection) || typeof selection.property !== "string" || !t.gscProperties.includes(selection.property) || !Array.isArray(selection.queries) || selection.queries.length > 10 || selection.queries.some((q) => typeof q !== "string" || !q.trim() || q.length > 200)) return fail(res, 400, "SÃ©lection de requÃªtes invalide.");
       watchedQueries = { ...t.watchedQueries, [selection.property]: [...new Set((selection.queries as string[]).map((q) => q.trim()))] };
     }
     let siteProfiles = t.siteProfiles;
@@ -324,9 +325,9 @@ export function buildConsoleRouter(routes: ConsoleRoute[], options: ConsoleOptio
   });
   router.post("/tenant/users", async (req, res) => {
     const { tenancy } = res.locals as Locals;
-    if (!tenancy?.tenant) return fail(res, 400, "Sélectionnez un tenant.");
-    if (!isAdmin(tenancy)) return fail(res, 403, "Réservé aux administrateurs du tenant.");
-    if (!kcAdmin) return fail(res, 503, "Provisionnement Keycloak non configuré.");
+    if (!tenancy?.tenant) return fail(res, 400, "SÃ©lectionnez un tenant.");
+    if (!isAdmin(tenancy)) return fail(res, 403, "RÃ©servÃ© aux administrateurs du tenant.");
+    if (!kcAdmin) return fail(res, 503, "Provisionnement Keycloak non configurÃ©.");
     const body = (req.body ?? {}) as Body;
     const email = str(body.email);
     if (!email) return fail(res, 400, "E-mail requis.");
@@ -366,12 +367,12 @@ export function buildPlatformRouter(options: ConsoleOptions = {}): Router {
   router.use(requireOidc(config, options.jwksLoader));
   router.use((_req, res, next) => {
     const user = (res.locals as Locals).user;
-    if (user?.iss !== config?.issuer || !(user?.realm_access?.roles ?? []).includes("platform-admin")) return fail(res, 403, "Réservé au super-administrateur de la plateforme.");
+    if (user?.iss !== config?.issuer || !(user?.realm_access?.roles ?? []).includes("platform-admin")) return fail(res, 403, "RÃ©servÃ© au super-administrateur de la plateforme.");
     return next();
   });
   router.get("/tenants", (_req, res) => res.json({ tenants: store.list().map(publicTenant) }));
   router.post("/tenants", async (req, res) => {
-    if (!kcAdmin || !config) return fail(res, 503, "Provisionnement Keycloak non configuré (KEYCLOAK_INTERNAL_URL, KEYCLOAK_ADMIN_CLIENT_ID, KEYCLOAK_ADMIN_CLIENT_SECRET).");
+    if (!kcAdmin || !config) return fail(res, 503, "Provisionnement Keycloak non configurÃ© (KEYCLOAK_INTERNAL_URL, KEYCLOAK_ADMIN_CLIENT_ID, KEYCLOAK_ADMIN_CLIENT_SECRET).");
     try {
       const result = await provisionTenant(req.body as ProvisionInput, { admin: kcAdmin, store, publicKeycloakUrl: new URL(config.issuer).origin, consoleDomain: process.env.CONSOLE_DOMAIN });
       return res.status(201).json({ tenant: publicTenant(result.tenant), steps: result.steps });
@@ -383,7 +384,7 @@ export function buildPlatformRouter(options: ConsoleOptions = {}): Router {
 /**
  * Public tenant discovery for the login page: by email domain, by subdomain
  * (<id>.gtm.kayroslab.com) or by explicit id. Returns only what the login page
- * needs (issuer, organization alias, branding) — never domains or properties.
+ * needs (issuer, organization alias, branding) â€” never domains or properties.
  */
 export function discoverTenant(store: TenantStore, query: { email?: string; host?: string; tenant?: string }, consoleDomain = process.env.CONSOLE_DOMAIN ?? "gtm.kayroslab.com") {
   let tenant: Tenant | undefined;
@@ -398,7 +399,7 @@ export function discoverTenant(store: TenantStore, query: { email?: string; host
 }
 
 export function allConsoleRoutes(): ConsoleRoute[] {
-  return [...phase1Routes, ...phase2Routes, ...phase3Routes, ...analyticsRoutes, ...gtmRoutes, ...aiVisibilityRoutes, ...aiProviderRoutes, ...aiConnectionRoutes, ...competitionRoutes, ...operationsRoutes, ...applyPreviewRoutes, ...localSeoRoutes, ...visualCatalogRoutes, ...dataAgentRoutes];
+  return [...phase1Routes, ...phase2Routes, ...phase3Routes, ...analyticsRoutes, ...gtmRoutes, ...aiVisibilityRoutes, ...aiProviderRoutes, ...aiConnectionRoutes, ...competitionRoutes, ...operationsRoutes, ...applyPreviewRoutes, ...localSeoRoutes, ...visualCatalogRoutes, ...dataAgentRoutes, ...commerceRoutes];
 }
 
 export function mountConsoleApi(app: Express, options: ConsoleOptions = {}): void {
@@ -409,10 +410,10 @@ export function mountConsoleApi(app: Express, options: ConsoleOptions = {}): voi
     // Small per-IP limit: discovery must not become a tenant enumeration oracle.
     const ip = req.ip ?? "?"; const now = Date.now();
     const hits = (limiter.get(ip) ?? []).filter((t) => now - t < 60_000); hits.push(now); limiter.set(ip, hits);
-    if (hits.length > 20) return fail(res, 429, "Trop de requêtes.");
+    if (hits.length > 20) return fail(res, 429, "Trop de requÃªtes.");
     const q = { email: str(req.query.email), host: str(req.query.host) ?? req.headers["x-forwarded-host"]?.toString() ?? req.headers.host, tenant: str(req.query.tenant) };
     const found = discoverTenant(store, q);
-    return found ? res.json(found) : fail(res, 404, "Aucun espace client trouvé.");
+    return found ? res.json(found) : fail(res, 404, "Aucun espace client trouvÃ©.");
   });
   app.use("/api/platform", buildPlatformRouter(opts));
   app.use("/api/console", buildConsoleRouter(options.routes ?? allConsoleRoutes(), opts));

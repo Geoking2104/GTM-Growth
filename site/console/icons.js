@@ -9,6 +9,7 @@ const P = {
   platform: '<rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><path d="M14 16l3-2 4 2v3l-4 3-3-3z"/>',
   account: '<circle cx="12" cy="12" r="9"/><circle cx="12" cy="9" r="3"/><path d="M5 18a7 7 0 0 1 14 0"/>',
   products: '<path d="M3 7l9-4 9 4v11l-9 4-9-4z"/><path d="M3 7l9 4 9-4M12 11v11M8 5l9 4"/>',
+  commerce: '<path d="M4 6h2l2 11h10l2-8H8"/><circle cx="10" cy="20" r="1.5"/><circle cx="17" cy="20" r="1.5"/><path d="M12 9v5M10 11h4"/>',
   page: '<rect x="4" y="3" width="16" height="18" rx="2"/><path d="M8 7h8M8 11h8M8 15h4"/>',
   brand: '<path d="M3 10l9-7 9 7v10H3z"/><path d="M9 20v-7h6v7"/>',
   eye: '<path d="M2 12s4-7 10-7 10 7 10 7-4 7-10 7S2 12 2 12z"/><circle cx="12" cy="12" r="3"/>',
