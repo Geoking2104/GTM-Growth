@@ -1,275 +1,150 @@
 # GTM Growth
 
-**Open-source MCP server** connecting **Google Analytics 4**, **Google Tag Manager** (web + **server-side**), **Measurement Protocol**, **Search Console**, the **Indexing API**, **PageSpeed Insights**, and **CrUX** to **Grok** (xAI), **Claude** (Anthropic), **Codex** (OpenAI), and any MCP-capable agent.
+**Open-source SEO/GEO and analytics workspace**, available through a bilingual web console, an MCP server and a CLI. Connect Google Analytics 4, Google Tag Manager (web and server-side), Measurement Protocol, Search Console, PageSpeed Insights and CrUX; turn measured evidence into reviewed actions.
 
-The agent reads live Google data, audits setups, crosses organic search with site speed, and (when explicitly enabled) submits sitemaps, notifies the Indexing API or announces changed URLs through **IndexNow** to Bing, Yandex, Seznam and Naver — via **MCP tools**, a **CLI**, or the **multi-tenant web console**. Skill, MCP server, and GitHub repo are all named **gtm-growth**.
+**Website: [https://gtm.kayroslab.com/](https://gtm.kayroslab.com/)** · [Français](https://gtm.kayroslab.com/fr/) · [Console EN](https://gtm.kayroslab.com/console/?lang=en#c-public-read) · [Console FR](https://gtm.kayroslab.com/console/?lang=fr#c-public-read)
 
-| | |
-|---|---|
-| **MCP tools** | 99 (GA4 · GTM/sGTM · MP · Search Console · Indexing · PageSpeed · CrUX · GEO · IndexNow · GeoSuite) |
-| **Tests** | Automated Vitest suite · typecheck + lint + build in CI |
-| **License** | Apache-2.0 · Node ≥ 20 · read-only by default |
-| **External APIs** | Free Google APIs only — no SerpApi, no DataForSEO, no commercial LLM |
-| **Website** | <https://geoking2104.github.io/GTM-Growth/> — free URL read, then the full audit |
+Start with a public page read without signup, explore customer questions, then connect authorized data and manage work in a tenant-scoped console. Grok, Claude, Codex and other MCP clients use the same tool modules. The canonical agent skill and package are named **gtm-growth**.
 
----
+| Project | Current reference |
+| --- | --- |
+| **Documentation updated** | 13 November 2026; English-first documentation, French/English product interface |
+| **Package / runtime** | `gtm-growth` 0.22.0 · Node.js ≥ 20 · TypeScript |
+| **License** | Apache-2.0; self-hosted software remains free |
+| **Data and costs** | Public checks and local SEO workflows need no paid data provider. Optional live OpenAI/Gemini checks use tenant-supplied keys and may incur provider charges. |
+| **Cloud offer** | Solo €39/month and Agency €149/month are indicative pilot hypotheses; Mollie checkout and subscription entitlements are not active |
+| **Hosting** | OVH VPS with Docker Compose, Nginx and Keycloak; the address above is the primary product website |
+| **Validation** | CI: typecheck, lint, Vitest, build, CLI/site smoke, production image, FR/EN browser QA and Node-RED runtime smoke |
 
-## Global and local SEO — offline-first workspace
+## Current delivery status
 
-The console now includes a bilingual **Global and local SEO** workspace: CSV/JSON registry imports with preview, exact location access grants, declared rank observations with deterministic metrics, comparable-series changes, evidence-backed manual actions, separate approval and scoped exports. SQLite persists records and audit events. The landing pages and free console add a business-type checklist without requiring signup or a paid provider.
+The latest successful [OVH deployment run](https://github.com/Geoking2104/GTM-Growth/actions/runs/43270543975), on 12 November 2026, updated the application to [`5c83519`](https://github.com/Geoking2104/GTM-Growth/commit/5c83519c5092b9548c7b9b40879b0c0d00a7a79d); [CI passed for that revision](https://github.com/Geoking2104/GTM-Growth/actions/runs/43270115356). This is deployment evidence, not proof that optional Google connections, billing or external writes have been activated.
 
-**Delivered scope:** registry/import/manual-action foundation, 24 deterministic LOC rules with explicit evidence coverage, an operator-configured GBP reader, five durable Node-RED job pollers, and supervised phone/URL updates with independent approval and API readback. Google access and writes are disabled until explicitly configured. Several controls still require declared evidence; qualified local AI, performance collection, bulk publishing and public-visibility verification remain unavailable. See [operations and activation gates](docs/product/LOCAL-SEO-OPERATIONS.md). The existing GEO v2 verified-domain pilot remains separate. No new runtime dependency or paid fallback is introduced, and Mollie plans are unchanged.
-
-Repository documentation is maintained in English; the product interface remains French/English. The console also passes the selected language to Keycloak sign-in. See the [implementation contract, examples, acceptance coverage and remaining scope](docs/product/GLOBAL-LOCAL-SEO.md). This source change alone does not establish a production deployment.
-
-Production releases use the manual [OVH deployment workflow](.github/workflows/deploy-kayroslab-vps.yml), the `DEPLOY` confirmation and the protected `production` environment. The workflow pins the verified public SSH host fingerprint in source; `VPS_SSH_USER` and `VPS_SSH_KEY` remain repository secrets. The legacy fingerprint secret is no longer used. Enabling Google's Business Information API also requires separate GBP project approval: a zero requests-per-minute quota blocks live synchronization. See [local SEO operations](docs/product/LOCAL-SEO-OPERATIONS.md) for the OAuth and approval gates.
-
-The optional `sync_login_titles` deployment input synchronizes only the FR/EN Keycloak login headings when realm overrides shadow the theme translations. It uses the existing provisioner service account inside the application container, verifies each saved heading, and does not change accounts, access settings or restart SSO. Missing credentials or insufficient permissions stop this optional maintenance step; the retired bootstrap admin account is not used.
-
-## Public console — evidence and actionable free recommendations
-
-The unauthenticated `/console/?lang=en#c-public-read` and `?lang=fr` flow now accepts a **public page URL directly**. The read returns a bounded set of observed on-page SEO/GEO checks, a GEO **v1 page-readiness** score, technical evidence, explicitly outbound social-profile references, and up to twelve evidence-backed opportunities (with six presented at a time). The assistant button **“AI recommends” / “L’IA recommande”** ranks actual failures in three explainable modes: quick wins, potential rubric impact, and AI discoverability. Every option describes the expected technical effect and effort, links to the observed evidence, and offers a guided sign-in CTA.
-
-- The public read is a **single-page diagnostic**; it is not the GEO v2 42-check crawler or a Google/Bing/ChatGPT visibility measurement. The ranking is a **deterministic algorithm**, not an LLM call or a prediction of traffic, citation or revenue. Recoverable GEO points are conditional rubric points, not promised search results.
-- Google, Bing, ChatGPT, Gemini, Perplexity and Claude are represented by branded visual cues; the logos indicate relevance only, **not live engine API access or endorsement**.
-- `POST /api/free-read` remains the server-side measurement source, with existing rate limits, anti-SSRF and caching. No public Playwright scan, site write, or score publication is introduced. Social profiles are discovered from the page's outbound links and schema `sameAs`; inbound backlinks cannot be inferred from these signals.
-- Cloud Solo (€39/month) and Cloud Agency (€149/month) remain pilot hypotheses; the **self-hosted Apache-2.0 product stays free**. Connected data, multi-page analysis, history, automations and approved Apply Mode are differentiated cloud capabilities, not prerequisites for a one-page public read.
-
-See [Free console: market comparison, screenshots and next experiments](docs/product/FREE-CONSOLE-VALUE-PLAN.md).
-
----
-
-## Customer journey — first read and tracked questions (review-stage L1)
-
-The customer-journey integration adapts the **five awareness stages** (unaware, problem-aware, solution-aware, product-aware, most aware) from Illyism's open Agent Skills methodology. After the public one-page read, visitors can inspect and edit **hypothetical** buyer questions, see tentative matches to measured page headings, copy a local action plan and compare the three leading evidence-backed technical fixes. Expanded recommendations preserve six observed options with quick-wins, blockers, customer-intent, potential-rubric-impact and AI-discovery ordering. No assistant is queried for the free journey.
-
-In the authenticated console, **Customer journey / Parcours client** lets tenant admins explicitly add selected questions to the existing prompt pool without triggering paid engine collection. Inferred, user-provided and observed sources remain distinct; tenant scope is enforced on target URLs. The feature does not publish content or modify customer sites.
-
-This is a staged code feature, **not evidence of a live production deployment**. Cloud entitlements, scheduled SEO Autopilot, multi-page mapping and Mollie billing are separate increments. Details, testing and third-party attribution: [Customer Journey integration](docs/product/CUSTOMER-JOURNEY-INTEGRATION.md).
-
-## GEO Score v2 — verified-domain Playwright pilot (in development)
-
-The **GEO v2 scoring rubric** allocates 100 points across eight categories: robots 14, llms.txt 14, JSON-LD 14, metadata 10, content 18, brand/entity 10, AI discovery 8, and crawler rendering 12. This is the **v2 pilot**, separate from the existing live v1 examples and public free-read flow documented below.
-
-- **Domain verification:** the proposed owner-only pilot supports either a DNS TXT challenge at `_gtm-growth-verify.<hostname>` or a plain-text HTTPS file at `https://<hostname>/.well-known/gtm-growth-verification.txt`. A challenge lasts 30 minutes; a verified grant lasts seven days and must be renewed. Each exact hostname requires its own proof.
-- **Multi-tenant registry:** the Node-only SQLite implementation stores hashed challenge tokens, tenant-scoped grants, atomic single-use verification and audit events. It is **not yet connected to public/API routes**.
-- **Browser isolation:** Playwright is planned as a separate constrained VPS job (initial proposal: one browser, 1 vCPU, 1 GiB RAM, 45 seconds). The network-level anti-SSRF/egress gate is mandatory before a runnable worker or real outbound verification is enabled.
-- **Privacy and release:** scores remain private unless the owner explicitly consents to publication. No production deployment, GitHub secret update, or service restart is part of this pilot PR.
-
-See the [GEO v2 Playwright pilot architecture and security gates](docs/architecture/GEO-V2-PLAYWRIGHT-PILOT.md) and [draft PR #28](https://github.com/Geoking2104/GTM-Growth/pull/28). Implementation is staged; these safeguards are **not** claims about current public-site behavior.
-
-## Apply Mode — reviewed fixes, never autopilot (MVP foundation)
-
-The new **Apply Mode** scope extends the audit-to-action journey: select one bounded fix, inspect its before/after diff, preview, explicitly approve, snapshot, apply, independently verify and offer rollback. External writers will require exact-domain ownership, tenant-scoped Keycloak approval, a pre-write backup, drift checks and an append-only audit trail. The Apply Mode roadmap limits WordPress content to **draft-only** and GTM changes to a **draft workspace**, with no automatic publication; legacy GTM write/publish routes are not part of that workflow.
-
-Two **read-only preview entry points** are implemented for AI crawler rules:
-
-```bash
-npm run cli -- geo-apply --url https://example.com --fix robots-ai --dry-run
-npm run cli -- geo-apply --url https://example.com --fix robots-ai --diff
-```
-
-The authenticated console also exposes **Act → GEO fixes → Preview**, through `POST /api/console/apply/preview` (`url`, `fix: "robots-ai"`, `mode: "dry-run"`). This route derives the tenant from Keycloak, requires a registered HTTPS hostname, and never enables application. The CLI and console fetch public `robots.txt` with SSRF protections, generate a bounded diff and SHA-256 evidence, and flag manual conflicts. **Neither can write to a website**: CLI `--confirm` and `--apply` fail closed. The existing WordPress content route creates **drafts only** and no longer submits draft URLs to IndexNow.
-
-**Phase 0.3 — approval and recovery foundation (library-only):** a Node/SQLite `ApplyRegistry` can persist encrypted previews and before-change snapshots (AES-256-GCM, tenant/proposal-bound authenticated context), an explicit approval bound to the reviewed diff digest and active exact-hostname verification grant, and a per-tenant HMAC-chained audit journal. Keycloak-derived reader/editor/approver/admin identities are mapped server-side; the approver/admin roles can approve only a current, conflict-free proposal. Approval validity is capped at five minutes; encrypted backups have a configurable 1–90-day retention period (30 days by default), with an explicit purge operation. Tests cover tampering, tenant isolation, drift, expiry and revocation. The storage key is operator-provided (32 random bytes); **there is no default key or production registry configuration**.
-
-**Still deliberately disabled:** the registry is not connected to the console, REST/MCP approval routes or production adapters. Purging still needs a scheduled job; exclusive write-attempt locks, consumption of single-use approvals, independent post-write verification and real rollback need implementation and staging validation. No Apply Mode feature can publish WordPress content, edit files on a remote site or publish a GTM version. The existing unrelated GTM write routes are **not** governed by this new approval mechanism. See the [full owner specification](docs/specs/APPLY-MODE-v1-2026-11-09.md) and [Apply Mode architecture, safety gates and scope register](docs/architecture/APPLY-MODE-MVP.md).
-
----
+| Area | Implemented / available in the deployed revision | Remaining conditions or scope |
+| --- | --- | --- |
+| **Free public read** | Single-page GEO v1 readiness, observed SEO evidence, ranked recommendations and outbound social-profile references | No measured search/AI visibility, inbound backlink coverage or public Playwright scan |
+| **Customer journey** | Five awareness stages, editable hypothetical questions, tentative heading matches, copied action plan and explicitly selected tracked prompts | Multi-page journey persistence, scheduled SEO Autopilot and commercial entitlements remain future work |
+| **Global and local SEO** | CSV/JSON registry, exact location grants, declared rank imports, 24 LOC rules, scoped actions/exports and SQLite audit history | Several controls need declared evidence; missing or stale evidence stays unknown |
+| **GBP / Node-RED** | Operator-configured Google Business Profile reader, five durable job pollers, supervised phone/website changes with independent approval and API readback | Google project approval, manager OAuth, tenant credentials and worker configuration required; writes disabled by default |
+| **FR/EN and SSO** | Localized navigation, language passed to Keycloak, optional login-title override synchronization | Business language and time zone stay separate from interface language |
+| **GEO v2** | Category budgets, ownership-verification primitives and isolation architecture on `main`; foundation PR #28 merged | [PR #30](https://github.com/Geoking2104/GTM-Growth/pull/30) remains open: 42-control integration and expanded instrumentation are not in the deployed release; no live isolated Playwright worker |
+| **Apply Mode** | Read-only CLI/console diff preview; encrypted approval/snapshot registry and HMAC audit primitives | Registry integration, production writers, independent verification and real rollback remain pending |
+| **Cloud / Mollie** | Bilingual pilot offer displayed; self-hosted option remains free | Checkout disabled pending payment profile, terms, tax treatment, plan limits and subscription implementation |
 
 ## How to read this README
 
-This document has **two independent tracks**. Pick yours and ignore the other.
-
 | You are… | Read | You will find |
-|---|---|---|
-| **Marketing / growth / agency / decision-maker** | **[Track 1 — Marketing](#track-1--marketing--what-gtm-growth-does-for-you)** | What it does for your business, illustrated audits (input → output → result), before/after numbers, the client console, safety guarantees, how to try it |
-| **Developer / integrator / DevOps** | **[Track 2 — Technical](#track-2--technical--how-it-works-and-how-to-run-it)** | Architecture, install, client connections, the MCP tool catalog, workflows, console internals (Keycloak multi-tenant), the Ops layer, IndexNow deep dive, CI/CD |
+| --- | --- | --- |
+| **Marketing / growth / agency / decision-maker** | [Track 1 — Marketing](#track-1--marketing--what-gtm-growth-does-for-you) | Customer value, free-to-connected journey, local SEO, pilot offer and product limits |
+| **Developer / integrator / DevOps** | [Track 2 — Technical](#track-2--technical--how-it-works-and-how-to-run-it) | Architecture, installation, tool catalog, tenant isolation, operations, activation gates and deployment |
 
-Shared reference: [Recent updates](#recent-updates--november-2026) is at the end of this file.
+Shared reference: [Recent updates](#recent-updates--november-2026).
 
----
 ---
 
 # Track 1 · Marketing — what GTM Growth does for you
 
-You do not need to know what MCP, JSON-LD or CrUX are to read this track. Everything here is about **your questions, your numbers, and what you receive**.
+## 1. From evidence to an action plan
 
-## 1. The problem it solves
+GTM Growth brings public-page checks, authorized analytics and search data, customer-journey hypotheses and local-business operations into one workspace. An agency can review several clients while keeping each tenant's domains, properties and records separate.
 
-When you ask an AI assistant about your traffic or your SEO, one of two things happens:
+| Business question | What you receive | What the result means |
+| --- | --- | --- |
+| **Can crawlers understand my page?** | GEO v1 readiness score, observed checks and prioritized technical fixes | A technical rubric, not a probability of being cited by an AI assistant |
+| **What should I fix first?** | Three leading fixes, with up to six observed recommendations shown at a time | Deterministic ordering by quick wins, blockers, customer intent, rubric impact or AI discoverability |
+| **What might buyers ask?** | Five awareness stages with editable questions and tentative matches to page headings | Hypotheses for review, not observed queries, search volumes or proven demand |
+| **Where does useful traffic come from?** | GA4 / Search Console reports after authorized connection; PageSpeed and CrUX where data exists | Provider results with evidence; disconnected examples are labelled as samples |
+| **Are my locations consistent?** | Location registry, 24 local controls, evidence coverage, declared rank comparisons and assigned actions | Declared evidence remains distinct from Google reads; unknowns do not become passes |
+| **Does an AI engine mention my brand?** | Optional bounded OpenAI/Gemini collections and reviewable Competition datasets | Tenant keys required; automated mention detection remains provisional until reviewed |
+| **Can I prepare content and fixes?** | Generated assets, article briefs, quality-gated WordPress drafts and read-only Apply Mode previews | Drafts and previews require human review; Apply Mode cannot yet change a remote site |
 
-- it asks you to **paste exports and screenshots**, then re-formats them for you; or
-- it **invents plausible numbers**.
+Outbound profiles can be detected in page links and schema `sameAs`, including Instagram, X/Twitter, Reddit, Discord and TikTok. These references do not establish inbound backlinks.
 
-GTM Growth replaces both with a connected toolbox: the assistant **calls Google directly**, cites only what the APIs return, and never guesses.
+## 2. The customer journey
 
-| A classic LLM | With GTM Growth |
-|---|---|
-| Works on pasted exports | Calls GA4, Search Console, PageSpeed, CrUX directly |
-| Can invent numbers | Cites only tool results, with evidence |
-| One source at a time | Crosses analytics + search + speed in one answer |
-| Advice only | Can act — gated, confirmed writes only |
-| Method changes every chat | Same reproducible audit every time |
+1. **Start free:** open [gtm.kayroslab.com](https://gtm.kayroslab.com/) or the [French site](https://gtm.kayroslab.com/fr/), then submit a public page in the console. No account or paid provider is required for this read.
+2. **Inspect evidence:** review the GEO v1 score, observed SEO issues and the leading technical fixes. The public flow diagnoses one page; it does not run the GEO v2 crawler.
+3. **Explore intent:** review the five stages—unaware, problem-aware, solution-aware, product-aware and most aware. Edit hypothetical questions, inspect tentative heading coverage and copy the action plan locally.
+4. **Connect authorized data:** sign in through the FR/EN Keycloak flow, use your tenant's registered domains and connect the relevant Google properties. A tenant administrator can explicitly add selected journey questions to the prompt pool.
+5. **Track and act:** review collected data, maintain local evidence, assign actions and prepare drafts. Adding a prompt does not trigger a paid AI run; scheduled checks and external writes require their own configuration and authority.
 
-## 2. What you get
+The **“AI recommends” / “L’IA recommande”** interface ranks measured failures with an explainable algorithm. It does not call an LLM for the free read or forecast traffic, revenue or citations. Search-engine and assistant logos indicate relevance, not endorsement or live API access.
 
-| Capability | What it means for you |
-|---|---|
-| **AI-search readiness audit (GEO)** | A 0–100 score for "will AI engines cite my site", with the exact fix for every lost point |
-| **Analytics & search truth** | Live GA4, Search Console and Bing numbers: clicks, queries, positions, devices, countries |
-| **Speed reality check** | Lab scores (PageSpeed) **and** real-user Core Web Vitals (CrUX) side by side |
-| **GEO generators** | Ready-to-publish `llms.txt`, rich structured data (JSON-LD), corrected `robots.txt` |
-| **Fast indexing** | Announce changed URLs to Bing/Yandex/Seznam/Naver in one call (IndexNow) |
-| **Client-ready PDF** | A 9-page report your client can read without you in the room |
-| **Ops: live AI visibility** | Track the prompts buyers ask ChatGPT/Gemini, see when your brand is cited — and when a competitor is cited instead |
-| **Ops: article pipeline** | From keyword to structured draft with mandatory quality gates, published to WordPress as a **draft** (you approve, never autopilot) |
+## 3. Global and local SEO — head office, agencies and locations
 
-## 3. How an audit works — illustrated
+The free business-type checklist adapts to physical, service-area and web-only businesses. It is a preparation plan rather than a measured Maps ranking.
 
-**Input:** one URL. **Output:** score, evidence, ranked fixes. No configuration, no form-filling.
+In the authenticated workspace, head-office or agency administrators import a CSV/JSON location registry, preview accepted/rejected rows and confirm the import. They grant local users access to exact location IDs, keep country, business languages and time zone separate, and review scoped actions and exports.
 
-```mermaid
-flowchart LR
-  IN["Your URL<br/><i>input</i>"] --> AUDIT["GEO audit<br/>42 checks · 8 categories"]
-  AUDIT --> SCORE["0–100 score<br/><i>result</i>"]
-  AUDIT --> EVID["Evidence per check<br/><i>what was measured</i>"]
-  AUDIT --> FIXES["Ranked fixes<br/><i>highest points first</i>"]
-  FIXES --> GEN["Generators<br/>llms.txt · JSON-LD · robots.txt"]
-  GEN --> RE["Re-audit<br/>see the score move"]
-```
+| Workflow | Current behavior |
+| --- | --- |
+| **Registry and permissions** | Persistent tenant-scoped locations, exact user grants and audit history |
+| **Local rank observations** | Declared imports with source/date/method; Maps, local-pack and organic surfaces remain separate; only comparable series are compared |
+| **24 LOC controls** | Pass, fail, unknown or not-applicable with explicit evidence coverage; several inputs still require declared evidence |
+| **Google Business Profile** | Profile/review reads after operator setup, API approval and listing-manager OAuth consent |
+| **Supervised changes** | Only website URL and primary phone; separate administrator approval, explicit execution and API readback |
+| **Automation** | Five optional Node-RED pollers process queued jobs; no bulk publishing, automatic review replies or autonomous content publication |
 
-### What a result looks like (real run)
+A verified API readback does not establish public Maps visibility. Performance collection, qualified local AI and automatic evidence collection for every control remain pending. See [Global/Local SEO](docs/product/GLOBAL-LOCAL-SEO.md) and [operations](docs/product/LOCAL-SEO-OPERATIONS.md).
 
-`geo_audit` on `https://stripe.com` (2026-10-30) — **78/100 · good**, 29 of 42 checks passed, 12 prioritized fixes returned. Extract of the breakdown:
+## 4. The client console
 
-| Category | Points | Finding |
-|---|---:|---|
-| robots.txt | 15/18 | Citation bots allowed only through `User-agent: *` → partial credit |
-| llms.txt | 16/18 | 8,032 words, 31 sections, 308 links; no `/llms-full.txt` |
-| Schema JSON-LD | 10/16 | Rich WebSite + Organization; no FAQPage, no Article |
-| AI discovery | 0/6 | `/.well-known/ai.txt`, `/ai/summary.json`… all 404 |
+Open [the English console](https://gtm.kayroslab.com/console/?lang=en#c-public-read) or [the French console](https://gtm.kayroslab.com/console/?lang=fr#c-public-read). Public reading is available before sign-in; connected workspaces use tenant-scoped SSO.
 
-And the first fixes it returns, in priority order: explicit rules for the five citation bots (+3), FAQPage schema (+3), Article schema (+3), publish `llms-full.txt` (+2), RSS link (+2), `/ai/summary.json` (+2).
+| Workspace | Main outcome / prerequisite |
+| --- | --- |
+| **Public read** | One-page evidence, technical recommendations and free journey exploration |
+| **Overview / Audit / Generators** | Readiness, technical checks and assets to review |
+| **Customer journey** | Selected questions added to the tenant prompt pool by an administrator |
+| **Global and local SEO** | Location registry, evidence, controls, actions, approvals and exports |
+| **Track / Keywords** | Authorized GA4, Search Console and configured Bing data; search opportunities |
+| **Competition / Ops visibility** | Imported or configured provider collections, with human review of mentions |
+| **Ops rankings** | Keyword history and AI-Overview signals from a configured supplier; no bundled SERP data feed |
+| **Ops articles** | Brief, draft and quality gates; approved WordPress draft creation |
+| **Ops alerts** | Rank-drop and lost-mention signals where collections are configured |
+| **Act / GEO fixes** | Read-only before/after preview; no Apply Mode writer |
+| **Reports** | Evidence-based exports and PDF reports; see the [sample report](site/reports/opendpe.html) |
 
-### Before / after (offline demo you can reproduce)
+## 5. Open source and the Cloud pilot
 
-A normal day-one page — title, H1, one sentence, no robots.txt, no llms.txt, no structured data — audited, fixed with what the server generates, re-audited:
+| Offer | Current position |
+| --- | --- |
+| **Self-hosted** | Free Apache-2.0 software; operators supply hosting and any optional provider accounts |
+| **Cloud Solo** | Indicative pilot hypothesis: **€39/month** |
+| **Cloud Agency** | Indicative pilot hypothesis: **€149/month** |
 
-| Category | Before | After |
-|---|---:|---:|
-| robots.txt | 0 | **18** |
-| llms.txt | 0 | **14** |
-| Schema JSON-LD | 0 | **16** |
-| Meta tags | 5 | **14** |
-| Content | 2 | **12** |
-| Brand & Entity | 2 | **10** |
-| Signals | 0 | **6** |
-| AI discovery | 0 | **6** |
-| **Total** | **9/100** | **96/100** |
+The Cloud offer is intended to package hosted connected data, history, multi-client work and configured operations. Prices and plan limits are not active subscription entitlements. **Mollie checkout remains disabled** until the payment profile, terms, tax treatment, amounts and limits are validated and the billing lifecycle is implemented. Optional BYOK AI calls may have separate provider costs.
 
-The rubric also tells you **when to stop**: the last 4 points require an llms.txt deeper than 1,000 words — everything else is on the table.
+## 6. Evidence, control and next steps
 
-## 4. The Ops loop — illustrated
+- **Measured, declared and inferred stay distinct.** Scores express technical readiness; unknown evidence is not a success. Historical examples and demo values are not current customer results.
+- **Writes require their own explicit controls.** WordPress receives drafts only. Creating a draft does not send an IndexNow notification; a published URL must be independently verified before a separate submission.
+- **GEO v2 remains a separate pilot.** Exact-domain verification and owner consent for score publication are separate requirements. The 42-control integration is still under review in PR #30.
+- **Local publication is narrowly scoped.** Google access and writes must be deliberately enabled; one administrator prepares a phone/website change and another approves it.
+- **Self-hosting remains available.** The free public read and local planning do not require a commercial SEO data API.
 
-The newest part of the product closes the loop between *measurement* and *action*:
+[Try a free read](https://gtm.kayroslab.com/console/?lang=en#c-public-read), [start in French](https://gtm.kayroslab.com/console/?lang=fr#c-public-read), or connect an MCP client using Track 2. The site's contact form records a request; automatic emailing of a PDF is not configured.
 
-```mermaid
-flowchart LR
-  P["Prompt pool<br/><i>what buyers ask AI engines</i>"] -->| bounded run · client keys | RUN["OpenAI / Gemini<br/>live answers"]
-  RUN --> DS["Competition dataset<br/>mentions · citations · sentiment"]
-  DS --> REV["Human review<br/>confirm / reject each mention"]
-  REV --> AL["Share of voice · trends<br/>lost-mention alerts"]
-  KEY["Keyword pool"] -->| scheduled checks | RANK["Google positions<br/>+ AI Overview citations"]
-  RANK --> AL
-  AL --> ART["Article pipeline<br/>brief → draft → quality gates"]
-  ART -->| you approve | WP["WordPress draft<br/>+ IndexNow ping"]
-```
-
-Nothing autopilots: every external write (publishing, IndexNow) requires an explicit approval, and every AI answer stays **reviewable** — automatic mention detection is a proposal, you confirm or reject it.
-
-## 5. The client console — what each tab gives you
-
-The console (`gtm.kayroslab.com/console/`, or `<client>.gtm.kayroslab.com`) is white-label per client, secured by SSO. Each tab is one question → one answer:
-
-| You open… | You provide | You get |
-|---|---|---|
-| **Overview** | your domain | GEO score, platform readiness, priority plan |
-| **Track · Search Console** | nothing (connected once) | clicks, impressions, CTR, position — with period-over-period change |
-| **Track · GA4** | nothing | audience, acquisition, devices, realtime |
-| **Keywords** | nothing | opportunity-scored queries from your real impressions |
-| **Audit** | your domain | technical crawl: canonicals, titles, redirects, broken links |
-| **Generators** | a keyword | titles, meta descriptions, article plans |
-| **Report** | your domain | the 9-page PDF |
-| **Ops · Live AI visibility** | prompts to track | brand mentions and citations per AI engine |
-| **Ops · Rankings** | keywords to track | Google positions history + AI-Overview citations |
-| **Ops · Articles** | a target keyword | gated draft ready for your review |
-| **Ops · Alerts** | nothing | rank drops, lost mentions, pipeline events |
-
-Multi-client agencies get strict isolation: client A can never see client B's domains, properties, leads or reports — enforced and tested.
-
-## 6. What it will never do
-
-- **No invented numbers.** Every point in every score carries the evidence that produced it.
-- **No hidden writes.** Reads are open; anything that writes (sitemap submit, IndexNow, publishing) is disabled by default and needs explicit confirmation.
-- **No autopublished content.** The article pipeline produces drafts with quality gates; a human approves before anything goes to your CMS.
-- **No paid data APIs.** Google free APIs only; live AI checks use **your own** OpenAI/Gemini keys, stored server-side, never returned to the browser.
-- **Your data stays yours.** Open source (Apache-2.0), self-hostable, per-tenant storage.
-
-## 7. Try it
-
-1. **Free instant read** — <https://geoking2104.github.io/GTM-Growth/> : paste a URL, get the GEO essentials.
-2. **Ask your assistant** — connect the server to Grok, Claude or Codex and ask *"audit https://my-site.com for AI search"*.
-3. **Full audit & engagement** — leave your email on the site; you get the complete audit and a guided GTM engagement.
-
----
 ---
 
 # Track 2 · Technical — how it works and how to run it
 
 ## 1. Architecture
 
-```text
-     ┌─────────┐   ┌────────────┐   ┌─────────┐
-     │  Grok   │   │   Claude   │   │  Codex  │
-     │  (xAI)  │   │ (Anthropic)│   │ (OpenAI)│
-     └────┬─────┘   └─────┬──────┘   └────┬─────┘
-          └───────────────┬─────────────┘
-                       │ MCP (stdio or HTTPS /mcp)
-                       ▼
-              ┌───────────────────┐
-              │   gtm-growth      │
-              │  Service Account  │
-              └─────────┬─────────┘
-     ┌─────────────────┼───────────────────┐
-     ▼              ▼                     ▼
- GA4 Data/Admin  GTM Web + sGTM      Search Console
- + MP secrets    tags / clients      + Indexing API
-                                     + PageSpeed / CrUX
-```
-
-The web console is a second surface over the same modules: Express + Keycloak OIDC (PKCE), per-tenant JWT resolution, sqlite/Redis stores, PDF reports via pdfkit.
+MCP clients connect through stdio or HTTPS `/mcp`; the CLI and web console reuse the audit and provider modules. The public website and console are served at **[https://gtm.kayroslab.com/](https://gtm.kayroslab.com/)**. The production application binds to `127.0.0.1:4300` behind Nginx.
 
 ```mermaid
-flowchart LR
-  subgraph Clients
-    U1["Client A user<br/>a.gtm.kayroslab.com"]
-    U2["Client B user<br/>SSO Entra / Google / SAML"]
-    SA["Platform admin"]
-  end
-  subgraph VPS["Host (Docker Compose)"]
-    NG["Nginx<br/>*.gtm.kayroslab.com · auth…"]
-    KC["Keycloak 26 + Postgres 16<br/>realm + Organizations"]
-    API["Console API<br/>JWT → tenant → data isolation"]
-    REG[("Tenant registry<br/>domains · GSC properties<br/>leads · reports")]
-  end
-  G["Free Google APIs<br/>GSC · GA4 · PSI · CrUX"]
-  U1 & U2 & SA --> NG --> API
-  NG -->|"/console/ PKCE"| KC
-  API -->|JWKS per issuer| KC
-  API --> REG
-  API --> G
+flowchart TD
+  MCP["MCP clients and CLI"] --> CORE["Audit and provider modules"]
+  WEB["FR/EN web console"] --> API["Express API"]
+  API --> AUTH["Keycloak OIDC and tenant scope"]
+  API --> CORE
+  API --> DB["SQLite and optional Redis"]
+  CORE --> GOOGLE["Authorized Google APIs"]
+  CORE --> PUBLIC["Public-page reads"]
 ```
+
+Keycloak uses Postgres; tenant registries, local evidence, operations and audit events use their respective stores. Optional Node-RED pollers access private tenant-scoped job routes. PDF reports use pdfkit. The Cloudflare Worker is an alternative public API deployment, not the full Node/Keycloak/SQLite console.
 
 ## 2. Quick start
 
@@ -277,7 +152,8 @@ flowchart LR
 
 ```bash
 git clone https://github.com/Geoking2104/GTM-Growth.git
-cd GTM-Growth && npm install
+cd GTM-Growth
+npm ci
 cp .env.example .env          # set GOOGLE_APPLICATION_CREDENTIALS
 npm run build
 npm run start:stdio           # or start:http → :3000/mcp + /sse
@@ -285,7 +161,9 @@ npm run start:stdio           # or start:http → :3000/mcp + /sse
 
 Scopes: `analytics.readonly[.edit]`, `tagmanager.readonly[.edit.containers]`, `webmasters[.readonly]`, `indexing` (gated).
 
-Writes are **disabled by default** and double-gated (`*_WRITE_ENABLED=true` **and** `confirm=true` per call): GA4 secrets, GTM tag creation, sitemap submit, Indexing API, IndexNow submissions. Publishing to WordPress additionally requires `approved: true` and all quality gates passed.
+Write controls are adapter-specific: Google mutation tools use their documented enablement/confirmation gates; `indexnow_submit` explicitly requires `confirm=true`. The authenticated WordPress route requires tenant-admin rights, configured credentials, `approved: true` and passing quality gates, and always creates a **draft** without IndexNow submission. Local GBP publication has its separate two-administrator approval and enablement gates described below. Read-only Apply Mode previews cannot enable a writer.
+
+These service-account prerequisites apply to the connected Google analytics/tagging tools. Public-page reads do not need Google credentials. GBP requires separate listing-manager OAuth; do not reuse the analytics service-account JSON for it.
 
 Reliability: zod validation on every tool, enriched Google errors (`[status | reason]`), gaxios retry/pagination, optional `MCP_API_TOKEN` bearer auth, stderr-only logging.
 
@@ -345,7 +223,7 @@ Example report shapes: [`skills/gtm-growth/references/examples.md`](skills/gtm-g
 | API | Express + internal JWT verification (`node:crypto`, JWKS per issuer), tenant resolution, data isolation |
 | Provisioning | Keycloak Admin REST (service account `gtm-provisioner`): `npm run tenant:provision` or `POST /api/platform/tenants` |
 
-**Why Organizations over realm-per-client:** one issuer/JWKS to trust and secure; email-domain discovery is native; adding a client takes seconds via the API; Keycloak degrades beyond a few hundred realms. Dedicated realms remain available per client on demand.
+**Organization mode** shares an issuer/JWKS while tenant membership and groups determine access. Dedicated realms provide a separate issuer when configured.
 
 **The tenant travels in the token:** in Organization mode, an `organization` claim **and** a `/tenants/<id>/<role>` group must agree (a group without membership is ignored); in realm mode, the issuer `iss` is the tenant. Multi-tenant users pick the active tenant in the UI (`X-Tenant` header, verified against the token — not spoofable).
 
@@ -353,7 +231,7 @@ Example report shapes: [`skills/gtm-growth/references/examples.md`](skills/gtm-g
 |---|---|---|
 | `tenant-user` | group `/tenants/<id>/tenant-user` | console tools on **own** domains/properties, leads, reports |
 | `tenant-admin` | group `/tenants/<id>/tenant-admin` | + tenant settings, user invites, Ops writes |
-| `platform-admin` | realm role (hosting side) | all tenants via `X-Tenant`, provisioning API |
+| `platform-admin` | realm role (hosting side) | Platform provisioning and supported tenant administration via `X-Tenant`; no implicit local SEO editorial/publication access |
 
 **API-side isolation:** every request resolves to a tenant; any `url`/`inspectUrl` outside the tenant's domains → **403 before DNS resolution**; properties/containers outside the tenant → 403; leads and PDF reports are stored and served per tenant. Covered by `tests/tenant-isolation.test.ts`.
 
@@ -377,40 +255,78 @@ Provisioning creates the organization (or realm), role groups, console redirect 
 | Phase 3 | Technical audit · Generators | `audit/{technical,serp-preview}`, `generate/{titles,meta,outline}` |
 | Track | GSC · GA4 · Bing · Status | `search/performance`, `search/query-pages`, `ga4/{overview,ecommerce,technology,realtime}`, `bing/performance`, `tracking/status` |
 | Competition | AI answers | `ai-visibility/*`, `competition/*` (+ read-only per-tenant MCP at `/api/mcp/competition`) |
-| Ops | Visibility · Rankings · Articles · Alerts | `visibility/*`, `rank/*`, `content/*`, `ops/*` (see below) |
+| Ops / Journey | Visibility · Rankings · Articles · Alerts · Customer journey | `visibility/*`, `rank/*`, `content/*`, `ops/*`; selected journey prompts reuse the existing tenant prompt pool |
+| Global / Local SEO | Registry · Evidence · Controls · Jobs · Publication | `local-seo/*`; see the exact contracts in the operations guide |
+| Apply Mode | GEO fix preview | `apply/preview` (`robots-ai`, dry-run only) |
 
 Code: `src/console/` (API, auth, modules) · `site/console/` (app-shell UI) · tests `tests/console-*.test.ts`.
 
+### Global/local SEO operations and activation gates
+
+The authenticated module persists registry entries, grants, declared rank observations, evidence, actions, approvals, jobs and audit events in SQLite. Local users have no location access until explicitly granted; platform admins and machine identities have no implicit editorial/publication access. UI language never changes a location's business language or time zone.
+
+- **24 deterministic controls:** `src/local-seo/controls.ts` emits `pass`, `fail`, `unknown` or `not-applicable`. Coverage excludes inapplicable controls; conformity can be null and summaries below 80% coverage are unreliable. A declared pass is not independent Google certification.
+- **GBP reads:** require approved Google project access, Business Information/My Business API enablement, offline `business.manage` manager consent and per-tenant files under `GBP_CREDENTIALS_DIR`. There is no self-service OAuth callback. API enablement alone is insufficient; zero quota blocks synchronization.
+- **GBP writes:** only `websiteUri` and `phoneNumbers.primaryPhone`. Require `LOCAL_SEO_PUBLISH_ENABLED=true`, tenant `writeEnabled=true`, an immutable diff/digest, an approval valid for 30 minutes from a different tenant administrator, explicit execution, drift checks and independent API readback. Timeouts after dispatch become uncertain and are reconciled read-only.
+- **Durable jobs:** optional Node-RED core-node pollers handle WF-02/03/07/09/10: profile sync, review sync, control evaluation, publication reconciliation and control summary. Tenant-scoped hashed worker tokens are configured through `LOCAL_SEO_WORKERS_FILE`; polling processes queued jobs and does not itself schedule recurring collections. WF-08 publication stays a human console operation.
+- **Pending:** performance collection, automatic evidence feeds for all controls, local AI qualification, bulk publication and public-visibility verification.
+
+Contracts and qualification: [Global/Local SEO](docs/product/GLOBAL-LOCAL-SEO.md), [Local SEO operations](docs/product/LOCAL-SEO-OPERATIONS.md), [Node-RED setup](deploy/node-red/README.md). The local SEO integration introduces no paid-provider fallback.
+
+### Customer journey and language handling
+
+The public journey derives tentative heading matches from bounded title/description/H1/H2 signals already returned by `POST /api/free-read`; no extra crawl or paid engine call is added. Questions preserve inferred/user-provided provenance; selected target URLs must remain inside the authenticated tenant's scope. The admin action adds a prompt, not a visibility collection.
+
+Console navigation and Keycloak sign-in preserve the chosen FR/EN locale. The optional deployment input `sync_login_titles` updates only login-heading overrides through the existing provisioner service account, verifies the saved values and does not restart SSO. See [Customer Journey integration](docs/product/CUSTOMER-JOURNEY-INTEGRATION.md) for the L1 scope and remaining L2 work; the deployment record above supersedes its original pre-release status.
+
+### GEO v2 — ownership and instrumentation status
+
+The approved category budgets are **14 / 14 / 14 / 10 / 18 / 10 / 8 / 12** for robots, llms.txt, JSON-LD, metadata, content, brand/entity, AI discovery and rendering. These v2 budgets must not be used to reinterpret historical v1 scores.
+
+The merged [PR #28](https://github.com/Geoking2104/GTM-Growth/pull/28) supplies verified-domain guards and the pilot architecture. The SQLite registry hashes challenge tokens, consumes challenges atomically and scopes grants to a tenant and exact hostname. Verification uses DNS TXT at `_gtm-growth-verify.<hostname>` or an HTTPS file at `/.well-known/gtm-growth-verification.txt`; challenges expire after 30 minutes and grants after seven days. These primitives are not yet wired to a public verification API.
+
+The open [PR #30](https://github.com/Geoking2104/GTM-Growth/pull/30) contains the proposed 42-control scoring integration, 17 HTTP/HTML collectors plus 18 conditional collectors, and verified offline rendering replay. These are **branch contents, not merged functionality**. Unresolved evidence must remain unknown; offline replay is not a live browser worker.
+
+Live Playwright execution still requires a separate isolated job, network-level SSRF/DNS-rebinding protection, exact-host egress policy and validated resource limits. Score publication also requires explicit owner consent. See [the pilot architecture](docs/architecture/GEO-V2-PLAYWRIGHT-PILOT.md).
+
+### Apply Mode — reviewed fixes (MVP foundation)
+
+The new **Apply Mode** scope extends the audit-to-action journey: select one bounded fix, inspect its before/after diff, preview, explicitly approve, snapshot, apply, independently verify and offer rollback. External writers will require exact-domain ownership, tenant-scoped Keycloak approval, a pre-write backup, drift checks and an append-only audit trail. The Apply Mode roadmap limits WordPress content to **draft-only** and GTM changes to a **draft workspace**, with no automatic publication; legacy GTM write/publish routes are not part of that workflow.
+
+Two **read-only preview entry points** are implemented for AI crawler rules:
+
+```bash
+npm run cli -- geo-apply --url https://example.com --fix robots-ai --dry-run
+npm run cli -- geo-apply --url https://example.com --fix robots-ai --diff
+```
+
+The authenticated console also exposes **Act → GEO fixes → Preview**, through `POST /api/console/apply/preview` (`url`, `fix: "robots-ai"`, `mode: "dry-run"`). This route derives the tenant from Keycloak, requires a registered HTTPS hostname, and never enables application. The CLI and console fetch public `robots.txt` with SSRF protections, generate a bounded diff and SHA-256 evidence, and flag manual conflicts. **Neither can write to a website**: CLI `--confirm` and `--apply` fail closed. The existing WordPress content route creates **drafts only** and no longer submits draft URLs to IndexNow.
+
+**Phase 0.3 — approval and recovery foundation (library-only):** a Node/SQLite `ApplyRegistry` can persist encrypted previews and before-change snapshots (AES-256-GCM, tenant/proposal-bound authenticated context), an explicit approval bound to the reviewed diff digest and active exact-hostname verification grant, and a per-tenant HMAC-chained audit journal. Keycloak-derived reader/editor/approver/admin identities are mapped server-side; the approver/admin roles can approve only a current, conflict-free proposal. Approval validity is capped at five minutes; encrypted backups have a configurable 1–90-day retention period (30 days by default), with an explicit purge operation. Tests cover tampering, tenant isolation, drift, expiry and revocation. The storage key is operator-provided (32 random bytes); **there is no default key or production registry configuration**.
+
+**Still deliberately disabled:** the registry is not connected to the console, REST/MCP approval routes or production adapters. Purging still needs a scheduled job; exclusive write-attempt locks, consumption of single-use approvals, independent post-write verification and real rollback need implementation and staging validation. No Apply Mode feature can publish WordPress content, edit files on a remote site or publish a GTM version. The existing unrelated GTM write routes are **not** governed by this new approval mechanism. See the [full owner specification](docs/specs/APPLY-MODE-v1-2026-11-09.md) and [Apply Mode architecture, safety gates and scope register](docs/architecture/APPLY-MODE-MVP.md).
+
 ## 7. Ops layer — live visibility, rankings, article pipeline
 
-The Ops section (PR #24) closes the measurement→action loop. All routes tenant-scoped, writes admin-only, BYOK keys stored server-side.
+The Ops section connects configured collections to review, alerts and draft preparation. All routes are tenant-scoped, writes admin-only, and BYOK keys stored server-side. Optional providers may incur charges; the free journey and local SEO workflows do not call them.
 
 ```mermaid
-flowchart LR
-  subgraph Collect
-    PP["Prompt pool<br/>200 max · sqlite"] -->|"5/lot · 2 lots/run"| VR["visibility-runner<br/>OpenAI + Gemini collectors"]
-    VR -->|"normalizeImport"| DS["Competition dataset<br/>existing confirm/reject workflow"]
-  end
-  subgraph Track2["Track"]
-    KW["Keyword pool"] --> RC["rank check<br/>injectable SERP supplier"]
-    RC -->|"snapshots + history"| RB["rank board + AIO citations"]
-  end
-  subgraph Act
-    BR["Deterministic brief<br/>intent · angles · FAQ"] --> DR["Draft (deterministic/Ollama)"]
-    DR --> QG{"Quality gates<br/>title · meta · answer-first<br/>FAQ · length · lists · entities"}
-    QG -->|all passed + approved| WP["WordPress draft post"]
-    WP --> IN["IndexNow announce (optional)"]
-  end
-  RC --> AL["Alerts (sqlite)"]
-  VR --> AL
-  SCHED["Scheduler<br/>OPS_SCHEDULER_ENABLED"] --> VR & RC
+flowchart TD
+  POOL["Prompt pool"] --> RUN["Configured AI collection"]
+  RUN --> REVIEW["Competition review"]
+  REVIEW --> ALERT["Visibility alerts"]
+  KEY["Keyword pool"] --> RANK["Configured rank supplier"]
+  RANK --> ALERT
+  BRIEF["Content brief"] --> DRAFT["Draft and quality gates"]
+  DRAFT --> APPROVE{"Explicit approval"}
+  APPROVE --> WP["WordPress draft only"]
 ```
 
 | Area | Bounds & safety |
 |---|---|
 | **Prompt pool / runs** | 200 prompts, deduped; runs bounded (5 prompts × 2 lots per engine per run); unconfigured engines degrade with a clear message; every run lands as a reviewable Competition dataset |
 | **Rank tracking** | 200 keywords; SERP supplier via `RANK_SUPPLIER_URL`+`RANK_SUPPLIER_TOKEN` (JSON API) or `RANK_SCRAPER_URL` (HTML profile); AI-Overview presence + tenant-citation detection on the same payload; drop alerts warn ≥ 3 positions, critical ≥ 10 |
-| **Article pipeline** | deterministic brief/outline (FR/EN); Ollama optional (`OLLAMA_URL`); gates block publishing until fixed; WordPress publish requires `approved: true` + all gates passed, posts as WP **draft**; optional IndexNow announce composes the existing client |
+| **Article pipeline** | Deterministic brief/outline (FR/EN); optional Ollama (`OLLAMA_URL`); WordPress creation requires `approved: true` + all gates passed and produces a **draft**. The route returns `published: false` and `indexNow: null`; it never announces a draft URL. |
 | **Alerts & scheduler** | alert store with acknowledge; visibility-loss and rank-drop detection; per-tenant automation config; scheduler opt-in (`OPS_SCHEDULER_ENABLED`, default off — stdio/CI stay quiet) |
 
 Env (all optional, documented in `.env.example`): `AI_VISIBILITY_{OPENAI,GEMINI}_KEY_<TENANT>` · `RANK_SUPPLIER_URL/TOKEN` or `RANK_SCRAPER_URL` · `WP_{SITE_URL,USERNAME,APP_PASSWORD}_<TENANT>` · `OLLAMA_URL/MODEL` · `OPS_SCHEDULER_ENABLED/MINUTES`.
@@ -435,7 +351,7 @@ Operating rules: submit **changes**, not the archive; one batch per publish; nev
 
 | Endpoint | Role |
 |---|---|
-| `POST /api/free-read` | GEO score + SEO tables + GA4/GSC blocks for any URL (same anti-SSRF guard as the console) |
+| `POST /api/free-read` | Bounded public-page GEO v1/SEO evidence, page signals and social references with SSRF protection, caching and rate limits. GA4/GSC traffic rows are samples unless authorized data is connected; this endpoint does not grant access to a site's private analytics. |
 | `POST /api/lead` | Contact capture (JSONL + optional `LEAD_WEBHOOK_URL`); no mail client — PDF emailing would need an SMTP/API provider, intentionally not configured |
 
 Same shared code runs on Node or as a **Cloudflare Worker**: [docs/PUBLIC_API.md](docs/PUBLIC_API.md) · [docs/WORKER.md](docs/WORKER.md).
@@ -444,12 +360,19 @@ Same shared code runs on Node or as a **Cloudflare Worker**: [docs/PUBLIC_API.md
 
 | Workflow | When | What |
 |----------|------|------|
-| **CI** | push / PR | typecheck + lint + test + build + CLI smoke |
-| **Validate** | manual (optional weekly) | live pipeline with SA secret |
+| [CI](.github/workflows/ci.yml) | push / PR to main or master | Typecheck, lint, Vitest, build, CLI/site smoke, Docker build, FR/EN browser QA/screenshots and Node-RED runtime smoke |
+| [Validate](.github/workflows/validate.yml) | manual (optional weekly) | Live pipeline with configured service-account secret |
+| [OVH release](.github/workflows/deploy-kayroslab-vps.yml) | Manual on main with `DEPLOY` | `production` environment; strict pinned ED25519 SSH verification; fast-forward source update and Compose deployment; optional login-title synchronization |
+| [GitHub Pages](.github/workflows/pages.yml) / [Cloudflare Worker](.github/workflows/worker.yml) | Manual on main with `DEPLOY` | Alternative publication targets; neither changes the primary website address |
 
 ```bash
-npm run lint && npm test && npm run typecheck
+npm run typecheck
+npm run lint
+npm test
+npm run build
 ```
+
+The OVH workflow reads `VPS_SSH_USER` and `VPS_SSH_KEY` from secrets and validates the public ED25519 fingerprint pinned in source; the legacy fingerprint secret is no longer used. A documentation push runs CI but does not dispatch a production deployment. Latest confirmed application deployment: [12 November 2026](https://github.com/Geoking2104/GTM-Growth/actions/runs/43270543975).
 
 ## 11. Project layout
 
@@ -462,9 +385,12 @@ src/
   google/                      # data-api, gtm, search-console, indexing, pagespeed, crux
   geo/                         # GEO engine: audit/*, generate/*, citability, platforms, risks…
   console/                     # console API, Keycloak auth, competition, ops-*
+  local-seo/                   # registry, controls, GBP, durable jobs, publication
+  apply/                       # read-only previews, encrypted registry and audit primitives
   indexnow/ geosuite/ freeread/ leads/ tenants/ report/ http/ worker/
-site/                          # landing (GitHub Pages) + console app-shell
-deploy/kayroslab-vps/          # Docker Compose, Keycloak realm, Nginx
+site/                          # FR/EN landing and console app-shell served on the VPS
+deploy/kayroslab-vps/          # Docker Compose, Keycloak realm/theme, Nginx
+deploy/node-red/              # optional local SEO pollers
 docs/                          # all guides (see index below)
 ```
 
@@ -475,7 +401,11 @@ docs/                          # all guides (see index below)
 | [skills/gtm-growth/SKILL.md](skills/gtm-growth/SKILL.md) | **Shared agent skill** |
 | [docs/CLAUDE_SETUP.md](docs/CLAUDE_SETUP.md) · [CODEX_SETUP.md](docs/CODEX_SETUP.md) · [GROK_SETUP.md](docs/GROK_SETUP.md) | Client setup |
 | [skills/gtm-growth/references/setup.md](skills/gtm-growth/references/setup.md) | Connect — 3 options |
-| [docs/PRESENTATION.md](docs/PRESENTATION.md) | Pitch & marketing guide |
+| [docs/PRESENTATION.md](docs/PRESENTATION.md) | Background pitch; use this README for current delivery and offer status |
+| [Free console value plan](docs/product/FREE-CONSOLE-VALUE-PLAN.md) | Public-read evidence, screenshots and experiments |
+| [Customer Journey integration](docs/product/CUSTOMER-JOURNEY-INTEGRATION.md) | Five-stage journey, provenance, acceptance and future increments |
+| [Global/Local SEO](docs/product/GLOBAL-LOCAL-SEO.md) · [Local SEO operations](docs/product/LOCAL-SEO-OPERATIONS.md) | Registry, permissions, LOC controls, GBP activation and publication gates |
+| [Node-RED setup](deploy/node-red/README.md) | Optional worker runtime and workflow boundaries |
 | [docs/DEPLOYMENT.md](docs/DEPLOYMENT.md) · [VPS_DEPLOY.md](docs/VPS_DEPLOY.md) | Docker / Fly / Railway · KayrosLab VPS |
 | [docs/CLI.md](docs/CLI.md) | All CLI commands |
 | [docs/GEO.md](docs/GEO.md) | GEO rubric, tools, limits |
@@ -493,26 +423,19 @@ docs/                          # all guides (see index below)
 
 ## Recent updates — November 2026
 
-| Update | Detail |
+| Date / reference | Update |
 | --- | --- |
-| **Apply Mode foundation (PR #31)** | Read-only `geo-apply` and authenticated console diff preview, plus library-only AES-GCM-encrypted approval/snapshot registry and tenant HMAC journal. No approval UI or production writers enabled. |
-| **GEO v2 pilot (PR #28, draft)** | Verified-domain DNS TXT/HTTPS challenge flow; SQLite tenant-scoped single-use verification registry; Playwright isolation and SSRF gates documented. No live browser worker or production deployment yet. |
-| **Console Ops** | New **Ops** section (PR #24): tracked prompt pool + bounded BYOK visibility runs (OpenAI/Gemini, client keys) feeding the existing Competition review workflow; arbitrary keyword rank tracking with history, AI-Overview citation detection and drop alerts; article pipeline with deterministic briefs and **mandatory quality gates**; WordPress draft creation (**no IndexNow notification until independently verified publication**); alert store and per-tenant scheduler (`OPS_SCHEDULER_ENABLED`, off by default). Tests: `tests/console-ops.test.ts`. |
-| **Live AI-visibility collection** | `/ai-visibility/openai-run` (and Gemini status) with tenant-held keys; every collection creates a reviewable dataset; mention heuristics stay provisional until confirmed/rejected. |
-| **Onboarding profiles** | Rich brand profile read from the homepage JSON-LD/meta during guided onboarding (PR #19). |
-| **GTM container discovery** | Console inventory of GTM containers available to the service account (PR #23). |
-| **Hosting (KayrosLab VPS)** | Docker Compose on OVH behind Nginx (`gtm.kayroslab.com`, wildcard `*.gtm.kayroslab.com`), Let's Encrypt with auto-renewal, PM2 startup, containers `restart: unless-stopped` — verified by a full VPS reboot. |
-| **Lead form fix** | `POST /api/lead` 500 (`EACCES` on `/data/leads.jsonl`) fixed: the Dockerfile now creates `/data` with the right uid; requests persist (201 + id). Notifications via `LEAD_WEBHOOK_URL`; automatic PDF emailing still requires a mail provider (not configured by design). |
-| **Visual sitemap** | The free read renders the sitemap architecture (SlickMap-style tree, sections, depth, `lastmod`). |
-| **Sample report** | 11-page example PDF (opendpe.net) with console guide and marketing plans. |
-| **Keycloak multi-tenant console** | Client console with Organizations, SSO brokering (Entra/Google/SAML), TOTP MFA, per-tenant isolation, live-data tabs. |
-
----
+| **13 November — documentation** | Primary website changed to [gtm.kayroslab.com](https://gtm.kayroslab.com/); both tracks aligned with merged code, the successful OVH release and the remaining activation/development gates |
+| **12 November — OVH / SSO** | Successful deployment of `5c83519`; FR/EN navigation/sign-in and optional login-title maintenance using the provisioner service account; corrected and pinned SSH host fingerprint |
+| **12 November — [PR #36](https://github.com/Geoking2104/GTM-Growth/pull/36)** | Global/local registry, permissions, declared rank evidence, 24 LOC controls, operator-configured GBP reads, durable Node-RED jobs and independently approved phone/website changes |
+| **11 November — [PR #35](https://github.com/Geoking2104/GTM-Growth/pull/35)** | Five-stage customer journey, editable hypotheses, heading evidence, copied plans and tenant-scoped tracked prompts |
+| **11 November — [PR #34](https://github.com/Geoking2104/GTM-Growth/pull/34)** | Actionable free page read, evidence-led recommendations and explicit outbound social references |
+| **10 November — [PR #33](https://github.com/Geoking2104/GTM-Growth/pull/33)** | Bilingual landing and console, visual QA and Cloud pilot pricing; Mollie checkout remains disabled |
+| **9 November — [PR #31](https://github.com/Geoking2104/GTM-Growth/pull/31)** | Apply Mode read-only previews, encrypted approval/snapshot registry and HMAC journal; production writers remain disabled |
+| **GEO v2 — separate status** | Foundation [PR #28](https://github.com/Geoking2104/GTM-Growth/pull/28) merged; 42-control/instrumentation [PR #30](https://github.com/Geoking2104/GTM-Growth/pull/30) still open as of this update; live isolated rendering remains pending |
 
 ## License
 
 Apache-2.0
 
----
-
-Built by [Geoking2104](https://github.com/Geoking2104) / **KayrosLab** for Grok, Claude, and Codex.
+Built by [Geoking2104](https://github.com/Geoking2104) / **KayrosLab** for Grok, Claude, Codex and other MCP-capable agents.
