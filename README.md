@@ -33,6 +33,13 @@ The latest successful [OVH deployment run](https://github.com/Geoking2104/GTM-Gr
 
 ## How to read this README
 
+**Data-agent source integration (13 November 2026, not a deployment claim):** a
+bilingual guided assistant now spans the public scan, onboarding and every
+authenticated console section. An optional Eve service adds natural-language
+Slack replies through tenant-bound metric reads. See the
+[journey/value plan](docs/product/DATA-AGENT-JOURNEY.md) and
+[Slack operator setup](integrations/eve-data-agent/README.md).
+
 | You are… | Read | You will find |
 | --- | --- | --- |
 | **Marketing / growth / agency / decision-maker** | [Track 1 — Marketing](#track-1--marketing--what-gtm-growth-does-for-you) | Customer value, free-to-connected journey, local SEO, pilot offer and product limits |
@@ -69,6 +76,19 @@ Outbound profiles can be detected in page links and schema `sameAs`, including I
 5. **Track and act:** review collected data, maintain local evidence, assign actions and prepare drafts. Adding a prompt does not trigger a paid AI run; scheduled checks and external writes require their own configuration and authority.
 
 The **“AI recommends” / “L’IA recommande”** interface ranks measured failures with an explainable algorithm. It does not call an LLM for the free read or forecast traffic, revenue or citations. Search-engine and assistant logos indicate relevance, not endorsement or live API access.
+
+The **Data assistant** adds a common entry point throughout this journey. Set your
+business role, objective, audience, lifecycle stage and optional 28-day target;
+the console recommends relevant actions while keeping every section accessible.
+Guided questions read configured sources, Search Console clicks, GA4 sessions/key
+events, reviewed AI mentions and operations status, with explicit source/period
+and missing-data states. No model credential is required for these console answers.
+
+Teams can optionally ask the **Eve Slack agent** natural-language questions in
+approved channels and follow its answer back to the right console workspace.
+Slack configuration and live acceptance are required; model/hosting fees may
+apply. A user's business role never expands permissions, and a Slack channel
+never aggregates different clients. [Scope, value and next increments](docs/product/DATA-AGENT-JOURNEY.md).
 
 ## 3. Global and local SEO — head office, agencies and locations
 
@@ -223,6 +243,16 @@ Full agent-facing catalog: [`skills/gtm-growth/references/tools.md`](skills/gtm-
 Example report shapes: [`skills/gtm-growth/references/examples.md`](skills/gtm-growth/references/examples.md) · server-side path: [docs/SERVER_SIDE_TRACKING_ARCHITECTURE.md](docs/SERVER_SIDE_TRACKING_ARCHITECTURE.md).
 
 ## 6. Console internals — multi-tenant on Keycloak
+
+The data-agent routes (`/api/console/data-agent/context`, `/profile`, `/query`)
+reuse OIDC and active-tenant checks. Profiles are scoped to tenant + issuer +
+subject. The optional `/api/internal/data-agent/read` bridge validates raw-body
+HMAC signatures, durable replay nonces and an operator-approved team/channel/user
+binding before resolving the tenant. It exposes curated aggregates, with no SQL
+or arbitrary MCP execution. The independent
+[`integrations/eve-data-agent`](integrations/eve-data-agent/README.md) package pins
+Eve dependencies on Node 26; the core OVH app retains its existing runtime.
+Slack and API errors never become invented measurements or automatic writes.
 
 **Keycloak 26.4** is the identity provider for all console clients, not just a login screen.
 

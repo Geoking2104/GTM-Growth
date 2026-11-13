@@ -73,6 +73,12 @@ export function getDataset<T extends StoredDataset>(tenantId: string, id: string
   validateTenant(tenantId); const db = database(); migrateLegacy(db, tenantId);
   const row = db.prepare("SELECT payload FROM datasets WHERE tenant_id = ? AND id = ?").get(tenantId, id) as Row | undefined; return row ? parse<T>(row) : undefined;
 }
+/** Bounded read for the agent: never deserialize every historical answer panel. */
+export function latestDataset<T extends StoredDataset>(tenantId: string): T | undefined {
+  validateTenant(tenantId); const db = database(); migrateLegacy(db, tenantId);
+  const row = db.prepare("SELECT payload FROM datasets WHERE tenant_id = ? ORDER BY created_at DESC, id DESC LIMIT 1").get(tenantId) as Row | undefined;
+  return row ? parse<T>(row) : undefined;
+}
 export function insertDataset<T extends StoredDataset>(tenantId: string, data: T) {
   validateTenant(tenantId); const db = database(); migrateLegacy(db, tenantId);
   const insert = db.transaction(() => {

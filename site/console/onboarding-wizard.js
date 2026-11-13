@@ -7,6 +7,7 @@ const button = (label, fn, cls = "btn btn-small") => { const b = el("button", cl
 const keyFor = (me) => `gtm-console-wizard-v1:${me.tenant.id}:${me.email || me.username || "user"}`;
 import { hasVerifiedAccess } from "./onboarding-steps.js";
 import { renderTrackedQueries } from "./tracked-queries.js";
+import { createDataAgent } from "./data-agent.js";
 
 export function renderAgentHelp() {
   const box = el("section", "app-strip wizard-agent");
@@ -20,6 +21,7 @@ export function renderAgentHelp() {
 }
 
 export function openWizard({ state, api, scope, saveSettings, renderSettings, renderStatus, onSite, onClose }) {
+  const assistant = createDataAgent({ api, language: LANG, workspaceName: state.me.tenant.name });
   const storageKey = keyFor(state.me); let step = -1, usage = state.me.tenant.usageType || "", status = null, audit = null, read = null, profile = null, profileHints = "", comparison = null, busy = false, selected = state.url;
   const overlay = el("div", "wizard-overlay"); overlay.setAttribute("role", "dialog"); overlay.setAttribute("aria-modal", "true"); overlay.setAttribute("aria-labelledby", "wizard-title");
   const panel = el("div", "wizard-panel"); overlay.append(panel); document.body.append(overlay);
@@ -32,6 +34,7 @@ export function openWizard({ state, api, scope, saveSettings, renderSettings, re
     const title = el("h2", "", [L("Votre site", "Your website"), L("Lecture de votre site", "Your website read"), L("Connectez vos données", "Connect your data"), L("Vos concurrents", "Your competitors"), L("Votre premier audit", "Your first audit")][step] || L("Comment utilisez-vous GTM Growth ?", "How will you use GTM Growth?")); title.id = "wizard-title"; panel.append(title);
     const content = el("div", "wizard-content"); panel.append(content);
     if (step === -1) {
+      content.append(assistant.element);
       const admin = state.me.platformAdmin || state.me.role === "tenant-admin";
       content.append(el("p", "c-note", L("Ce choix adapte le contexte de votre espace. Les droits et les clients accessibles restent ceux accordés par votre administrateur.", "This choice describes your workspace. Access to clients remains controlled by your administrator.")));
       for (const [value, title, hint] of [["company", L("Mon entreprise", "My company"), L("Suivre les sites de votre organisation.", "Track your organization’s sites.")], ["agency", L("Pour mes clients", "For my clients"), L("Travailler dans les espaces clients auxquels vous avez accès.", "Work in the client workspaces you can access.")]]) {
