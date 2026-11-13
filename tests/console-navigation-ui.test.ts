@@ -45,6 +45,9 @@ it.each(["fr", "en"])("opens every navigation entry with content or recovery ste
   expect(memory.get("gtm-console-selected")).toBe("acme");
   const nav = [...document.querySelectorAll<HTMLAnchorElement>(".app-nav a")];
   expect(nav.length).toBe(25);
+  const navIcons = [...nav, document.querySelector<HTMLAnchorElement>("#c-account")!].map(a => a.querySelector("svg")?.innerHTML);
+  expect(navIcons.every(Boolean)).toBe(true);
+  expect(new Set(navIcons).size).toBe(navIcons.length);
   expect(document.querySelector("#c-nav-act a")?.getAttribute("href")).toBe("#journey");
   for (const link of nav) {
     link.click();

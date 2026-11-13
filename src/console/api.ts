@@ -39,6 +39,7 @@ import { auditIndexNow } from "../indexnow/readiness.js";
 import { buildAnalysisBoard } from "../analysis/board.js";
 import { phase3Routes } from "./phase3.js";
 import { aiVisibilityRoutes } from "./ai-visibility.js";
+import { aiConnectionRoutes } from "./ai-connections.js";
 import { aiProviderRoutes } from "./ai-visibility-providers.js";
 import { competitionRoutes } from "./competition.js";
 import { operationsRoutes } from "./ops-routes.js";
@@ -336,6 +337,7 @@ export function buildConsoleRouter(routes: ConsoleRoute[], options: ConsoleOptio
 
   for (const route of routes) {
     router.post(route.path, async (req: Request, res: Response) => {
+      if (route.path.startsWith("/ai-visibility/accounts")) res.setHeader("Cache-Control", "no-store");
       const body = { ...((req.body ?? {}) as Body) };
       const { user, tenancy } = res.locals as Locals;
       const scoped = await scopeRequest(route, body, tenancy!);
@@ -395,7 +397,7 @@ export function discoverTenant(store: TenantStore, query: { email?: string; host
 }
 
 export function allConsoleRoutes(): ConsoleRoute[] {
-  return [...phase1Routes, ...phase2Routes, ...phase3Routes, ...analyticsRoutes, ...gtmRoutes, ...aiVisibilityRoutes, ...aiProviderRoutes, ...competitionRoutes, ...operationsRoutes, ...applyPreviewRoutes, ...localSeoRoutes, ...visualCatalogRoutes];
+  return [...phase1Routes, ...phase2Routes, ...phase3Routes, ...analyticsRoutes, ...gtmRoutes, ...aiVisibilityRoutes, ...aiProviderRoutes, ...aiConnectionRoutes, ...competitionRoutes, ...operationsRoutes, ...applyPreviewRoutes, ...localSeoRoutes, ...visualCatalogRoutes];
 }
 
 export function mountConsoleApi(app: Express, options: ConsoleOptions = {}): void {

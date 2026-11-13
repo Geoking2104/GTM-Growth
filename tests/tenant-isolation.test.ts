@@ -13,6 +13,7 @@ import { saveTenantReport } from "../src/tenants/data.js";
 import { KeycloakAdmin } from "../src/tenants/keycloak-admin.js";
 import { buildCompetitionMcpRouter } from "../src/console/competition-mcp.js";
 import { aiVisibilityRoutes } from "../src/console/ai-visibility.js";
+import { aiConnectionRoutes, connectAIAccount } from "../src/console/ai-connections.js";
 import { aiProviderRoutes } from "../src/console/ai-visibility-providers.js";
 import { createApplyPreviewRoutes } from "../src/console/apply-routes.js";
 import type { Fetcher } from "../src/geo/http.js";
@@ -68,7 +69,7 @@ const fakeFetch = (async (u: string | URL, init?: RequestInit) => {
   return new Response(null, { status: 204 });
 }) as typeof fetch;
 const keycloakAdmin = new KeycloakAdmin({ baseUrl: "http://kc", authRealm: "master", clientId: "p", clientSecret: "s", fetch: fakeFetch });
-app.use("/c", buildConsoleRouter([echo, ...aiVisibilityRoutes, ...aiProviderRoutes, ...createApplyPreviewRoutes(applyFetcher)], { config, jwksLoader: loader, store, keycloakAdmin }));
+app.use("/c", buildConsoleRouter([echo, ...aiVisibilityRoutes, ...aiProviderRoutes, ...aiConnectionRoutes, ...createApplyPreviewRoutes(applyFetcher)], { config, jwksLoader: loader, store, keycloakAdmin }));
 app.use("/mcp-competition", buildCompetitionMcpRouter({ config, jwksLoader: loader, store }));
 app.use("/p", buildPlatformRouter({ config, jwksLoader: loader, store, keycloakAdmin }));
 let server: ReturnType<typeof app.listen>; let root = "";
@@ -282,4 +283,19 @@ describe("MCP concurrence tenant", () => {
     const other = await send(superAdmin, rpc("competition_report", { datasetId: id }), "globex"); expect(await other.text()).not.toContain("Acme");
     const spoof = await send(acmeUser, rpc("competition_report", { datasetId: id, tenantId: "globex" })); expect(await spoof.text()).toContain("Invalid arguments");
   });
+});
+
+
+it("restricts account management to tenant admins and never exposes keys across tenants", async () => {
+  const saved = await connectAIAccount("acme", { provider: "openai", label: "Test project", key: "sk-test-not-real-secret-12345", confirmed: true }, async () => new Response('{"data":[]}'));
+  for (const route of ["accounts", "accounts/connect", "accounts/check", "accounts/disconnect"]) {
+    expect((await call(`/c/ai-visibility/${route}`, acmeUser, { provider: "openai", accountId: saved.id })).status).toBe(403);
+  }
+  const own = await call("/c/ai-visibility/accounts", acmeAdmin, { provider: "openai" });
+  expect(own.headers.get("cache-control")).toBe("no-store"); const payload = await own.json();
+  expect(payload.accounts.some((a: any) => a.id === saved.id)).toBe(true); expect(JSON.stringify(payload)).not.toContain("sk-test");
+  const other = await call("/c/ai-visibility/accounts", { organization: ["globex"], groups: ["/tenants/globex/tenant-admin"] }, { provider: "openai" });
+  expect((await other.json()).accounts.some((a: any) => a.id === saved.id)).toBe(false);
+  const foreign = await call("/c/ai-visibility/accounts/disconnect", { organization: ["globex"], groups: ["/tenants/globex/tenant-admin"] }, { provider: "openai", accountId: saved.id, confirmed: true });
+  expect(foreign.status).toBe(502);
 });
