@@ -4,7 +4,7 @@ import { renderLocalSeoWorkspace } from "./local-seo.js";
  * données en direct via /api/console/*. Les définitions d'outils viennent de tools.js. */
 import { API_BASE, DISCOVER, CONSOLE_DOMAIN } from "./config.js";
 import { login, logout, handleRedirect, accessToken, currentTenant, setTenant, accountConsoleUrl } from "./auth.js";
-import { TABS, raw } from "./tools.js";
+import { TABS } from "./tools.js";
 import { el } from "./render.js";
 import { t, tr, actionLabel, LANG } from "./i18n.js";
 import { icon } from "./icons.js";
@@ -23,6 +23,10 @@ import { renderApplyMode } from "./apply.js";
 import { openWizard, renderAgentHelp } from "./onboarding-wizard.js";
 import { toolbar, renderSearchPerformance, renderQueryPages, renderSitemaps, renderGa4, renderRealtime, renderEcommerce, renderTechnology, renderGtm, renderBing, renderStatus, renderTags, renderSettings } from "./analytics.js";
 import { mountPublicRead } from "./public-read.js";
+import { renderAction } from "./action-view.js";
+import { renderDataGuide } from "./data-guidance.js";
+import { resolveWorkspace } from "./workspace-context.js";
+import { renderGlobalSeo } from "./global-seo.js";
 import { renderCustomerJourneyWorkspace } from "./customer-journey-workspace.js";
 
 const $ = (s) => document.querySelector(s);
@@ -41,14 +45,14 @@ const host = (u) => { try { return new URL(u).hostname.replace(/^www\./, ""); } 
 async function fetchApi(route, body, { binary = false } = {}) {
   const token = await accessToken();
   if (!token) { await login(); throw new Error("Session expirée"); }
-  const res = await fetch(`${API_BASE}${route}`, { method: "POST", headers: { "Content-Type": "application/json", ...headers(token) }, body: JSON.stringify(body) });
+  const res = await fetch(`${API_BASE}${route}`, { method: "POST", headers: { "Content-Type": "application/json", ...headers(token) }, body: JSON.stringify(body), ...(automaticRoutes.has(route) ? { signal: AbortSignal.timeout(90000) } : {}) });
   if (res.status === 401) { await login(); throw new Error("Session expirée"); }
-  if (!res.ok) { const e = await res.json().catch(() => ({})); throw new Error(e.error || `Erreur ${res.status}`); }
+  if (!res.ok) { const e = await res.json().catch(() => ({})); const error = new Error(e.error || `HTTP ${res.status}`); error.status = res.status; throw error; }
   return binary ? res.blob() : res.json();
 }
 
 
-const automaticRoutes = new Set(["/overview", "/tracking/status", "/search/performance", "/search/query-pages", "/search/sitemaps", "/ga4/overview", "/ga4/ecommerce", "/ga4/technology", "/bing/performance", "/sitemap/map", "/geo/citability", "/geo/robots", "/geo/schema", "/performance/weight", "/ai-visibility/datasets", "/competition/state", "/gtm/inventory", "/search/queries", "/search/trends", "/search/losing-pages", "/keywords/opportunities", "/sitemap/audit", "/geo/llms", "/performance/pagespeed", "/performance/crux", "/audit/technical", "/audit/serp-preview"]);
+const automaticRoutes = new Set(["/overview", "/tracking/status", "/search/performance", "/search/query-pages", "/search/sitemaps", "/ga4/overview", "/ga4/ecommerce", "/ga4/technology", "/bing/performance", "/sitemap/map", "/geo/citability", "/geo/robots", "/geo/schema", "/performance/weight", "/ai-visibility/datasets", "/competition/state", "/gtm/inventory", "/search/queries", "/search/trends", "/search/losing-pages", "/keywords/opportunities", "/sitemap/audit", "/geo/llms", "/performance/pagespeed", "/performance/crux", "/audit/technical", "/audit/serp-preview", "/calc/ctr"]);
 const background = createBackgroundLoader((route, body) => fetchApi(route, body), renderBackground);
 export async function api(route, body, options = {}) {
   if (!options.binary && automaticRoutes.has(route)) return background.request(selectedTenant() || state.me?.tenant?.id || "", route, body);
@@ -115,21 +119,17 @@ const custom = (id, tabs) => ({ id, tabs });
 const fromTool = (id, filter = () => true, intro) => () => { const x = tool(id); return { intro: intro ?? tr(x.intro), tabs: x.actions.filter(filter).map((a) => ({ id: a.id, label: actionLabel(a), action: a })) }; };
 const SECTIONS = {
   track: [
-    { id: "local_seo", icon: "geo", build: () => custom("local_seo", [{ id: "network", label: LANG === "fr" ? "Réseau et établissements" : "Network and locations", needsDomain: false, async: async () => renderLocalSeo({ api, me: state.me }) }, { id: "planning", label: LANG === "fr" ? "Préparer mon établissement" : "Plan my business", needsDomain: false, async: async () => renderLocalSeoWorkspace({ state }) }]) },
-    { id: "journey", icon: "geo", build: () => custom("journey", [
-      { id: "map", label: LANG === "fr" ? "Mon parcours client" : "My customer journey", needsDomain: false, async: async () => renderCustomerJourneyWorkspace({ state, api }) },
-      { id: "prompts", label: LANG === "fr" ? "Questions suivies" : "Tracked questions", needsDomain: false, async: async () => renderOpsPrompts({ api, me: state.me }) },
-    ]) },
     { id: "overview", icon: "overview", build: () => custom("overview", [
       { id: "board", label: t("s_overview"), async: async () => {
-        const [ov, status, reports] = await Promise.all([overview().catch(() => null), api("/tracking/status", scope()).catch(() => null), reportsList()]);
+        const [ov, status, reports] = await Promise.all([overview().catch(error => ({ loadError: error })), api("/tracking/status", scope()).catch(() => null), reportsList()]);
         const [search, ga4] = await Promise.all([
           status?.gsc?.hasAccess === true ? api("/search/performance", scope()).catch(() => ({ problem: true })) : null,
           status?.ga4?.hasAccess === true ? api("/ga4/overview", scope()).catch(() => ({ problem: true })) : null,
         ]);
-        return [renderAudienceOverview({ search, ga4, status, state, rerender }), ...(ov ? renderOverview(ov) : []), renderOnboarding({ status, tenant: state.me?.tenant, overview: ov, reports }), wizardButton(), renderAgentHelp()];
+        return [renderAudienceOverview({ search, ga4, status, state, rerender }), ...(ov?.loadError ? [renderDataGuide("geo", { error: ov.loadError, retry: rerender })] : ov ? renderOverview(ov) : []), renderOnboarding({ status, tenant: state.me?.tenant, overview: ov?.loadError ? null : ov, reports }), wizardButton(), renderAgentHelp()];
       } },
       { id: "plan", label: t("t_plan"), async: async () => renderPlan(await overview()) }]) },
+    { id: "local_seo", icon: "geo", build: () => custom("local_seo", [{ id: "website", label: LANG === "fr" ? "SEO du site" : "Website SEO", needsDomain: false, async: async () => renderGlobalSeo({ state, api, scope }) }, { id: "network", label: LANG === "fr" ? "Réseau et établissements" : "Network and locations", needsDomain: false, async: async () => renderLocalSeo({ api, me: state.me }) }, { id: "planning", label: LANG === "fr" ? "Préparer mon établissement" : "Plan my business", needsDomain: false, async: async () => renderLocalSeoWorkspace({ state }) }]) },
     { id: "competition", icon: "geo", build: () => custom("competition", [{ id: "board", label: LANG === "fr" ? "Concurrence" : "Competition", needsDomain: false, async: async () => renderCompetition({ api, me: state.me, property: state.property, days: state.days }) }]) },
     { id: "ai_visibility", icon: "geo", build: () => custom("ai_visibility", [{ id: "board", label: LANG === "fr" ? "Réponses IA" : "AI answers", needsDomain: false, async: async () => renderAiVisibility({ api, me: state.me }) }]) },
     { id: "gsc", icon: "google", build: () => custom("gsc", [
@@ -144,11 +144,15 @@ const SECTIONS = {
     { id: "bing", icon: "bing", build: () => custom("bing", [{ id: "performance", label: t("t_bing"), ...live("/bing/performance", renderBing) }]) },
     { id: "geo", icon: "geo", build: fromTool("geo", (a) => a.id !== "citability") },
     { id: "citability", icon: "citability", build: fromTool("geo", (a) => a.id === "citability", t("citIntro")) },
-    { id: "indexnow", icon: "indexnow", build: () => custom("indexnow", [{ id: "readiness", label: t("s_indexnow"), needsDomain: false, async: async () => renderIndexNow(await overview().catch(() => null)) }]) },
+    { id: "indexnow", icon: "indexnow", build: () => custom("indexnow", [{ id: "readiness", label: t("s_indexnow"), needsDomain: false, async: async () => renderIndexNow(await overview()) }]) },
     { id: "sitemap", icon: "sitemap", build: fromTool("sitemap") },
     { id: "performance", icon: "performance", build: fromTool("performance") },
   ],
   act: [
+    { id: "journey", icon: "geo", build: () => custom("journey", [
+      { id: "map", label: LANG === "fr" ? "Mon parcours client" : "My customer journey", needsDomain: false, async: async () => renderCustomerJourneyWorkspace({ state, api }) },
+      { id: "prompts", label: LANG === "fr" ? "Questions suivies" : "Tracked questions", needsDomain: false, async: async () => renderOpsPrompts({ api, me: state.me }) },
+    ]) },
     { id: "apply_mode", icon: "audit", build: () => custom("apply_mode", [
       { id: "preview", label: LANG === "fr" ? "Correctifs GEO" : "GEO fixes", needsDomain: false, async: async () => renderApplyMode({ api, me: state.me, url: state.url }) }]) },
     { id: "search", icon: "search", build: fromTool("search") },
@@ -173,41 +177,6 @@ const SECTIONS = {
 };
 const ALL = [...SECTIONS.track, ...SECTIONS.act];
 
-function paramField(p) {
-  const label = el("label", "c-field"); label.append(el("span", "", tr(p.label)));
-  let input;
-  if (p.type === "select") { input = el("select"); for (const [v, txt] of p.options) { const o = el("option", "", tr(txt)); o.value = v; input.append(o); } }
-  else if (p.type === "textarea") { input = el("textarea"); input.rows = p.rows ?? 4; input.value = p.value ?? ""; }
-  else { input = el("input"); input.type = p.type ?? "text"; if (p.value !== undefined) input.value = p.value; if (p.step) input.step = p.step; if (p.placeholder) input.placeholder = p.placeholder; }
-  input.name = p.name; label.append(input); return label;
-}
-
-function renderAction(action) {
-  const card = el("section", "c-card");
-  card.append(el("h3", "", actionLabel(action)));
-  if (action.help) card.append(el("p", "c-note", tr(action.help)));
-  const form = el("form", "c-form");
-  for (const p of action.params ?? []) form.append(paramField(p));
-  const btn = el("button", "btn btn-small", tr(action.button) ?? t("run")); btn.type = "submit"; form.append(btn);
-  const out = el("div", "c-out");
-  form.onsubmit = async (event) => {
-    event.preventDefault();
-    const body = { url: state.url, property: state.property || undefined };
-    for (const [k, v] of new FormData(form)) body[k] = v;
-    if (action.local) { out.replaceChildren(...[action.local(body)].flat()); return; }
-    if (action.needsUrl !== false && !state.url) { out.replaceChildren(el("p", "c-error", t("noDomain"))); return; }
-    btn.disabled = true; out.replaceChildren(el("p", "c-loading", t("running")));
-    try {
-      if (action.download) { const blob = await api(action.route, body, { binary: true }); const a = el("a", "btn btn-small", t("download")); a.href = URL.createObjectURL(blob); a.download = action.download; out.replaceChildren(a); a.click(); return; }
-      const data = await api(action.route, body);
-      out.replaceChildren(...[action.render ? action.render(data, body) : []].flat(), raw(data));
-    } catch (error) { out.replaceChildren(el("p", "c-error", error.message)); }
-    finally { btn.disabled = false; }
-  };
-  card.append(form, out);
-  if (action.route && automaticRoutes.has(action.route) && (!action.needsUrl || state.url)) form.requestSubmit();
-  return card;
-}
 
 function wizardButton() {
   const button = el("button", "btn btn-small", LANG === "fr" ? "Refaire le démarrage guidé" : "Restart guided setup");
@@ -220,6 +189,7 @@ function launchWizard() {
     localStorage.setItem("gtm-console-url", url); $("#c-url").value = url; refreshSite();
   }, onClose: () => show("overview") });
 }
+let started = false;
 let current = { section: "overview", tab: "" };
 async function saveSettings(body) {
   const token = await accessToken();
@@ -234,6 +204,7 @@ async function saveSettings(body) {
   return data;
 }
 async function show(sectionId, tabId) {
+  if (!started) return;
   const section = ALL.find((s) => s.id === sectionId) ?? ALL[0];
   const def = section.build();
   const tab = def.tabs.find((x) => x.id === tabId) ?? def.tabs[0];
@@ -249,12 +220,15 @@ async function show(sectionId, tabId) {
   }
   const panel = el("section", "app-panel c-panel"); panel.setAttribute("role", "tabpanel");
   $("#c-panels").replaceChildren(panel);
+  if (!state.me?.tenant && section.id !== "platform") {
+    panel.append(renderDataGuide("tenant", { error: state.contextError })); return;
+  }
   if (def.intro) panel.append(el("p", "c-intro", def.intro));
-  if (tab.action) { panel.append(renderAction(tab.action)); return; }
-  if (!state.url && tab.needsDomain !== false) { panel.append(el("p", "c-intro", t("noDomain"))); return; }
+  if (tab.action) { panel.append(renderAction(tab.action, { state, api, automaticRoutes })); return; }
+  if (!state.url && tab.needsDomain !== false) { panel.append(renderDataGuide("domain")); return; }
   const loading = el("p", "c-loading", t("loadingOverview")); panel.append(loading);
   try { const nodes = await tab.async(); if (current.section === section.id && current.tab === tab.id) loading.replaceWith(...[nodes].flat()); }
-  catch (error) { loading.replaceWith(el("p", "c-error", error.message)); }
+  catch (error) { if (panel.isConnected) loading.replaceWith(renderDataGuide(section.id, { error, retry: rerender })); }
 }
 
 function mountNav() {
@@ -345,9 +319,12 @@ async function start() {
   sw.onclick = () => { picker.hidden = !picker.hidden; sw.setAttribute("aria-expanded", String(!picker.hidden)); };
   try {
     const token = await accessToken();
-    const res = await fetch(`${API_BASE}/me`, { headers: headers(token) });
-    const me = await res.json();
-    if (!res.ok) throw new Error(me.error || `Erreur ${res.status}`);
+    const me = await resolveWorkspace(async (tenant) => {
+      const res = await fetch(`${API_BASE}/me`, { headers: { Authorization: `Bearer ${token}`, ...(tenant ? { "X-Tenant": tenant } : {}) } });
+      const value = await res.json();
+      if (!res.ok) throw new Error(value.error || `Erreur ${res.status}`);
+      return value;
+    }, selectedTenant(), id => sessionStorage.setItem("gtm-console-selected", id));
     state.me = me;
     $("#c-user").textContent = `${me.username ?? ""}${me.tenant ? ` · ${me.tenant.name}` : ""}${me.platformAdmin ? ` · ${t("superAdmin")}` : ""}`;
     if (me.accountConsole) $("#c-account").href = me.accountConsole;
@@ -355,10 +332,15 @@ async function start() {
     const select = $("#c-tenant");
     if ((me.memberships?.length ?? 0) > 1 || me.platformAdmin) {
       $("#c-tenant-wrap").hidden = false;
+      const empty = el("option", "", LANG === "fr" ? "Choisir un client…" : "Choose a customer…"); empty.value = ""; select.append(empty);
       for (const m of me.memberships ?? []) { const o = el("option", "", `${m.id} (${m.role})`); o.value = m.id; select.append(o); }
       if (me.tenant && ![...select.options].some((o) => o.value === me.tenant.id)) { const o = el("option", "", me.tenant.id); o.value = me.tenant.id; select.append(o); }
       select.value = me.tenant?.id ?? selectedTenant() ?? "";
     }
+    select.onchange = () => {
+      if (!select.value || select.value === selectedTenant()) return;
+      sessionStorage.setItem("gtm-console-selected", select.value); location.reload();
+    };
     if (me.tenant) {
       // The picker was historically shared by all tenants on this browser.
       // Never reuse another tenant's scope after switching workspaces.
@@ -376,7 +358,7 @@ async function start() {
       if (!me.tenant.ga4Properties?.includes(state.ga4Property)) state.ga4Property = me.tenant.ga4Properties?.[0] || "";
       if (!me.tenant.bingSites?.includes(state.bingSite)) state.bingSite = me.tenant.bingSites?.[0] || "";
     }
-  } catch (error) { $("#c-user").textContent = error.message; }
+  } catch (error) { state.contextError = error; $("#c-user").textContent = LANG === "fr" ? "Espace indisponible" : "Workspace unavailable"; }
   $("#c-url").value = state.url; $("#c-property").value = state.property; $("#c-ga4").value = state.ga4Property; $("#c-bing").value = state.bingSite;
   picker.onsubmit = (e) => {
     e.preventDefault();
@@ -396,8 +378,9 @@ async function start() {
     notice.setAttribute("role", "alert"); $("#c-app").prepend(notice);
   }
   const [s, tb] = location.hash.slice(1).split("/");
-  if (!state.url) { picker.hidden = false; sw.setAttribute("aria-expanded", "true"); }
+  if (!state.url || !state.me?.tenant) { picker.hidden = false; sw.setAttribute("aria-expanded", "true"); }
   startBackground();
+  started = true;
   show(s || "overview", tb);
   if (state.me?.tenant && !state.requestedDomainUnavailable && (state.openRequestedWizard || !localStorage.getItem(`gtm-console-wizard-v1:${state.me.tenant.id}:${state.me.email || state.me.username || "user"}`))) launchWizard();
 }

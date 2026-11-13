@@ -1,5 +1,6 @@
 /* Operations console (T-1/T-2/T-4/T-9/T-10/T-11): live AI-visibility runs,
  * keyword rank tracking, article pipeline with quality gates, alerts. */
+import { renderDataGuide } from "./data-guidance.js";
 import { el } from "./render.js";
 import { LANG } from "./i18n.js";
 const L = (fr, en) => LANG === "fr" ? fr : en;
@@ -15,7 +16,7 @@ export function renderOpsPrompts({ api, me }) {
   const load = async () => {
     message.textContent = L("Chargement…", "Loading…");
     try { data = await api("/visibility/prompts", {}); message.textContent = ""; draw(); }
-    catch (error) { message.textContent = error.message; }
+    catch (error) { message.textContent = ""; content.replaceChildren(renderDataGuide("ops", { error, retry: load })); }
   };
   const draw = () => {
     const wrap = el("div");
@@ -29,7 +30,7 @@ export function renderOpsPrompts({ api, me }) {
       if (admin) li.append(button(L("Retirer", "Remove"), async () => { try { await api("/visibility/prompts/remove", { id: p.id }); await load(); } catch (error) { message.textContent = error.message; } }));
       list.append(li);
     }
-    if (!(data?.prompts ?? []).length) list.append(el("li", "", L("Aucun prompt suivi pour l'instant.", "No tracked prompts yet.")));
+    if (!(data?.prompts ?? []).length) wrap.append(renderDataGuide("journey", { reason: L("Aucune question n’est suivie. Ajoutez-en une ci-dessous ou préparez-la dans Parcours client. Les mesures nécessitent ensuite des réponses observées.", "No question is tracked yet. Add one below or prepare it in Customer journey. Measurements then require observed answers.") }));
     wrap.append(list);
     if (admin) {
       const row = el("p");
@@ -55,7 +56,7 @@ export function renderOpsPrompts({ api, me }) {
     content.replaceChildren(wrap);
     void api("/visibility/runs", {}).then((r) => { runs = r; const rows = (r.runs ?? []).slice(0, 5).map((x) => `${x.ranAt.slice(0, 16).replace("T", " ")} — ${x.succeeded}/${x.prompts} ok${x.failed ? `, ${x.failed} échecs` : ""}`); if (rows.length) content.append(el("p", "c-note", `${L("Derniers contrôles", "Latest checks")} : ${rows.join(" | ")}`)); }).catch(() => {});
   };
-  content.append(button(L("Charger", "Load"), load));
+  void load();
   return box;
 }
 
@@ -69,7 +70,7 @@ export function renderOpsRank({ api, me }) {
   const load = async () => {
     message.textContent = L("Chargement…", "Loading…");
     try { const data = await api("/rank/keywords", {}); board = data.board; message.textContent = data.supplier ? `${L("Fournisseur", "Supplier")} : ${data.supplier.provider}` : L("Aucun fournisseur SERP configuré (RANK_SUPPLIER_URL).", "No SERP supplier configured (RANK_SUPPLIER_URL)."); draw(); }
-    catch (error) { message.textContent = error.message; }
+    catch (error) { message.textContent = ""; content.replaceChildren(renderDataGuide("rank", { error, retry: load })); }
   };
   const draw = () => {
     const wrap = el("div");
@@ -79,7 +80,7 @@ export function renderOpsRank({ api, me }) {
     table.append(head);
     for (const r of rows) { const tr = el("tr"); for (const v of [r.keyword, String(r.position), r.url, r.aio, r.checkedAt, r.history]) { const td = el("td", "", String(v)); td.style.maxWidth = "220px"; td.style.overflow = "hidden"; td.style.textOverflow = "ellipsis"; tr.append(td); } table.append(tr); }
     wrap.append(table);
-    if (!(board ?? []).length) wrap.append(el("p", "c-note", L("Aucun mot-clé suivi.", "No tracked keywords.")));
+    if (!(board ?? []).length) wrap.append(el("p", "c-note", L("Aucun mot-clé suivi. Ajoutez un mot-clé ci-dessous. Pour obtenir des positions, configurez une source de positions avec l’administrateur, ou utilisez les requêtes Search Console dans Mots-clés.", "No tracked keywords. Add one below. To obtain rankings, configure a rank source with the administrator, or use Search Console queries under Keywords.")));
     if (admin) {
       const row = el("p");
       row.append(input, button(L("Suivre", "Track"), async () => { try { await api("/rank/keywords/add", { keyword: input.value }); input.value = ""; await load(); } catch (error) { message.textContent = error.message; } }),
@@ -89,7 +90,7 @@ export function renderOpsRank({ api, me }) {
     wrap.append(button(L("Actualiser", "Refresh"), load));
     content.replaceChildren(wrap);
   };
-  content.append(button(L("Charger", "Load"), load));
+  void load();
   return box;
 }
 
@@ -142,11 +143,11 @@ export function renderOpsAlerts({ api, me }) {
   box.append(el("h3", "", L("Alertes", "Alerts")), el("p", "c-note", L("Chutes de position, pertes de mentions IA, événements du pipeline article.", "Rank drops, AI mention losses, article pipeline events.")), content, message);
   const load = async () => {
     message.textContent = L("Chargement…", "Loading…");
-    try { const data = await api("/ops/alerts", {}); message.textContent = ""; draw(data.alerts ?? []); } catch (error) { message.textContent = error.message; }
+    try { const data = await api("/ops/alerts", {}); message.textContent = ""; draw(data.alerts ?? []); } catch (error) { message.textContent = ""; content.replaceChildren(renderDataGuide("ops", { error, retry: load })); }
   };
   const draw = (alerts) => {
     const wrap = el("div");
-    if (!alerts.length) wrap.append(el("p", "c-note", L("Aucune alerte non lue.", "No unacknowledged alerts.")));
+    if (!alerts.length) wrap.append(el("p", "c-note", L("Aucune alerte non lue. Les alertes sont créées après des contrôles de positions, de mentions IA ou des opérations sur les articles ; sans contrôles, aucune évolution n’est mesurée.", "No unacknowledged alerts. Alerts are created after rank checks, AI mention checks or article operations; without checks, no change is measured.")));
     const list = el("ul", "tracked-list");
     for (const a of alerts) {
       const li = el("li");
@@ -157,6 +158,6 @@ export function renderOpsAlerts({ api, me }) {
     wrap.append(list, button(L("Actualiser", "Refresh"), load));
     content.replaceChildren(wrap);
   };
-  content.append(button(L("Charger", "Load"), load));
+  void load();
   return box;
 }

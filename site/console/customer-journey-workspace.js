@@ -3,6 +3,7 @@
 import { renderJourneyPreview } from "./customer-journey.js";
 import { normalisePublicUrl } from "./public-read-model.js";
 import { el } from "./render.js";
+import { renderDataGuide } from "./data-guidance.js";
 import { LANG } from "./i18n.js";
 
 const L = (fr, en) => LANG === "fr" ? fr : en;
@@ -28,10 +29,18 @@ export function renderCustomerJourneyWorkspace({ state, api }) {
   const output = el("div");
   const button = el("button", "btn btn-small", L("Lire la page et afficher le parcours", "Read the page and map the journey"));
   button.type = "button";
-  button.onclick = async () => {
+  const render = (url, data = {}) => renderJourneyPreview({
+    language: LANG, mode: "workspace",
+    data: { url: data.finalUrl || url, finalUrl: data.finalUrl || url, pageSignals: data.pageSignals || {}, opportunities: data.opportunities || [] },
+    savePrompt: (prompt) => {
+      if (!state.me?.platformAdmin && state.me?.role !== "tenant-admin") throw new Error(L("Droits administrateur requis.", "Administrator permissions required."));
+      return api("/visibility/prompts/add", prompt);
+    },
+  });
+  const load = async () => {
     const url = normalisePublicUrl(state.url || "");
     if (!url || !ownedUrl(state.me?.tenant, url)) {
-      status.textContent = L("Sélectionnez une URL appartenant au domaine autorisé de votre espace.", "Select a URL on a domain authorised for your workspace.");
+      output.replaceChildren(renderDataGuide("domain"));
       return;
     }
     button.disabled = true;
@@ -46,28 +55,18 @@ export function renderCustomerJourneyWorkspace({ state, api }) {
       if (!response.ok) throw new Error("HTTP " + response.status);
       const data = await response.json();
       if (data.httpStatus && (data.httpStatus < 200 || data.httpStatus >= 400)) throw new Error("HTTP " + data.httpStatus);
-      const result = renderJourneyPreview({
-        language: LANG,
-        mode: "workspace",
-        data: {
-          url: data.finalUrl || url, finalUrl: data.finalUrl || url,
-          pageSignals: data.pageSignals || {},
-          opportunities: data.opportunities || [],
-        },
-        savePrompt: (prompt) => {
-          if (!state.me?.platformAdmin && state.me?.role !== "tenant-admin")
-            throw new Error(L("Droits administrateur requis.", "Administrator permissions required."));
-          return api("/visibility/prompts/add", prompt);
-        },
-      });
-      output.replaceChildren(result);
+      output.replaceChildren(render(url, data));
       status.textContent = L("Parcours prêt. Les questions sont des hypothèses non observées.", "Journey ready. Questions are unobserved hypotheses.");
     } catch (error) {
-      status.textContent = L("Lecture indisponible : ", "Read unavailable: ") + (error?.message || String(error));
+      status.textContent = L("Lecture indisponible. La trame ci-dessous est manuelle : aucun contenu de page n’a été observé.", "Reading unavailable. The outline below is manual: no page content was observed.");
+      output.replaceChildren(renderDataGuide("journey", { error, retry: load }), render(url));
     } finally {
       button.disabled = false;
     }
   };
-  panel.append(button, status, output);
+  button.onclick = load;
+  button.textContent = L("Actualiser la lecture", "Refresh page reading");
+  panel.append(el("p", "c-note", L("Agir → Parcours client : préparez vos contenus et vos questions avant de mesurer leur visibilité.", "Act → Customer journey: prepare content and questions before measuring visibility.")), button, status, output);
+  void load();
   return panel;
 }

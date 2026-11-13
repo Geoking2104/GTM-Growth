@@ -1,6 +1,7 @@
 import { renderLocalOperations } from "./local-seo-operations.js";
 import { parseRegistryCsv } from "./local-seo-csv.js";
 /** Local SEO workspace. All dynamic content uses text nodes. */
+import { renderDataGuide } from "./data-guidance.js";
 import { LANG } from "./i18n.js";
 import { el } from "./render.js";
 const L = (fr,en) => LANG === "fr" ? fr : en;
@@ -48,6 +49,7 @@ export async function renderLocalSeo({ api, me }) {
   async function refresh() {
     const data=await call("state");content.replaceChildren();
     content.append(el("p","c-note",L("Observations déclarées, règles calculées et validation humaine. GBP et Node-RED nécessitent une configuration serveur. L’IA locale reste indisponible. Aucun repli payant.","Declared observations, calculated rules and human approval. GBP and Node-RED require server configuration. Local AI remains unavailable. No paid fallback.")));
+    if (!data.sites.length || !data.observations.length) content.append(renderDataGuide("local_seo"));
     content.append(renderLocalOperations({data,admin,call,run,refresh}));
     const filters=el("div","c-fields"); const country=field(filters,L("Filtrer par pays","Filter by country"));const language=field(filters,L("Filtrer par langue de recherche","Filter by search language"));content.append(filters);
     const list=el("div");content.append(list);
@@ -79,7 +81,7 @@ export async function renderLocalSeo({ api, me }) {
       }
     }
     country.oninput=draw;language.oninput=draw;draw();
-    const imports=el("details");imports.append(el("summary","",L("Importer et organiser","Import and organise")));content.append(imports);
+    const imports=el("details");imports.open=!data.sites.length;imports.append(el("summary","",L("Importer et organiser","Import and organise")));content.append(imports);
     if(admin){
       imports.append(el("h3","",L("Référentiel des établissements","Location registry")),el("p","c-note",L("Import JSON : identifiants stables, pays ISO, langues BCP 47, fuseau IANA et page appartenant à votre espace. Aucun champ d’adresse privée n’est accepté.","JSON import: stable IDs, ISO countries, BCP 47 languages, IANA time zone and a page owned by your workspace. Private address fields are not accepted.")));
       const registry=field(imports,L("Établissements (JSON)","Locations (JSON)"),JSON.stringify([{id:"brussels",name:"Brussels",brand:"Brand",country:"BE",languages:["fr-BE","nl-BE"],timezone:"Europe/Brussels",kind:"physical",page:"https://"+(me?.tenant?.domains?.[0]||"example.com")+"/brussels"}],null,2),"textarea");
@@ -101,6 +103,17 @@ export async function renderLocalSeo({ api, me }) {
     button(draft,L("Enregistrer le brouillon","Save draft"),()=>run(async()=>{await call("action",{action:{siteId:siteId.value,title:title.value,content:text.value,language:lang.value,owner:owner.value,due:due.value,evidence:evidence.value.split(",").map(s=>s.trim()).filter(Boolean)}});await refresh();}));
     button(content,L("Exporter mon périmètre (JSON)","Export my scope (JSON)"),()=>run(async()=>{const value=await call("export");const url=URL.createObjectURL(new Blob([JSON.stringify({reportLocale:LANG,...value},null,2)],{type:"application/json"}));const a=el("a");a.href=url;a.download="local-seo-"+LANG+".json";a.click();setTimeout(()=>URL.revokeObjectURL(url),1000);}));
   }
-  try{await refresh();}catch{status.textContent=L("Accès indisponible. Un compte client actif et une délégation sont nécessaires ; le rôle plateforme seul ne donne pas accès aux données locales.","Access unavailable. An active customer account and a delegation are required; the platform role alone does not grant local data access.");}
+  const load = async () => {
+    status.textContent = L("Chargement du réseau…", "Loading locations…");
+    try { await refresh(); status.textContent = ""; }
+    catch (error) {
+      const denied = error.status === 403 || /LOCAL_ACCESS/.test(error.message) || me?.platformAdmin;
+      status.textContent = denied
+        ? L("Accès local non autorisé pour ce compte.", "Local access is not authorised for this account.")
+        : L("Les données locales n’ont pas pu être chargées. Elles n’ont pas été effacées.", "Local data could not be loaded. It has not been deleted.");
+      content.replaceChildren(renderDataGuide("local_seo", { error, retry: load }));
+    }
+  };
+  await load();
   return root;
 }

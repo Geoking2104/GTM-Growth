@@ -1,6 +1,7 @@
 /* Track : Search Console, GA4 et Bing en direct + statut des accès et paramètres.
  * Même vocabulaire visuel que la vue d'ensemble (kpi-row, app-chart, app-table). */
 import { el, table } from "./render.js";
+import { renderDataGuide } from "./data-guidance.js";
 import { LANG } from "./i18n.js";
 
 export const L = (fr, en) => (LANG === "en" ? en : fr);
@@ -92,11 +93,10 @@ function filterable(rows, columns, filename) {
 
 /** Problème d'accès : quoi faire, et quel e-mail autoriser. */
 export function problemBox(p) {
-  const box = el("div", "c-problem");
-  box.append(el("strong", "", p.state === "no-access" ? L("Accès manquant", "Access missing") : p.state === "not-configured" ? L("À configurer", "To configure") : p.state === "no-credentials" ? L("Compte de service absent", "Service account missing") : L("Erreur", "Error")));
-  box.append(el("p", "", p.message));
+  const source = /GA4|Analytics/i.test(p.message) ? "ga4" : /Bing/i.test(p.message) ? "bing" : /GTM|Tag Manager|conteneur/i.test(p.message) ? "gtm" : "gsc";
+  const box = renderDataGuide(source, { error: p.message });
   if (p.grantEmail) { const e = el("p", ""); e.append(L("E-mail à autoriser : ", "Email to grant: ")); const c = el("code", "", p.grantEmail); const copy = el("button", "c-btn c-btn-ghost", L("Copier", "Copy")); copy.type = "button"; copy.onclick = () => navigator.clipboard?.writeText(p.grantEmail); e.append(c, " ", copy); box.append(e); }
-  if (p.steps?.length) { const ol = el("ol", "c-list"); for (const s of p.steps) ol.append(el("li", "", s)); box.append(ol); }
+  if (p.steps?.length) { const detail = el("details"); detail.append(el("summary", "", L("Instructions renvoyées par la source", "Instructions returned by the source"))); const ol = el("ol", "c-list"); for (const s of p.steps) ol.append(el("li", "", s)); detail.append(ol); box.append(detail); }
   return box;
 }
 

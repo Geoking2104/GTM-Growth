@@ -8,6 +8,57 @@ body.console-page { margin: 0; min-height: 100vh; background: #f3f4f7; padding: 
 .c-app .app-tabs { grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); }
 .c-app .app-main { min-width: 0; }
 
+/* Contain intrinsic input/table widths and avoid stretching short panels to the
+ * height of the navigation. Shared by both interface languages. */
+.c-app, .c-app * { box-sizing: border-box; }
+.c-app .app-body { grid-template-columns: 248px minmax(0, 1fr); }
+.c-app .app-side { flex-direction: column; flex-wrap: nowrap; align-items: stretch; }
+.c-app .app-side .app-group, .c-app .app-side .app-side-foot { display: block; }
+.c-app .app-nav { display: grid; }
+.c-app .app-main { display: flex; flex-direction: column; justify-content: flex-start; }
+.c-app .app-side, .c-picker, .c-field, .c-panel, .c-out, #c-panels,
+.c-panel > *, .c-panel .app-split > *, .ai-controls > * { min-width: 0; }
+.c-field input, .c-field select, .c-field textarea { width: 100%; min-width: 0; max-width: 100%; }
+.c-app input:not([type="checkbox"]):not([type="radio"]), .c-app textarea, .c-app select { max-width: 100%; }
+.c-app .app-filters { flex-wrap: wrap; align-items: center; }
+.c-app .app-pill { min-width: 0; max-width: 100%; overflow-wrap: anywhere; }
+.c-app .app-crumb { flex-wrap: wrap; min-width: 0; overflow-wrap: anywhere; }
+.c-app .app-nav a { align-items: flex-start; }
+.c-app .app-nav svg, .c-app .app-tab-icon { flex-shrink: 0; }
+.c-app .app-nav span { min-width: 0; overflow-wrap: anywhere; }
+.c-app .app-tabs { display: flex; overflow-x: auto; }
+.c-app .app-tab { flex: 1 0 auto; max-width: 100%; }
+.c-panel pre { max-width: 100%; overflow: auto; }
+.c-panel .c-table-wrap, .c-panel .ai-matrix-scroll { width: 100%; min-width: 0; }
+.c-data-guide { margin: 0; padding: 1.1rem 1.2rem; border: 1px solid var(--app-line); border-left: 3px solid var(--app-accent); border-radius: 12px; background: #faf9ff; display: grid; gap: .7rem; overflow-wrap: anywhere; }
+.c-data-guide h3 { margin: 0; font-size: 1rem; }
+.c-data-guide .c-list { display: grid; gap: .5rem; line-height: 1.6; }
+.c-guide-actions { display: flex; flex-wrap: wrap; gap: .55rem; align-items: center; }
+.c-guide-actions a, .c-guide-actions button { white-space: normal; text-align: left; }
+.c-error-detail summary { font-size: .8rem; cursor: pointer; color: var(--app-muted); }
+.c-global-seo { display: grid; gap: 1rem; }
+.c-page-heading h2 { margin: 0 0 .5rem; font-size: 1.25rem; }
+.c-page-heading .c-guide-actions { margin-top: 1rem; }
+.c-app .btn { background: linear-gradient(135deg,#7c3aed,#ec4899); }
+@media (max-width: 900px) {
+  .c-app .app-body { grid-template-columns: 210px minmax(0, 1fr); }
+  .c-app .app-filters { gap: .35rem; }
+  .c-app #c-user { flex-basis: 100%; }
+}
+@media (max-width: 640px) {
+  body.console-page { padding: .4rem; }
+  .c-app .app-body { display: flex; flex-direction: column; }
+  .c-app .app-side { display: flex; border-right: 0; border-bottom: 1px solid var(--app-line); padding: .8rem; }
+  .c-app .app-nav { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .c-app .app-main { padding: .85rem; }
+  .c-app .c-form { grid-template-columns: minmax(0, 1fr); }
+  .c-app .kpi-row { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .c-app .c-panel .app-split { grid-template-columns: minmax(0, 1fr); }
+  .c-app .c-table-bar { flex-wrap: wrap; }
+  .c-app .c-filter { min-width: 0; width: 100%; }
+  .c-app .c-data-guide { padding: .9rem; }
+}
+
 /* Apply Mode preview deliberately has no execution control. */
 .apply-preview-form { max-width: 720px; }
 .apply-preview-output { min-width: 0; }
