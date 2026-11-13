@@ -1,176 +1,55 @@
 # Landing site
 
-Static page for `gtm-growth`, published with GitHub Pages from this folder.
-No build step: HTML, CSS and ES modules.
+The primary product site is **https://gtm.kayroslab.com/**; its French version is **https://gtm.kayroslab.com/fr/**. Nginx on the OVH VPS serves the static pages alongside the API and console. A push alone does not deploy.
 
-The FR/EN landing pages and public console share `local-seo-preview.js` and `local-seo.css` for a free, declaration-based local presence checklist. The authenticated workspace is implemented by `console/local-seo-network.js` and uses tenant-scoped backend commands. See [Global and local SEO](../docs/product/GLOBAL-LOCAL-SEO.md) for the delivered scope and unavailable connectors.
+## One layout, two languages
 
-```
-site/
-  index.html      marketing page + JSON-LD
-  styles.css      all styles, no external fonts
-  app.js          free read, lead form, copy buttons
-  sitemap-map.js   visual sitemap renderer for measured free-read data
-  sitemap-map.css  SlickMap-inspired visual sitemap skin (attribution in file)
-  preview.js      pure URL checks (imported by tests)
-  robots.txt      allow all + sitemap
-  sitemap.xml     one canonical URL
-  llms.txt        dogfooding: the site describes itself for AI agents
-  404.html
-  assets/logo.png
-  assets/logo-128.png
-  assets/logo-64.png
-```
+The English presentation is the shared visual reference. Both homepages retain the complete French homepage content: audit, workflow, tools, Ops loop, console, roadmap, toolkit, measurement, proof, pilot offers, contact and FAQ. English has a complete translation of that content.
 
-## Publish
+| Source | Purpose |
+| --- | --- |
+| `landing/template.html` | Shared semantic structure and section order |
+| `landing/en.json`, `landing/fr.json` | Complete locale dictionaries, including accessible labels and metadata |
+| `landing.css` + `styles.css` | Shared English visual system, light content sections and responsive layouts |
+| `landing.js` | Shared free-read and lead-form behavior, localized through the page language |
+| `assets/screens/geo-board-en.svg`, `geo-board-fr.svg` | Same illustration with localized labels |
+| `index.html`, `fr/index.html` | Generated, committed static output; do not edit directly |
 
-1. Run `.github/workflows/pages.yml` manually on `main` with `confirmation: DEPLOY` to publish GitHub Pages. The OVH site has a separate manual deployment workflow. A push alone does not deploy.
-2. **Settings → Pages → Build and deployment → Source** must be **GitHub Actions**.
-   If it is set to *Deploy from a branch*, the workflow stops at **Configure Pages**
-   and the URL keeps serving the repository README through the default theme.
-3. Expected URL: `https://geoking2104.github.io/GTM-Growth/` — if the
-   repository is renamed, update the canonical URL, `og:url`, `sitemap.xml`,
-   `robots.txt` and `llms.txt`.
-
-### Troubleshooting
-
-| Symptom | Cause | Fix |
-|---|---|---|
-| Workflow fails at **Configure Pages** | Pages is disabled, or set to *Deploy from a branch* | Set Source to **GitHub Actions**, then re-run the workflow |
-| URL shows the README with the default theme | Same as above — the branch build wins | Same fix; the Actions deploy replaces it |
-| Page loads unstyled | Assets 404 because a branch build is serving the repo root | Same fix |
-
-## Languages
-
-The site ships as two static pages, not a runtime toggle:
-
-| URL | File | `lang` | Canonical |
-|---|---|---|---|
-| `/` | `index.html` | `en` | `/Google-Growth/` |
-| `/fr/` | `fr/index.html` | `fr` | `/Google-Growth/fr/` |
-
-Both pages cross-link with `hreflang` (en, fr, x-default) and share
-`styles.css`, `app.js`, `preview.js`. The header has an EN/FR switch that points
-at the other page, so the choice survives without JavaScript or storage.
-
-Static copy lives in each HTML file. Strings the browser generates after a
-submit — the 10 URL checks, verdicts, errors and lead-form messages — live in
-`i18n.js`, keyed by language. `app.js` reads `<html lang>` and picks the
-dictionary; `preview.js` takes it as an argument, so it stays testable.
-
-To add a language: copy `fr/index.html` to the new locale folder, translate it,
-add a `translations.<lang>` entry in `i18n.js`, add the `hreflang` links on every
-page, and list the URL in `sitemap.xml` and `llms.txt`. `node
-scripts/check-site.mjs` fails if the pair is incomplete.
-
-## Lead capture — in the page, no mail client
-
-The form POSTs JSON. It never opens a mail client and never claims success it did
-not get: "sent" appears only after a 2xx from the endpoint.
-
-Two meta tags in `index.html` and `fr/index.html` configure it:
-
-```html
-<meta name="gg-api" content="https://api.example.com">   <!-- free read + lead -->
-<meta name="gg-form" content="https://formspree.io/f/xxxx">  <!-- lead only -->
-```
-
-| Configured | Free read tables | Lead form |
-| --- | --- | --- |
-| `gg-api` | measured on the page, robots.txt and sitemap | POST `/api/lead` |
-| `gg-form` only | sample rows, badged | POST to that endpoint |
-
-**Current deployment:** `gg-form` is set to `https://formspree.io/f/meaavjpa`, so the form
-sends through Formspree and no mail client opens. `gg-api` is empty, so the free-read
-tables stay badged as samples until the read API is hosted.
-| neither | sample rows, badged | request kept on the device, nothing pretends to be sent |
-
-The API itself ships in this repository — see [`docs/PUBLIC_API.md`](../docs/PUBLIC_API.md):
+After changing the template or a dictionary:
 
 ```bash
-npm run build
-PORT=3111 LEADS_PATH=./data/leads.jsonl SITE_ORIGINS=https://geoking2104.github.io \
-  npm run cli -- serve-http
+npm run site:render
+npm run site:check
 ```
 
-Leads land in `data/leads.jsonl`, one JSON object per line, readable with
-`npm run cli -- leads`. Set `LEAD_WEBHOOK_URL` to forward them to a CRM or a
-Slack webhook.
+The renderer rejects missing, extra or empty translations. The site check rejects stale output, structural divergence, broken local asset references or fragments, missing sections and console links without the selected locale. It also checks canonical URLs and the EN/FR language switch. JSON-LD FAQ content is generated from the visible localized questions and answers.
 
-**Offline behaviour.** If the POST fails, the payload is queued in
-`localStorage` (`gg.lead.queue.v1`) and flushed on the next visit. The visitor
-sees "saved on this device", not a fake confirmation.
+The shared script preserves existing English section links such as `#plans` and `#talk`. Links to the console carry `?lang=en` or `?lang=fr`; privacy links remain localized. The console keeps its own styles and language shell.
 
-**Anti-abuse.** Honeypot field (`company`), a 1.2 s minimum on the form, 5 posts
-per minute per IP, and URL normalisation before storage.
+## Forms and evidence
 
-## Can I keep the site fully static?
+Both languages use the same form hooks and endpoints:
 
-Yes, with one trade-off:
+- `url-form`: ten immediate URL-shape checks from `preview.js`, followed by `POST /api/free-read` for a server page read. URL hygiene and the measured GEO score are distinct. If the server is unavailable, sample tables are explicitly labelled. French server rows are translated by `fr/server-tables.js`.
+- `lead-form`: validates name, email and website, then sends JSON to `POST /api/lead`. Success is shown only after a successful HTTP response; errors preserve visitor input. This flow does not use Formspree, open a mail client or queue data offline.
+- `sitemap-map.js`: renders declared sitemap data with localized labels; sitemap metrics are not traffic estimates.
 
-- **Lead form:** set `gg-form` to any JSON endpoint (Formspree, Basin, your own
-  worker). No server needed.
-- **Free read tables:** they need a server that can fetch the visitor's page —
-  browsers cannot, because most sites do not send CORS headers. Without `gg-api`
-  the page shows clearly-badged sample rows and the exact CLI command to produce
-  the real ones.
+See [Public API](../docs/PUBLIC_API.md) for endpoint operations. The free local presence checklist is shared with the public console through `local-seo-preview.js` and `local-seo.css`. The authenticated tenant-scoped workspace uses `console/local-seo-network.js`; see [Global and local SEO](../docs/product/GLOBAL-LOCAL-SEO.md) for its limits and connector prerequisites.
 
-## Local preview
+Solo €39/month and Agency €149/month remain indicative pilot offers. Mollie checkout is not active.
+
+## Preview and verification
 
 ```bash
-npx serve site
-# or
-python -m http.server 8080 --directory site
+python3 -m http.server 8080 --directory site
+# In another terminal:
+node scripts/qa-landing.mjs
 ```
 
-## Sample report
+Browser QA requires Chromium (or `CHROMIUM_BIN`). CI installs it and verifies EN/FR desktop/mobile rendering, common structure/styles, privacy, lead success/failure with intercepted requests, sample/measured read flows, console navigation and the language switch. Screenshots are uploaded as `landing-fr-en-screenshots`.
 
-`reports/opendpe.html` is a real audit of www.opendpe.net (71/100), with the raw
-snapshot in `reports/opendpe.json`. It is the page linked from the hero as a
-worked example.
+## Deployment
 
-Regenerate after engine changes:
+Use `.github/workflows/deploy-kayroslab-vps.yml` on `main` with `confirmation: DEPLOY`. The protected OVH workflow updates the checkout and deploys the application with the existing SSH host verification. See [VPS operations](../deploy/kayroslab-vps/README.md).
 
-```bash
-npm run build
-node scripts/collect-sample.mjs https://www.opendpe.net site/reports/opendpe.json
-```
-
-The HTML is written by hand from that JSON; update the numbers and the snapshot
-date together, otherwise the report lies.
-
-## What the free read measures
-
-Two layers, and the page says which one ran:
-
-1. **In the browser, always** — ten checks on the URL itself (`preview.js`):
-   protocol, hostname shape, path depth, tracking parameters, fragments, length,
-   file extensions. No fetch, so it works for every visitor and cannot be wrong
-   about a page it never saw.
-2. **On the server, when `gg-api` is set** — one request each for the page,
-   `robots.txt` and the sitemap, then three things:
-   - **SEO tables**: title and description lengths, canonical, robots meta,
-     `lang`, H1/H2/H3 outline, word count, links, images without alt, JSON-LD
-     blocks and types;
-   - **GA4 table**: measurement IDs, dead UA tags, container count, loader
-     duplication, `dataLayer`, consent mode — all read from the HTML;
-   - **Search Console table**: verification meta, robots.txt directives, sitemap
-     coverage, lastmod share, indexability, canonical host.
-   - **Visual sitemap**: declared URLs rendered in a SlickMap-inspired hierarchy,
-     with URL count, path depth, `lastmod` coverage and section distribution. These
-     are sitemap metrics, not traffic estimates.
-
-The two traffic reports (sessions, clicks, impressions) need a Google credential
-the visitor never shares. They are returned with `sample: true` and rendered with
-a **sample** badge. The moment a property is connected server-side, the same
-tables carry **measured** instead — the code path is identical.
-
-## Check before publishing
-
-```bash
-node scripts/check-site.mjs
-```
-
-Validates that the required files exist, the page keeps its hooks (`check-form`,
-`lead-form`, JSON-LD), local asset references resolve, and no placeholder text
-ships.
+The separate manual `pages.yml` workflow is a secondary static publication path. The primary canonical domain remains `gtm.kayroslab.com`; API-dependent features require the OVH backend.

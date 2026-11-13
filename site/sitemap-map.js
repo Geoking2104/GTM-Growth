@@ -11,17 +11,17 @@ function treeFrom(nodes) {
   }
   return root;
 }
-function branch(branchData, depth = 0) {
+function branch(branchData, depth = 0, lang = "en") {
   const list = document.createElement("ul"); list.className = depth ? "slickmap-children" : "slickmap-tree";
   for (const [segment, child] of [...branchData.children.entries()].sort(([a], [b]) => a.localeCompare(b))) {
     const item = document.createElement("li"); const card = document.createElement(child.page ? "a" : "span");
     card.className = child.page ? "map-page" : "map-group";
     if (child.page) {
       card.href = child.page.url; card.target = "_blank"; card.rel = "noopener noreferrer"; card.title = child.page.url;
-      card.append(text(child.page.label === "Home" ? "Home /" : child.page.label));
-      const meta = document.createElement("small"); meta.textContent = child.page.lastmod ? `updated ${child.page.lastmod}` : "no lastmod"; card.append(meta);
+      card.append(text(child.page.label === "Home" ? (lang === "fr" ? "Accueil /" : "Home /") : child.page.label));
+      const meta = document.createElement("small"); meta.textContent = child.page.lastmod ? `${lang === "fr" ? "mis à jour" : "updated"} ${child.page.lastmod}` : (lang === "fr" ? "sans lastmod" : "no lastmod"); card.append(meta);
     } else card.textContent = segment.replace(/[-_]+/g, " ");
-    item.append(card); if (child.children.size) item.append(branch(child, depth + 1)); list.append(item);
+    item.append(card); if (child.children.size) item.append(branch(child, depth + 1, lang)); list.append(item);
   }
   return list;
 }
@@ -33,7 +33,7 @@ export function renderSitemapMap(host, map, lang = "en") {
   const metrics = document.createElement("div"); metrics.className = "sitemap-metrics";
   metrics.append(metric(lang === "fr" ? "URL déclarées" : "Declared URLs", String(map.nodeCount)), metric(lang === "fr" ? "Profondeur max." : "Max depth", String(map.metrics.maxDepth)), metric(lang === "fr" ? "Couverture lastmod" : "lastmod coverage", `${map.metrics.lastmodCoveragePercent}%`), metric(lang === "fr" ? "Sections" : "Sections", String(map.metrics.sections.length)));
   const sections = document.createElement("p"); sections.className = "sitemap-sections"; sections.textContent = map.metrics.sections.map((row) => `${row.label} (${row.pages})`).join(" · ");
-  const shell = document.createElement("div"); shell.className = "slickmap"; const root = document.createElement("div"); root.className = "map-root"; root.textContent = new URL(map.nodes[0]?.url || map.sitemapUrl).hostname; shell.append(root, branch(treeFrom(map.nodes)));
+  const shell = document.createElement("div"); shell.className = "slickmap"; const root = document.createElement("div"); root.className = "map-root"; root.textContent = new URL(map.nodes[0]?.url || map.sitemapUrl).hostname; shell.append(root, branch(treeFrom(map.nodes), 0, lang));
   host.append(metrics, sections, shell);
   if (map.truncated) { const note = document.createElement("p"); note.className = "sitemap-map-note"; note.textContent = lang === "fr" ? `Vue limitée aux ${map.shownNodeCount} premières URL sur ${map.nodeCount}.` : `View limited to the first ${map.shownNodeCount} of ${map.nodeCount} URLs.`; host.append(note); }
 }

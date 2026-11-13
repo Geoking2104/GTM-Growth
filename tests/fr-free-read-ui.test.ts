@@ -1,6 +1,6 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
-/** Small DOM stand-in: run the actual French form listener without a browser. */
+/** Small DOM stand-in: run the actual shared form listener without a browser. */
 class NodeStub {
   tagName: string;
   value = "";
@@ -38,11 +38,14 @@ beforeEach(async () => {
   for (const key of Object.keys(nodes)) delete nodes[key];
   for (const id of ["url-form", "url-input", "form-msg", "read-result"]) nodes[id] = new NodeStub(id);
   vi.stubGlobal("document", {
+    documentElement: { lang: "fr" },
     getElementById: (id: string) => nodes[id] ?? null,
     createElement: (tagName: string) => new NodeStub(tagName),
   });
+  vi.stubGlobal("window", { addEventListener: vi.fn() });
+  vi.stubGlobal("location", { hash: "" });
   vi.stubGlobal("sessionStorage", { setItem: vi.fn() });
-  await import("../site/fr/free-read.js");
+  await import("../site/landing.js");
 });
 
 afterEach(() => vi.unstubAllGlobals());
