@@ -59,7 +59,7 @@ const background = createBackgroundLoader((route, body) => fetchApi(route, body)
 export async function api(route, body, options = {}) {
   if (!options.binary && automaticRoutes.has(route)) return background.request(selectedTenant() || state.me?.tenant?.id || "", route, body);
   const result = await fetchApi(route, body, options);
-  if (["/ai-visibility/import", "/ai-visibility/review", "/ai-visibility/openai-run", "/ai-visibility/gemini-run", "/competition/panel", "/competition/revise-panel", "/competition/group", "/competition/alert-config", "/competition/priority", "/competition/action", "/gtm/write", "/gtm/publish"].includes(route)) startBackground();
+  if (["/ai-visibility/import", "/ai-visibility/review", "/ai-visibility/openai-run", "/ai-visibility/gemini-run", "/ai-visibility/claude-run", "/ai-visibility/mistral-run", "/ai-visibility/grok-run", "/competition/panel", "/competition/revise-panel", "/competition/group", "/competition/alert-config", "/competition/priority", "/competition/action", "/gtm/write", "/gtm/publish"].includes(route)) startBackground();
   return result;
 }
 function renderBackground(jobs) {

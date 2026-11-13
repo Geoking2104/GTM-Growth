@@ -13,6 +13,7 @@ import { saveTenantReport } from "../src/tenants/data.js";
 import { KeycloakAdmin } from "../src/tenants/keycloak-admin.js";
 import { buildCompetitionMcpRouter } from "../src/console/competition-mcp.js";
 import { aiVisibilityRoutes } from "../src/console/ai-visibility.js";
+import { aiProviderRoutes } from "../src/console/ai-visibility-providers.js";
 import { createApplyPreviewRoutes } from "../src/console/apply-routes.js";
 import type { Fetcher } from "../src/geo/http.js";
 
@@ -67,7 +68,7 @@ const fakeFetch = (async (u: string | URL, init?: RequestInit) => {
   return new Response(null, { status: 204 });
 }) as typeof fetch;
 const keycloakAdmin = new KeycloakAdmin({ baseUrl: "http://kc", authRealm: "master", clientId: "p", clientSecret: "s", fetch: fakeFetch });
-app.use("/c", buildConsoleRouter([echo, ...aiVisibilityRoutes, ...createApplyPreviewRoutes(applyFetcher)], { config, jwksLoader: loader, store, keycloakAdmin }));
+app.use("/c", buildConsoleRouter([echo, ...aiVisibilityRoutes, ...aiProviderRoutes, ...createApplyPreviewRoutes(applyFetcher)], { config, jwksLoader: loader, store, keycloakAdmin }));
 app.use("/mcp-competition", buildCompetitionMcpRouter({ config, jwksLoader: loader, store }));
 app.use("/p", buildPlatformRouter({ config, jwksLoader: loader, store, keycloakAdmin }));
 let server: ReturnType<typeof app.listen>; let root = "";
@@ -173,6 +174,18 @@ describe("isolation stricte entre tenants", () => {
   });
   it("refuse un en-tête X-Tenant usurpé", async () => {
     expect((await call("/c/me", acmeUser, undefined, { "X-Tenant": "globex" })).status).toBe(403);
+  });
+  it.each(["claude", "mistral", "grok"])("isole les clés %s et réserve la collecte aux administrateurs", async provider => {
+    const variable = `AI_VISIBILITY_${provider.toUpperCase()}_KEY_ACME`; process.env[variable] = "tenant-test-secret";
+    try {
+      expect((await call(`/c/ai-visibility/${provider}-status`, acmeUser, {})).status).toBe(403);
+      expect((await call(`/c/ai-visibility/${provider}-run`, acmeUser, {})).status).toBe(403);
+      const a = await (await call(`/c/ai-visibility/${provider}-status`, acmeAdmin, {})).json();
+      const b = await (await call(`/c/ai-visibility/${provider}-status`, superAdmin, {}, { "X-Tenant": "globex" })).json();
+      expect(a).toMatchObject({ configured: true, keyVariable: variable, maxCalls: 5 });
+      expect(JSON.stringify(a)).not.toContain("tenant-test-secret"); expect(b.configured).toBe(false);
+      expect((await call(`/c/ai-visibility/${provider}-run`, acmeAdmin, { confirmed: false })).status).toBe(502);
+    } finally { delete process.env[variable]; }
   });
   it("ignore un groupe sans appartenance à l'organisation", async () => {
     expect((await call("/c/me", { organization: ["acme"], groups: ["/tenants/globex/tenant-admin"] })).status).toBe(403);
