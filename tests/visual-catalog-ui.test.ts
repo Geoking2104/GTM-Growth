@@ -39,7 +39,11 @@ it("requires preview after every input edit before a catalogue can be saved", as
 });
 
 it("keeps missing images and missing measurements honest, with accessible chart data", async () => {
-  const { thumbnail, gauge, visibilityChart } = await import("../site/console/visuals.js");
+  const { thumbnail, gauge, visibilityChart, setVisualEntities, entityCell } = await import("../site/console/visuals.js");
+  const brand = entityCell("Atelier", { kind: "brand", url: item.url }); document.body.append(brand);
+  setVisualEntities([item], "https://example.com/");
+  expect(brand.querySelector("img")).toBeNull();
+  expect(entityCell("Atelier", { kind: "brand", url: item.url }).querySelector("img")).toBeNull();
   const bad = thumbnail({ name: "Product", imageUrl: "javascript:alert(1)" }); expect(bad.querySelector("img")).toBeNull();
   const image = thumbnail({ name: "Product", imageUrl: item.imageUrl }); image.querySelector("img")!.dispatchEvent(new window.Event("error")); expect(image.querySelector("img")).toBeNull(); expect(image.title).toContain("indisponible");
   expect(gauge("Unknown", null).textContent).toContain("—");

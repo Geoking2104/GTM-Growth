@@ -33,9 +33,9 @@ export function setVisualEntities(items = [], origin = selectedOrigin) {
   });
 }
 export function entityCell(value, data = {}) {
-  const key = keyFor(data.url || value), known = entities.get(key) || entities.get(String(value).toLocaleLowerCase());
+  const key = keyFor(data.url || value), known = data.kind === "brand" ? undefined : entities.get(key) || entities.get(String(value).toLocaleLowerCase());
   const item = { name: String(value ?? "—"), kind: "page", ...known, ...data };
-  const row = node("span", "v-entity"); row.dataset.visualKey = key;
+  const row = node("span", "v-entity"); if (data.kind !== "brand" && !data.imageUrl) row.dataset.visualKey = key;
   row.append(thumbnail(item), node("span", "v-entity-label", value ?? "—")); return row;
 }
 export function metricIcon(name = "overview") { const chip = node("span", "v-metric-icon"); chip.innerHTML = icon(name); return chip; }
