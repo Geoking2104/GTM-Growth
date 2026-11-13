@@ -256,12 +256,12 @@ try {
   await verifyLeadFlow(fr, "fr");
   for (const [page, locale] of [[en,"en"],[fr,"fr"]]) {
     await page.goto(`${origin}/${locale === "fr" ? "fr/" : ""}#ops`);
-    await page.getByRole("button", { name: locale === "fr" ? "Refuser" : "Reject", exact: true }).click();
+    // Hash navigation keeps the existing page and its rejected privacy choice.
+    assert.equal(await page.locator(".privacy-banner").isVisible(), false);
     await page.locator("#ops").screenshot({path:path.join(outputDir,`${locale}-ops.png`)});
     await page.goto(`${origin}/${locale === "fr" ? "fr/" : ""}#roadmap`);
     await page.locator("#roadmap").screenshot({path:path.join(outputDir,`${locale}-roadmap.png`)});
     await page.goto(`${origin}/${locale === "fr" ? "fr/" : ""}`);
-    await page.getByRole("button", { name: locale === "fr" ? "Refuser" : "Reject", exact: true }).click();
   }
 
   // French read: instant URL analysis, no identity wall; sample fallback explicit.
