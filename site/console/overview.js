@@ -3,6 +3,7 @@
 import { el } from "./render.js";
 import { t, CATEGORY, LANG } from "./i18n.js";
 import { makeKey, keyFile, normalizeHost } from "../indexnow.js";
+import { gauge, metricIcon } from "./visuals.js";
 
 const NS = "http://www.w3.org/2000/svg";
 const svg = (tag, attrs = {}) => { const n = document.createElementNS(NS, tag); for (const [k, v] of Object.entries(attrs)) n.setAttribute(k, v); return n; };
@@ -11,6 +12,7 @@ const width = (node, pct) => { node.style.width = `${Math.max(0, Math.min(100, p
 
 function kpi(label, value, max, delta, note, color, help) {
   const c = el("div", "kpi-cell");
+  c.append(metricIcon("overview"));
   const v = el("div", "kpi-value"); v.append(el("strong", "", String(value ?? "—")), el("em", "", `/${max}`));
   const f = el("div", "kpi-foot"); f.append(el("span", `delta ${delta >= 0 ? "up" : "down"}`, fmtDelta(delta)), el("span", "kpi-note", note));
   c.append(el("span", "kpi-label", label), v, f); if (help) c.append(el("p", "kpi-help", help)); return c;
@@ -54,12 +56,12 @@ function strip(breakdown, max) {
 export function renderOverview(d) {
   const ready = d.platforms.filter((p) => p.score >= 80);
   const idxFails = (d.indexnow?.checks ?? []).filter((c) => c.status !== "pass").length;
-  const row = el("div", "kpi-row");
+  const row = el("div", "v-gauge-grid");
   row.append(
-    kpi(t("kGeo"), d.geo.score, 100, d.geo.projectedScore - d.geo.score, t("projected"), "#4f5bd5", t("hGeo")),
-    kpi(t("kCit"), d.citability?.score ?? "—", 100, d.citability ? 100 - d.citability.score : 0, t("toMax"), "#8b7bd8", t("hCit")),
-    kpi(t("kIdx"), d.indexnow?.score ?? "—", 100, d.indexnow ? 100 - d.indexnow.score : 0, `${idxFails} ${t("toFix")}`, "#e0b23c", t("hIdx")),
-    kpi(t("kEng"), ready.length, d.platforms.length, d.platforms.length - ready.length, ready.map((p) => p.label).join(", ") || "—", "#2f9e6f", t("hEng")),
+    gauge(t("kGeo"), d.geo.score, `${d.geo.projectedScore}/100 ${t("projected")} · ${LANG === "fr" ? "préparation du site" : "site readiness"}`),
+    gauge(t("kCit"), d.citability?.score ?? null, LANG === "fr" ? "Structure et qualité des passages citables" : "Structure and quality of quotable passages"),
+    gauge(t("kIdx"), d.indexnow?.score ?? null, `${idxFails} ${t("toFix")}`),
+    gauge(t("kEng"), d.platforms.length ? ready.length / d.platforms.length * 100 : null, `${ready.length}/${d.platforms.length} · ${LANG === "fr" ? "score de préparation ≥ 80" : "readiness score ≥ 80"}`),
   );
   const split = el("div", "app-split"); split.append(trajectory(d.geo.score, d.geo.projectedScore, d.geo.recommendations ?? []), rank(d.platforms));
   return [el("p", "c-note c-pad", t("hBoard")), row, split, strip(d.geo.breakdown, d.geo.max)];

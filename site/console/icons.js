@@ -1,5 +1,10 @@
 /* Icônes de la console (mêmes tracés que la démo publique). */
 const P = {
+  products: '<path d="M3 7l9-4 9 4v11l-9 4-9-4z"/><path d="M3 7l9 4 9-4M12 11v11M8 5l9 4"/>',
+  page: '<rect x="4" y="3" width="16" height="18" rx="2"/><path d="M8 7h8M8 11h8M8 15h4"/>',
+  brand: '<path d="M3 10l9-7 9 7v10H3z"/><path d="M9 20v-7h6v7"/>',
+  eye: '<path d="M2 12s4-7 10-7 10 7 10 7-4 7-10 7S2 12 2 12z"/><circle cx="12" cy="12" r="3"/>',
+  heart: '<path d="M12 21S2 15 2 8a5 5 0 0 1 10-1 5 5 0 0 1 10 1c0 7-10 13-10 13z"/>',
   overview: '<path d="M3 17l5-6 4 4 5-7 4 5"/><path d="M3 21h18"/>',
   geo: '<path d="M4 19V5"/><path d="M4 19h16"/><rect x="7" y="11" width="3" height="8"/><rect x="12" y="7" width="3" height="12"/><rect x="17" y="13" width="3" height="6"/>',
   citability: '<path d="M12 3l7 3v6c0 4-3 7-7 8-4-1-7-4-7-8V6z"/><path d="M9 12l2 2 4-4"/>',

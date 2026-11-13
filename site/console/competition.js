@@ -1,6 +1,7 @@
 import { comparePeriods, opportunityScore } from "./competition-metrics.js";
 import { renderDataGuide } from "./data-guidance.js";
 import { el } from "./render.js";
+import { entityCell, visibilityChart } from "./visuals.js";
 
 import { LANG } from "./i18n.js";
 
@@ -71,6 +72,16 @@ export function renderCompetition({ api, me, property, days }) {
     }
     output.append(el("p", "c-note", `${rows.length} ${L("réponses valides", "valid answers")} · ${rows.length < 20 ? L("échantillon limité", "limited sample") : L("périmètre sélectionné", "selected scope")}. ${L("Les dates sans réponse ne sont pas des zéros.", "Dates without answers are not zeroes.")}`));
 
+    const rankingCounts = report.brands.map(b => ({ ...b, count: rows.filter(r => present(r, b.name)).length })).sort((a, b) => b.count - a.count);
+    const podium = el("div", "v-podium");
+    for (const [index, brand] of rankingCounts.slice(0, 3).entries()) {
+      const card = el("article", "v-podium-card"); card.append(el("span", "v-rank", String(index + 1)), entityCell(brand.name, { kind: "brand", imageUrl: brand.logoUrl, url: brand.website }), el("strong", "", pct(brand.count, rows.length)), el("p", "c-note", `${brand.count}/${rows.length} ${L("réponses mentionnent cette marque", "answers mention this brand")}`)); podium.append(card);
+    }
+    output.append(podium);
+    const trends = el("div", "v-trend-grid");
+    trends.append(visibilityChart(rows, report.brands.map(b => ({ label: b.name, matches: r => present(r, b.name) })), L("Visibilité des marques", "Brand visibility")), visibilityChart(rows, [...new Set(rows.map(r => r.source))].map(source => ({ label: source, filter: r => r.source === source, matches: r => present(r, own) })), L(`Visibilité de ${own} par source`, `${own} visibility by source`)));
+    output.append(trends);
+
     const historyButton = button(L("Charger les jeux compatibles pour l’historique", "Load compatible datasets for history"), async () => { try { const signature = (brands) => JSON.stringify(brands.map((b) => [b.name, [...b.aliases].sort()]).sort((a, b) => a[0].localeCompare(b[0]))); const signatureOfCurrent = signature(report.brands); const others = await Promise.all(datasets.filter((d) => d.id !== current).map((d) => api("/ai-visibility/report", { datasetId: d.id }))); const compatible = others.filter((d) => signature(d.brands) === signatureOfCurrent); const unique = new Map(); for (const r of [...report.responses, ...compatible.flatMap((d) => d.responses)]) if (!unique.has(r.id)) unique.set(r.id, r); history = [...unique.values()]; draw(); } catch (e) { status.textContent = e.message; } }); output.append(historyButton, el("p", "c-note", history ? L(`${history.length} réponses uniques de jeux aux marques et alias identiques. En cas de doublon, la révision du jeu affiché prévaut.`, `${history.length} unique answers with identical brands and aliases. For duplicates, the displayed dataset review takes precedence.`) : L("L’historique avant/après utilise le jeu affiché. Chargez les autres jeux compatibles pour élargir la période.", "Before/after uses the displayed dataset. Load compatible datasets to extend history.")));
     if (from && to) { const comparison = comparePeriods((history || report.responses).filter((r) => (!groupPrompts || groupPrompts.includes(r.prompt)) && (!source || r.source === source)), own, from, to); const box = el("section", "ai-chart"); box.append(el("h3", "", L("Comparaison avec la période précédente", "Comparison with previous period"))); if (!comparison || !comparison.shared) box.append(el("p", "c-note", L("Aucune question et source communes aux deux périodes ; comparaison indisponible.", "No common prompt/source in both periods; comparison unavailable."))); else box.append(el("p", "", `${comparison.previousStart} – ${comparison.previousEnd} : ${pct(comparison.previous, 100)} → ${from} – ${to} : ${pct(comparison.current, 100)} · ${comparison.delta.toFixed(1)} points`), el("p", "c-note", `${comparison.shared} ${L("couples question/source communs, pondérés également", "shared prompt/source pairs, equally weighted")} · ${comparison.previousCount} / ${comparison.currentCount} ${L("réponses", "answers")}. ${L("Les autres couples sont exclus ; une évolution ne prouve pas une cause.", "Other pairs are excluded; changes do not establish causation.")}`)); output.append(box); }
     const monitor = el("section", "ai-chart"); monitor.append(el("h3", "", L("Surveillance de la visibilité", "Visibility monitoring")), el("p", "c-note", L("Trois périodes complètes UTC : une alerte exige deux périodes consécutives au-delà du seuil, sur les mêmes questions et sources. Aucune collecte ni notification externe n’est déclenchée.", "Three complete UTC windows: alerts require two consecutive windows beyond the threshold, on the same prompts and sources. No collection or external notification is triggered.")));
@@ -80,7 +91,7 @@ export function renderCompetition({ api, me, property, days }) {
 
     const counts = report.brands.map((b) => ({ name: b.name, count: rows.filter((r) => present(r, b.name)).length })).sort((a, b) => b.count - a.count);
 
-    for (const c of counts) { const line = el("div", "ai-bar-row"); line.append(button(`${c.name}${c.name === own ? L(" (nous)", " (us)") : ""}`, () => { selection = (r) => present(r, c.name); drawEvidence(); }), el("span", "", `${c.count}/${rows.length}`), el("strong", "", pct(c.count, rows.length))); ranking.append(line); } output.append(ranking);
+    for (const c of counts) { const line = el("div", "ai-bar-row"); const brand = report.brands.find(b => b.name === c.name); const selectBrand = button("", () => { selection = (r) => present(r, c.name); drawEvidence(); }); selectBrand.append(entityCell(`${c.name}${c.name === own ? L(" (nous)", " (us)") : ""}`, { kind: "brand", imageUrl: brand?.logoUrl, url: brand?.website })); line.append(selectBrand, el("span", "", `${c.count}/${rows.length}`), el("strong", "", pct(c.count, rows.length))); ranking.append(line); } output.append(ranking);
 
     const matrix = el("section", "ai-chart"); matrix.append(el("h3", "", L("Questions × marques", "Questions × brands")), el("p", "c-note", L("Chaque cellule ouvre les réponses correspondantes ; le dénominateur est commun à toutes les marques.", "Each cell opens its answers; all brands share the same denominator.")));
 

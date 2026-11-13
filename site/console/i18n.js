@@ -8,10 +8,11 @@ document.documentElement.lang = LANG;
 
 const DICT = {
   fr: {
+    s_catalog: "Produits & pages",
     s_local_seo: "SEO global et local",
     title: "Console GTM Growth", loginLead: "Accès réservé. Connectez-vous avec votre compte (SSO Keycloak).", email: "E-mail professionnel",
     continue: "Continuer", redirecting: "Redirection…", loginHelp: "Votre espace client est détecté à partir de votre e-mail, du sous-domaine (client.gtm.kayroslab.com) ou du lien ?tenant=client. Sinon, connexion au compte GTM Growth.",
-    loginFail: "Connexion impossible", backToSite: "← Retour au site", search: "Rechercher", track: "Track", act: "Act", settings: "Mon compte", logout: "Déconnexion",
+    loginFail: "Connexion impossible", backToSite: "← Retour au site", search: "Rechercher", track: "Analyser", act: "Agir", settings: "Mon compte", logout: "Déconnexion",
     client: "Client", domain: "Domaine analysé", property: "Propriété Search Console", apply: "Appliquer", noDomain: "Choisissez un domaine dans le sélecteur en haut à gauche.",
     run: "Lancer", running: "Analyse en cours…", download: "Télécharger le PDF", live: "Données en direct", allEngines: "Tous les moteurs", superAdmin: "super-admin",
     s_overview: "Vue d’ensemble", s_geo: "GEO", s_citability: "Citabilité", s_indexnow: "IndexNow", s_sitemap: "Sitemap", s_performance: "Performance",
@@ -30,6 +31,7 @@ const DICT = {
     t_status: "Statut des accès", t_tags: "Balises GA4 / GTM", t_settings: "Paramètres", ga4Property: "Propriété GA4 (ID)", bingSite: "Site Bing Webmaster",
   },
   en: {
+    s_catalog: "Products & pages",
     s_local_seo: "Global and local SEO",
     title: "GTM Growth console", loginLead: "Restricted access. Sign in with your account (Keycloak SSO).", email: "Work email",
     continue: "Continue", redirecting: "Redirecting…", loginHelp: "Your client space is detected from your email, the subdomain (client.gtm.kayroslab.com) or the ?tenant=client link. Otherwise you sign in to the GTM Growth account.",

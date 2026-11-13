@@ -18,12 +18,21 @@ function database(): Database.Database {
   db.pragma("busy_timeout = 10000"); db.pragma("journal_mode = DELETE"); db.pragma("synchronous = FULL");
   db.exec(`CREATE TABLE IF NOT EXISTS datasets (tenant_id TEXT NOT NULL, id TEXT NOT NULL, created_at TEXT NOT NULL, payload TEXT NOT NULL, PRIMARY KEY (tenant_id, id));
            CREATE TABLE IF NOT EXISTS legacy_imports (tenant_id TEXT PRIMARY KEY, imported_at TEXT NOT NULL);
-           CREATE TABLE IF NOT EXISTS competition_state (tenant_id TEXT PRIMARY KEY, payload TEXT NOT NULL);`);
+           CREATE TABLE IF NOT EXISTS competition_state (tenant_id TEXT PRIMARY KEY, payload TEXT NOT NULL);
+           CREATE TABLE IF NOT EXISTS visual_catalog (tenant_id TEXT NOT NULL, origin TEXT NOT NULL, payload TEXT NOT NULL, PRIMARY KEY (tenant_id, origin));`);
   connections.set(file, db); return db;
 }
 export function readCompetitionState<T>(tenantId: string, fallback: T): T {
   validateTenant(tenantId); const row = database().prepare("SELECT payload FROM competition_state WHERE tenant_id = ?").get(tenantId) as Row | undefined;
   return row ? parse<T>(row) : fallback;
+}
+export function readVisualCatalog<T>(tenantId: string, origin: string, fallback: T): T {
+  validateTenant(tenantId); const row = database().prepare("SELECT payload FROM visual_catalog WHERE tenant_id = ? AND origin = ?").get(tenantId, origin) as Row | undefined;
+  return row ? parse<T>(row) : fallback;
+}
+export function saveVisualCatalog(tenantId: string, origin: string, items: unknown): void {
+  validateTenant(tenantId);
+  database().prepare("INSERT INTO visual_catalog (tenant_id, origin, payload) VALUES (?, ?, ?) ON CONFLICT(tenant_id, origin) DO UPDATE SET payload = excluded.payload").run(tenantId, origin, JSON.stringify(items));
 }
 export function updateCompetitionState<T>(tenantId: string, fallback: T, update: (state: T) => void): T {
   validateTenant(tenantId); const db = database();

@@ -11,6 +11,7 @@
 <link rel="stylesheet" href="../brand.css">
 <link rel="stylesheet" href="shell.css">
 <link rel="stylesheet" href="../local-seo.css">
+<link rel="stylesheet" href="visual.css">
 </head>
 <body class="console-page">
 <!-- Connexion : même coque .app que la console publique -->
@@ -54,7 +55,6 @@
 
 <!-- Console : reprend exactement la structure de la section #console du site -->
 <div id="c-app" class="app c-app" hidden>
-  <div class="app-tabs" id="c-tabs" role="tablist"></div>
   <div class="app-body">
     <aside class="app-side">
       <button type="button" class="app-switch" id="c-switch" aria-expanded="false" aria-controls="c-picker">
@@ -87,6 +87,8 @@
           <button class="app-pill" id="c-logout" type="button" data-i18n="logout">Déconnexion</button>
         </div>
       </div>
+      <div id="c-visual-context"></div>
+      <div class="app-tabs" id="c-tabs" role="tablist"></div>
       <details class="c-background" id="c-background" hidden>
         <summary id="c-background-summary"></summary>
         <ul id="c-background-jobs" aria-live="polite"></ul>

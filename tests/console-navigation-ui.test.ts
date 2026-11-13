@@ -14,7 +14,7 @@ it.each(["fr", "en"])("opens every navigation entry with content or recovery ste
   });
   const memory = new Map<string, string>();
   const storage = { getItem: (key: string) => key.startsWith("gtm-console-wizard") ? "1" : memory.get(key) || "", setItem: (key: string, value: string) => memory.set(key, value), removeItem: (key: string) => memory.delete(key) };
-  const location = { pathname: "/console/", search: `?lang=${lang}`, hash: "#geo", hostname: "localhost", href: `http://localhost/console/?lang=${lang}#geo`, reload: vi.fn() };
+  const location = { pathname: "/console/", search: `?lang=${lang}`, hash: "#geo", hostname: "localhost", href: `http://localhost/console/?lang=${lang}#geo`, reload: vi.fn(), replace: vi.fn() };
   vi.stubGlobal("document", document); vi.stubGlobal("window", window); vi.stubGlobal("Node", window.Node);
   vi.stubGlobal("location", location); vi.stubGlobal("history", { replaceState: (_a: unknown, _b: string, hash: string) => { location.hash = hash; } });
   vi.stubGlobal("localStorage", storage); vi.stubGlobal("sessionStorage", storage);
@@ -44,7 +44,7 @@ it.each(["fr", "en"])("opens every navigation entry with content or recovery ste
   await vi.waitFor(() => expect(document.querySelector(".c-out .c-raw")).toBeTruthy());
   expect(memory.get("gtm-console-selected")).toBe("acme");
   const nav = [...document.querySelectorAll<HTMLAnchorElement>(".app-nav a")];
-  expect(nav.length).toBe(24);
+  expect(nav.length).toBe(25);
   expect(document.querySelector("#c-nav-act a")?.getAttribute("href")).toBe("#journey");
   for (const link of nav) {
     link.click();
@@ -57,6 +57,11 @@ it.each(["fr", "en"])("opens every navigation entry with content or recovery ste
   const calls = fetcher.mock.calls.filter(([url]) => url.startsWith("/api/console/") && !url.endsWith("/me"));
   expect(calls.every(([, options]) => options?.headers?.["X-Tenant"] === "acme")).toBe(true);
   expect(calls.some(([url]) => /\/(run|publish|import|add|remove)$/.test(url))).toBe(false);
-// This is a complete 24-screen journey, with an assertion for every entry.
+  location.href = "http://localhost/console/#catalog";
+  document.querySelector<HTMLAnchorElement>("#c-lang")!.click();
+  const languageUrl = new URL(String(location.replace.mock.calls[0][0]));
+  expect(languageUrl.searchParams.get("lang")).toBe(lang === "fr" ? "en" : "fr");
+  expect(languageUrl.hash).toBe("#catalog");
+// This is a complete 25-screen journey, with an assertion for every entry.
 // Keep individual readiness waits bounded while allowing slower shared CI CPUs.
 }, 20000);
