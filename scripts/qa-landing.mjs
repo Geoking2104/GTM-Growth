@@ -71,9 +71,25 @@ async function visit(browserContext, locale, label, viewport) {
   assert.match(pricingCopy, /39/, `${label}: Solo pilot price`);
   assert.match(pricingCopy, /149/, `${label}: Agency pilot price`);
   assert.match(pricingCopy, locale === "fr" ? /HT\/TTC/ : /VAT/, `${label}: VAT status is explicit`);
-  const consoleLink = await plans.locator('a[href*="/console/"]').first().getAttribute("href");
-  assert.match(consoleLink ?? "", new RegExp(`lang=${locale}`), `${label}: checkout CTA preserves language`);
+  assert.equal(await plans.locator('a[href="#contact"]').count(), 3, `${label}: pilot and support CTAs lead to contact, not inactive checkout`);
   if (viewport.width > 1000) await plans.screenshot({ path: path.join(outputDir, `${label}-pricing.png`) });
+  await page.locator('[data-profile="growth"]').click();
+  assert.equal(await page.locator('#journey-recommendation a').count(), 4);
+  assert.equal(await page.locator('[data-stage="understand"]').getAttribute('aria-pressed'), 'true');
+  await page.locator('#feature-query').fill('zzzz-no-match');
+  assert.equal(await page.locator('[data-feature]:visible').count(), 0);
+  await page.locator('#feature-reset').click();
+  assert.equal(await page.locator('[data-feature]:visible').count(), 31);
+  await page.locator('#feature-query').fill('Slack');
+  assert.equal(await page.locator('[data-feature]:visible').count(), 1);
+  assert.ok((await page.locator('#feature-slack a').getAttribute('href')).endsWith(`/console/?lang=${locale}#overview`));
+  await page.locator('#feature-query').fill('');
+  await page.locator('[data-stage="diagnose"]').press('Enter');
+  assert.equal(await page.locator('[data-feature]:visible').count(), 5);
+  await page.locator('#features').screenshot({ path: path.join(outputDir, `${label}-feature-explorer.png`) });
+  assert.ok(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth + 2), `${label}: explorer has no overflow`);
+  await page.goto(`${origin}/${locale === 'fr' ? 'fr/' : ''}`);
+  await page.getByRole('button', { name: locale === 'fr' ? 'Refuser' : 'Reject', exact: true }).click();
   assert.deepEqual(errors, [], `${label}: no JS runtime exceptions`);
   return page;
 }
@@ -239,8 +255,13 @@ try {
   await verifyLeadFlow(en, "en");
   await verifyLeadFlow(fr, "fr");
   for (const [page, locale] of [[en,"en"],[fr,"fr"]]) {
+    await page.goto(`${origin}/${locale === "fr" ? "fr/" : ""}#ops`);
+    await page.getByRole("button", { name: locale === "fr" ? "Refuser" : "Reject", exact: true }).click();
     await page.locator("#ops").screenshot({path:path.join(outputDir,`${locale}-ops.png`)});
+    await page.goto(`${origin}/${locale === "fr" ? "fr/" : ""}#roadmap`);
     await page.locator("#roadmap").screenshot({path:path.join(outputDir,`${locale}-roadmap.png`)});
+    await page.goto(`${origin}/${locale === "fr" ? "fr/" : ""}`);
+    await page.getByRole("button", { name: locale === "fr" ? "Refuser" : "Reject", exact: true }).click();
   }
 
   // French read: instant URL analysis, no identity wall; sample fallback explicit.
@@ -265,7 +286,7 @@ try {
 
   // The FR server rows remain translated when a real response arrives.
   const measured = await browser.newContext();
-  await measured.route("**/api/free-read", (route) => route.fulfill({ status: 200, contentType: "application/json", body: JSON.stringify({ score: 71, projectedScore: 100, durationMs: 117, tables: [{ id: "seo.meta", title: "SEO — metadata", rows: [{ label: "Title", value: "48 chars", status: "pass", note: "Indexable." }] }] }) }));
+  await measured.route("**/api/free-read", (route) => route.fulfill({ status: 200, contentType: "application/json", body: JSON.stringify({ score: 71, projectedScore: 100, durationMs: 117, opportunities: [{ checkId: "llms.found", category: "llms", priority: "high", status: "fail", points: 3, evidence: "No llms.txt (HTTP 404)" }], tables: [{ id: "seo.meta", title: "SEO — metadata", rows: [{ label: "Title", value: "48 chars", status: "pass", note: "Indexable." }] }] }) }));
   const frMeasured = await measured.newPage();
   await frMeasured.goto(`${origin}/fr/`);
   await frMeasured.locator("#url-input").fill("example.com");
@@ -273,6 +294,8 @@ try {
   await frMeasured.getByText("Score GEO mesuré : 71/100").waitFor();
   assert.match(await frMeasured.locator("#read-result").innerText(), /SEO — métadonnées/);
   assert.match(await frMeasured.locator("#read-result").innerText(), /48 caractères/);
+  assert.equal(await frMeasured.locator(".landing-next-actions li").count(), 1);
+  assert.equal(await frMeasured.locator(".gg-next").getAttribute("href"), "/console/?lang=fr#c-public-read");
   await frMeasured.screenshot({ path: path.join(outputDir, "fr-measured.png") });
 
   await visitPublicConsole(browser, "fr", desktop, "desktop");
@@ -283,7 +306,8 @@ try {
   const enMobile = await visit(context, "en", "en-mobile", mobile);
   const frMobile = await visit(context, "fr", "fr-mobile", mobile);
   await verifySharedLanding(enMobile,frMobile);
-  await frMobile.locator(".nav-menu summary").nth(1).click();
+  for (const locale of ["en", "fr"]) { const narrow = await visit(context, locale, `${locale}-narrow`, { width: 375, height: 812 }); await narrow.close(); }
+  await frMobile.locator(".nav-menu summary").click();
   assert.ok(await frMobile.locator('.nav-dropdown a[href="#faq"]').isVisible(), "French mobile menu opens");
   await frMobile.screenshot({ path: path.join(outputDir, "fr-mobile-menu.png") });
   await frMobile.locator('.lang a[hreflang="en"]').click();

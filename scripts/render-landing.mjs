@@ -4,6 +4,7 @@ import fs from "node:fs";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 import { parseHTML } from "linkedom";
+import { journeyMarkup } from "./journey-markup.mjs";
 
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
 const template = fs.readFileSync(path.join(root, "site/landing/template.html"), "utf8");
@@ -15,7 +16,7 @@ for (const locale of ["en", "fr"]) {
   if (JSON.stringify(Object.keys(copy).sort()) !== JSON.stringify(keys)) throw new Error(`${locale}: translation keys differ from the template`);
   for (const [key, value] of Object.entries(copy)) if (typeof value !== "string" || !value.trim()) throw new Error(`${locale}: empty translation ${key}`);
   const canonical = `https://gtm.kayroslab.com/${locale === "fr" ? "fr/" : ""}`;
-  const config = { locale, canonical, privacy: locale === "fr" ? "/fr/confidentialite.html" : "/privacy.html", active_en: locale === "en" ? 'aria-current="page"' : "", active_fr: locale === "fr" ? 'aria-current="page"' : "" };
+  const config = { ...journeyMarkup(locale), locale, canonical, privacy: locale === "fr" ? "/fr/confidentialite.html" : "/privacy.html", active_en: locale === "en" ? 'aria-current="page"' : "", active_fr: locale === "fr" ? 'aria-current="page"' : "" };
   let html = template.replace(/\{\{(\w+)\}\}/g, (_, key) => {
     if (key in copy) return escape(copy[key]);
     if (key in config) return config[key];

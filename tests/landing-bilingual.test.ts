@@ -22,8 +22,8 @@ describe("French and English landing pages", () => {
     }
   });
   it("preserves the French editorial sections and their English translations", () => {
-    expect(fr).toContain("booster votre site");
-    expect(en).toContain("boost your website");
+    expect(fr).toContain("Sachez quoi améliorer.");
+    expect(en).toContain("Know what to improve.");
     for (const id of ["audit", "fonctionnement", "outils", "ops", "console", "roadmap", "toolkit", "mesure", "preuve", "offres", "contact", "faq", "credit"]) {
       for (const html of [en, fr]) expect(html).toContain(`id="${id}"`);
     }
@@ -42,7 +42,7 @@ describe("French and English landing pages", () => {
     for (const [html, locale, route] of [[en,"en","/"],[fr,"fr","/fr/"]]) {
       expect(html).toContain(`href="https://gtm.kayroslab.com${route}"`);
       expect(html).toContain(`lang="${locale}"`);
-      expect(html).toContain(`/console/?lang=${locale}#billing`);
+      expect(html).toContain(`/console/?lang=${locale}#overview`);
       expect(html).toContain('hreflang="en"');
       expect(html).toContain('hreflang="fr"');
     }

@@ -4,6 +4,7 @@ import { dictFor } from "./i18n.js";
 import { renderTables, sampleTables } from "./tables.js";
 import { renderSitemapMap } from "./sitemap-map.js";
 import { translateLiveTables } from "./fr/server-tables.js";
+import { rankRecommendations, explainRecommendation } from "./console/public-read-model.js";
 
 const language = document.documentElement.lang === "fr" ? "fr" : "en";
 const dict = dictFor(language);
@@ -45,17 +46,18 @@ function renderInitialResult(url, report) {
   note.dataset.resultNote = "";
   const tables = element("div", "gg-data");
   tables.dataset.resultTables = "";
-  const next = element("a", "gg-next", L("Ouvrir la console complète →", "Open the full console →"));
-  next.href = `/console/?lang=${language}#overview`;
+  const next = element("a", "gg-next", L("Étape suivante : explorer les questions de mes clients, gratuitement →", "Next: explore my customers’ questions for free →"));
+  next.href = `/console/?lang=${language}#c-public-read`;
+  const actions = element("section", "landing-next-actions"); actions.hidden = true;
 
   const mapHeading = element("h3", "", L("Carte du sitemap", "Sitemap map"));
   const map = element("div", "sitemap-map");
   renderSitemapMap(map, null, language);
-  result.replaceChildren(title, verdictText, score, explanation, heading, renderChecks(report), apiHeading, note, tables, mapHeading, map, next);
+  result.replaceChildren(title, verdictText, score, explanation, actions, next, heading, renderChecks(report), apiHeading, note, tables, mapHeading, map);
   result.hidden = false;
   result.scrollIntoView({ behavior: "smooth", block: "start" });
   title.focus({ preventScroll: true });
-  return { title, score, verdictText, note, tables, map };
+  return { title, score, verdictText, note, tables, map, actions };
 }
 
 async function loadLiveRead(url, host, view, requestId) {
@@ -76,6 +78,17 @@ async function loadLiveRead(url, host, view, requestId) {
       view.verdictText.textContent = `${L("Audit de la page", "Page audit for")} ${host}${projected}. ${L("Ce score ne concerne pas tout le domaine.", "This score does not cover the whole domain.")}`;
     }
     renderTables(view.tables, language === "fr" ? translateLiveTables(payload.tables ?? []) : (payload.tables ?? []), dict);
+    const fixes = rankRecommendations(payload.opportunities, "quick", 3);
+    view.actions.replaceChildren(element("h3", "", L("Votre prochaine action, fondée sur les constats", "Your next action, grounded in evidence")));
+    if (!fixes.length) view.actions.append(element("p", "", L("Cette lecture ne fournit pas de correctif étayé. Explorez les questions clients ou vérifiez les mesures techniques ci-dessous.", "This read provides no evidence-backed fix. Explore customer questions or review the technical measurements below.")));
+    const list = element("ol");
+    for (const fix of fixes) {
+      const explanation = explainRecommendation(fix, language), item = element("li"), evidence = element("details");
+      item.append(element("strong", "", explanation.title), element("p", "", explanation.steps), element("p", "", `${L("Bénéfice attendu", "Intended benefit")}: ${explanation.effect}`));
+      evidence.append(element("summary", "", L("Voir le constat", "View the finding")), element("p", "", fix.evidence || fix.checkId));
+      item.append(evidence); list.append(item);
+    }
+    view.actions.append(list); view.actions.hidden = false;
     renderSitemapMap(view.map, payload.sitemapMap, language);
     view.note.textContent = dict.tables.serverNote({
       at: new Date().toLocaleTimeString(language === "fr" ? "fr-FR" : "en-GB", { hour: "2-digit", minute: "2-digit" }),
@@ -145,7 +158,11 @@ leadForm?.addEventListener("submit", async event => {
 const aliases = { how: "fonctionnement", tools: "outils", measurement: "mesure", proof: "preuve", plans: "offres", talk: "contact", geosuite: "credit", "free-read": "url-form" };
 function followLegacyAnchor() {
   const target = aliases[location.hash.slice(1)];
-  if (target) document.getElementById(target)?.scrollIntoView();
+  const node = target && document.getElementById(target);
+  if (node) {
+    for (let parent = node.parentElement; parent; parent = parent.parentElement) if (parent.tagName === "DETAILS") parent.open = true;
+    node.scrollIntoView({ behavior: "instant" });
+  }
 }
 window.addEventListener("hashchange", followLegacyAnchor);
 followLegacyAnchor();
