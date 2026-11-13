@@ -1,6 +1,6 @@
-﻿import { renderLocalSeo } from "./local-seo-network.js";
+import { renderLocalSeo } from "./local-seo-network.js";
 import { renderLocalSeoWorkspace } from "./local-seo.js";
-ï»¿/* Console authentifiÃ©e : mÃªme design que la section #console du site (coque .app),
+/* Console authentifiÃ©e : mÃªme design que la section #console du site (coque .app),
  * donnÃ©es en direct via /api/console/*. Les dÃ©finitions d'outils viennent de tools.js. */
 import { API_BASE, DISCOVER, CONSOLE_DOMAIN } from "./config.js";
 import { login, logout, handleRedirect, accessToken, currentTenant, setTenant, accountConsoleUrl } from "./auth.js";
