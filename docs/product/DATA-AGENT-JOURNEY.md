@@ -1,7 +1,8 @@
 # Data agent across the customer journey
 
-Status: implementation for review; production activation and real Slack acceptance
-remain separate. Website: https://gtm.kayroslab.com/. English is the reference;
+Status: merged in [PR #42](https://github.com/Geoking2104/GTM-Growth/pull/42); core assistant deployed to OVH on 13 November 2026 in
+[run #44](https://github.com/Geoking2104/GTM-Growth/actions/runs/43462628681) at `1749446`.
+Live Slack activation and real Slack acceptance remain pending. Website: https://gtm.kayroslab.com/. English is the reference;
 the implemented public, onboarding and authenticated UI has matching FR/EN copy.
 
 ## Product decision
@@ -128,9 +129,11 @@ the core app keeps its existing Node 20 deployment. See the
 Automated checks cover SSO/tenant/source isolation, private preference scope,
 missing/error data, reviewed/sample metric semantics, raw-data exclusion,
 signature freshness/tampering/replays, changed bindings and suspension, bilingual
-UI behavior, stable navigation and adapter transport bounds. Real Google reads,
-live Slack replies and a production deployment require their configured accounts;
-fixtures do not establish those outcomes. The normal CI and deployment controls,
+UI behavior, stable navigation and adapter transport bounds. Core CI passed 556 tests;
+Eve CI passed two adapter tests and its build. The production release passed health,
+asset parity, public analysis and unauthenticated API boundary checks. Real Google
+reads and live Slack replies require their configured accounts and were not
+validated by those checks; fixtures do not establish those outcomes. The normal CI and deployment controls,
 including OVH SSH pinning, remain in force.
 
 ## Résumé français

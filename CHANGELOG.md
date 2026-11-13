@@ -4,6 +4,9 @@
 
 ### Added
 
+- Contextual FR/EN data assistant in the public scan, onboarding and every authenticated console section; personal role, goal, audience, lifecycle stage and optional 28-day target. Guided answers use tenant-scoped sources with explicit periods and missing-data states, without model credentials.
+- Optional Eve Slack agent with four curated read-only tools, exact workspace/channel/user bindings, signed tenant bridge, durable replay protection and tenant-preserving console links. Live Slack installation and credentials remain separate from the OVH core release.
+
 - LOC-01–24 deterministic evidence rules; operator-configured tenant-specific GBP profile/review reads; durable private Node-RED jobs; supervised phone/URL publication with separate approval, conflict checks and readback. FR/EN console, tests and activation guide included. Live Google access and publication remain opt-in.
 
 - Offline-first global/local SEO workspace: tenant-scoped registry previews, CSV/JSON imports, exact local access grants, deterministic rank metrics and comparisons, durable manual actions with independent approval, and scoped JSON exports.

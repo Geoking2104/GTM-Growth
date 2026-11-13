@@ -1,6 +1,6 @@
 # GTM Growth
 
-**Open-source SEO/GEO and analytics workspace**, available through a bilingual web console, an MCP server and a CLI. Connect Google Analytics 4, Google Tag Manager (web and server-side), Measurement Protocol, Search Console, PageSpeed Insights and CrUX; turn measured evidence into reviewed actions.
+**Open-source SEO/GEO and analytics workspace**, available through a bilingual web console with a contextual data assistant, an MCP server and a CLI. An optional Eve integration supports natural-language replies in approved Slack channels. Connect Google Analytics 4, Google Tag Manager (web and server-side), Measurement Protocol, Search Console, PageSpeed Insights and CrUX; turn measured evidence into reviewed actions.
 
 **Website: [https://gtm.kayroslab.com/](https://gtm.kayroslab.com/)** · [Français](https://gtm.kayroslab.com/fr/) · [Console EN](https://gtm.kayroslab.com/console/?lang=en#c-public-read) · [Console FR](https://gtm.kayroslab.com/console/?lang=fr#c-public-read)
 
@@ -11,19 +11,24 @@ Start with a public page read without signup, explore customer questions, then c
 | **Documentation updated** | 13 November 2026; English-first documentation, French/English product interface |
 | **Package / runtime** | `gtm-growth` 0.22.0 · Node.js ≥ 20 · TypeScript |
 | **License** | Apache-2.0; self-hosted software remains free |
-| **Data and costs** | Public checks and local SEO workflows need no paid data provider. Optional live OpenAI/Gemini checks use tenant-supplied keys and may incur provider charges. |
+| **Data and costs** | Public checks and local SEO workflows need no paid data provider. Optional AI collectors and the Eve Slack agent use configured model credentials and may incur provider/hosting charges; guided console answers need no model key. |
 | **Cloud offer** | Solo €39/month and Agency €149/month are indicative pilot hypotheses; Mollie checkout and subscription entitlements are not active |
 | **Hosting** | OVH VPS with Docker Compose, Nginx and Keycloak; the address above is the primary product website |
 | **Validation** | CI: typecheck, lint, Vitest, build, CLI/site smoke, production image, FR/EN browser QA and Node-RED runtime smoke |
 
 ## Current delivery status
 
-The latest successful [OVH deployment run](https://github.com/Geoking2104/GTM-Growth/actions/runs/43270543975), on 12 November 2026, updated the application to [`5c83519`](https://github.com/Geoking2104/GTM-Growth/commit/5c83519c5092b9548c7b9b40879b0c0d00a7a79d); [CI passed for that revision](https://github.com/Geoking2104/GTM-Growth/actions/runs/43270115356). This is deployment evidence, not proof that optional Google connections, billing or external writes have been activated.
+The [OVH production deployment on 13 November 2026](https://github.com/Geoking2104/GTM-Growth/actions/runs/43462628681) released [`1749446`](https://github.com/Geoking2104/GTM-Growth/commit/174944640b5ea8fea2851ada56183f430ffe8004), including [PR #42](https://github.com/Geoking2104/GTM-Growth/pull/42). [Core CI](https://github.com/Geoking2104/GTM-Growth/actions/runs/43462106000) and [Eve CI](https://github.com/Geoking2104/GTM-Growth/actions/runs/43462106099) passed on that merged revision: 556 core tests, two adapter tests, builds and FR/EN browser checks.
 
-| Area | Implemented / available in the deployed revision | Remaining conditions or scope |
+Post-deployment checks confirmed `/health` returns 200, the EN/FR homepages and three console modules match the released files, and a real public analysis renders the assistant guidance. The protected assistant context returns 401 without sign-in. The Slack bridge returns 503 `Agent bridge not configured`: its code is deployed, but live Slack replies are **not activated**. Authenticated real-tenant analytics and live Slack/model replies were not exercised in this production check.
+
+| Area | Included in the deployed core or optional integration source | Remaining conditions or scope |
 | --- | --- | --- |
 | **Free public read** | Single-page GEO v1 readiness, observed SEO evidence, ranked recommendations and outbound social-profile references | No measured search/AI visibility, inbound backlink coverage or public Playwright scan |
 | **Customer journey** | Five awareness stages, editable hypothetical questions, tentative heading matches, copied action plan and explicitly selected tracked prompts | Multi-page journey persistence, scheduled SEO Autopilot and commercial entitlements remain future work |
+| **Contextual data assistant** | FR/EN entry points in public scan, onboarding and every console section; personal role, goal, audience, lifecycle stage and optional 28-day target; guided read-only metrics with source/period and missing-data states | Connected data needs authorized tenant sources; business preferences never grant permissions |
+| **Slack / Eve** | Optional pinned integration and tenant-bound HMAC read bridge, exact workspace/channel/user bindings, four curated tools and tenant-preserving console links | Separate operator installation, model credentials, secrets, channel audience review and real Slack acceptance required; Slack is not activated by the OVH core deployment |
+| **AI visibility accounts** | Named encrypted API accounts; explicit OpenAI, Claude, Mistral and Grok collectors alongside the Gemini panel; distinct navigation icons | A supported provider API account/key is required; consumer chat subscriptions do not supply API access |
 | **Global and local SEO** | CSV/JSON registry, exact location grants, declared rank imports, 24 LOC rules, scoped actions/exports and SQLite audit history | Several controls need declared evidence; missing or stale evidence stays unknown |
 | **GBP / Node-RED** | Operator-configured Google Business Profile reader, five durable job pollers, supervised phone/website changes with independent approval and API readback | Google project approval, manager OAuth, tenant credentials and worker configuration required; writes disabled by default |
 | **FR/EN and SSO** | Localized navigation, language passed to Keycloak, optional login-title override synchronization | Business language and time zone stay separate from interface language |
@@ -33,7 +38,7 @@ The latest successful [OVH deployment run](https://github.com/Geoking2104/GTM-Gr
 
 ## How to read this README
 
-**Data-agent source integration (13 November 2026, not a deployment claim):** a
+**Data-agent capabilities (13 November 2026):** a
 bilingual guided assistant now spans the public scan, onboarding and every
 authenticated console section. An optional Eve service adds natural-language
 Slack replies through tenant-bound metric reads. See the
@@ -62,7 +67,8 @@ GTM Growth brings public-page checks, authorized analytics and search data, cust
 | **What might buyers ask?** | Five awareness stages with editable questions and tentative matches to page headings | Hypotheses for review, not observed queries, search volumes or proven demand |
 | **Where does useful traffic come from?** | GA4 / Search Console reports after authorized connection; PageSpeed and CrUX where data exists | Provider results with evidence; disconnected examples are labelled as samples |
 | **Are my locations consistent?** | Location registry, 24 local controls, evidence coverage, declared rank comparisons and assigned actions | Declared evidence remains distinct from Google reads; unknowns do not become passes |
-| **Does an AI engine mention my brand?** | Optional bounded OpenAI/Gemini collections and reviewable Competition datasets | Tenant keys required; automated mention detection remains provisional until reviewed |
+| **Does an AI engine mention my brand?** | Optional bounded AI collections, named API accounts and reviewable Competition datasets | Tenant keys required; automated mention detection remains provisional until reviewed |
+| **What should my team do next?** | Role- and goal-aware console shortcuts, guided metric answers and optional natural-language Slack replies | Answers show source/period and missing evidence; Slack requires separate activation |
 | **Can I prepare content and fixes?** | Generated assets, article briefs, quality-gated WordPress drafts and read-only Apply Mode previews | Drafts and previews require human review; Apply Mode cannot yet change a remote site |
 
 Outbound profiles can be detected in page links and schema `sameAs`, including Instagram, X/Twitter, Reddit, Discord and TikTok. These references do not establish inbound backlinks.
@@ -467,6 +473,7 @@ docs/                          # all guides (see index below)
 
 | Date / reference | Update |
 | --- | --- |
+| **13 November — [PR #42](https://github.com/Geoking2104/GTM-Growth/pull/42)** | Contextual FR/EN data assistant across the journey; saved personal goals/targets, shared curated metric reads and optional tenant-bound Eve Slack integration. Track 1 covers customer value; Track 2 and the operator runbook cover authorization, setup and costs. |
 | **13 November — bilingual landing** | Shared English visual layout, complete original French homepage content translated into English, localized illustrations and identical forms; static generation and parity checks prevent language drift. See [landing maintenance](site/README.md). |
 | **13 November — documentation** | Primary website changed to [gtm.kayroslab.com](https://gtm.kayroslab.com/); both tracks aligned with merged code, the successful OVH release and the remaining activation/development gates |
 | **12 November — OVH / SSO** | Successful deployment of `5c83519`; FR/EN navigation/sign-in and optional login-title maintenance using the provisioner service account; corrected and pinned SSH host fingerprint |

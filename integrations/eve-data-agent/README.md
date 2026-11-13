@@ -5,7 +5,10 @@ using the same read-only metric service as the GTM console. It does not replace
 the OVH app or require moving GTM data to a new warehouse. The console's guided
 assistant works independently, without a model credential.
 
-This is source integration, not proof of a production installation. Live Slack
+The core console assistant and bridge code were deployed to OVH in
+[run #44](https://github.com/Geoking2104/GTM-Growth/actions/runs/43462628681)
+on 13 November 2026. The bridge remains unconfigured (503); this optional Eve
+service has not been installed or accepted against a real Slack workspace. Live Slack
 acceptance needs an authorized workspace, app, allowed conversations/users and a
 model credential. No messages are sent by build/tests. See
 [product architecture and value plan](../../docs/product/DATA-AGENT-JOURNEY.md).
