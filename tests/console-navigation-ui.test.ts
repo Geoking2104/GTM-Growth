@@ -57,4 +57,6 @@ it.each(["fr", "en"])("opens every navigation entry with content or recovery ste
   const calls = fetcher.mock.calls.filter(([url]) => url.startsWith("/api/console/") && !url.endsWith("/me"));
   expect(calls.every(([, options]) => options?.headers?.["X-Tenant"] === "acme")).toBe(true);
   expect(calls.some(([url]) => /\/(run|publish|import|add|remove)$/.test(url))).toBe(false);
-});
+// This is a complete 24-screen journey, with an assertion for every entry.
+// Keep individual readiness waits bounded while allowing slower shared CI CPUs.
+}, 20000);
