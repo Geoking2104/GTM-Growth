@@ -27,6 +27,7 @@ it.each(["fr", "en"])("opens a scoped assistant, persists choices, explains real
   await document.querySelectorAll("form")[1].onsubmit({ preventDefault() {} });
   await vi.waitFor(() => expect(document.querySelector(".c-agent-answer").textContent).toContain("42 / 50"));
   expect(document.querySelector(".c-agent-answer").textContent).toContain("2026-10-01");
+  expect(document.querySelector(".c-agent-answer a").getAttribute("href")).toBe("#ga4");
   expect(document.querySelector(".c-agent-slack").textContent).toContain(language === "fr" ? "administrateur" : "administrator");
   api.mockRejectedValueOnce(new Error("secret upstream"));
   await document.querySelectorAll("form")[1].onsubmit({ preventDefault() {} });
@@ -66,4 +67,5 @@ it("preserves the requested tenant and section through SSO without accepting sta
   await expect(resolveWorkspace(load, "acme", remember)).rejects.toThrow("Denied"); expect(remember).not.toHaveBeenCalled(); expect(load).toHaveBeenCalledTimes(1);
   expect(workspaceHandoff({ search: "", hash: "" }, storage, 700000)).toBe(null);
   expect(workspaceHandoff({ search: "?tenant=acme", hash: "#javascript:bad" }, storage, 800000).hash).toBe("#overview");
+  expect(workspaceHandoff({ search: "?tenant=acme", hash: "#ga4/ecommerce" }, storage, 900000).hash).toBe("#ga4/ecommerce");
 });

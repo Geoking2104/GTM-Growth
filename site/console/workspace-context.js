@@ -15,7 +15,7 @@ export function workspaceHandoff(location, storage, now = Date.now()) {
   const key = "gtm-console-handoff", params = new URLSearchParams(location.search);
   const tenant = params.get("tenant");
   const validTenant = value => typeof value === "string" && /^[a-z0-9](?:[a-z0-9-]{0,38}[a-z0-9])?$/.test(value);
-  const validHash = value => typeof value === "string" && /^#[a-z_]+(?:\/[a-z-]+)?$/.test(value);
+  const validHash = value => typeof value === "string" && /^#[a-z0-9_]+(?:\/[a-z0-9-]+)?$/.test(value);
   if (validTenant(tenant)) {
     const value = { tenant, hash: validHash(location.hash) ? location.hash : "#overview", expires: now + 600000 };
     storage.setItem(key, JSON.stringify(value)); return value;

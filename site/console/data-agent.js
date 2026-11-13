@@ -76,7 +76,7 @@ export function createDataAgent({ api, language = "en", workspaceName = "" }) {
         const m = (answer.metrics || []).find(v => v.id === profile.target?.metric);
         if (requestedDays === 28 && answer.state === "ready" && m?.value !== null && m?.value !== undefined && profile.target) output.append(el("p", "", `${L("Mesure / cible personnelle sur 28 jours", "Measurement / personal 28-day target")} : ${m.value} / ${profile.target.value}`));
         for (const note of answer.caveats || []) output.append(el("p", "c-note", note));
-        if (/^#[a-z_]+(?:\/[a-z-]+)?$/.test(answer.href || "")) { const link = el("a", "app-pill", L("Ouvrir l'analyse et ses sources", "Open the analysis and its sources")); link.href = answer.href; output.append(link); }
+        if (/^#[a-z0-9_]+(?:\/[a-z0-9-]+)?$/.test(answer.href || "")) { const link = el("a", "app-pill", L("Ouvrir l'analyse et ses sources", "Open the analysis and its sources")); link.href = answer.href; output.append(link); }
       } catch { if (epoch === own) output.replaceChildren(el("p", "c-error", L("Données indisponibles. Réessayez ou vérifiez les accès dans Tracking.", "Data unavailable. Retry or check access in Tracking."))); }
       finally { ask.disabled = false; }
     }

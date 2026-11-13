@@ -29,6 +29,7 @@ for(const lang of ['fr','en']) for(const width of [390,1440]) {
  await page.locator('#c-data-agent > details > summary').click();
  await page.locator('.c-agent-grid').last().getByRole('button').click();
  await page.locator('.c-agent-answer').getByText('420 / 500',{exact:false}).waitFor();
+ if(await page.locator('.c-agent-answer a').getAttribute('href') !== '#ga4') throw new Error('Missing source analysis handoff');
  await page.locator('.c-agent-profile > summary').click();
  await page.locator('.c-agent-grid').first().locator('select').first().selectOption('agency');
  await page.locator('.c-agent-grid').first().getByRole('button').click();
