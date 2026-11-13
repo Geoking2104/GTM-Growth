@@ -18,11 +18,11 @@ Start with a public page read without signup, explore customer questions, then c
 
 ## Current delivery status
 
-The website journey redesign described below is source-level functionality; the last verified production release is recorded here until the next deployment is confirmed.
+The website journey redesign is live in production. The [OVH release completed on 14 November 2026 (UTC+8)](https://github.com/Geoking2104/GTM-Growth/actions/runs/43522090712) deployed [`83c8720`](https://github.com/Geoking2104/GTM-Growth/commit/83c8720a153a5224f38c74c688083ab992335c44), including [PR #43](https://github.com/Geoking2104/GTM-Growth/pull/43). [CI passed on the merged revision](https://github.com/Geoking2104/GTM-Growth/actions/runs/43521515234): 585 tests, typecheck, lint, build, production image, FR/EN browser checks and Node-RED runtime smoke.
 
-The [OVH production deployment on 13 November 2026](https://github.com/Geoking2104/GTM-Growth/actions/runs/43462628681) released [`1749446`](https://github.com/Geoking2104/GTM-Growth/commit/174944640b5ea8fea2851ada56183f430ffe8004), including [PR #42](https://github.com/Geoking2104/GTM-Growth/pull/42). [Core CI](https://github.com/Geoking2104/GTM-Growth/actions/runs/43462106000) and [Eve CI](https://github.com/Geoking2104/GTM-Growth/actions/runs/43462106099) passed on that merged revision: 556 core tests, two adapter tests, builds and FR/EN browser checks.
+Post-deployment checks confirmed `/health` returns 200 and the EN/FR homepages, landing styles/scripts, shared feature catalog and three console modules match the released files byte for byte. Live browser checks confirmed all 31 functions, commerce search, French navigation and a real public analysis of `gtm.kayroslab.com`, including three measured recommendations and the handoff into the free console with its URL retained.
 
-Post-deployment checks confirmed `/health` returns 200, the EN/FR homepages and three console modules match the released files, and a real public analysis renders the assistant guidance. The protected assistant context returns 401 without sign-in. The Slack bridge returns 503 `Agent bridge not configured`: its code is deployed, but live Slack replies are **not activated**. Authenticated real-tenant analytics and live Slack/model replies were not exercised in this production check.
+Slack remains an optional, separately configured integration; this release does not activate it. The previous release's checks confirmed the protected assistant context returns 401 without sign-in and the unconfigured Slack bridge returns 503. Authenticated real-tenant analytics, payments, store pilots and live Slack/model replies were not exercised in this website release.
 
 | Area | Included in the deployed core or optional integration source | Remaining conditions or scope |
 | --- | --- | --- |
