@@ -48,6 +48,14 @@ node scripts/qa-landing.mjs
 
 Browser QA requires Chromium (or `CHROMIUM_BIN`). CI installs it and verifies EN/FR desktop/mobile rendering, common structure/styles, privacy, lead success/failure with intercepted requests, sample/measured read flows, console navigation and the language switch. Screenshots are uploaded as `landing-fr-en-screenshots`.
 
+## Authenticated console
+
+The console loads read-only data on navigation and supplies bilingual setup/import
+procedures when results cannot be shown. Customer journey sits under **Act**;
+website SEO and local network data have separate entry tabs. See the
+[console readiness and acceptance map](../docs/product/CONSOLE-READINESS.md) for
+entry-by-entry behavior, permissions and validation limits.
+
 ## Deployment
 
 Use `.github/workflows/deploy-kayroslab-vps.yml` on `main` with `confirmation: DEPLOY`. The protected OVH workflow updates the checkout and deploys the application with the existing SSH host verification. See [VPS operations](../deploy/kayroslab-vps/README.md).
