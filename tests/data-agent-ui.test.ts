@@ -56,3 +56,14 @@ it("all suggested navigation paths exist and the global surface is in the common
   }
   expect(readFileSync("site/console/index.html", "utf8")).toContain('id="c-data-agent"');
 });
+
+it("preserves the requested tenant and section through SSO without accepting stale or unsafe targets", async () => {
+  const { workspaceHandoff, resolveWorkspace } = await import("../site/console/workspace-context.js");
+  const memory = new Map(); const storage = { getItem: k => memory.get(k), setItem: (k, v) => memory.set(k, v), removeItem: k => memory.delete(k) };
+  expect(workspaceHandoff({ search: "?tenant=acme&lang=en", hash: "#ops/alerts" }, storage, 1000)).toMatchObject({ tenant: "acme", hash: "#ops/alerts" });
+  expect(workspaceHandoff({ search: "?code=callback", hash: "" }, storage, 2000)).toMatchObject({ tenant: "acme", hash: "#ops/alerts" });
+  const remember = vi.fn(); const load = vi.fn(async () => { throw new Error("Denied"); });
+  await expect(resolveWorkspace(load, "acme", remember)).rejects.toThrow("Denied"); expect(remember).not.toHaveBeenCalled(); expect(load).toHaveBeenCalledTimes(1);
+  expect(workspaceHandoff({ search: "", hash: "" }, storage, 700000)).toBe(null);
+  expect(workspaceHandoff({ search: "?tenant=acme", hash: "#javascript:bad" }, storage, 800000).hash).toBe("#overview");
+});

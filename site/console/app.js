@@ -25,7 +25,7 @@ import { toolbar, renderSearchPerformance, renderQueryPages, renderSitemaps, ren
 import { mountPublicRead } from "./public-read.js";
 import { renderAction } from "./action-view.js";
 import { renderDataGuide } from "./data-guidance.js";
-import { resolveWorkspace } from "./workspace-context.js";
+import { resolveWorkspace, workspaceHandoff } from "./workspace-context.js";
 import { renderGlobalSeo } from "./global-seo.js";
 import { renderCustomerJourneyWorkspace } from "./customer-journey-workspace.js";
 import { renderCatalog } from "./catalog.js";
@@ -351,11 +351,12 @@ async function loginScreen() {
 function i18nStaticLogin() { document.querySelectorAll("#c-login [data-i18n]").forEach((n) => { n.textContent = t(n.dataset.i18n); }); document.title = t("title"); }
 
 async function start() {
+  const handoff = workspaceHandoff(location, sessionStorage);
   let tokens;
   try { tokens = await handleRedirect(); } catch (error) { console.error(error); $("#c-login-error").textContent = error.message; }
   if (!tokens) return loginScreen();
   $("#c-app").hidden = false; i18nStatic();
-  $("#c-logout").onclick = () => { setTenant(null); sessionStorage.removeItem("gtm-console-selected"); logout(); };
+  $("#c-logout").onclick = () => { setTenant(null); sessionStorage.removeItem("gtm-console-selected"); sessionStorage.removeItem("gtm-console-handoff"); logout(); };
   $("#c-account").href = accountConsoleUrl();
   $("#c-account svg").outerHTML = icon("account");
   const picker = $("#c-picker"); const sw = $("#c-switch");
@@ -367,7 +368,12 @@ async function start() {
       const value = await res.json();
       if (!res.ok) throw new Error(value.error || `Erreur ${res.status}`);
       return value;
-    }, selectedTenant(), id => sessionStorage.setItem("gtm-console-selected", id));
+    }, handoff?.tenant || selectedTenant(), id => sessionStorage.setItem("gtm-console-selected", id));
+    if (handoff) {
+      if (me.tenant?.id !== handoff.tenant) throw new Error(LANG === "fr" ? "L'espace demandé n'est pas accessible avec ce compte." : "The requested workspace is not accessible with this account.");
+      sessionStorage.removeItem("gtm-console-handoff");
+      history.replaceState(null, "", `?lang=${LANG}${handoff.hash}`);
+    }
     state.me = me;
     $("#c-user").textContent = `${me.username ?? ""}${me.tenant ? ` · ${me.tenant.name}` : ""}${me.platformAdmin ? ` · ${t("superAdmin")}` : ""}`;
     if (me.accountConsole) $("#c-account").href = me.accountConsole;
@@ -382,7 +388,7 @@ async function start() {
     }
     select.onchange = () => {
       if (!select.value || select.value === selectedTenant()) return;
-      sessionStorage.setItem("gtm-console-selected", select.value); location.reload();
+      sessionStorage.removeItem("gtm-console-handoff"); sessionStorage.setItem("gtm-console-selected", select.value); location.reload();
     };
     if (me.tenant) {
       // The picker was historically shared by all tenants on this browser.
