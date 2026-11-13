@@ -8,79 +8,51 @@ const siteFile = (name: string): string => readFileSync(join(process.cwd(), "sit
 describe("French and English landing pages", () => {
   const en = siteFile("index.html");
   const fr = siteFile("fr/index.html");
-
-  it("offers visible reciprocal language links and shared design tokens", () => {
-    expect(en).toContain('hreflang="fr" lang="fr"');
-    expect(fr).toContain('hreflang="en" lang="en"');
-    expect(en).toContain('href="brand.css"');
-    expect(fr).toContain('href="../brand.css"');
-    expect(en).toContain('aria-current="page">EN');
-    expect(fr).toContain('aria-current="page">FR');
-  });
-
-  it("shares privacy controls while displaying consent in the visitor's language", () => {
-    expect(en).toContain('src="./privacy.js"');
-    expect(fr).toContain('src="../privacy.js"');
-    expect(fr).toContain('class="privacy-settings"');
-    const privacy = siteFile("privacy.js");
-    expect(privacy).toContain('Vos préférences de confidentialité');
-    expect(privacy).toContain('Your privacy preferences');
-    expect(privacy).toContain('text("Refuser", "Reject")');
-    expect(siteFile("brand.css")).toContain('.privacy-banner .btn.btn-ghost');
-  });
-
-  it("runs the free read in French without requiring a console login", () => {
-    expect(fr).toContain('src="free-read.js"');
-    expect(fr).toContain('id="read-result"');
-    expect(fr).not.toContain("window.location.assign('/console/')");
-    const js = siteFile("fr/free-read.js");
-    expect(js).toContain('fetch("/api/free-read"');
-    expect(js).toContain("auditUrlShape");
-    expect(js).toContain("sampleTables(dict)");
-  });
-
-  it("uses English-language graphics and identifies illustrations", () => {
-    for (const wrongLanguage of ["geo-board.webp", "citability-main.webp", "free-sitemap.webp", "free-seo.webp", "free-ga4.webp", "free-gsc.webp", "search-perf.webp", "indexnow-main.webp"]) {
-      expect(en).not.toContain(`src="assets/screens/${wrongLanguage}"`);
+  it("shares the English layout, stylesheet and behavior", () => {
+    for (const html of [en, fr]) {
+      expect(html).toContain('class="wrap hero-inner"');
+      expect(html).toContain('class="site-header"');
+      expect(html).toContain('href="/styles.css"');
+      expect(html).toContain('href="/landing.css"');
+      expect(html).toContain('src="/landing.js"');
+      expect(html).toContain('src="/privacy.js"');
+      expect(html).toContain('src="/locale-links.js"');
+      expect(html).toContain('id="read-result"');
+      expect(html).toContain('id="lead-form"');
     }
-    expect(en).toContain('src="assets/screens/geo-board-en.svg"');
-    expect(en).toContain("English-language illustration");
-    const svg = siteFile("assets/screens/geo-board-en.svg");
-    expect(svg).toContain("Projected score trajectory");
-    expect(svg).not.toContain("Vue d’ensemble");
   });
-
-  it("keeps canonical and hreflang URLs on the public domain", () => {
-    const sitemap = siteFile("sitemap.xml");
-    const robots = siteFile("robots.txt");
-    for (const path of ["/", "/fr/"]) {
-      expect(sitemap).toContain(`https://gtm.kayroslab.com${path}`);
-      expect(en).toContain(`href="https://gtm.kayroslab.com${path}"`);
-      expect(fr).toContain(`href="https://gtm.kayroslab.com${path}"`);
+  it("preserves the French editorial sections and their English translations", () => {
+    expect(fr).toContain("booster votre site");
+    expect(en).toContain("boost your website");
+    for (const id of ["audit", "fonctionnement", "outils", "ops", "console", "roadmap", "toolkit", "mesure", "preuve", "offres", "contact", "faq", "credit"]) {
+      for (const html of [en, fr]) expect(html).toContain(`id="${id}"`);
     }
-    expect(robots).toContain("Sitemap: https://gtm.kayroslab.com/sitemap.xml");
+    expect(fr).toContain("Trois phases, sept chantiers");
+    expect(en).toContain("Three phases, seven workstreams");
   });
-
-  it("shows the approved pilot prices with a pre-launch VAT and Mollie caveat", () => {
-    expect(fr).toContain("39&nbsp;€");
-    expect(fr).toContain("149&nbsp;€");
-    expect(en).toContain("€39");
-    expect(en).toContain("€149");
-    expect(fr).toContain("HT/TTC");
-    expect(en).toContain("VAT");
-    expect(fr).toContain('/console/?lang=fr#billing');
-    expect(en).toContain('/console/?lang=en#billing');
+  it("uses localized versions of the same graphic and marks projections", () => {
+    expect(en).toContain('src="/assets/screens/geo-board-en.svg"');
+    expect(fr).toContain('src="/assets/screens/geo-board-fr.svg"');
+    expect(en).toContain("projected improvement, not historical results");
+    expect(fr).toContain("progression projetée, pas un historique");
+    expect(siteFile("assets/screens/geo-board-fr.svg")).toContain("Trajectoire du score projetée");
+    expect(siteFile("assets/screens/geo-board-en.svg")).toContain("Projected score trajectory");
   });
-
-  it("keeps language selection on console links and public sign-in", () => {
-    expect(fr).toContain('src="../locale-links.js"');
-    expect(en).toContain('src="locale-links.js"');
-    const consoleHtml = siteFile("console/index.html");
-    expect(consoleHtml).toContain('href="../brand.css"');
-    expect(consoleHtml).toContain('src="locale-shell.js"');
-    expect(consoleHtml).toContain('hreflang="fr"');
-    expect(consoleHtml).toContain('hreflang="en"');
-    expect(siteFile("console/locale-shell.js")).toContain('const home = en ? "/" : "/fr/"');
+  it("keeps canonical URLs, privacy and console navigation localized", () => {
+    for (const [html, locale, route] of [[en,"en","/"],[fr,"fr","/fr/"]]) {
+      expect(html).toContain(`href="https://gtm.kayroslab.com${route}"`);
+      expect(html).toContain(`lang="${locale}"`);
+      expect(html).toContain(`/console/?lang=${locale}#billing`);
+      expect(html).toContain('hreflang="en"');
+      expect(html).toContain('hreflang="fr"');
+    }
+    expect(fr).toContain('href="/fr/confidentialite.html"');
+    expect(en).toContain('href="/privacy.html"');
+    expect(siteFile("console/index.html")).toContain('src="locale-shell.js"');
+  });
+  it("keeps pilot prices and payment disclosures equivalent", () => {
+    for (const html of [fr,en]) { expect(html).toMatch(/39.*€/); expect(html).toMatch(/149.*€/); expect(html).toContain("Mollie"); }
+    expect(fr).toContain("HT/TTC"); expect(en).toContain("VAT");
   });
 });
 

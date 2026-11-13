@@ -55,7 +55,7 @@ async function visit(browserContext, locale, label, viewport) {
   await page.evaluate(() => document.fonts.ready);
   const sizing = await page.evaluate(() => ({ width: innerWidth, documentWidth: document.documentElement.scrollWidth }));
   assert.ok(sizing.documentWidth <= sizing.width + 2, `${label}: horizontal overflow ${JSON.stringify(sizing)}`);
-  const logo = page.locator(locale === "fr" ? ".nav .logo-mark" : ".site-header .brand img");
+  const logo = page.locator(".site-header .brand img");
   assert.ok(await logo.evaluate((img) => img.complete && img.naturalWidth > 0), `${label}: logo must load`);
   const langTarget = locale === "fr" ? "en" : "fr";
   assert.equal(await page.locator(`a[hreflang="${langTarget}"]`).count() > 0, true);
@@ -66,7 +66,7 @@ async function visit(browserContext, locale, label, viewport) {
   await privacy.getByRole("button", { name: locale === "fr" ? "Refuser" : "Reject" }).click();
   await privacy.waitFor({ state: "hidden" });
   await page.screenshot({ path: path.join(outputDir, `${label}.png`) });
-  const plans = page.locator(locale === "fr" ? "#offres" : "#plans");
+  const plans = page.locator("#offres");
   const pricingCopy = await plans.innerText();
   assert.match(pricingCopy, /39/, `${label}: Solo pilot price`);
   assert.match(pricingCopy, /149/, `${label}: Agency pilot price`);
@@ -178,6 +178,49 @@ async function visitLocalSeoWorkspace(browser, locale) {
   await context.close();
 }
 
+
+async function verifySharedLanding(en, fr) {
+  const shape = page => page.evaluate(() => ({
+    sections: [...document.querySelectorAll("main > section, main > header")].map(n => n.id),
+    stylesheets: [...document.querySelectorAll('link[rel="stylesheet"]')].map(n => new URL(n.href).pathname),
+    scripts: [...document.querySelectorAll('script[src]')].map(n => new URL(n.src).pathname),
+    styles: [".site-header", ".hero", ".hero-inner", ".block", ".plan", ".check-form"].map(selector => {
+      const s = getComputedStyle(document.querySelector(selector));
+      return [s.backgroundColor,s.backgroundImage,s.color,s.fontFamily,s.display,s.borderRadius,s.padding];
+    }),
+    cards: ["#ops .loop-node", "#roadmap .phase", "#toolkit .lever", "#faq details"].map(q => document.querySelectorAll(q).length),
+  }));
+  assert.deepEqual(await shape(en), await shape(fr), "Both locales have the English visual system, complete French sections and identical behaviors");
+}
+
+async function verifyLeadFlow(page, locale) {
+  const requests = [];
+  await page.route("**/api/lead", route => {
+    requests.push(route.request().postDataJSON());
+    return route.fulfill({status:200,contentType:"application/json",body:'{"ok":true}'});
+  });
+  await page.locator('#lead-form button').click();
+  assert.equal(requests.length,0,"Invalid forms must not be sent");
+  assert.match(await page.locator('#lead-msg-status').innerText(),locale==='fr'?/invalides/:/invalid/);
+  await page.locator('#lead-name').fill('QA Example');
+  await page.locator('#lead-email').fill('qa@example.com');
+  await page.locator('#lead-url').fill('https://example.com/');
+  await page.locator('#lead-form button').click();
+  await page.getByText(locale==='fr'?'Votre demande a bien été enregistrée.':'Your request has been recorded.',{exact:true}).waitFor();
+  assert.equal(requests.length,1);
+  assert.equal(requests[0].source,`landing-${locale}`);
+  assert.equal(requests[0].website,'https://example.com/');
+  assert.ok(await page.locator('#lead-form button').isEnabled());
+  await page.unroute('**/api/lead');
+  await page.route('**/api/lead',route=>route.fulfill({status:503,body:'unavailable'}));
+  await page.locator('#lead-name').fill('QA Example');
+  await page.locator('#lead-email').fill('qa@example.com');
+  await page.locator('#lead-url').fill('https://example.com/');
+  await page.locator('#lead-form button').click();
+  await page.getByText(locale==='fr'?'L’envoi a échoué. Veuillez réessayer.':'Sending failed. Please try again.',{exact:true}).waitFor();
+  assert.equal(await page.locator('#lead-email').inputValue(),'qa@example.com','Failed send keeps the visitor input');
+}
+
 try {
   await fs.mkdir(outputDir, { recursive: true });
   await ready();
@@ -192,6 +235,13 @@ try {
   const mobile = { width: 390, height: 844 };
   const en = await visit(context, "en", "en-desktop", desktop);
   const fr = await visit(context, "fr", "fr-desktop", desktop);
+  await verifySharedLanding(en, fr);
+  await verifyLeadFlow(en, "en");
+  await verifyLeadFlow(fr, "fr");
+  for (const [page, locale] of [[en,"en"],[fr,"fr"]]) {
+    await page.locator("#ops").screenshot({path:path.join(outputDir,`${locale}-ops.png`)});
+    await page.locator("#roadmap").screenshot({path:path.join(outputDir,`${locale}-roadmap.png`)});
+  }
 
   // French read: instant URL analysis, no identity wall; sample fallback explicit.
   await fr.locator("#url-input").fill("not a url");
@@ -207,10 +257,10 @@ try {
   await fr.screenshot({ path: path.join(outputDir, "fr-result.png") });
 
   // English read still works on the same unmodified engine.
-  await en.locator("#site-url").fill("example.com");
-  await en.locator("#check-form button").click();
-  await en.locator("#check-list li").first().waitFor();
-  assert.equal(await en.locator("#check-list li").count(), 10);
+  await en.locator("#url-input").fill("example.com");
+  await en.locator("#url-form button").click();
+  await en.locator("#read-result .gg-checks li").first().waitFor();
+  assert.equal(await en.locator("#read-result .gg-checks li").count(), 10);
   await en.screenshot({ path: path.join(outputDir, "en-result.png") });
 
   // The FR server rows remain translated when a real response arrives.
@@ -232,10 +282,11 @@ try {
 
   const enMobile = await visit(context, "en", "en-mobile", mobile);
   const frMobile = await visit(context, "fr", "fr-mobile", mobile);
-  await frMobile.locator(".mobile-nav summary").click();
-  assert.ok(await frMobile.locator('.mobile-nav a[href="#faq"]').isVisible(), "French mobile menu opens");
+  await verifySharedLanding(enMobile,frMobile);
+  await frMobile.locator(".nav-menu summary").nth(1).click();
+  assert.ok(await frMobile.locator('.nav-dropdown a[href="#faq"]').isVisible(), "French mobile menu opens");
   await frMobile.screenshot({ path: path.join(outputDir, "fr-mobile-menu.png") });
-  await frMobile.locator('.lang-switch a[hreflang="en"]').click();
+  await frMobile.locator('.lang a[hreflang="en"]').click();
   await frMobile.waitForURL(origin + "/");
   assert.equal(await frMobile.locator("html").getAttribute("lang"), "en", "FR to EN navigation works");
   await enMobile.locator('.lang a[hreflang="fr"]').click();

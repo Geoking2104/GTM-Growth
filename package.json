@@ -42,7 +42,9 @@
     "worker:deploy": "wrangler deploy",
     "worker:dry-run": "wrangler deploy --dry-run --outdir=.worker-build",
     "site:api": "node scripts/set-api.mjs",
-    "tenant:provision": "tsx scripts/provision-tenant.ts"
+    "tenant:provision": "tsx scripts/provision-tenant.ts",
+    "site:render": "node scripts/render-landing.mjs",
+    "site:check": "node scripts/check-site.mjs"
   },
   "keywords": [
     "mcp",

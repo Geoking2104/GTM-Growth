@@ -425,6 +425,7 @@ docs/                          # all guides (see index below)
 
 | Date / reference | Update |
 | --- | --- |
+| **13 November — bilingual landing** | Shared English visual layout, complete original French homepage content translated into English, localized illustrations and identical forms; static generation and parity checks prevent language drift. See [landing maintenance](site/README.md). |
 | **13 November — documentation** | Primary website changed to [gtm.kayroslab.com](https://gtm.kayroslab.com/); both tracks aligned with merged code, the successful OVH release and the remaining activation/development gates |
 | **12 November — OVH / SSO** | Successful deployment of `5c83519`; FR/EN navigation/sign-in and optional login-title maintenance using the provisioner service account; corrected and pinned SSH host fingerprint |
 | **12 November — [PR #36](https://github.com/Geoking2104/GTM-Growth/pull/36)** | Global/local registry, permissions, declared rank evidence, 24 LOC controls, operator-configured GBP reads, durable Node-RED jobs and independently approved phone/website changes |
