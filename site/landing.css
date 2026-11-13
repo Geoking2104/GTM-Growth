@@ -336,6 +336,7 @@ html { scroll-padding-top: 82px; }
 }
 @media (max-width: 650px) {
   .landing-page .hero { padding-block: 2.5rem; }
+  .landing-page .hero .check-form { display: grid; grid-template-columns: minmax(0, 1fr); }
   .journey-hero-board { transform: none; }
   .journey-board-body { padding: 1.3rem; }
   .journey-trust .wrap { flex-direction: column; font-size: .7rem; }

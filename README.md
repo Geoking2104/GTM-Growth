@@ -91,7 +91,7 @@ Every customer console section uses the same product descriptions for its purpos
 5. **Connect the store:** an administrator connects Shopify or PrestaShop in **Commerce**; the catalogue and orders sync, webhooks keep them current, and each order is attributed to a channel with its method displayed.
 6. **Track and act:** review collected data, maintain local evidence, assign actions and prepare drafts. Adding a prompt does not trigger a paid AI run; scheduled checks and external writes require their own configuration and authority.
 
-The **“AI recommendsâ€ / “L'IA recommandeâ€** interface ranks measured failures with an explainable algorithm. It does not call an LLM for the free read or forecast traffic, revenue or citations. Search-engine and assistant logos indicate relevance, not endorsement or live API access.
+The **“AI recommends” / “L'IA recommande”** interface ranks measured failures with an explainable algorithm. It does not call an LLM for the free read or forecast traffic, revenue or citations. Search-engine and assistant logos indicate relevance, not endorsement or live API access.
 
 
 The **Data assistant** adds a common entry point throughout this journey. Set your
@@ -121,7 +121,7 @@ The e-commerce connectors close the biggest gap of GEO measurement: proving what
 | **MCP tools** | `commerce_dashboard`, `commerce_orders`, `commerce_products`, `ecommerce_feed_readiness` — same data for agents |
 | **Privacy** | No customer name, e-mail, phone or address is ever stored: a keyed-HMAC pseudonym replaces the customer id at ingestion; credentials are AES-256-GCM sealed per tenant |
 
-What attribution does **not** claim: an order attributed to ChatGPT was not “causedâ€ by ChatGPT — it correlates with a referrer or UTM, and the method is displayed everywhere so the report survives scrutiny. Masked referrers stay `unknown`; they are never silently reclassified.
+What attribution does **not** claim: an order attributed to ChatGPT was not “caused” by ChatGPT — it correlates with a referrer or UTM, and the method is displayed everywhere so the report survives scrutiny. Masked referrers stay `unknown`; they are never silently reclassified.
 
 ## 4. Global and local SEO — head office, agencies and locations
 
@@ -224,7 +224,7 @@ Keycloak uses Postgres; tenant registries, local evidence, operations, commerce 
 One normalized ingestion path serves both platforms: providers only map into canonical types (`src/ecommerce/types.ts`), so quota handling (Shopify), XML quirks (PrestaShop) and status mappings stay in their mappers and never leak into ingestion.
 
 ```text
-Shopify webhooks (HMAC-SHA256)  ──â”
+Shopify webhooks (HMAC-SHA256)  ──┐
 PrestaShop module (HMAC)        ──┼─► /webhooks/* ──► ingest.ts ──► store (tenant-scoped SQLite)
 Backfill: GraphQL / webservice  ──┘        (idempotence,     │
                                             attribution)     ├─► Console /commerce/* routes

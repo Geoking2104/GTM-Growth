@@ -152,7 +152,7 @@ async function latestAiReport() {
   } catch { return { unavailable: true }; }
 }
 
-/* ââ€€ââ€€ Sections de la barre latérale : Track / Act, comme la démo publique ââ€€ââ€€ */
+/* â”€â”€ Sections de la barre latérale : Track / Act, comme la démo publique â”€â”€ */
 const custom = (id, tabs) => ({ id, tabs });
 const fromTool = (id, filter = () => true, intro) => () => { const x = tool(id); return { intro: intro ?? tr(x.intro), tabs: x.actions.filter(filter).map((a) => ({ id: a.id, label: actionLabel(a), action: a })) }; };
 const SECTIONS = {

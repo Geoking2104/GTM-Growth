@@ -55,6 +55,8 @@ async function visit(browserContext, locale, label, viewport) {
   await page.evaluate(() => document.fonts.ready);
   const sizing = await page.evaluate(() => ({ width: innerWidth, documentWidth: document.documentElement.scrollWidth }));
   assert.ok(sizing.documentWidth <= sizing.width + 2, `${label}: horizontal overflow ${JSON.stringify(sizing)}`);
+  const urlFieldHeight = await page.locator('#url-input').evaluate(input => input.getBoundingClientRect().height);
+  assert.ok(urlFieldHeight >= 44 && urlFieldHeight <= 80, `${label}: URL field remains a compact touch target (${urlFieldHeight}px)`);
   const logo = page.locator(".site-header .brand img");
   assert.ok(await logo.evaluate((img) => img.complete && img.naturalWidth > 0), `${label}: logo must load`);
   const langTarget = locale === "fr" ? "en" : "fr";

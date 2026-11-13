@@ -16,7 +16,7 @@
 - Free FR/EN local presence planner for physical, service-area and web-only businesses. The public free planner introduces no paid provider or external publication. See `docs/product/GLOBAL-LOCAL-SEO.md` for remaining specification scope.
 - FR/EN regression coverage, locale-aware console number formatting and repaired console text encoding.
 
-- **Richer brand profile in guided onboarding**: `/api/console/onboarding/profile` now prefers the JSON-LD `name` (source shown in the wizard: “name read from structured dataâ€), falls back to `og:site_name`, then `title`; description falls back meta description → og:description → schema; and surfaces `lang` and detected schema types as hints in the wizard. No LLM, no paid API — pure HTML reading.
+- **Richer brand profile in guided onboarding**: `/api/console/onboarding/profile` now prefers the JSON-LD `name` (source shown in the wizard: “name read from structured data”), falls back to `og:site_name`, then `title`; description falls back meta description → og:description → schema; and surfaces `lang` and detected schema types as hints in the wizard. No LLM, no paid API — pure HTML reading.
 - **Keycloak multi-tenant for GTM Growth clients**:
   - Keycloak 26 Organizations, one per client, in the shared realm `gtm-growth`, with an optional dedicated realm `tenant-<id>`.
   - Tenant resolved from the token (`organization` claim plus `/tenants/<id>/<role>` groups, or the issuer for dedicated realms).
@@ -105,7 +105,7 @@
 
 ### Added
 
-- **Contact form without a mail client**: `POST /api/lead` validates, normalises and appends the request to JSONL (`LEADS_PATH`), with an optional webhook forward. The page posts in-place and only shows “sentâ€ after a 2xx; a failed post is queued on the device (`localStorage`) and flushed on the next visit. Honeypot, 1.2 s minimum, 5 posts/min per IP.
+- **Contact form without a mail client**: `POST /api/lead` validates, normalises and appends the request to JSONL (`LEADS_PATH`), with an optional webhook forward. The page posts in-place and only shows “sent” after a 2xx; a failed post is queued on the device (`localStorage`) and flushed on the next visit. Honeypot, 1.2 s minimum, 5 posts/min per IP.
 - **Enriched free read**: `POST /api/free-read` returns the GEO score, the three fixes that move it most, three SEO tables (metadata, content structure, links/media/structured data), a GA4 measurement-readiness table and a Search Console indexation table — all measured on the fetched HTML, `robots.txt` and sitemap.
 - **Traffic report previews**: GA4 and GSC performance tables ship with `sample: true` and a visible badge until a property is connected; the same code path serves measured rows.
 - `geo-free-read` and `leads` CLI commands; `docs/PUBLIC_API.md` documents both routes, the guards and the environment.
