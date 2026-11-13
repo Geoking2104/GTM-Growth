@@ -39,6 +39,7 @@ import { auditIndexNow } from "../indexnow/readiness.js";
 import { buildAnalysisBoard } from "../analysis/board.js";
 import { phase3Routes } from "./phase3.js";
 import { aiVisibilityRoutes } from "./ai-visibility.js";
+import { aiProviderRoutes } from "./ai-visibility-providers.js";
 import { competitionRoutes } from "./competition.js";
 import { operationsRoutes } from "./ops-routes.js";
 import { analyticsRoutes } from "./analytics.js";
@@ -394,7 +395,7 @@ export function discoverTenant(store: TenantStore, query: { email?: string; host
 }
 
 export function allConsoleRoutes(): ConsoleRoute[] {
-  return [...phase1Routes, ...phase2Routes, ...phase3Routes, ...analyticsRoutes, ...gtmRoutes, ...aiVisibilityRoutes, ...competitionRoutes, ...operationsRoutes, ...applyPreviewRoutes, ...localSeoRoutes, ...visualCatalogRoutes];
+  return [...phase1Routes, ...phase2Routes, ...phase3Routes, ...analyticsRoutes, ...gtmRoutes, ...aiVisibilityRoutes, ...aiProviderRoutes, ...competitionRoutes, ...operationsRoutes, ...applyPreviewRoutes, ...localSeoRoutes, ...visualCatalogRoutes];
 }
 
 export function mountConsoleApi(app: Express, options: ConsoleOptions = {}): void {

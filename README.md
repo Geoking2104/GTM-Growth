@@ -89,6 +89,12 @@ A verified API readback does not establish public Maps visibility. Performance c
 
 ## 4. The client console
 
+AI visibility includes explicit Claude, Mistral and Grok API collectors alongside
+OpenAI and the existing Gemini panel. Tenant-specific keys, setup guidance,
+bounded calls, citations and saved-answer imports are described in
+[AI visibility provider setup](docs/product/AI-VISIBILITY-PROVIDERS.md). Gemini
+collection remains disabled pending safe Search Suggestions display.
+
 Open [the English console](https://gtm.kayroslab.com/console/?lang=en#c-public-read) or [the French console](https://gtm.kayroslab.com/console/?lang=fr#c-public-read). Public reading is available before sign-in; connected workspaces use tenant-scoped SSO.
 
 | Workspace | Main outcome / prerequisite |
