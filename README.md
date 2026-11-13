@@ -95,6 +95,7 @@ Open [the English console](https://gtm.kayroslab.com/console/?lang=en#c-public-r
 | --- | --- |
 | **Public read** | One-page evidence, technical recommendations and free journey exploration |
 | **Overview / Audit / Generators** | Readiness, technical checks and assets to review |
+| **Products & pages** | Real product/page thumbnails, completeness gauges, filters and table/card views; public metadata read or previewed administrator JSON import |
 | **Customer journey** | Selected questions added to the tenant prompt pool by an administrator |
 | **Global and local SEO** | Location registry, evidence, controls, actions, approvals and exports |
 | **Track / Keywords** | Authorized GA4, Search Console and configured Bing data; search opportunities |

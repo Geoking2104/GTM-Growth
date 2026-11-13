@@ -4,9 +4,10 @@ import { createHash, randomUUID } from "node:crypto";
 import { validTenantId } from "../tenants/store.js";
 import type { ConsoleRoute } from "./util.js";
 import { listDatasets, getDataset, insertDataset, updateDataset } from "./ai-visibility-store.js";
+import { visualUrl } from "./visual-catalog.js";
 
 type Sentiment = "positive" | "neutral" | "negative" | "mixed" | "unknown";
-interface Brand { name: string; aliases: string[] }
+interface Brand { name: string; aliases: string[]; website?: string; logoUrl?: string }
 interface InputResponse { prompt: string; answer: string; source: string; observedAt: string; citations?: string[]; citationSpans?: Array<{ start: number; end: number; url: string }> }
 interface Observation extends InputResponse { id: string; mentions: Array<{ brand: string; evidence: string; sentiment: Sentiment; method: string; status?: "confirmed" | "rejected" }> }
 interface Dataset { id: string; createdAt: string; brands: Brand[]; observations: Observation[]; audit?: Array<{ at: string; actor: string; responseId: string; brand: string; status: string; sentiment: string }> }
@@ -30,7 +31,9 @@ export function normalizeImport(input: unknown): Dataset {
     const aliases = [...new Set([name, ...raw.map((v) => clean(v, 100))])];
     if (aliases.some((a) => a.length < 3)) throw new Error("Aliases must contain at least three characters");
     for (const alias of aliases) { const key = alias.toLocaleLowerCase(); if (seenAliases.has(key)) throw new Error("An alias belongs to multiple brands"); seenAliases.add(key); }
-    return { name, aliases };
+    const website = b.website ? visualUrl(b.website) : null, logoUrl = b.logoUrl ? visualUrl(b.logoUrl) : null;
+    if (b.website && !website || b.logoUrl && !logoUrl) throw new Error("Brand website and logo require public HTTPS URLs");
+    return { name, aliases, ...(website ? { website } : {}), ...(logoUrl ? { logoUrl } : {}) };
   });
   const hashes = new Set<string>();
   const observations: Observation[] = body.responses.map((item) => {

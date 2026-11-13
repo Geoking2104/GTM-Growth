@@ -5,6 +5,11 @@ const L = (fr, en) => LANG === "fr" ? fr : en;
 const settings = ["#tracking/settings", "Configurer les sources", "Configure sources"];
 const access = ["#tracking", "Vérifier les accès", "Check access"];
 const guides = {
+  catalog: {
+    title: ["Faire remonter les images et les produits", "Bring in images and products"],
+    reason: ["La lecture du site n’a pas fourni de catalogue exploitable. Une page bloquée, un rendu uniquement JavaScript ou des métadonnées absentes peuvent l’expliquer.", "The site did not provide a usable catalogue. A blocked page, JavaScript-only content or missing metadata can explain this."],
+    steps: [["Sélectionnez une page publique de votre site, idéalement une fiche produit.", "Select a public page on your site, ideally a product page."], ["Publiez les images en HTTPS et renseignez Product.image ou og:image ; relisez ensuite le site.", "Publish images over HTTPS and supply Product.image or og:image; then read the site again."], ["Utilisez l’import JSON ci-dessous pour renseigner les images, noms, prix et identifiants manquants. Prévisualisez avant d’enregistrer.", "Use the JSON import below to supply missing images, names, prices and identifiers. Preview before saving."]], links: [["#geo/schema", "Vérifier les données structurées", "Check structured data"]],
+  },
   domain: {
     title: ["Choisir le site à analyser", "Choose the website to analyse"],
     reason: ["Aucune URL autorisée n’est sélectionnée pour cette analyse.", "No authorised URL is selected for this analysis."],

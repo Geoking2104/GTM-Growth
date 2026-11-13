@@ -28,6 +28,8 @@ import { renderDataGuide } from "./data-guidance.js";
 import { resolveWorkspace } from "./workspace-context.js";
 import { renderGlobalSeo } from "./global-seo.js";
 import { renderCustomerJourneyWorkspace } from "./customer-journey-workspace.js";
+import { renderCatalog } from "./catalog.js";
+import { clearVisualEntities, setVisualEntities, visualBrief, sectionHeading } from "./visuals.js";
 
 const $ = (s) => document.querySelector(s);
 const selectedTenant = () => sessionStorage.getItem("gtm-console-selected") || currentTenant()?.id || "";
@@ -52,7 +54,7 @@ async function fetchApi(route, body, { binary = false } = {}) {
 }
 
 
-const automaticRoutes = new Set(["/overview", "/tracking/status", "/search/performance", "/search/query-pages", "/search/sitemaps", "/ga4/overview", "/ga4/ecommerce", "/ga4/technology", "/bing/performance", "/sitemap/map", "/geo/citability", "/geo/robots", "/geo/schema", "/performance/weight", "/ai-visibility/datasets", "/competition/state", "/gtm/inventory", "/search/queries", "/search/trends", "/search/losing-pages", "/keywords/opportunities", "/sitemap/audit", "/geo/llms", "/performance/pagespeed", "/performance/crux", "/audit/technical", "/audit/serp-preview", "/calc/ctr"]);
+const automaticRoutes = new Set(["/visual/catalog", "/overview", "/tracking/status", "/search/performance", "/search/query-pages", "/search/sitemaps", "/ga4/overview", "/ga4/ecommerce", "/ga4/technology", "/bing/performance", "/sitemap/map", "/geo/citability", "/geo/robots", "/geo/schema", "/performance/weight", "/ai-visibility/datasets", "/competition/state", "/gtm/inventory", "/search/queries", "/search/trends", "/search/losing-pages", "/keywords/opportunities", "/sitemap/audit", "/geo/llms", "/performance/pagespeed", "/performance/crux", "/audit/technical", "/audit/serp-preview", "/calc/ctr"]);
 const background = createBackgroundLoader((route, body) => fetchApi(route, body), renderBackground);
 export async function api(route, body, options = {}) {
   if (!options.binary && automaticRoutes.has(route)) return background.request(selectedTenant() || state.me?.tenant?.id || "", route, body);
@@ -71,7 +73,7 @@ function renderBackground(jobs) {
   list.replaceChildren(...jobs.map((job) => { const item = el("li", `c-background-${job.state}`); item.append(el("strong", "", job.label), document.createTextNode(` — ${labels[job.state]}${job.detail ? ` : ${job.detail}` : ""}`)); return item; }));
 }
 function startBackground() {
-  background.reset(); state.overview = null; state.overviewFor = "";
+  background.reset(); state.overview = null; state.overviewFor = ""; startVisualContext();
   if (!state.me?.tenant) return;
   const base = scope(); const actionBody = { url: state.url, property: state.property || undefined };
   const missing = LANG === "fr" ? "Renseignez les paramètres dans Tracking." : "Configure the connection in Tracking.";
@@ -105,6 +107,31 @@ function startBackground() {
   void background.start(selectedTenant() || state.me.tenant.id, tasks);
 }
 
+let visualGeneration = 0;
+function updateVisualContext(data) {
+  setVisualEntities(data.items || [], state.url);
+  const box = $("#c-visual-context");
+  if (box && state.url) box.replaceChildren(visualBrief(data.profile, state.url));
+}
+function startVisualContext() {
+  const generation = ++visualGeneration, url = state.url;
+  clearVisualEntities(url);
+  const box = $("#c-visual-context");
+  if (!box) return;
+  box.replaceChildren();
+  if (!url || !state.me?.tenant) return;
+  box.append(visualBrief(null, url));
+  api("/visual/catalog", { url }).then(data => { if (generation === visualGeneration && url === state.url) updateVisualContext(data); }).catch(() => {});
+}
+function catalogWorkspace() {
+  const generation = visualGeneration, url = state.url;
+  return renderCatalog({ api, state: { ...state }, me: state.me, onLoaded: data => {
+    if (generation !== visualGeneration || url !== state.url) return;
+    if (data === null) { background.reset(); clearVisualEntities(url); return; }
+    updateVisualContext(data);
+  } });
+}
+
 async function overview() {
   if (state.overview && state.overviewFor === state.url) return state.overview;
   const url = state.url; const data = await api("/overview", { url }); if (state.url === url) { state.overview = data; state.overviewFor = url; } return data;
@@ -112,6 +139,13 @@ async function overview() {
 
 async function reportsList() {
   try { const token = await accessToken(); const r = await fetch(`${API_BASE}/reports`, { headers: headers(token) }); return r.ok ? (await r.json()).reports ?? [] : []; } catch { return []; }
+}
+async function latestAiReport() {
+  try {
+    const [result, competition] = await Promise.all([api("/ai-visibility/datasets", {}), api("/competition/state", {}).catch(() => null)]);
+    const dataset = result.datasets?.at(-1); if (!dataset) return null;
+    return await api("/ai-visibility/report", { datasetId: dataset.id, brand: competition?.panels?.[dataset.id] || undefined });
+  } catch { return { unavailable: true }; }
 }
 
 /* â”€â”€ Sections de la barre latérale : Track / Act, comme la démo publique â”€â”€ */
@@ -121,15 +155,16 @@ const SECTIONS = {
   track: [
     { id: "overview", icon: "overview", build: () => custom("overview", [
       { id: "board", label: t("s_overview"), async: async () => {
-        const [ov, status, reports] = await Promise.all([overview().catch(error => ({ loadError: error })), api("/tracking/status", scope()).catch(() => null), reportsList()]);
+        const [ov, status, reports, ai] = await Promise.all([overview().catch(error => ({ loadError: error })), api("/tracking/status", scope()).catch(() => null), reportsList(), latestAiReport()]);
         const [search, ga4] = await Promise.all([
           status?.gsc?.hasAccess === true ? api("/search/performance", scope()).catch(() => ({ problem: true })) : null,
           status?.ga4?.hasAccess === true ? api("/ga4/overview", scope()).catch(() => ({ problem: true })) : null,
         ]);
-        return [renderAudienceOverview({ search, ga4, status, state, rerender }), ...(ov?.loadError ? [renderDataGuide("geo", { error: ov.loadError, retry: rerender })] : ov ? renderOverview(ov) : []), renderOnboarding({ status, tenant: state.me?.tenant, overview: ov?.loadError ? null : ov, reports }), wizardButton(), renderAgentHelp()];
+        return [renderAudienceOverview({ search, ga4, status, state, rerender, ai }), ...(ov?.loadError ? [renderDataGuide("geo", { error: ov.loadError, retry: rerender })] : ov ? renderOverview(ov) : []), renderOnboarding({ status, tenant: state.me?.tenant, overview: ov?.loadError ? null : ov, reports }), wizardButton(), renderAgentHelp()];
       } },
       { id: "plan", label: t("t_plan"), async: async () => renderPlan(await overview()) }]) },
     { id: "local_seo", icon: "geo", build: () => custom("local_seo", [{ id: "website", label: LANG === "fr" ? "SEO du site" : "Website SEO", needsDomain: false, async: async () => renderGlobalSeo({ state, api, scope }) }, { id: "network", label: LANG === "fr" ? "Réseau et établissements" : "Network and locations", needsDomain: false, async: async () => renderLocalSeo({ api, me: state.me }) }, { id: "planning", label: LANG === "fr" ? "Préparer mon établissement" : "Plan my business", needsDomain: false, async: async () => renderLocalSeoWorkspace({ state }) }]) },
+    { id: "catalog", icon: "products", build: () => custom("catalog", [{ id: "library", label: LANG === "fr" ? "Catalogue visuel" : "Visual catalogue", needsDomain: false, async: async () => catalogWorkspace() }]) },
     { id: "competition", icon: "geo", build: () => custom("competition", [{ id: "board", label: LANG === "fr" ? "Concurrence" : "Competition", needsDomain: false, async: async () => renderCompetition({ api, me: state.me, property: state.property, days: state.days }) }]) },
     { id: "ai_visibility", icon: "geo", build: () => custom("ai_visibility", [{ id: "board", label: LANG === "fr" ? "Réponses IA" : "AI answers", needsDomain: false, async: async () => renderAiVisibility({ api, me: state.me }) }]) },
     { id: "gsc", icon: "google", build: () => custom("gsc", [
@@ -220,10 +255,11 @@ async function show(sectionId, tabId) {
   }
   const panel = el("section", "app-panel c-panel"); panel.setAttribute("role", "tabpanel");
   $("#c-panels").replaceChildren(panel);
+  panel.append(sectionHeading($("#c-crumb").textContent, def.intro || (LANG === "fr" ? "Comprendre les résultats, leurs sources et la prochaine action." : "Understand results, their sources and the next action."), section.icon));
   if (!state.me?.tenant && section.id !== "platform") {
     panel.append(renderDataGuide("tenant", { error: state.contextError })); return;
   }
-  if (def.intro) panel.append(el("p", "c-intro", def.intro));
+
   if (tab.action) { panel.append(renderAction(tab.action, { state, api, automaticRoutes })); return; }
   if (!state.url && tab.needsDomain !== false) { panel.append(renderDataGuide("domain")); return; }
   const loading = el("p", "c-loading", t("loadingOverview")); panel.append(loading);
@@ -247,7 +283,7 @@ function i18nStatic() {
   document.querySelectorAll("[data-i18n-ph]").forEach((n) => { n.placeholder = t(n.dataset.i18nPh); n.setAttribute("aria-label", t(n.dataset.i18nPh)); });
   document.title = t("title");
   const other = LANG === "en" ? "fr" : "en"; const l = $("#c-lang"); l.textContent = other.toUpperCase();
-  l.onclick = (e) => { e.preventDefault(); localStorage.setItem("gtm-console-lang", other); const u = new URL(location.href); u.searchParams.delete("lang"); location.replace(u); };
+  l.onclick = (e) => { e.preventDefault(); localStorage.setItem("gtm-console-lang", other); const u = new URL(location.href); u.searchParams.set("lang", other); location.replace(u); };
 }
 
 function refreshSite() {

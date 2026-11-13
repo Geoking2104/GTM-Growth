@@ -3,6 +3,7 @@
 import { el, table } from "./render.js";
 import { renderDataGuide } from "./data-guidance.js";
 import { LANG } from "./i18n.js";
+import { metricIcon } from "./visuals.js";
 
 export const L = (fr, en) => (LANG === "en" ? en : fr);
 const loc = LANG === "en" ? "en-GB" : "fr-FR";
@@ -31,6 +32,7 @@ export function toolbar(state, rerender, { searchType = false } = {}) {
 
 function kpi(label, value, deltaPct, { invert = false, note } = {}) {
   const c = el("div", "kpi-cell");
+  c.append(metricIcon(/position/i.test(label) ? "geo" : /reven|revenue/i.test(label) ? "products" : "overview"));
   const v = el("div", "kpi-value"); v.append(el("strong", "", value)); c.append(el("span", "kpi-label", label), v);
   const f = el("div", "kpi-foot");
   if (deltaPct === null || deltaPct === undefined) f.append(el("span", "kpi-note", note ?? L("pas de période précédente", "no previous period")));

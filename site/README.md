@@ -54,7 +54,12 @@ The console loads read-only data on navigation and supplies bilingual setup/impo
 procedures when results cannot be shown. Customer journey sits under **Act**;
 website SEO and local network data have separate entry tabs. See the
 [console readiness and acceptance map](../docs/product/CONSOLE-READINESS.md) for
-entry-by-entry behavior, permissions and validation limits.
+entry-by-entry behavior, permissions and validation limits. `console/visual.css`
+and `console/visuals.js` provide shared cards, gauges, thumbnails and trend charts.
+The **Products & pages** catalogue reads real Product/og:image metadata on entry;
+administrators can preview and save a JSON catalogue with public HTTPS image URLs.
+Images stay on their original host. Missing sources, logos and AI observations
+remain explicitly unavailable; no demonstration metrics ship in the console.
 
 ## Deployment
 

@@ -32,6 +32,7 @@ outgrow their grid column, while the main grid stretched short content verticall
 |---|---|---|
 | Overview | Audience sources, GEO audit and setup status | Source links; failed audit has recovery instructions |
 | Global and local SEO | Website search performance when configured | Search Console setup; links to technical audit, sitemap and local network |
+| Products & pages | Bounded public metadata read, image cards, completeness gauges and searchable table | Product/og:image setup or previewed JSON import; inaccessible pages and images remain explicit |
 | Local network subtab | Registry, observations, controls and actions | CSV/JSON import procedure; customer account and delegation requirements |
 | Local planning subtab | Editable business profile | Explain required inputs; export/reimport the dossier to retain work |
 | Competition | Latest imported dataset, comparison and available GSC suggestions | Actual-answer import instructions, brand/alias requirements, dates and sources; reset empty filters |
@@ -67,17 +68,50 @@ by navigation, and no customer dataset is fabricated or imported by this fix.
 - `tests/console-entry-ui.test.ts`: FR/EN automatic reads, workspace selection,
   missing scope, structured failures, journey fallback, Competition import links,
   local access restrictions and operations reads without collection.
-- `tests/console-navigation-ui.test.ts`: all 24 sidebar entries in FR and EN against
+- `tests/console-navigation-ui.test.ts`: all 25 sidebar entries in FR and EN against
   isolated DOM/API fixtures; checks selected-tenant request headers and absence of
   collection/import/publication calls.
 - Existing competition UI test now requires automatic Search Console suggestions.
 - Full suite, typecheck, lint, build and static site checks are run before delivery.
 
-The new CSS contains intrinsic field widths, wraps the account toolbar, keeps
-short panels at the top, contains tables and keeps navigation available on small
-screens. Pixel/layout inspection of the modified version still needs a reachable
-preview or deployment: the available cloud browser could not reach the local
-fixture server. DOM tests are not a substitute for that visual acceptance check.
+The shared dashboard CSS contains intrinsic field widths, wraps the account
+toolbar, keeps short panels at the top and contains tables. Visual acceptance uses
+an isolated browser preview with explicitly labelled synthetic analytics and
+actual public product images extracted from atelieraffiche.com. No fixture data
+is shipped or written to a customer workspace. Production authenticated acceptance
+still requires an active customer SSO session.
+
+## Visual catalogue and dashboard
+
+All sections share compact navigation, section headings, metric cards, table
+styles and source/error states. Overview, Competition and AI visibility chart
+actual imported answers on a shared 0–100% scale, preserving missing observations
+as gaps. Catalogue completeness and GEO readiness never stand in for AI mentions.
+
+The catalogue reads the selected page plus up to five same-origin links through
+the existing public-fetch guard. It extracts JSON-LD Product (including nested
+ItemList/@graph), Open Graph/Twitter previews and declared organization icons.
+At most 200 collected items are shown; this is a sample, not a full crawl. Failures
+on secondary pages are disclosed without discarding successful results. Images
+load directly from public HTTPS hosts with no referrer and an unavailable fallback;
+the application does not host uploads or proxy image bytes.
+
+To supply images, publish Product.image/og:image on the source site, or open
+**Products & pages → Add or correct images and catalogue**. Import a JSON array
+with `kind` (`product` or `page`), `name`, a same-origin HTTPS `url`, and `imageUrl`
+or `images`. Optional product fields: `description`, `brand`, `sku`, `gtin`,
+`category`, `price`, `currency`, `availability`. The inline example adapts to the
+selected site. Preview is read-only; only an administrator's explicit save writes
+the additions. Saving replaces previous imported additions for this tenant and
+origin; other customers and sites are isolated in SQLite. Imported additions can
+remain visible when a public read fails. File limit: 1 MB; 1–200 imported entries.
+
+AI brand imports additionally accept optional public HTTPS `website` and `logoUrl`
+fields. Missing logos remain neutral icons, never guessed third-party images.
+
+Regression coverage includes extraction, bounded partial reads, URL validation,
+tenant/domain isolation, administrator-only imports, preview invalidation,
+image fallback, unknown gauges, chart gaps, filters and table/card switching.
 
 ## Résumé français
 
