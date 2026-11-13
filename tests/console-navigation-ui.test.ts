@@ -55,6 +55,10 @@ it.each(["fr", "en"])("opens every navigation entry with content or recovery ste
       const panel = document.querySelector("[role=tabpanel]");
       expect(panel?.textContent?.length, link.getAttribute("href") || "").toBeGreaterThan(25);
       expect(panel?.querySelector(".c-loading")).toBeNull();
+      if (link.getAttribute('href') !== '#platform') {
+        expect(panel?.querySelector('.c-feature-guide')).toBeTruthy();
+        expect(panel?.querySelector('.c-feature-next')?.getAttribute('href')).toMatch(/^#[a-z_]+/);
+      }
     });
   }
   const calls = fetcher.mock.calls.filter(([url]) => url.startsWith("/api/console/") && !url.endsWith("/me"));

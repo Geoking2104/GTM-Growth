@@ -24,7 +24,7 @@
       <img src="/fr/assets/logo-rocket.png" alt="" width="32" height="32">
       <span>{{t004}}&#160;{{t005}}</span>
     </a>
-    <nav class="nav" aria-label="{{t006}}"><details class="nav-menu"><summary>{{t007}}</summary><div class="nav-dropdown"><a href="#audit">{{t008}}</a><a href="#outils">{{t009}}</a><a href="#toolkit">{{t010}}</a><a href="#ops">{{t011}}</a><a href="#console">{{t012}}</a><a href="#mesure">{{t013}}</a></div></details><details class="nav-menu"><summary>{{t014}}</summary><div class="nav-dropdown"><a href="#fonctionnement">{{t015}}</a><a href="#roadmap">{{t016}}</a><a href="#preuve">{{t017}}</a><a href="#faq">{{t018}}</a><a href="https://github.com/Geoking2104/GTM-Growth">{{t019}}</a></div></details><a href="#offres">{{t020}}</a></nav>
+    <nav class="nav" aria-label="{{t006}}"><a href="#fonctionnement">{{t015}}</a><a href="#features">{{t007}}</a><details class="nav-menu"><summary>{{t014}}</summary><div class="nav-dropdown"><a href="#audit">{{t008}}</a><a href="#ops">{{t011}}</a><a href="#mesure">{{t013}}</a><a href="#roadmap">{{t016}}</a><a href="#faq">{{t018}}</a><a href="https://github.com/Geoking2104/GTM-Growth">{{t019}}</a></div></details><a href="#offres">{{t020}}</a><a href="/console/?lang={{locale}}#overview">{{t362}}</a></nav>
     <div class="lang" role="group" aria-label="{{t021}}">
       <a {{active_en}} href="/" hreflang="en" lang="en">{{t022}}</a>
       <a {{active_fr}} href="/fr/" hreflang="fr" lang="fr">{{t023}}</a>
@@ -36,7 +36,24 @@
 <!-- ======================= HERO ======================= -->
 <header class="hero" id="top"><div class="wrap hero-inner"><div class="hero-copy">
 
-  <div class="logo-strip ai-logo-stack" aria-label="{{t025}}">
+<span class="eyebrow"><span class="dot" aria-hidden="true"></span>{{t034}}</span>
+  <h1>{{t035}}<br>{{t036}} <span class="grad-text">{{t037}}</span></h1>
+  <p class="lede hero-sub">{{t038}}
+  <strong>{{t039}}</strong> {{t040}}</p>
+
+  <form class="check-form" id="url-form" novalidate>
+    <label for="url-input" class="journey-url-label">{{t041}}</label>
+    <input id="url-input" aria-describedby="form-msg" aria-label="{{t041}}" type="text" inputmode="url" placeholder="{{t042}}" autocomplete="url">
+    <button class="btn" type="submit">{{t043}}</button>
+  </form>
+  <p class="form-msg" id="form-msg" role="status" aria-live="polite"></p>
+
+
+  <div class="cta-row">
+    <a class="btn btn-ghost" href="#fonctionnement">{{t044}}</a>
+    <a class="btn btn-ghost" href="/reports/opendpe.html" title="{{t045}}">{{t046}}</a>
+  </div>
+<p class="journey-engine-note">{{t363}}</p>  <div class="logo-strip ai-logo-stack" aria-label="{{t025}}">
     <span class="badge"><img src="/fr/assets/engines/chatgpt.svg" alt="{{t026}}"></span>
     <span class="badge"><img src="/fr/assets/engines/gemini.svg" alt="{{t027}}"></span>
     <span class="badge"><img src="/fr/assets/engines/claude.svg" alt="{{t028}}"></span>
@@ -44,68 +61,128 @@
     <span class="badge"><span class="mono" style="background:linear-gradient(135deg,#111,#3f3f46)" role="img" aria-label="{{t030}}">𝕏</span></span>
     <span class="badge"><span class="mono" style="background:linear-gradient(135deg,#fb7185,#f59e0b)" role="img" aria-label="{{t031}}">{{t032}}</span></span>
     <span class="badge"><span class="mono" style="background:linear-gradient(135deg,#0ea5e9,#6366f1)" role="img" aria-label="{{t033}}">◐</span></span>
-  </div><span class="eyebrow"><span class="dot" aria-hidden="true"></span>{{t034}}</span>
-  <h1>{{t035}}<br>{{t036}} <span class="grad-text">{{t037}}</span></h1>
-  <p class="lede hero-sub">{{t038}}
-  <strong>{{t039}}</strong> {{t040}}</p>
-
-  <form class="check-form" id="url-form" novalidate>
-    <label for="url-input" class="sr-only" style="position:absolute;left:-9999px;">{{t041}}</label>
-    <input id="url-input" aria-label="{{t041}}" type="text" inputmode="url" placeholder="{{t042}}" autocomplete="url">
-    <button class="btn" type="submit">{{t043}}</button>
-  </form>
-  <p class="form-msg" id="form-msg" role="status" aria-live="polite"></p>
+  </div>  </div>{{journey_hero}}</div></header><div class="wrap"><section id="read-result" class="gg-free-result" aria-label="{{t049}}" aria-live="polite" hidden></section></div>
 
 
-  <div class="cta-row">
-    <a class="btn" href="#url-form">{{t044}}</a>
-    <a class="btn btn-ghost" href="/reports/opendpe.html" title="{{t045}}">{{t046}}</a>
-  </div>
-  </div><figure class="hero-visual"><img src="/assets/screens/geo-board-{{locale}}.svg" width="1400" height="880" alt="{{t047}}"><figcaption>{{t048}}</figcaption></figure></div></header><div class="wrap"><section id="read-result" class="gg-free-result" aria-label="{{t049}}" aria-live="polite" hidden></section></div>
+<div class="journey-trust"><div class="wrap"><span>{{t364}}</span><span>{{t365}}</span><span>{{t366}}</span></div></div>
+{{journey_steps}}
+{{journey_explorer}}
 
-<!-- ======================= PROOF ======================= -->
-<div class="proof landing-proof">
-  <div class="proof-in">
-    <div><div class="proof-n grad-text">96</div><div class="proof-l">{{t050}}</div></div>
-    <div><div class="proof-n grad-text">{{t051}}</div><div class="proof-l">{{t052}}</div></div>
-    <div><div class="proof-n grad-text">5</div><div class="proof-l">{{t053}}</div></div>
-    <div><div class="proof-n grad-text">9→96</div><div class="proof-l">{{t054}}</div></div>
-    <div><div class="proof-n grad-text">0&#160;€</div><div class="proof-l">{{t055}}</div></div>
-  </div>
-</div>
+<section class="block section" id="console"><div class="wrap">
+  <span class="kicker">{{t173}}</span>
+  <h2 class="title">{{t174}}</h2>
+  <p class="lede">{{t175}}</p>
 
-<!-- ======================= PROBLEM ======================= -->
-<section class="section" id="local-seo-free" aria-label="{{t056}}"></section>
-<section class="block section section-alt" id="probleme"><div class="wrap">
-  <span class="kicker">{{t057}}</span>
-  <h2 class="title">{{t058}}</h2>
-  <p class="lede">{{t059}}</p>
-  <div class="grid-3">
-    <div class="pain">
-      <div class="picto" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="#c084fc" stroke-width="1.8" stroke-linecap="round"><rect x="4" y="7" width="16" height="12" rx="3" /><circle cx="9" cy="13" r="1.4" fill="#c084fc" stroke="none" /><circle cx="15" cy="13" r="1.4" fill="#c084fc" stroke="none" /><path d="M12 7V4" /><circle cx="12" cy="3" r="1.2" fill="#c084fc" stroke="none" /><path d="M4 16h16" opacity=".4" /></svg></div>
-      <h3>{{t060}}</h3>
-      <p>{{t061}}</p>
+  <figure class="console-mock" role="figure" aria-label="{{t176}}">
+    <div class="cm-top" aria-hidden="true">
+      <span class="d" style="background:#ff5f57"></span><span class="d" style="background:#febc2e"></span><span class="d" style="background:#28c840"></span>
+      <span class="cm-url">{{t177}}</span>
     </div>
-    <div class="pain">
-      <div class="picto" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="#c084fc" stroke-width="1.8" stroke-linecap="round"><path d="M4 9v6h4l5 4V5L8 9H4z" /><path d="M17 9l4 6M21 9l-4 6" /></svg></div>
-      <h3>{{t062}}</h3>
-      <p>{{t063}}</p>
+    <div class="cm-body">
+      <div class="cm-side" aria-hidden="true">
+        <div class="cm-item active"><span class="cm-ico" style="background:linear-gradient(135deg,#7c3aed,#ec4899)"></span>{{t178}}</div>
+        <div class="cm-item"><span class="cm-ico" style="background:#8a8a96"></span>{{t179}}</div>
+        <div class="cm-item"><span class="cm-ico" style="background:#e8833a"></span>{{t180}}</div>
+        <div class="cm-item"><span class="cm-ico" style="background:#3b82f6"></span>{{t181}}</div>
+        <div class="cm-item"><span class="cm-ico" style="background:#10b981"></span>{{t182}}</div>
+        <div class="cm-item"><span class="cm-ico" style="background:#f59e0b"></span>{{t183}}</div>
+        <div class="cm-item"><span class="cm-ico" style="background:#ec4899"></span>{{t123}}</div>
+      </div>
+      <div class="cm-main">
+        <div class="cm-head">
+          <h5>{{t184}}</h5>
+          <span class="cm-pill">{{t185}}</span>
+        </div>
+        <div class="cm-kpis">
+          <div class="cm-kpi"><div class="v">71<span style="font-size:12px;color:#8a8a96">/100</span></div><div class="l">{{t186}}</div><div class="d up">{{t187}}</div></div>
+          <div class="cm-kpi"><div class="v">4 218</div><div class="l">{{t188}}</div><div class="d up">↑ +12,4 %</div></div>
+          <div class="cm-kpi"><div class="v">18,6</div><div class="l">{{t189}}</div><div class="d down">↓ −1,2</div></div>
+        </div>
+        <div class="cm-chart">
+          <div class="t">{{t190}}</div>
+          <div class="cm-bars" aria-hidden="true">
+            <i class="ghost" style="height:34%"></i><i class="ghost" style="height:41%"></i><i class="ghost" style="height:38%"></i><i class="ghost" style="height:47%"></i>
+            <i style="height:52%"></i><i style="height:58%"></i><i style="height:54%"></i><i style="height:63%"></i><i style="height:70%"></i><i style="height:66%"></i><i style="height:78%"></i><i style="height:84%"></i><i style="height:80%"></i><i style="height:92%"></i>
+          </div>
+        </div>
+        <div class="cm-rows">
+          <div class="cm-row"><span class="q">{{t191}}</span><span class="m"><span class="cm-badge ok">{{t192}}</span></span><span class="pos">{{t193}}</span></div>
+          <div class="cm-row"><span class="q">{{t194}}</span><span class="m"><span class="cm-badge warn">{{t195}}</span></span><span class="pos">{{t196}}</span></div>
+          <div class="cm-row"><span class="q">{{t197}}</span><span class="m"><span class="cm-badge ok">{{t198}}</span></span><span class="pos">{{t199}}</span></div>
+        </div>
+      </div>
     </div>
-    <div class="pain">
-      <div class="picto" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="#c084fc" stroke-width="1.8" stroke-linecap="round"><path d="M4 19V5" /><path d="M4 19h16" /><path d="M8 15l4-5 3 3 4-6" /><circle cx="19" cy="7" r="1.3" fill="#c084fc" stroke="none" /></svg></div>
-      <h3>{{t064}}</h3>
-      <p>{{t065}}</p>
-    </div>
-  </div>
+  </figure>
+  <p class="note-inline">{{t200}}</p>
 </div></section>
 
-<!-- ======================= AUDIT SHOWCASE ======================= -->
+<section class="section" id="local-seo-free" aria-label="{{t056}}"></section>
+<section class="block section section-alt" id="offres"><div class="wrap">
+  <span class="kicker">{{t020}}</span>
+  <h2 class="title">{{t275}}</h2>
+  <p class="lede">{{t276}}</p>
+  <div class="pricing-grid">
+    <div class="plan">
+      <div class="pl-name">{{t277}}</div>
+      <div class="pl-price">0&#160;€</div>
+      <p class="pl-target">{{t278}}</p>
+      <ul>
+        <li><span class="tick">✓</span><span>{{t279}}</span></li>
+        <li><span class="tick">✓</span><span><b>{{t280}}</b> {{t281}}</span></li>
+        <li><span class="tick">✓</span><span><b>{{t282}}</b> {{t283}}</span></li>
+        <li><span class="tick">✓</span><span><b>{{t284}}</b> {{t285}}</span></li>
+        <li><span class="tick">✓</span><span>{{t286}}</span></li>
+        <li><span class="tick">✓</span><span>{{t287}}</span></li>
+      </ul>
+      <a class="btn-primary btn" href="#url-form">{{t288}}</a>
+    </div>
+    <div class="plan hot">
+      <div class="pl-name">{{t289}}</div>
+      <div class="pl-price">39&#160;€ <small>{{t290}}</small></div>
+      <p class="pl-target">{{t291}}</p>
+      <ul>
+        <li><span class="tick">✓</span><span>{{t292}}</span></li>
+        <li><span class="tick">✓</span><span>{{t293}}</span></li>
+        <li><span class="tick">✓</span><span>{{t294}}</span></li>
+        <li><span class="tick">✓</span><span>{{t295}}</span></li>
+      </ul>
+      <a class="btn-primary btn" href="#contact">{{t296}}</a>
+    </div>
+    <div class="plan">
+      <div class="pl-name">{{t297}}</div>
+      <div class="pl-price">149&#160;€ <small>{{t290}}</small></div>
+      <p class="pl-target">{{t298}}</p>
+      <ul>
+        <li><span class="tick">✓</span><span>{{t299}}</span></li>
+        <li><span class="tick">✓</span><span>{{t300}}</span></li>
+        <li><span class="tick">✓</span><span>{{t301}}</span></li>
+        <li><span class="tick">✓</span><span>{{t302}}</span></li>
+      </ul>
+      <a class="btn-ghost btn" href="#contact">{{t303}}</a>
+    </div>
+    <div class="plan">
+      <div class="pl-name">{{t304}}</div>
+      <div class="pl-price">{{t305}}</div>
+      <p class="pl-target">{{t306}}</p>
+      <ul>
+        <li><span class="tick">✓</span><span>{{t307}}</span></li>
+        <li><span class="tick">✓</span><span>{{t308}}</span></li>
+        <li><span class="tick">✓</span><span>{{t309}}</span></li>
+        <li><span class="tick">✓</span><span>{{t310}}</span></li>
+      </ul>
+      <a class="btn-ghost btn" href="#contact">{{t311}}</a>
+    </div>
+  </div>
+  <p class="pricing-disclaimer">{{t312}}</p>
+</div></section>
+
+<section class="section journey-detail-section" id="product-detail"><div class="wrap"><span class="kicker">{{t375}}</span><h2>{{t376}}</h2><p class="lede">{{t377}}</p></div><details class="journey-detail"><summary class="wrap">{{t367}}</summary>
 <section class="block showcase section" id="audit"><div class="wrap">
   <span class="kicker">{{t066}}</span>
   <h2 class="title">{{t067}}</h2>
   <p class="lede">{{t068}} <b>{{t069}}</b> {{t070}}</p>
 
-  <div class="audit-grid">
+  <figure class="journey-audit-image"><img loading="lazy" src="/assets/screens/geo-board-{{locale}}.svg" width="1400" height="880" alt="{{t047}}"><figcaption>{{t048}}</figcaption></figure><div class="audit-grid">
     <!-- gauge panel -->
     <div class="panel">
       <h4>{{t071}}</h4>
@@ -197,32 +274,7 @@
   <p class="note-inline">{{t094}} <code style="font-family:ui-monospace,Consolas,monospace;font-size:11.5px">npm run build &amp;&amp; npm run demo:geo</code> {{t095}}</p>
 </div></section>
 
-<!-- ======================= FONCTIONNEMENT ======================= -->
-<section class="block section section-alt" id="fonctionnement"><div class="wrap">
-  <span class="kicker">{{t015}}</span>
-  <h2 class="title">{{t096}}</h2>
-  <p class="lede">{{t097}}</p>
-  <div class="flow">
-    <div class="flow-node">
-      <div class="flow-rail"><span class="flow-dot" aria-hidden="true">🔍</span><span class="flow-line"></span></div>
-      <div class="flow-body"><span class="chip">{{t098}}</span><h3>{{t099}}</h3><p>{{t100}}</p></div>
-    </div>
-    <div class="flow-node">
-      <div class="flow-rail"><span class="flow-dot" aria-hidden="true">🔗</span><span class="flow-line"></span></div>
-      <div class="flow-body"><span class="chip">{{t101}}</span><h3>{{t102}}</h3><p>{{t103}}</p></div>
-    </div>
-    <div class="flow-node">
-      <div class="flow-rail"><span class="flow-dot" aria-hidden="true">📊</span><span class="flow-line"></span></div>
-      <div class="flow-body"><span class="chip">{{t104}}</span><h3>{{t105}}</h3><p>{{t106}}</p></div>
-    </div>
-    <div class="flow-node">
-      <div class="flow-rail"><span class="flow-dot" aria-hidden="true">🚀</span></div>
-      <div class="flow-body"><span class="chip">{{t107}}</span><h3>{{t108}}</h3><p>{{t109}}</p></div>
-    </div>
-  </div>
-</div></section>
-
-<!-- ======================= FREE TOOLS ======================= -->
+</details><details class="journey-detail"><summary class="wrap">{{t368}}</summary>
 <section class="block section" id="outils"><div class="wrap">
   <span class="kicker">{{t009}}</span>
   <h2 class="title">{{t110}}</h2>
@@ -250,7 +302,7 @@
   </div>
 </div></section>
 
-<!-- ======================= OPS LOOP ======================= -->
+</details><details class="journey-detail"><summary class="wrap">{{t369}}</summary>
 <section class="block ops section section-alt" id="ops"><div class="wrap">
   <span class="kicker">{{t120}}</span>
   <h2 class="title">{{t121}}</h2>
@@ -330,100 +382,7 @@
 </div></section>
 
 
-<!-- ======================= CONSOLE ======================= -->
-<section class="block section" id="console"><div class="wrap">
-  <span class="kicker">{{t173}}</span>
-  <h2 class="title">{{t174}}</h2>
-  <p class="lede">{{t175}}</p>
-
-  <figure class="console-mock" role="figure" aria-label="{{t176}}">
-    <div class="cm-top" aria-hidden="true">
-      <span class="d" style="background:#ff5f57"></span><span class="d" style="background:#febc2e"></span><span class="d" style="background:#28c840"></span>
-      <span class="cm-url">{{t177}}</span>
-    </div>
-    <div class="cm-body">
-      <div class="cm-side" aria-hidden="true">
-        <div class="cm-item active"><span class="cm-ico" style="background:linear-gradient(135deg,#7c3aed,#ec4899)"></span>{{t178}}</div>
-        <div class="cm-item"><span class="cm-ico" style="background:#8a8a96"></span>{{t179}}</div>
-        <div class="cm-item"><span class="cm-ico" style="background:#e8833a"></span>{{t180}}</div>
-        <div class="cm-item"><span class="cm-ico" style="background:#3b82f6"></span>{{t181}}</div>
-        <div class="cm-item"><span class="cm-ico" style="background:#10b981"></span>{{t182}}</div>
-        <div class="cm-item"><span class="cm-ico" style="background:#f59e0b"></span>{{t183}}</div>
-        <div class="cm-item"><span class="cm-ico" style="background:#ec4899"></span>{{t123}}</div>
-      </div>
-      <div class="cm-main">
-        <div class="cm-head">
-          <h5>{{t184}}</h5>
-          <span class="cm-pill">{{t185}}</span>
-        </div>
-        <div class="cm-kpis">
-          <div class="cm-kpi"><div class="v">71<span style="font-size:12px;color:#8a8a96">/100</span></div><div class="l">{{t186}}</div><div class="d up">{{t187}}</div></div>
-          <div class="cm-kpi"><div class="v">4 218</div><div class="l">{{t188}}</div><div class="d up">↑ +12,4 %</div></div>
-          <div class="cm-kpi"><div class="v">18,6</div><div class="l">{{t189}}</div><div class="d down">↓ −1,2</div></div>
-        </div>
-        <div class="cm-chart">
-          <div class="t">{{t190}}</div>
-          <div class="cm-bars" aria-hidden="true">
-            <i class="ghost" style="height:34%"></i><i class="ghost" style="height:41%"></i><i class="ghost" style="height:38%"></i><i class="ghost" style="height:47%"></i>
-            <i style="height:52%"></i><i style="height:58%"></i><i style="height:54%"></i><i style="height:63%"></i><i style="height:70%"></i><i style="height:66%"></i><i style="height:78%"></i><i style="height:84%"></i><i style="height:80%"></i><i style="height:92%"></i>
-          </div>
-        </div>
-        <div class="cm-rows">
-          <div class="cm-row"><span class="q">{{t191}}</span><span class="m"><span class="cm-badge ok">{{t192}}</span></span><span class="pos">{{t193}}</span></div>
-          <div class="cm-row"><span class="q">{{t194}}</span><span class="m"><span class="cm-badge warn">{{t195}}</span></span><span class="pos">{{t196}}</span></div>
-          <div class="cm-row"><span class="q">{{t197}}</span><span class="m"><span class="cm-badge ok">{{t198}}</span></span><span class="pos">{{t199}}</span></div>
-        </div>
-      </div>
-    </div>
-  </figure>
-  <p class="note-inline">{{t200}}</p>
-</div></section>
-
-<!-- ======================= ROADMAP ======================= -->
-<section class="block section section-alt" id="roadmap"><div class="wrap">
-  <span class="kicker">{{t016}}</span>
-  <h2 class="title">{{t201}}</h2>
-  <p class="lede">{{t202}}</p>
-
-  <div class="phases">
-    <div class="phase a">
-      <span class="ph-tag">{{t203}}</span>
-      <h3>{{t204}}</h3>
-      <p class="ph-sub">{{t205}}</p>
-      <ul>
-        <li><span class="st done">●</span><span><b>{{t206}}</b> {{t207}}</span></li>
-        <li><span class="st done">●</span><span><b>{{t208}}</b> {{t209}}</span></li>
-        <li><span class="st done">●</span><span><b>{{t210}}</b> {{t211}}</span></li>
-      </ul>
-      <p class="foot"><b>{{t212}}</b> {{t213}}</p>
-    </div>
-    <div class="phase b">
-      <span class="ph-tag">{{t214}}</span>
-      <h3>{{t215}}</h3>
-      <p class="ph-sub">{{t216}}</p>
-      <ul>
-        <li><span class="st">●</span><span><b>{{t217}}</b> {{t218}}</span></li>
-        <li><span class="st">●</span><span><b>{{t219}}</b> {{t220}}</span></li>
-        <li><span class="st">●</span><span><b>{{t221}}</b> {{t222}}</span></li>
-      </ul>
-      <p class="foot"><b>{{t212}}</b> {{t223}}</p>
-    </div>
-    <div class="phase c">
-      <span class="ph-tag">{{t224}}</span>
-      <h3>{{t225}}</h3>
-      <p class="ph-sub">{{t226}}</p>
-      <ul>
-        <li><span class="st">●</span><span><b>{{t227}}</b> {{t228}}</span></li>
-        <li><span class="st">●</span><span><b>{{t229}}</b> {{t230}}</span></li>
-        <li><span class="st">●</span><span><b>{{t231}}</b> {{t232}}</span></li>
-      </ul>
-      <p class="foot"><b>{{t212}}</b> {{t233}}</p>
-    </div>
-  </div>
-  <p class="note-inline">{{t234}} <code style="font-family:ui-monospace,Consolas,monospace;font-size:11.5px">GTM-GROWTH-CHANGE-IMPLEMENTATION.md</code>.</p>
-</div></section>
-
-<!-- ======================= TOOLKIT 7 LEVIERS ======================= -->
+</details><details class="journey-detail"><summary class="wrap">{{t370}}</summary>
 <section class="block section" id="toolkit"><div class="wrap">
   <span class="kicker">{{t010}}</span>
   <h2 class="title">{{t235}}</h2>
@@ -438,7 +397,7 @@
   </div>
 </div></section>
 
-<!-- ======================= MESURE GTM ======================= -->
+</details><details class="journey-detail"><summary class="wrap">{{t371}}</summary>
 <section class="block section section-alt" id="mesure"><div class="wrap">
   <span class="kicker">{{t013}}</span>
   <h2 class="title">{{t250}}</h2>
@@ -470,7 +429,7 @@
   </div>
 </div></section>
 
-<!-- ======================= OPEN SOURCE PROOF ======================= -->
+</details><details class="journey-detail"><summary class="wrap">{{t372}}</summary>
 <section class="block section" id="preuve"><div class="wrap">
   <span class="kicker">{{t017}}</span>
   <h2 class="title">{{t267}}</h2>
@@ -486,67 +445,116 @@
   <p class="note-inline">{{t274}}</p>
 </div></section>
 
-<!-- ======================= OFFRES ======================= -->
-<section class="block section section-alt" id="offres"><div class="wrap">
-  <span class="kicker">{{t020}}</span>
-  <h2 class="title">{{t275}}</h2>
-  <p class="lede">{{t276}}</p>
-  <div class="pricing-grid">
-    <div class="plan">
-      <div class="pl-name">{{t277}}</div>
-      <div class="pl-price">0&#160;€</div>
-      <p class="pl-target">{{t278}}</p>
-      <ul>
-        <li><span class="tick">✓</span><span>{{t279}}</span></li>
-        <li><span class="tick">✓</span><span><b>{{t280}}</b> {{t281}}</span></li>
-        <li><span class="tick">✓</span><span><b>{{t282}}</b> {{t283}}</span></li>
-        <li><span class="tick">✓</span><span><b>{{t284}}</b> {{t285}}</span></li>
-        <li><span class="tick">✓</span><span>{{t286}}</span></li>
-        <li><span class="tick">✓</span><span>{{t287}}</span></li>
-      </ul>
-      <a class="btn-primary btn" href="#url-form">{{t288}}</a>
+</details><details class="journey-detail"><summary class="wrap">{{t373}}</summary>
+
+<section class="block section section-alt" id="probleme"><div class="wrap">
+  <span class="kicker">{{t057}}</span>
+  <h2 class="title">{{t058}}</h2>
+  <p class="lede">{{t059}}</p>
+  <div class="grid-3">
+    <div class="pain">
+      <div class="picto" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="#c084fc" stroke-width="1.8" stroke-linecap="round"><rect x="4" y="7" width="16" height="12" rx="3" /><circle cx="9" cy="13" r="1.4" fill="#c084fc" stroke="none" /><circle cx="15" cy="13" r="1.4" fill="#c084fc" stroke="none" /><path d="M12 7V4" /><circle cx="12" cy="3" r="1.2" fill="#c084fc" stroke="none" /><path d="M4 16h16" opacity=".4" /></svg></div>
+      <h3>{{t060}}</h3>
+      <p>{{t061}}</p>
     </div>
-    <div class="plan hot">
-      <div class="pl-name">{{t289}}</div>
-      <div class="pl-price">39&#160;€ <small>{{t290}}</small></div>
-      <p class="pl-target">{{t291}}</p>
-      <ul>
-        <li><span class="tick">✓</span><span>{{t292}}</span></li>
-        <li><span class="tick">✓</span><span>{{t293}}</span></li>
-        <li><span class="tick">✓</span><span>{{t294}}</span></li>
-        <li><span class="tick">✓</span><span>{{t295}}</span></li>
-      </ul>
-      <a class="btn-primary btn" href="/console/?lang={{locale}}#billing">{{t296}}</a>
+    <div class="pain">
+      <div class="picto" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="#c084fc" stroke-width="1.8" stroke-linecap="round"><path d="M4 9v6h4l5 4V5L8 9H4z" /><path d="M17 9l4 6M21 9l-4 6" /></svg></div>
+      <h3>{{t062}}</h3>
+      <p>{{t063}}</p>
     </div>
-    <div class="plan">
-      <div class="pl-name">{{t297}}</div>
-      <div class="pl-price">149&#160;€ <small>{{t290}}</small></div>
-      <p class="pl-target">{{t298}}</p>
-      <ul>
-        <li><span class="tick">✓</span><span>{{t299}}</span></li>
-        <li><span class="tick">✓</span><span>{{t300}}</span></li>
-        <li><span class="tick">✓</span><span>{{t301}}</span></li>
-        <li><span class="tick">✓</span><span>{{t302}}</span></li>
-      </ul>
-      <a class="btn-ghost btn" href="/console/?lang={{locale}}#billing">{{t303}}</a>
-    </div>
-    <div class="plan">
-      <div class="pl-name">{{t304}}</div>
-      <div class="pl-price">{{t305}}</div>
-      <p class="pl-target">{{t306}}</p>
-      <ul>
-        <li><span class="tick">✓</span><span>{{t307}}</span></li>
-        <li><span class="tick">✓</span><span>{{t308}}</span></li>
-        <li><span class="tick">✓</span><span>{{t309}}</span></li>
-        <li><span class="tick">✓</span><span>{{t310}}</span></li>
-      </ul>
-      <a class="btn-ghost btn" href="#contact">{{t311}}</a>
+    <div class="pain">
+      <div class="picto" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="#c084fc" stroke-width="1.8" stroke-linecap="round"><path d="M4 19V5" /><path d="M4 19h16" /><path d="M8 15l4-5 3 3 4-6" /><circle cx="19" cy="7" r="1.3" fill="#c084fc" stroke="none" /></svg></div>
+      <h3>{{t064}}</h3>
+      <p>{{t065}}</p>
     </div>
   </div>
-  <p class="pricing-disclaimer">{{t312}}</p>
 </div></section>
 
-<!-- ======================= LEAD ======================= -->
+</details><details class="journey-detail"><summary class="wrap">{{t374}}</summary>
+<section class="block section section-alt" id="roadmap"><div class="wrap">
+  <span class="kicker">{{t016}}</span>
+  <h2 class="title">{{t201}}</h2>
+  <p class="lede">{{t202}}</p>
+
+  <div class="phases">
+    <div class="phase a">
+      <span class="ph-tag">{{t203}}</span>
+      <h3>{{t204}}</h3>
+      <p class="ph-sub">{{t205}}</p>
+      <ul>
+        <li><span class="st">●</span><span><b>{{t206}}</b> {{t207}}</span></li>
+        <li><span class="st">●</span><span><b>{{t208}}</b> {{t209}}</span></li>
+        <li><span class="st">●</span><span><b>{{t210}}</b> {{t211}}</span></li>
+      </ul>
+      <p class="foot"><b>{{t212}}</b> {{t213}}</p>
+    </div>
+    <div class="phase b">
+      <span class="ph-tag">{{t214}}</span>
+      <h3>{{t215}}</h3>
+      <p class="ph-sub">{{t216}}</p>
+      <ul>
+        <li><span class="st">●</span><span><b>{{t217}}</b> {{t218}}</span></li>
+        <li><span class="st">●</span><span><b>{{t219}}</b> {{t220}}</span></li>
+        <li><span class="st">●</span><span><b>{{t221}}</b> {{t222}}</span></li>
+      </ul>
+      <p class="foot"><b>{{t212}}</b> {{t223}}</p>
+    </div>
+    <div class="phase c">
+      <span class="ph-tag">{{t224}}</span>
+      <h3>{{t225}}</h3>
+      <p class="ph-sub">{{t226}}</p>
+      <ul>
+        <li><span class="st">●</span><span><b>{{t227}}</b> {{t228}}</span></li>
+        <li><span class="st">●</span><span><b>{{t229}}</b> {{t230}}</span></li>
+        <li><span class="st">●</span><span><b>{{t231}}</b> {{t232}}</span></li>
+      </ul>
+      <p class="foot"><b>{{t212}}</b> {{t233}}</p>
+    </div>
+  </div>
+  <p class="note-inline">{{t234}} <code style="font-family:ui-monospace,Consolas,monospace;font-size:11.5px">GTM-GROWTH-CHANGE-IMPLEMENTATION.md</code>.</p>
+</div></section>
+
+</details></section>
+<section class="block section section-alt" id="faq"><div class="wrap">
+  <span class="kicker">{{t018}}</span>
+  <h2 class="title">{{t325}}</h2>
+  <div class="faq" style="margin-top:36px">
+    <details>
+      <summary>{{t326}}&#160;?</summary>
+      <p>{{t327}} <b>{{t328}}</b>{{t329}} <b>{{t330}}</b> ; <b>{{t331}}</b> {{t332}}</p>
+    </details>
+    <details>
+      <summary>{{t333}}&#160;?</summary>
+      <p>{{t334}} <b>{{t335}}</b> {{t336}}</p>
+    </details>
+    <details>
+      <summary>{{t337}}&#160;?</summary>
+      <p>{{t338}}</p>
+    </details>
+    <details>
+      <summary>{{t339}}&#160;?</summary>
+      <p>{{t342}}</p>
+    </details>
+    <details>
+      <summary>{{t343}}&#160;?</summary>
+      <p>{{t344}} <b>{{t345}}</b> {{t346}}</p>
+    </details>
+    <details>
+      <summary>{{t347}}&#160;?</summary>
+      <p>{{t348}} <b>{{t349}}</b>.</p>
+    </details>
+    <details>
+      <summary>{{t350}}&#160;?</summary>
+      <p>{{t351}}</p>
+    </details>
+    <details>
+      <summary>{{t352}}&#160;?</summary>
+      <p>{{t353}}</p>
+    </details>
+  </div>
+</div></section>
+
+
 <section class="block lead section" id="contact"><div class="wrap">
   <span class="kicker">{{t313}}</span>
   <h2 class="title">{{t314}}</h2>
@@ -573,54 +581,14 @@
   </div>
 </div></section>
 
-<!-- ======================= FAQ ======================= -->
-<section class="block section section-alt" id="faq"><div class="wrap">
-  <span class="kicker">{{t018}}</span>
-  <h2 class="title">{{t325}}</h2>
-  <div class="faq" style="margin-top:36px">
-    <details>
-      <summary>{{t326}}&#160;?</summary>
-      <p>{{t327}} <b>{{t328}}</b>{{t329}} <b>{{t330}}</b> ; <b>{{t331}}</b> {{t332}}</p>
-    </details>
-    <details>
-      <summary>{{t333}}&#160;?</summary>
-      <p>{{t334}} <b>{{t335}}</b> {{t336}}</p>
-    </details>
-    <details>
-      <summary>{{t337}}&#160;?</summary>
-      <p>{{t338}}</p>
-    </details>
-    <details>
-      <summary>{{t339}}&#160;?</summary>
-      <p>{{t340}} <b>{{t341}}</b>{{t342}}</p>
-    </details>
-    <details>
-      <summary>{{t343}}&#160;?</summary>
-      <p>{{t344}} <b>{{t345}}</b> {{t346}}</p>
-    </details>
-    <details>
-      <summary>{{t347}}&#160;?</summary>
-      <p>{{t348}} <b>{{t349}}</b>.</p>
-    </details>
-    <details>
-      <summary>{{t350}}&#160;?</summary>
-      <p>{{t351}}</p>
-    </details>
-    <details>
-      <summary>{{t352}}&#160;?</summary>
-      <p>{{t353}}</p>
-    </details>
-  </div>
-</div></section>
 
-<!-- ======================= CREDIT ======================= -->
 <section class="block section" id="credit"><div class="wrap">
   <div class="credit">
     <p><b>{{t354}}</b> {{t355}}</p>
   </div>
 </div></section>
 
-<!-- ======================= FOOTER ======================= -->
+
 </main><footer class="site-footer">
   <div class="foot-in wrap">
     <p>{{t356}}</p>
@@ -640,5 +608,5 @@
 
 
 
-<script src="/landing.js" type="module"></script><script src="/locale-links.js" type="module"></script><script src="/local-seo-preview.js" type="module"></script><script defer src="/privacy.js"></script></body>
+<script type="module" src="/journey.js"></script><script src="/landing.js" type="module"></script><script src="/locale-links.js" type="module"></script><script src="/local-seo-preview.js" type="module"></script><script defer src="/privacy.js"></script></body>
 </html>

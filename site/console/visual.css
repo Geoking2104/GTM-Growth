@@ -147,3 +147,13 @@ body.console-page { padding: 0; background: #f7f8fa; color: #273142; }
 @media (max-width:720px) { .c-app .app-body { display: flex; flex-direction: column; } .c-app .app-side { position: static; width: 100%; height: auto; max-height: none; padding: 12px; border: 0; border-bottom: 1px solid #e5e7ed; } .c-app .app-nav { grid-template-columns: repeat(3,minmax(0,1fr)); } .c-app .app-nav a { padding: 8px 5px; font-size: 11px; } .c-app .app-main { width: 100%; padding: 0 14px 24px; } .c-app .app-side-foot { margin: 0; } .c-app .app-split,.v-podium,.audience-grid { grid-template-columns: minmax(0,1fr); } .v-context { flex-wrap: wrap; } .v-context > .v-context-link { margin-left: 0; } .c-app .audience-metrics { grid-template-columns: 1fr; } .v-gauge-grid { gap: 10px; } }
 @media (max-width:430px) { .v-product-grid { grid-template-columns: minmax(0,1fr); } .c-app .app-nav { grid-template-columns: repeat(2,minmax(0,1fr)); } .v-section-heading { gap: 8px; } .c-app .app-pill { font-size: 10px; } }
 @media (prefers-reduced-motion:reduce) { .c-app * { animation: none !important; transition: none !important; } }
+/* Product purpose stays visible while a connected source loads. */
+.c-feature-guide { border: 1px solid #ddd4ed; border-radius: 12px; background: #faf7ff; padding: 1rem 1.2rem; margin: 1rem 0 1.5rem; color: #30273e; }
+.c-feature-guide-head { display: flex; justify-content: space-between; flex-wrap: wrap; gap: .5rem; color: #72439a; font-size: .72rem; font-weight: 650; }
+.c-feature-guide > p { margin: .65rem 0; font-size: .85rem; }
+.c-feature-guide summary { cursor: pointer; font-size: .78rem; color: #665074; }
+.c-feature-guide dl { display: grid; grid-template-columns: 90px minmax(0, 1fr); gap: .65rem; font-size: .8rem; margin: 1rem 0; }
+.c-feature-guide dt { font-weight: 650; }.c-feature-guide dd { margin: 0; line-height: 1.6; }
+.c-feature-guide-actions { display: flex; flex-wrap: wrap; gap: .75rem 1.5rem; margin-top: .9rem; font-size: .76rem; }
+.c-feature-guide-actions a { color: #713caf; }.c-feature-next { font-weight: 650; }
+@media (max-width: 550px) { .c-feature-guide dl { grid-template-columns: 1fr; gap: .3rem; }.c-feature-guide dd { margin-bottom: .65rem; } }

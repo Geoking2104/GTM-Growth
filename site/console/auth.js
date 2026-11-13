@@ -2,6 +2,7 @@
  * Tokens stay in sessionStorage and are removed when the tab closes. */
 import { OIDC } from "./config.js";
 import { LANG } from "./i18n.js";
+import { featureHandoff } from "./workspace-context.js";
 
 const KEY = "gtm-console-tokens";
 const TENANT_KEY = "gtm-console-tenant";
@@ -24,6 +25,7 @@ function save(tokens) {
 const load = () => { try { return JSON.parse(sessionStorage.getItem(KEY) || "null"); } catch { return null; } };
 
 export async function login(loginHint) {
+  featureHandoff(location, sessionStorage);
   const verifier = random(48);
   const state = random(16);
   const challenge = b64url(await crypto.subtle.digest("SHA-256", new TextEncoder().encode(verifier)));

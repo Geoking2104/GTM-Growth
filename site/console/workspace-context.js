@@ -26,3 +26,23 @@ export function workspaceHandoff(location, storage, now = Date.now()) {
   } catch { /* invalid pending intent cannot select a workspace */ }
   storage.removeItem(key); return null;
 }
+import { journeyContent } from '../journey-content.js';
+
+/** A website feature choice survives sign-in without selecting a tenant or
+ * granting access. Only known product destinations may be restored. */
+export function featureHandoff(location, storage, now = Date.now()) {
+  const key = 'gtm-console-feature-handoff';
+  const { features } = journeyContent('en');
+  const routes = new Set(features.flatMap(f => [f.route, f.next]).filter(route => route !== '#c-public-read'));
+  try {
+    if (location.hash === '#c-public-read') { storage.removeItem(key); return null; }
+    if (routes.has(location.hash) && !new URLSearchParams(location.search).has('code')) {
+      const value = { hash: location.hash, expires: now + 600000 };
+      storage.setItem(key, JSON.stringify(value)); return value;
+    }
+    const value = JSON.parse(storage.getItem(key) || 'null');
+    if (value && routes.has(value.hash) && Number.isFinite(value.expires) && value.expires > now) return value;
+    storage.removeItem(key);
+  } catch { /* Storage is optional; normal sign-in still works. */ }
+  return null;
+}
