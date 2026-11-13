@@ -30,6 +30,7 @@ import { renderGlobalSeo } from "./global-seo.js";
 import { renderCustomerJourneyWorkspace } from "./customer-journey-workspace.js";
 import { renderCatalog } from "./catalog.js";
 import { clearVisualEntities, setVisualEntities, visualBrief, sectionHeading } from "./visuals.js";
+import { createDataAgent } from "./data-agent.js";
 
 const $ = (s) => document.querySelector(s);
 const selectedTenant = () => sessionStorage.getItem("gtm-console-selected") || currentTenant()?.id || "";
@@ -226,6 +227,7 @@ function launchWizard() {
 }
 let started = false;
 let current = { section: "overview", tab: "" };
+let dataAgent = null;
 async function saveSettings(body) {
   const token = await accessToken();
   const res = await fetch(`${API_BASE}/tenant/settings`, { method: "PUT", headers: { "Content-Type": "application/json", ...headers(token) }, body: JSON.stringify(body) });
@@ -244,6 +246,10 @@ async function show(sectionId, tabId) {
   const def = section.build();
   const tab = def.tabs.find((x) => x.id === tabId) ?? def.tabs[0];
   current = { section: section.id, tab: tab.id };
+  if (state.me?.tenant) {
+    if (!dataAgent) { dataAgent = createDataAgent({ api, language: LANG, workspaceName: state.me.tenant.name }); $("#c-data-agent").replaceChildren(dataAgent.element); }
+    dataAgent.setSection(section.id);
+  }
   history.replaceState(null, "", `#${section.id}${tab.id !== def.tabs[0].id ? `/${tab.id}` : ""}`);
   document.querySelectorAll(".app-nav a").forEach((a) => { const on = a.dataset.section === section.id; a.classList.toggle("is-active", on); if (on) a.setAttribute("aria-current", "true"); else a.removeAttribute("aria-current"); });
   $("#c-crumb").textContent = (section.id === "platform" ? (LANG === "fr" ? "Administration plateforme" : "Platform administration") : section.id === "competition" ? (LANG === "fr" ? "Concurrence" : "Competition") : section.id === "ai_visibility" ? (LANG === "fr" ? "Visibilité IA" : "AI visibility") : t(`s_${section.id}`));

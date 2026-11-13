@@ -17,6 +17,7 @@ import { mountPublicApi } from "./http/public-api.js";
 import { buildCompetitionMcpRouter } from "./console/competition-mcp.js";
 import { mountConsoleApi } from "./console/api.js";
 import { startScheduler } from "./console/ops-scheduler.js";
+import { buildDataAgentBridge } from "./data-agent/bridge.js";
 
 function getVersion(): string {
   try {
@@ -95,6 +96,7 @@ export async function startServer(transportType: "stdio" | "http" = "stdio") {
     methods: ["GET", "POST", "OPTIONS", "DELETE"],
     allowedHeaders: ["Content-Type", "Authorization", "MCP-Session-Id"],
   }));
+  app.use("/api/internal/data-agent", buildDataAgentBridge());
   app.use(express.json({ limit: "4mb" }));
 
   const port = parseInt(process.env.PORT || "3000", 10);

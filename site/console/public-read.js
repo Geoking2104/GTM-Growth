@@ -224,6 +224,7 @@ function renderResult(box, data, url, lang) {
     box.append(el("p", "public-panel c-error", copy.retry)); return;
   }
   if (metrics.children.length) box.append(metrics);
+  box.append(renderPublicAgent(data, lang));
   box.append(el("p", "public-micro", `${copy.scoreNote} ${copy.gainsNote}`));
   box.append(diagnostic(data, lang, copy));
   box.append(renderLocalSeoPreview(lang));
@@ -277,3 +278,4 @@ export function mountPublicRead({ initialUrl = "", language = "fr", endpoint = "
   form.addEventListener("submit", (event) => { event.preventDefault(); void run(input.value); });
   if (initialUrl) { input.value = initialUrl; void run(initialUrl); }
 }
+import { renderPublicAgent } from "./data-agent.js";
