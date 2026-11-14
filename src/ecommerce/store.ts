@@ -34,6 +34,7 @@ export function database(): Database.Database {
            CREATE UNIQUE INDEX IF NOT EXISTS orders_number ON orders (tenant_id, id);
            CREATE TABLE IF NOT EXISTS sync_cursors (tenant_id TEXT NOT NULL, resource TEXT NOT NULL, payload TEXT NOT NULL, PRIMARY KEY (tenant_id, resource));
            CREATE TABLE IF NOT EXISTS webhook_events (tenant_id TEXT NOT NULL, event_id TEXT NOT NULL, received_at TEXT NOT NULL, PRIMARY KEY (tenant_id, event_id));`);
+  db.exec("CREATE TABLE IF NOT EXISTS commerce_crm_outbox(tenant_id TEXT NOT NULL,id TEXT NOT NULL,payload TEXT NOT NULL,observed_at TEXT NOT NULL,delivered INTEGER NOT NULL DEFAULT 0,PRIMARY KEY(tenant_id,id)); CREATE INDEX IF NOT EXISTS crm_outbox_pending ON commerce_crm_outbox(tenant_id,delivered,observed_at);");
   connections.set(file, db); return db;
 }
 
@@ -61,8 +62,9 @@ export function removeConnection(tenantId: string, storeId: string): boolean {
   const db = database();
   const removed = db.prepare("DELETE FROM stores WHERE tenant_id = ? AND id = ?").run(tenantId, storeId).changes > 0;
   db.prepare("DELETE FROM products WHERE tenant_id = ? AND id LIKE ?").run(tenantId, `${storeId}:%`);
-  db.prepare("DELETE FROM orders WHERE tenant_id = ? AND id LIKE ?").run(tenantId, `${storeId}:%`);
-  db.prepare("DELETE FROM sync_cursors WHERE tenant_id = ?").run(tenantId);
+  db.prepare("DELETE FROM orders WHERE tenant_id = ? AND json_extract(payload,'$.storeId') = ?").run(tenantId, storeId);
+  db.prepare("DELETE FROM commerce_crm_outbox WHERE tenant_id = ? AND json_extract(payload,'$.storeId') = ?").run(tenantId, storeId);
+  db.prepare("DELETE FROM sync_cursors WHERE tenant_id = ? AND json_extract(payload,'$.storeId') = ?").run(tenantId, storeId);
   return removed;
 }
 
@@ -86,17 +88,26 @@ export function getProductId(tenantId: string, id: string): Product | undefined 
 
 /** Upsert keyed by canonical order id: webhook replay or out-of-order delivery
  * (e.g. orders/paid before orders/create) never duplicates a row. */
-export function upsertOrder(tenantId: string, order: Order): { inserted: boolean; order: Order } {
-  validateTenant(tenantId);
-  const db = database();
-  const existing = db.prepare("SELECT payload FROM orders WHERE tenant_id = ? AND id = ?").get(tenantId, order.id) as Row | undefined;
-  const merged: Order = existing ? { ...parse<Order>(existing), ...order, lines: order.lines.length ? order.lines : parse<Order>(existing).lines } : order;
-  db.prepare("INSERT INTO orders (tenant_id, id, created_at, payload) VALUES (?, ?, ?, ?) ON CONFLICT(tenant_id, id) DO UPDATE SET payload = excluded.payload, created_at = excluded.created_at").run(tenantId, merged.id, merged.createdAt, JSON.stringify(merged));
-  return { inserted: !existing, order: merged };
+export function upsertOrder(tenantId:string,order:Order):{inserted:boolean;order:Order}{
+ validateTenant(tenantId);if(order.customerRef&&!/^cust_[a-f0-9]{24}$/.test(order.customerRef))throw new Error('ECOMMERCE_CUSTOMER_NOT_PSEUDONYMIZED');
+ const db=database();return db.transaction(()=>{
+ const canonical=order.id.startsWith(order.storeId+':')?order.id:order.storeId+':'+order.id;
+ const row=db.prepare("SELECT payload FROM orders WHERE tenant_id=? AND (id=? OR (id=? AND json_extract(payload,'$.storeId')=?)) ORDER BY id=? DESC LIMIT 1").get(tenantId,canonical,order.id,order.storeId,canonical) as Row|undefined;
+ const existing=row?parse<Order>(row):undefined;
+ if(existing?.updatedAt&&order.updatedAt&&Number.isFinite(Date.parse(existing.updatedAt))&&Number.isFinite(Date.parse(order.updatedAt))&&Date.parse(order.updatedAt)<Date.parse(existing.updatedAt))return {inserted:false,order:existing};
+ const merged:Order={...(existing??{}),...order,id:canonical,lines:order.lines.length?order.lines:existing?.lines??[]};
+ db.prepare('INSERT INTO orders (tenant_id,id,created_at,payload) VALUES (?,?,?,?) ON CONFLICT(tenant_id,id) DO UPDATE SET payload=excluded.payload,created_at=excluded.created_at').run(tenantId,canonical,merged.createdAt,JSON.stringify(merged));
+ if(existing&&existing.id!==canonical)db.prepare('DELETE FROM orders WHERE tenant_id=? AND id=?').run(tenantId,existing.id);
+ if(!existing||sha256(JSON.stringify({...existing,id:canonical}))!==sha256(JSON.stringify(merged)))queueCrmOrder(tenantId,merged);
+ return {inserted:!existing,order:merged};
+ }).immediate();
 }
+export function queueCrmOrder(tenantId:string,order:Order){validateTenant(tenantId);if(order.customerRef&&!/^cust_[a-f0-9]{24}$/.test(order.customerRef))return;const id=sha256(JSON.stringify([order.storeId,order.id,order.updatedAt??null,order.status,order.total,order.currency,order.customerRef]));database().prepare('INSERT OR IGNORE INTO commerce_crm_outbox(tenant_id,id,payload,observed_at) VALUES (?,?,?,?)').run(tenantId,id,JSON.stringify({id:order.id,storeId:order.storeId,provider:order.provider,number:order.number,createdAt:order.createdAt,updatedAt:order.updatedAt,currency:order.currency,total:order.total,status:order.status,customerRef:order.customerRef}),now());}
+export function pendingCrmOrders(tenantId:string,limit=250){validateTenant(tenantId);return database().prepare('SELECT id,payload,observed_at FROM commerce_crm_outbox WHERE tenant_id=? AND delivered=0 ORDER BY observed_at,id LIMIT ?').all(tenantId,Math.min(limit,500)) as Array<{id:string;payload:string;observed_at:string}>;}
+export function acknowledgeCrmOrder(tenantId:string,id:string){validateTenant(tenantId);database().prepare('UPDATE commerce_crm_outbox SET delivered=1 WHERE tenant_id=? AND id=?').run(tenantId,id);}
 export function listOrders(tenantId: string, storeId: string, limit = 200): Order[] {
   validateTenant(tenantId);
-  return (database().prepare("SELECT payload FROM orders WHERE tenant_id = ? AND id LIKE ? ORDER BY created_at DESC, id LIMIT ?").all(tenantId, `${storeId}:%`, limit) as Row[]).map(parse<Order>);
+  return (database().prepare("SELECT payload FROM orders WHERE tenant_id = ? AND json_extract(payload,'$.storeId') = ? ORDER BY created_at DESC, id LIMIT ?").all(tenantId, storeId, limit) as Row[]).map(parse<Order>);
 }
 export function getOrder(tenantId: string, id: string): Order | undefined {
   validateTenant(tenantId);
@@ -106,14 +117,14 @@ export function getOrder(tenantId: string, id: string): Order | undefined {
 
 /* ---------- sync cursors ---------- */
 
-export function readCursor(tenantId: string, resource: "products" | "orders"): SyncCursor | null {
+export function readCursor(tenantId: string, resource: "products" | "orders", storeId?:string): SyncCursor | null {
   validateTenant(tenantId);
-  const row = database().prepare("SELECT payload FROM sync_cursors WHERE tenant_id = ? AND resource = ?").get(tenantId, resource) as Row | undefined;
+  const row = database().prepare("SELECT payload FROM sync_cursors WHERE tenant_id = ? AND resource = ?").get(tenantId, storeId?`${storeId}:${resource}`:resource) as Row | undefined;
   return row ? parse<SyncCursor>(row) : null;
 }
 export function writeCursor(tenantId: string, cursor: SyncCursor): void {
   validateTenant(tenantId);
-  database().prepare("INSERT INTO sync_cursors (tenant_id, resource, payload) VALUES (?, ?, ?) ON CONFLICT(tenant_id, resource) DO UPDATE SET payload = excluded.payload").run(tenantId, cursor.resource, JSON.stringify(cursor));
+  database().prepare("INSERT INTO sync_cursors (tenant_id, resource, payload) VALUES (?, ?, ?) ON CONFLICT(tenant_id, resource) DO UPDATE SET payload = excluded.payload").run(tenantId, `${cursor.storeId}:${cursor.resource}`, JSON.stringify(cursor));
 }
 
 /* ---------- webhook idempotency ---------- */

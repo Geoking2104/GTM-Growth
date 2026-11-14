@@ -1,3 +1,4 @@
+import { crmPluginRouter } from "./crm/plugins.js";
 import { buildSocialMcpRouter } from './console/social-mcp.js';
 import { socialWorkerRouter } from "./social/worker.js";
 import { localWorkerRouter } from "./local-seo/worker.js";
@@ -100,6 +101,7 @@ export async function startServer(transportType: "stdio" | "http" = "stdio") {
     allowedHeaders: ["Content-Type", "Authorization", "MCP-Session-Id"],
   }));
   app.use("/api/internal/data-agent", buildDataAgentBridge());
+  app.use("/webhooks", ecommerceWebhookRouter());
   app.use(express.json({ limit: "4mb" }));
 
   const port = parseInt(process.env.PORT || "3000", 10);
@@ -132,7 +134,7 @@ export async function startServer(transportType: "stdio" | "http" = "stdio") {
   mountConsoleApi(app);
   app.use("/api/internal/local-seo", localWorkerRouter());
   app.use("/api/internal/social", socialWorkerRouter());
-  app.use("/webhooks", ecommerceWebhookRouter());
+  app.use("/api/integrations/crm", crmPluginRouter());
   app.use("/api/mcp/competition", buildCompetitionMcpRouter());
   app.use("/api/mcp/social", buildSocialMcpRouter());
   // Operations scheduler (T-11): periodic visibility + rank checks per tenant.

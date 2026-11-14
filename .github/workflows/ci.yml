@@ -96,6 +96,11 @@ jobs:
           SOCIAL_QA_OUTPUT_DIR: qa-landing/social
         run: node scripts/qa-social.mjs
 
+      - name: CRM console and global journey browser QA
+        env:
+          CRM_QA_OUTPUT_DIR: qa-landing/crm
+        run: node scripts/qa-crm.mjs
+
       - name: Upload bilingual screenshots
         if: always()
         uses: actions/upload-artifact@v4

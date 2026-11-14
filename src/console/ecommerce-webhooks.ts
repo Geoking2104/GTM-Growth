@@ -24,16 +24,14 @@ function tenantStore(): TenantStore {
 
 /** All tenant connections — used only to route a webhook to its tenant. */
 function allConnections(): Array<{ tenantId: string; connections: StoreConnection[] }> {
-  return tenantStore().list().map((tenant) => ({ tenantId: tenant.id, connections: listConnections(tenant.id) }));
+  return tenantStore().list().filter((tenant) => tenant.status === "active").map((tenant) => ({ tenantId: tenant.id, connections: listConnections(tenant.id) }));
 }
 
 function tenantForDomain(domain: string): { tenantId: string; connection: StoreConnection } | null {
   if (!domain) return null;
   const normalized = domain.toLowerCase();
-  for (const { tenantId, connections } of allConnections()) {
-    const connection = connections.find((c) => c.domain?.toLowerCase() === normalized || c.id.toLowerCase() === normalized);
-    if (connection) return { tenantId, connection };
-  }
+  const matches = allConnections().flatMap(({tenantId,connections}) => connections.filter(c => c.domain?.toLowerCase() === normalized || c.id.toLowerCase() === normalized).map(connection => ({tenantId,connection})));
+  if (matches.length === 1) return matches[0];
   return null;
 }
 

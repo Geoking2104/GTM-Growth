@@ -1,3 +1,5 @@
+import { ingestOrder } from "../ecommerce/ingest.js";
+import {createHash} from "node:crypto";
 ﻿/** Console routes for the e-commerce connectors (Shopify & PrestaShop):
  * connect/disconnect, catalogue & order backfill, commerce dashboard with
  * attribution, product-page GEO audit and feed readiness. Tenant-scoped,
@@ -8,7 +10,7 @@ import { str, num } from "../console/util.js";
 import { decodeEcommerceKey, openSecret, sealSecret } from "../ecommerce/secrets.js";
 import {
   listConnections, saveConnection, removeConnection, getConnection, publicStore,
-  listProducts, listOrders, upsertProducts, upsertOrder, readCursor, writeCursor,
+  listProducts, listOrders, upsertProducts, readCursor, writeCursor,
 } from "../ecommerce/store.js";
 import { attributeOrder } from "../ecommerce/attribute.js";
 import { ShopifyProvider, shopifyOrderId } from "../ecommerce/providers/shopify/client.js";
@@ -100,7 +102,7 @@ export const commerceBackfillRoutes: ConsoleRoute[] = [
       const connection = getConnection(tenantId, storeId);
       if (!connection) throw new Error("Boutique introuvable.");
       const provider = providerFromConnection(connection, tenantId);
-      const cursor = readCursor(tenantId, "products");
+      const cursor = readCursor(tenantId, "products",storeId);
       writeCursor(tenantId, { storeId, resource: "products", cursor: cursor?.cursor ?? null, lastSyncedAt: nowIso(), status: "running" });
       try {
         let page = await provider.listProducts(cursor?.cursor ?? null, 250);
@@ -122,11 +124,11 @@ export const commerceBackfillRoutes: ConsoleRoute[] = [
       const connection = getConnection(tenantId, storeId);
       if (!connection) throw new Error("Boutique introuvable.");
       const provider = providerFromConnection(connection, tenantId);
-      const cursor = readCursor(tenantId, "orders");
+      const cursor = readCursor(tenantId, "orders",storeId);
       writeCursor(tenantId, { storeId, resource: "orders", cursor: cursor?.cursor ?? null, lastSyncedAt: nowIso(), status: "running" });
       try {
         const page = await provider.listOrders(cursor?.cursor ?? null, 250);
-        for (const order of page.items) upsertOrder(tenantId, order);
+        for (const order of page.items) ingestOrder({tenantId,provider:connection.provider,storeId,eventId:'backfill-'+createHash('sha256').update(JSON.stringify(order)).digest('hex'),customerId:order.customerRef,pseudonymSecret:dataKey(),order,signals:{referrer:order.attribution.referrer,landingPage:order.attribution.landingPage}});
         writeCursor(tenantId, { storeId, resource: "orders", cursor: page.nextCursor, lastSyncedAt: nowIso(), status: "idle" });
         return { imported: page.items.length, nextCursor: page.nextCursor, done: page.nextCursor === null };
       } catch (error) {
