@@ -81,6 +81,7 @@ function field(parent, label, type = "text", value = "", required = false) {
   const wrap = el("label", "crm-field");
   const input = el("input");
   input.type = type;
+  input.setAttribute("aria-label", label);
   input.value = value;
   input.required = required;
   input.maxLength = type === "url" ? 2048 : 500;
@@ -91,6 +92,7 @@ function field(parent, label, type = "text", value = "", required = false) {
 function select(parent, label, options) {
   const wrap = el("label", "crm-field"),
     input = el("select");
+  input.setAttribute("aria-label", label);
   wrap.append(el("span", "", label), input);
   for (const [value, title] of options) {
     const option = el("option", "", title);
