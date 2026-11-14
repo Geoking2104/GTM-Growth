@@ -8,6 +8,8 @@ while requests had no selected tenant, detached forms failing to start their rea
 and manual “Load” gates on journey and operations views. The sidebar fields could
 outgrow their grid column, while the main grid stretched short content vertically.
 
+Current journey behavior and delivery evidence: [planner contract](CUSTOMER-JOURNEY-INTEGRATION.md) · [capability register](../journey/CAPABILITIES.md). Historical validation counts below describe that increment, not a current feature count.
+
 ## Entry contract
 
 - Resolve the active workspace before rendering or requesting customer data. When
@@ -45,7 +47,7 @@ outgrow their grid column, while the main grid stretched short content verticall
 | IndexNow | Existing readiness audit and local key generator | Failed audit is explained; key generation remains explicit |
 | Sitemap | Sitemap map read | Public sitemap and crawl configuration procedure |
 | Performance | PageSpeed read | Failure detail and URL/configuration procedure |
-| Customer journey (Act) | Public-page reading and five-stage hypotheses | Labelled manual outline if reading fails; no invented observed content |
+| Customer journey (Act) | Product/Service reading, confirmed context and five-stage hypotheses | Missing product/context instructions; unsupported stages remain empty; see [current planner contract](CUSTOMER-JOURNEY-INTEGRATION.md) |
 | GEO fixes | Read-only robots.txt diff | Domain/access guidance; no website writes |
 | Search | Search Console queries | Connect property/access; expand an empty period |
 | Keywords | Opportunities and clusters | Property/period/filter guidance; tracked-query subtab loads saved data directly |
@@ -68,7 +70,7 @@ by navigation, and no customer dataset is fabricated or imported by this fix.
 - `tests/console-entry-ui.test.ts`: FR/EN automatic reads, workspace selection,
   missing scope, structured failures, journey fallback, Competition import links,
   local access restrictions and operations reads without collection.
-- `tests/console-navigation-ui.test.ts`: all 25 sidebar entries in FR and EN against
+- `tests/console-navigation-ui.test.ts`: the sidebar destinations at the time of that navigation increment in FR and EN against
   isolated DOM/API fixtures; checks selected-tenant request headers and absence of
   collection/import/publication calls.
 - Existing competition UI test now requires automatic Search Console suggestions.

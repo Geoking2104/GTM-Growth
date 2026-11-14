@@ -1,6 +1,8 @@
 # Website customer journey
 
-Updated: 14 November 2026. English-first source documentation; equivalent English and French interfaces.
+Updated: 15 November 2026. English-first source documentation; equivalent English and French interfaces.
+
+[Shared journey blueprint](../journey/README.md) · [Capability and release register](../journey/CAPABILITIES.md)
 
 ## Purpose
 
@@ -10,8 +12,8 @@ Help a visitor choose a useful action before asking them to connect data. The we
 | --- | --- | --- | --- |
 | Diagnose | What needs attention? | Observed page findings and a first fix | Free analysis, GEO, technical audit, sitemap, performance |
 | Understand | What do customers need? | Questions and evidence to prioritise content | Customer journey, products/pages, citability, search, keywords |
-| Prepare | What can we improve next? | An editable draft or preview | Title/meta/outline generators, fix preview, article drafts, IndexNow readiness |
-| Measure | What changed? | Period- and source-specific observations | Source setup, GSC, GA4, GTM, Bing, AI answers, competition, tracked questions/rankings, Shopify/PrestaShop commerce |
+| Prepare | What can we improve next? | An editable draft or preview | Title/meta/outline generators, fix preview, article drafts, Social campaigns, IndexNow readiness |
+| Measure | What changed? | Period- and source-specific observations | Source setup, GSC, GA4, GTM, Bing, AI answers, competition, tracked questions/rankings, Shopify/PrestaShop commerce and observed CRM timelines |
 | Coordinate | How do we repeat this together? | Scoped priorities, evidence and reviewed work | Overview, local SEO, reports, calculators, operations, data assistant, optional Slack |
 
 Review, approval, verification and remeasurement form the feedback loop. A generated draft, readiness score or preview does not prove business impact or publish a remote website.
@@ -20,7 +22,7 @@ Review, approval, verification and remeasurement form the feedback loop. A gener
 
 - The primary CTA accepts a public page URL without signup. Measured recommendations are ranked using the existing deterministic recommendation model, then link to the free customer-question explorer with the URL retained in session storage.
 - The four starting paths (website owner, marketing team, agency, locations/head office) suggest existing tools. They neither persist business roles nor change permissions.
-- The feature explorer filters by stage and searches all 31 functions. A visible reset recovers from empty results. Without JavaScript, all catalog content and links remain in the generated HTML.
+- The feature explorer filters by stage and searches the shared feature catalog. A visible reset recovers from empty results. Without JavaScript, all catalog content and links remain in the generated HTML.
 - Each feature describes its benefit, output, prerequisites and availability. Workspace access does not imply connected data or paid entitlements.
 - Customer console sections show immediate orientation while source data loads, expandable prerequisites and a next-action link. Existing recovery states remain intact.
 - Feature links survive OIDC through a ten-minute, allowlisted destination in session storage. They do not select a tenant. Explicit tenant handoffs keep precedence and the existing server authorisation checks.

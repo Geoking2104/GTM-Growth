@@ -1,5 +1,7 @@
 # Deployment Guide — GTM Growth
 
+> Alternative deployment targets. The primary GTM Growth website uses the [KayrosLab OVH runbook](../deploy/kayroslab-vps/README.md); see [operations](technical/OPERATIONS.md) before a production change.
+
 This document covers production deployment with Docker, Fly.io and Railway, including Redis caching.
 
 ## 1. Prerequisites

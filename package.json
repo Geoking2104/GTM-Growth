@@ -44,7 +44,8 @@
     "site:api": "node scripts/set-api.mjs",
     "tenant:provision": "tsx scripts/provision-tenant.ts",
     "site:render": "node scripts/render-landing.mjs",
-    "site:check": "node scripts/check-site.mjs"
+    "site:check": "node scripts/check-site.mjs",
+    "docs:check": "node scripts/check-docs.mjs"
   },
   "keywords": [
     "mcp",

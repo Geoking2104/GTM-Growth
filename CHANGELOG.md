@@ -2,6 +2,15 @@
 
 ## Unreleased
 
+### Documentation and journey integration
+
+- Reorganised the README into a short entry point, a documentation hub, equally detailed marketing/technical tracks and a shared five-stage customer journey. Added six Mermaid diagrams, an evidence/KPI guide, integration map, operations guide and prioritised repository audit.
+- Centralised source/activation/release status and corrected unsupported deployment-success claims against GitHub Actions. Preserved specialist guide paths and explicitly labelled historical/planned scope.
+- Aligned EN/FR journey catalog copy with actual Product/Service extraction and explicit context confirmation. Removed superseded heading-match/manual-outline claims from current guides.
+- Documented existing commerce aggregation/attribution limitations and the general MCP operator trust boundary; runtime behavior is unchanged.
+- Added a local Markdown path/anchor check to the package and CI.
+
+
 ### Added
 
 - Journey-led FR/EN website: five stages, four starting paths and a searchable catalog of 31 functions, each with benefits, outputs, prerequisites and a real console destination. Detailed examples remain expandable and linkable.
@@ -9,8 +18,11 @@
 - Clear availability for optional Slack, disabled Gemini collection, preview-only Apply Mode, future GEO v2 and inactive Cloud billing; pilot CTAs now lead to contact rather than an unsupported billing route.
 
 - Contextual FR/EN data assistant in the public scan, onboarding and every authenticated console section; personal role, goal, audience, lifecycle stage and optional 28-day target. Guided answers use tenant-scoped sources with explicit periods and missing-data states, without model credentials.
-- Optional Eve Slack agent with four curated read-only tools, exact workspace/channel/user bindings, signed tenant bridge, durable replay protection and tenant-preserving console links. Live Slack installation and credentials remain separate from the OVH core release.
-- **E-commerce connectors (Shopify & PrestaShop)**: canonical ingestion (`src/ecommerce/`) with webhook idempotence (`provider:event_id`) and order upsert; deterministic AI-aware attribution (UTM > referrer > GA4 join, engine matchers for ChatGPT/Claude/Perplexity/Copilot/Gemini/Grok, confidence stored, masked referrers never reclassified); AES-256-GCM sealed credentials (`ECOMMERCE_DATA_KEY_B64`, HKDF per purpose, tenant+store bound); HMAC-verified public webhook endpoints `/webhooks/shopify` and `/webhooks/prestashop` (silent 200 on invalid signature); Commerce console tab (FR/EN) with store connection, catalogue/order sync, revenue by channel incl. AI share, feed readiness; four read-only MCP tools (`commerce_dashboard`, `commerce_orders`, `commerce_products`, `ecommerce_feed_readiness`); 23 dedicated tests. No PII stored: keyed-HMAC customer pseudonym at ingestion. Specification: `docs/specs/ECOMMERCE-CONNECTORS-v1-2026-11-13.md`.
+- Optional Eve Slack agent with five curated read-only tools, exact workspace/channel/user bindings, signed tenant bridge, durable replay protection and tenant-preserving console links. Live Slack installation and credentials remain separate from the OVH core release.
+- **E-commerce connectors (Shopify & PrestaShop)**: store-scoped idempotent ingestion, sealed credentials, signed webhooks, catalogue/order sync and four read-only MCP tools. Current CRM integration adds a durable commerce delivery outbox and store-scoped customer pseudonyms. The current [capability register](docs/journey/CAPABILITIES.md) and [measurement limitations](docs/marketing/MEASUREMENT.md) supersede the original summary's complete-GA4-join and missing-referrer claims. A pseudonymous customer key is not anonymous data; CRM labels/notes/source references remain retained content.
+- **CRM**: native contacts or a client server plugin; exact scoped identity assertions, source-labelled immutable events, clickable FR/EN timelines, explicit roles, collection pause/erasure and Shopify/PrestaShop order observations. Named vendor adapters and live credentials remain separate setup.
+- **Social**: product-grounded campaigns/variants, independent reviews, explicit scheduling, Postiz dispatch/readback, sourced observations, creator vetting and manually sent reviewed outreach. Optional ZenML worker/provider activation is separate.
+
 - LOC-01–24 deterministic evidence rules; operator-configured tenant-specific GBP profile/review reads; durable private Node-RED jobs; supervised phone/URL publication with separate approval, conflict checks and readback. FR/EN console, tests and activation guide included. Live Google access and publication remain opt-in.
 - Offline-first global/local SEO workspace: tenant-scoped registry previews, CSV/JSON imports, exact local access grants, deterministic rank metrics and comparisons, durable manual actions with independent approval, and scoped JSON exports.
 - Free FR/EN local presence planner for physical, service-area and web-only businesses. The public free planner introduces no paid provider or external publication. See `docs/product/GLOBAL-LOCAL-SEO.md` for remaining specification scope.

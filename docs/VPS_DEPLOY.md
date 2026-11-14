@@ -1,5 +1,7 @@
 # Deploy GTM Growth on a VPS (Docker + Caddy)
 
+> Alternative Caddy-based VPS topology. The current primary website uses [Nginx/Keycloak on the KayrosLab OVH stack](../deploy/kayroslab-vps/README.md). These instructions do not describe that live stack.
+
 This guide stands up a public, HTTPS-protected MCP server on a VPS so it can be
 wired into xAI Grok via **Grok Connectors (Custom)** or the **Remote MCP Tools
 API**. The stack is: `ga-grok-app` (Node, Streamable HTTP `/mcp`) behind

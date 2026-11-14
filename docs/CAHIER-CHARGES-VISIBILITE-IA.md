@@ -1,5 +1,7 @@
 # Cahier des charges — Visibilité de marque dans les réponses IA
 
+> Requirements record, not proof that every requirement is implemented. See [current provider setup](product/AI-VISIBILITY-PROVIDERS.md) and the [capability register](journey/CAPABILITIES.md).
+
 **GTM Growth · Version de travail 1.0 · 5 novembre 2026**  
 **Statut :** spécification proposée pour validation produit et technique.  
 **Périmètre :** suivi de prompts, marques et concurrents, indicateurs historiques, sentiment, citations, collecte et exploitation.  

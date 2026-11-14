@@ -1,5 +1,7 @@
 # Local SEO: public feature research and first console increment
 
+> Initial research/planning record. Use [Global/local SEO](GLOBAL-LOCAL-SEO.md), [operations](LOCAL-SEO-OPERATIONS.md) and the [capability register](../journey/CAPABILITIES.md) for current integration and activation.
+
 Date: 2026-11-12. Baseline: `45d30bf` (main, customer journey integration).
 
 ## Findings and evidence boundary

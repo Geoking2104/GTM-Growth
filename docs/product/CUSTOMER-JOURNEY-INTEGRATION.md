@@ -1,46 +1,66 @@
-# Customer Journey — first integration increment (L1 / short L2)
+# Customer Journey — product-grounded question planner
 
-Status: implemented in branch for CI/review, **not production deployed**. This is an adapted workflow based on the external Agent Skills methodology, not an imported or executable third-party agent.
+[Documentation hub](../README.md) · [Shared journey](../journey/README.md) · [Capability status](../journey/CAPABILITIES.md)
 
-## Scope
+Current source contract, reviewed 15 November 2026 against `353e658`.
+The earlier heading-based L1 planner has been superseded by the shared
+`JOURNEY_VERSION = "2.0.0"` model. This is an editorial planner, separate from
+[observed CRM contact timelines](CRM-CUSTOMER-JOURNEY-SPEC.md).
+Production evidence is maintained in the capability register, not inferred here.
 
-- Public \`/console/?lang=fr#c-public-read\` and EN: after the existing one-page \`POST /api/free-read\` check, show five awareness stages with two editable, explicitly **inferred** questions per stage, optional audience / objective, tentative heading coverage, and a locally copied Markdown plan. No registration or paid LLM API required.
-- The existing public recommendation assistant still shows up to **six observed opportunities**; the first **three** are immediately visible. Ranking modes now include \`quick\`, \`blockers\`, \`journey\`, \`impact\`, and \`ai\`. Critical failures take precedence in all modes. The \`journey\` mode only reorders real measured checks; it does **not** fabricate content audit failures.
-- Authenticated console: **Customer journey / Parcours client** entry with an on-demand read of the selected authorised public page. An administrator can choose an inferred or manually edited prompt and add it to the existing tenant-scoped prompt pool, with source kind, source reference, locale, target URL, and group.
-- Back-end \`runFreeRead\` now returns bounded factual page signals (\`title\`, \`description\`, \`htmlLang\`, top 4 H1, top 8 H2), measured from its existing HTML fetch; there is no extra crawl.
-- Reuse \`site/console/shell.css\` and the current console shell; French and English are intentionally matched.
+## Input and evidence contract
 
-## Source attribution
+1. Read a specific public product/service page. The public free read and the
+   authenticated journey route use the same structured context extraction.
+2. Select an actual Product/Service identified in JSON-LD or product microdata.
+   A title, H1/H2, hostname or featured heading alone is not a product or brand.
+3. Confirm the brand, category, target buyer and customer need. Changing relevant
+   context invalidates the earlier proposals; incomplete context has explicit next steps.
+4. Optionally read up to two competitor product pages, select an identified offer
+   from each and explicitly confirm comparability. No competitor, price, share or
+   product advantage is invented.
+5. Review the proposed questions and their sources. The five stages remain Unaware,
+   Problem aware, Solution aware, Product aware and Most aware. Empty unsupported
+   stages remain empty; an observed delivery/return link does not verify its terms.
+6. Copy the plan, or explicitly save a selected question to the existing tenant
+   prompt pool as an administrator. Saving is not a provider collection or publication.
 
-- [Illyism / customer-journey](https://github.com/Illyism/seo-skills/blob/main/marketing/customer-journey/SKILL.md) — five awareness stages and conversational prompts.
-- [Illyism / seo-autopilot](https://github.com/Illyism/seo-skills/blob/main/seo/seo-autopilot/SKILL.md) — inspiration for the action-plan handoff, **not** an autonomous publishing agent.
-- [RomeoSEO / seo-skills](https://github.com/RomeoSEO/seo-skills) — guidance for prompt provenance, page/intent mapping, QA and safe handoffs. This increment does not invoke DataForSEO or copy their skills into runtime code.
+## Boundaries
 
-Source repositories advertise MIT; no untrusted installer or third-party agent instructions are run on the VPS.
+| Surface | Behavior |
+| --- | --- |
+| Public console | One-page evidence and grounded hypotheses without account/model key |
+| Authenticated `POST /api/console/journey/read` | Primary URL and final redirect must belong to the selected active tenant |
+| Competitor read | Public-only evidence; no rival private analytics or customer credentials |
+| Question model | Deterministic proposals using read facts and explicit user context; no paid LLM call |
+| Eve `get_customer_journey` | Same extraction/model through the configured signed tenant bridge; Slack activation remains separate |
+| Tracked prompts | Source-labelled admin save; actual AI observation/import is a separate deliberate step |
 
-## Evidence and constraints
+Questions are hypotheses, not observed searches, demand, positions, citations or
+conversion forecasts. Content coverage remains unverified. Public GEO remains v1;
+this planner does not enable the 42-control GEO v2 or a live Playwright crawler.
+No automatic publishing, score disclosure, outreach or Mollie entitlement is added.
 
-- Prompts shown by the new module are **generated hypotheses**, never claimed to be observed Search Console queries, actual ChatGPT searches, search volume, citations, positions, customer demand or conversion forecasts. Editing a prompt preserves \`provided:user\` provenance, not \`observed\`.
-- Possible H1/H2 matches are labelled exploratory and are not evidence of SERP coverage.
-- The existing deterministic technical GEO v1 score remains separate from GEO v2; public scans remain single-page. Verified-only Playwright and the 42-control v2 rubric are untouched.
-- Tracking a prompt does **not** run an AI provider: the separate visibility run is still gated by the existing admin route and the tenant's configured keys.
-- No automatic publication, redirects, email, outreach, backlinks purchasing, score disclosure or unapproved site writes.
-- Selected target URLs for journey-sourced tracked prompts must belong to the authenticated tenant, verified at the API route.
-- No subscription/Mollie entitlements or numeric Solo/Agency quotas are asserted as implemented. Self-hosted functionality remains free.
-- After merging, production release still requires a safe, verified \`VPS_SSH_FINGERPRINT\` configured in the protected deployment environment; never remove the SSH pinning guard.
+## Source and validation map
 
-## Next increments (not included)
+| Responsibility | Source | Checks |
+| --- | --- | --- |
+| Extract products/services, facts and links | [Context extractor](../../src/freeread/journey-context.ts) | [Customer journey](../../tests/customer-journey.test.ts), [free read](../../tests/free-read.test.ts) |
+| Ground proposals and missing-state behavior | [Shared model](../../site/console/customer-journey-model.js) | [Journey UI](../../tests/customer-journey-ui.test.ts) |
+| Enforce page scope | [Journey API](../../src/console/journey.ts) | [Customer journey](../../tests/customer-journey.test.ts) |
+| Public/site handoff | [Shared catalog](../../site/journey-content.js) | [Website journey](../../tests/website-journey.test.ts), FR/EN browser QA |
+| Optional Slack bridge | [Bridge](../../src/data-agent/bridge.ts) | [Data agent](../../tests/data-agent.test.ts), separate Eve checks |
 
-1. Persist a versioned site/segment journey with human approval, multi-page inventory and coverage verification on verified domains.
-2. Unify journey opportunities with an actionable 30/60/90-day tenant backlog and server-side authorization.
-3. Extend read-only Autopilot to durable scheduled checks, release regression snapshots and source-labelled impact.
-4. Improve content briefs: actual sector, current year, FR/EN, citations, QA and WordPress draft-only integration through the reviewed Apply Mode.
-5. Introduce contractual Cloud entitlements, Mollie lifecycle, budget caps and provider integrations only after separate review.
+## Methodology and remaining work
 
-## Review checklist
+The original five-awareness-stage framing was adapted from
+[Illyism customer-journey](https://github.com/Illyism/seo-skills/blob/main/marketing/customer-journey/SKILL.md),
+with action-planning inspiration from
+[seo-autopilot](https://github.com/Illyism/seo-skills/blob/main/seo/seo-autopilot/SKILL.md)
+and [RomeoSEO](https://github.com/RomeoSEO/seo-skills).
+These are methodology references, not executable third-party agents on the VPS.
 
-- Vitest: \`tests/customer-journey.test.ts\`, \`tests/console-public-read.test.ts\`, \`tests/free-read.test.ts\`, \`tests/console-ops.test.ts\`
-- \`npm run lint\`, \`npm run typecheck\`, \`npm run build\`, \`npm test\`
-- FR/EN authenticated and public flows; keyboard navigation, mobile 375/390px, desktop 1440px
-- Confirm no dummy measured metrics, no account needed to copy, and each edit is explicitly user-initiated
-- Verify that production was updated **only after** an authorised, successful deployment and live HTTP readback
+Versioned multi-page journeys, a unified owner-assigned 30/60/90-day backlog,
+durable SEO Autopilot scheduling and contractual Cloud quotas remain future work.
+The current prompt, content and CRM modules should be integrated through explicit
+source links and permissions, not inferred identity or automatic publication.

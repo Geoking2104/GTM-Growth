@@ -1,51 +1,19 @@
-# GTM Growth — GTM Pitch & Marketing Guide
+# GTM Growth — marketing entry
 
-> Turn GA4, Search Console, and Core Web Vitals into prioritized actions with Grok.
+The maintained pitch, user workflows, offer and limitations now live in
+[Track 1 — Marketing](marketing/README.md). This stable entry replaces the original
+Google/Grok-only pitch.
 
-## Problem
+GTM Growth helps teams turn public-page evidence and authorised analytics, search,
+social, commerce and CRM observations into reviewed actions. Start with a public
+page, confirm the customer context, prepare a bounded improvement, measure sourced
+results and coordinate the next decision.
 
-- Ecommerce teams see abandoned carts but not why tracking or speed is the cause.
-- Agencies spend hours assembling reports from exports that clients barely read.
+- [Shared customer journey and diagrams](journey/README.md)
+- [Measurement and attribution boundaries](marketing/MEASUREMENT.md)
+- [Capability and delivery register](journey/CAPABILITIES.md)
+- [Technical track](technical/README.md)
+- [Website](https://gtm.kayroslab.com/) · [Site français](https://gtm.kayroslab.com/fr/)
 
-## Solution
-
-GTM Growth connects live Google data to an agent. It reads GA4, GTM, Search Console, PageSpeed, and CrUX, then produces a short priority list instead of a raw dump.
-
-## Benefits
-
-| Benefit | Agency | Ecommerce |
-|---|---|---|
-| Real numbers | Reports cite APIs, not pasted screenshots | Decisions based on live data |
-| Cross-source | Ranked pages vs conversion vs speed | Find pages that rank and load slowly |
-| Faster reporting | Weekly briefing in one prompt | Executive summary for stakeholders |
-
-## Workflow
-
-1. Connect the MCP server (Service Account + optional API keys).
-2. Trust the tracking (`audit_ga4_setup_v2`, ecommerce validation).
-3. Measure (traffic, queries, CrUX, PageSpeed).
-4. Prioritize (table of pages + 3–5 actions).
-5. Act only when writes are explicitly enabled.
-
-## Example prompts
-
-- Give me a traffic briefing for the last 28 days.
-- Top Search Console queries and the pages they land on.
-- Run a mobile PageSpeed audit on the homepage.
-- Which ranked pages are slow in CrUX?
-- Draft a one-page monthly client report.
-
-## Capabilities
-
-GA4, GTM web, sGTM, Measurement Protocol, Search Console, Indexing API (gated), PageSpeed, CrUX.
-
-## Safety
-
-Reads are open. Writes need an env flag and `confirm=true`. The Indexing API is officially intended for job postings and livestream structured data.
-
-## Start
-
-- [GROK_SETUP.md](./GROK_SETUP.md)
-- [CLAUDE_SETUP.md](./CLAUDE_SETUP.md)
-- [CODEX_SETUP.md](./CODEX_SETUP.md)
-- [../README.md](../README.md)
+Readiness is not measured visibility; attribution is not causality. Self-hosted
+software remains free; Cloud pricing is indicative and checkout is inactive.

@@ -1,5 +1,7 @@
 # Free public console — conversion and evidence plan
 
+> Initial design and experiment record. The [current journey](../journey/README.md) and [capability register](../journey/CAPABILITIES.md) supersede the original branch/deployment status below; proposed experiments remain proposals.
+
 Status: first UI/API implementation on `feat/free-console-recommendations`; deployment and live end-to-end verification are separate release steps. Language priority: English and French must remain equivalent.
 
 ## Positioning
