@@ -1,6 +1,7 @@
 import { snapshotSchema } from "../local-seo/controls.js";
 import { addSnapshot, findingsFor, enqueue, synchronize } from "../local-seo/operations.js";
 import { gbpCapability, GoogleBusinessProfile } from "../local-seo/gbp.js";
+import { dashboardInput, performanceQuery, reviewSummary, performanceSeries, dashboardError } from "../local-seo/dashboard.js";
 import { preparePublication, approvePublication, executePublication, verifyPublication, cancelPublication } from "../local-seo/publication.js";
 import { workflows } from "../local-seo/worker.js";
 /** Tenant-scoped local SEO commands. Official GBP access is opt-in; no paid fallback. */
@@ -55,6 +56,22 @@ function route(path: string, handler: ConsoleRoute["handler"]): ConsoleRoute {
   } };
 }
 export const localSeoRoutes: ConsoleRoute[] = [
+  route("gbp/dashboard",async ctx=>{
+    const who=identity(ctx),input=dashboardInput.parse(ctx.body),s=readState(who.tenant.id),site=requireSite(ctx,s,input.siteId);
+    if(site.kind==="web-only")throw new Error("LOCAL_NOT_APPLICABLE");
+    const binding=s.bindings?.[site.id];if(!binding)throw new Error("GBP_UNBOUND");
+    const now=new Date(),{query,window}=performanceQuery(input.month,input.metric,now),provider=new GoogleBusinessProfile(who.tenant.id);
+    const [reviews,performance]=await Promise.allSettled([
+      provider.dashboardReviews(binding.location).then(reviewSummary),
+      (window.days?provider.dashboardPerformance(binding.location,query):Promise.resolve({})).then(raw=>performanceSeries(raw,input.month,input.metric,now))
+    ]);
+    // A local grant or binding may be revoked while Google is responding.
+    const current=readState(who.tenant.id);requireSite(ctx,current,site.id);
+    if(current.bindings?.[site.id]?.location!==binding.location||(current.scopeVersion??0)!==(s.scopeVersion??0))throw new Error("LOCAL_CHANGED");
+    return {siteId:site.id,month:input.month,metric:input.metric,source:"google-business-profile",fetchedAt:new Date().toISOString(),
+      reviews:reviews.status==="fulfilled"?{status:"available",...reviews.value}:dashboardError(reviews.reason),
+      performance:performance.status==="fulfilled"?{status:"available",...performance.value}:dashboardError(performance.reason)};
+  }),
   route("evidence/import",async ctx=>{
     const who=admin(ctx),input=snapshotSchema.parse(ctx.body.snapshot);
     return updateState(who.tenant.id,s=>{requireSite(ctx,s,input.siteId);if(input.facts.claims)input.facts.claims.accessibleEvidenceIds=[...s.observations,...(s.snapshots??[])].filter(x=>x.siteId===input.siteId).map(x=>x.id);const snap=addSnapshot(s,{...input,source:"declared",author:who.actor});audit(s,who.actor,"evidence-import",input.siteId);return snap;});

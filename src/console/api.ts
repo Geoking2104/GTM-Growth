@@ -340,7 +340,7 @@ export function buildConsoleRouter(routes: ConsoleRoute[], options: ConsoleOptio
 
   for (const route of routes) {
     router.post(route.path, async (req: Request, res: Response) => {
-      if (route.path.startsWith("/ai-visibility/accounts") || (route.path.startsWith("/data-agent/") || route.path.startsWith("/journey/"))) res.setHeader("Cache-Control", "no-store");
+      if (route.path.startsWith("/ai-visibility/accounts") || route.path.startsWith("/local-seo/") || (route.path.startsWith("/data-agent/") || route.path.startsWith("/journey/"))) res.setHeader("Cache-Control", "no-store");
       const body = { ...((req.body ?? {}) as Body) };
       const { user, tenancy } = res.locals as Locals;
       const scoped = await scopeRequest(route, body, tenancy!);

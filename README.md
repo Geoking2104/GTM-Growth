@@ -61,6 +61,14 @@ choices and returns only grounded proposals. Eve remains a separately configured
 optional service: adding this tool does not activate live Slack/model replies or a
 console LLM session. No paid generation or automatic publishing is introduced.
 
+## Google Business Profile dashboard and retail roadmap
+
+The local console now includes a bilingual dashboard following the supplied reference layout: location selector, linked-listing count, review total, Google rating gauge, star distribution and daily interaction chart with month/metric filters. Reads use the authorised location's official Reviews and Performance APIs on demand. Missing values remain unavailable; the distribution is explicitly limited to the returned review sample (up to 50). Dashboard Google content is not persisted.
+
+The public local-SEO section now explains **organise → measure → correct and verify**, with concrete outcomes and the prerequisites for Google data. See the [retail specification and acceptance criteria](docs/product/GBP-RETAIL-SPEC.md) for the implemented scope and the next delivery lots. Review replies, publishing campaigns, self-service OAuth and network reporting remain roadmap items. Server-side Google credentials, API approval and exact location mapping are still required; this change does not activate a customer connection.
+
+This section describes the source implementation. Production deployment must be confirmed independently by the OVH release workflow; the earlier production verification above does not certify this dashboard release.
+
 ## How to read this README
 
 **Data-agent capabilities (13 November 2026):** a

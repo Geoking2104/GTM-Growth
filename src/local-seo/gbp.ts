@@ -30,7 +30,7 @@ async function json(response:Response):Promise<Record<string,unknown>> {
 }
 export class GoogleBusinessProfile implements GbpProvider {
   constructor(private tenant:string,private fetcher:typeof fetch=fetch,private configuration=gbpConfig,private reserve=reserveRequest){}
-  private async request(location:string,method:"GET"|"PATCH",suffix:string,body?:unknown,write=false,review=false) {
+  private async request(location:string,method:"GET"|"PATCH",suffix:string,body?:unknown,write=false,review=false,performance=false) {
     const c=this.configuration(this.tenant);locationName.parse(location);
     if(!c.locations.includes(location))throw new Error("GBP_ACCESS");if(write&&!c.writeEnabled)throw new Error("GBP_WRITE_DISABLED");
     this.reserve(this.tenant,c.requestsPerHour);
@@ -40,7 +40,7 @@ export class GoogleBusinessProfile implements GbpProvider {
     }catch(e){if(e instanceof Error&&/^GBP_/.test(e.message))throw e;throw new Error("GBP_REMOTE");}
     if(typeof token.access_token!=="string")throw new Error("GBP_ACCESS");
     this.reserve(this.tenant,c.requestsPerHour);
-    const base=review?`https://mybusiness.googleapis.com/v4/${c.account}/${location}`:`https://mybusinessbusinessinformation.googleapis.com/v1/${location}`;
+    const base=performance?`https://businessprofileperformance.googleapis.com/v1/${location}`:review?`https://mybusiness.googleapis.com/v4/${c.account}/${location}`:`https://mybusinessbusinessinformation.googleapis.com/v1/${location}`;
     try {return await json(await this.fetcher(base+suffix,{method,redirect:"error",signal:AbortSignal.timeout(15000),headers:{Authorization:`Bearer ${token.access_token}`,"Content-Type":"application/json"},...(body?{body:JSON.stringify(body)}:{})}));}
     catch(e){if(e instanceof Error&&/^GBP_/.test(e.message))throw e;throw new Error("GBP_UNCERTAIN");}
   }
@@ -57,6 +57,13 @@ export class GoogleBusinessProfile implements GbpProvider {
   }
   async validate(location:string,change:GbpChange){await this.patch(location,change,true);}
   async write(location:string,change:GbpChange){await this.patch(location,change,false);}
+  /** On-demand dashboard reads: never persisted, no reviewer names or comments returned. */
+  async dashboardReviews(location:string) {
+    return this.request(location,"GET","/reviews?pageSize=50&orderBy=updateTime%20desc",undefined,false,true);
+  }
+  async dashboardPerformance(location:string,query:URLSearchParams) {
+    return this.request(location,"GET",`:fetchMultiDailyMetricsTimeSeries?${query}`,undefined,false,false,true);
+  }
   async reviews(location:string) {
     const items:Array<{id:string;createdAt:string;replyExpected:boolean;replied:boolean}>=[];let token="";
     for(let i=0;i<10;i++){

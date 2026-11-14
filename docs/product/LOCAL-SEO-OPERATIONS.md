@@ -117,3 +117,11 @@ Unit/integration tests cover deterministic controls, tenant-scoped credentials a
 Before a live pilot: enable approved Google access, mount tenant-specific secrets, provision two distinct administrators, verify persistent-volume backup/restore, qualify the optional container's resource budget, run a read-only sync, and only then deliberately enable writes for an owner-authorized test listing. No production Google integration, publication or deployment is claimed by repository tests.
 
 References: [Google prerequisites](https://developers.google.com/my-business/content/prereqs), [location patch/validateOnly](https://developers.google.com/my-business/reference/businessinformation/rest/v1/locations/patch), [offline OAuth](https://developers.google.com/identity/protocols/oauth2/web-server), [Node-RED security](https://nodered.org/docs/user-guide/runtime/securing-node-red).
+
+## On-demand GBP dashboard (14 November 2026)
+
+The console now has a single-location dashboard. The authenticated `gbp/dashboard` route reads review totals/rating and one daily Performance metric for a selected month. Enable the Business Profile Performance API in the approved operator project in addition to the APIs above. Existing per-tenant OAuth credentials, location allowlist and confirmed binding are reused; users also need the matching local delegation.
+
+Two independent bounded reads produce partial success when one API fails. Every network request, including token refresh, consumes the existing tenant quota. The review distribution covers only the first page (up to 50 reviews, update-time descending); names and comments are discarded. Dashboard data is transient, is not exported by `local-seo/export`, and does not populate evidence snapshots. `WF-04` scheduled performance collection remains unimplemented.
+
+See [the retail specification](GBP-RETAIL-SPEC.md) for the reference layout, metric definitions, connection requirements, future editorial workflows and acceptance criteria. Live verification needs an authorised pilot account; fixture-based tests do not establish that production credentials are configured.
