@@ -18,6 +18,9 @@ the CLI or a configured MCP client.
 | Both teams | [Shared customer journey](docs/journey/README.md) | The same five stages, responsibilities and acceptance criteria |
 | Looking for a specific guide | [Documentation hub](docs/README.md) | Current guides, detailed contracts, operations and historical material |
 
+Public reading guides: [Marketing](https://gtm.kayroslab.com/guides/marketing/) ·
+[Technical](https://gtm.kayroslab.com/guides/technical/) (each available in EN/FR).
+
 The documentation is English-first. Both tracks use the same stages as the FR/EN
 website. A product workflow, a buyer-awareness hypothesis and an observed contact
 timeline have different evidence: [how they fit together](docs/journey/README.md#three-journeys-three-kinds-of-evidence).

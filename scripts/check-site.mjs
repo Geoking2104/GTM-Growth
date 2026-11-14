@@ -13,7 +13,7 @@ const translatedAttributes = new Set(['lang', 'aria-label', 'alt', 'title', 'pla
 function structure(document) {
   return [...document.body.querySelectorAll('*')].map(node => [node.localName, [...node.attributes]
     .filter(a => !translatedAttributes.has(a.name))
-    .map(a => [a.name, a.value.replace(/lang=(en|fr)/g, 'lang=LOCALE').replace(/geo-board-(en|fr)\.svg/g, 'geo-board-LOCALE.svg').replace('/fr/confidentialite.html', '/privacy.html')])]);
+    .map(a => [a.name, a.value.replace(/lang=(en|fr)/g, 'lang=LOCALE').replace(/geo-board-(en|fr)\.svg/g, 'geo-board-LOCALE.svg').replace('/fr/confidentialite.html', '/privacy.html').replace(/^\/fr\/(?=guides\/|$|#)/, '/')])]);
 }
 assert.deepEqual(structure(documents[0]), structure(documents[1]), 'EN/FR structure, actions and assets must match');
 for (const [i, document] of documents.entries()) {
@@ -46,9 +46,43 @@ for (const [i, document] of documents.entries()) {
   assert.equal(document.querySelectorAll('#roadmap .phase').length, 3, 'Keep all French roadmap phases');
   assert.equal(document.querySelectorAll('#toolkit .lever').length, 7, 'Keep all French toolkit items');
 }
+
+// Guides are static, indexable pages. Every local destination and fragment must resolve.
+for (const track of ['marketing', 'technical']) {
+  const guides = ['en', 'fr'].map(locale => ({ locale, url: `${locale === 'fr' ? '/fr' : ''}/guides/${track}/` }));
+  const pages = guides.map(({url}) => parseHTML(read(url.slice(1) + 'index.html')).document);
+  assert.deepEqual(structure(pages[0]), structure(pages[1]), `${track}: translated structure/actions must match`);
+  for (const [i, document] of pages.entries()) {
+    const {locale, url} = guides[i];
+    assert.equal(document.documentElement.lang, locale);
+    assert.equal(document.querySelector('link[rel="canonical"]').href, `https://gtm.kayroslab.com${url}`);
+    assert.equal(document.querySelectorAll('h1').length, 1);
+    assert.equal(document.querySelectorAll('.guide-stages > li').length, 5);
+    assert.equal(document.querySelector('.lang [aria-current="page"]').textContent, locale.toUpperCase());
+    assert.ok(read('sitemap.xml').includes(`https://gtm.kayroslab.com${url}`));
+    const ids = [...document.querySelectorAll('[id]')].map(n => n.id);
+    assert.equal(new Set(ids).size, ids.length, `${url}: duplicate IDs`);
+    for (const script of document.querySelectorAll('script[type="application/ld+json"]')) JSON.parse(script.textContent);
+    for (const node of document.querySelectorAll('[src],link[href],a[href]')) {
+      const value = node.getAttribute('src') || node.getAttribute('href');
+      if (!value || /^(https?:|data:)/.test(value)) continue;
+      const target = new URL(value, `https://gtm.kayroslab.com${url}`);
+      if (target.pathname.startsWith('/console/')) {
+        assert.equal(target.searchParams.get('lang'), locale, `${url}: console language lost`);
+        continue;
+      }
+      let file = path.join(root, target.pathname);
+      assert.ok(fs.existsSync(file), `${url}: missing destination ${value}`);
+      if (fs.statSync(file).isDirectory()) file = path.join(file, 'index.html');
+      assert.ok(fs.existsSync(file), `${url}: missing index ${value}`);
+      if (target.hash) assert.ok(parseHTML(fs.readFileSync(file, 'utf8')).document.getElementById(target.hash.slice(1)), `${url}: missing fragment ${value}`);
+    }
+  }
+}
+
 const behavior = read('landing.js');
 for (const hook of ['url-form','lead-form','/api/free-read','/api/lead','auditUrlShape','sampleTables(dict)','translateLiveTables','renderSitemapMap']) assert.ok(behavior.includes(hook), `Missing shared behavior: ${hook}`);
 assert.doesNotMatch(behavior, /mailto:/);
 assert.ok(read('console/index.html').includes('src="locale-shell.js"'));
 assert.ok(read('reports/opendpe.html').includes('opendpe.pdf'));
-console.log('site check OK — English layout, full French content, bilingual actions, assets, SEO and generated-file parity');
+console.log('site check OK — English layout, full French content, bilingual actions, four guides, assets, SEO and generated-file parity');

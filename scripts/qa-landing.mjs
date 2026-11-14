@@ -250,6 +250,39 @@ async function verifyLeadFlow(page, locale) {
   assert.equal(await page.locator('#lead-email').inputValue(),'qa@example.com','Failed send keeps the visitor input');
 }
 
+async function visitReadingGuides(context, locale, viewport, label) {
+  for (const track of ['marketing', 'technical']) {
+    const page = await context.newPage();
+    const errors = [];
+    page.on('pageerror', error => errors.push(error.message));
+    await page.setViewportSize(viewport);
+    const prefix = locale === 'fr' ? '/fr' : '';
+    const route = `${prefix}/guides/${track}/`;
+    assert.equal((await page.goto(`${origin}${route}`, { waitUntil: 'networkidle' }))?.status(), 200);
+    await page.evaluate(() => document.fonts.ready);
+    assert.equal(await page.locator('html').getAttribute('lang'), locale);
+    assert.equal(await page.locator('.guide-stages > li').count(), 5);
+    assert.equal(await page.locator('.site-header .nav').isVisible(), true);
+    assert.ok(await page.locator('.site-header .brand img').evaluate(img => img.complete && img.naturalWidth > 0));
+    assert.ok(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth + 2), `${route} ${label}: no page overflow`);
+    await page.screenshot({ path: path.join(outputDir, `${locale}-${track}-${label}.png`), fullPage: true });
+    await page.locator(track === 'marketing' ? '#identity' : '#architecture').screenshot({ path: path.join(outputDir, `${locale}-${track}-${label}-diagram.png`) });
+    // Clicking the language control keeps the selected guide, then returns to the source locale.
+    const other = locale === 'fr' ? 'en' : 'fr';
+    await page.locator(`.lang a[hreflang="${other}"]`).click();
+    await page.waitForURL(`${origin}${other === 'fr' ? '/fr' : ''}/guides/${track}/`);
+    assert.equal(await page.locator('html').getAttribute('lang'), other);
+    await page.locator(`.lang a[hreflang="${locale}"]`).click();
+    await page.waitForURL(`${origin}${route}`);
+    // A real click checks the public console handoff, with language and target preserved.
+    await page.locator('.guide-hero a.btn').click();
+    await page.waitForURL(`${origin}/console/?lang=${locale}#c-public-read`);
+    await page.locator('#c-public-read').waitFor({ state: 'visible' });
+    assert.deepEqual(errors, [], `${route}: no runtime errors`);
+    await page.close();
+  }
+}
+
 try {
   await fs.mkdir(outputDir, { recursive: true });
   await ready();
@@ -265,6 +298,14 @@ try {
   const en = await visit(context, "en", "en-desktop", desktop);
   const fr = await visit(context, "fr", "fr-desktop", desktop);
   await verifySharedLanding(en, fr);
+  for (const [page, locale] of [[en, 'en'], [fr, 'fr']]) {
+    await page.locator('#reading-guides').screenshot({ path: path.join(outputDir, `${locale}-reading-tracks.png`) });
+    await page.locator(`#reading-guides a[href="${locale === 'fr' ? '/fr' : ''}/guides/marketing/"]`).click();
+    await page.waitForURL(`${origin}${locale === 'fr' ? '/fr' : ''}/guides/marketing/`);
+    await page.goto(`${origin}/${locale === 'fr' ? 'fr/' : ''}`);
+    await visitReadingGuides(context, locale, desktop, 'desktop');
+    await visitReadingGuides(context, locale, mobile, 'mobile');
+  }
   await verifyLeadFlow(en, "en");
   await verifyLeadFlow(fr, "fr");
   for (const [page, locale] of [[en,"en"],[fr,"fr"]]) {

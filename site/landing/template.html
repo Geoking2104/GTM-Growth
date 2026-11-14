@@ -14,7 +14,7 @@
 
 
 
-<meta content="https://gtm.kayroslab.com" name="gg-api"><link href="/styles.css" rel="stylesheet"><link href="/sitemap-map.css" rel="stylesheet"><link href="/landing.css" rel="stylesheet"><link href="/local-seo.css" rel="stylesheet"><link type="image/png" href="/fr/assets/logo-rocket.png" rel="icon"><link rel="stylesheet" href="/crm-public.css">
+<meta content="https://gtm.kayroslab.com" name="gg-api"><link href="/styles.css" rel="stylesheet"><link href="/sitemap-map.css" rel="stylesheet"><link href="/landing.css" rel="stylesheet"><link href="/reading-guides.css" rel="stylesheet"><link href="/local-seo.css" rel="stylesheet"><link type="image/png" href="/fr/assets/logo-rocket.png" rel="icon"><link rel="stylesheet" href="/crm-public.css">
 </head>
 <body class="shared-landing"><a href="#main" class="skip-link">{{t002}}</a>
 
@@ -25,7 +25,7 @@
       <img src="/fr/assets/logo-rocket.png" alt="" width="32" height="32">
       <span>{{t004}}&#160;{{t005}}</span>
     </a>
-    <nav class="nav" aria-label="{{t006}}"><a href="#fonctionnement">{{t015}}</a><a href="#features">{{t007}}</a><details class="nav-menu"><summary>{{t014}}</summary><div class="nav-dropdown"><a href="#audit">{{t008}}</a><a href="#ops">{{t011}}</a><a href="#mesure">{{t013}}</a><a href="#roadmap">{{t016}}</a><a href="#faq">{{t018}}</a><a href="https://github.com/Geoking2104/GTM-Growth">{{t019}}</a></div></details><a href="#offres">{{t020}}</a><a href="/console/?lang={{locale}}#overview">{{t362}}</a></nav>
+    <nav class="nav" aria-label="{{t006}}"><a href="#fonctionnement">{{t015}}</a><a href="#features">{{t007}}</a><details class="nav-menu"><summary>{{t014}}</summary><div class="nav-dropdown">{{guide_links}}<a href="#audit">{{t008}}</a><a href="#ops">{{t011}}</a><a href="#mesure">{{t013}}</a><a href="#roadmap">{{t016}}</a><a href="#faq">{{t018}}</a><a href="https://github.com/Geoking2104/GTM-Growth">{{t019}}</a></div></details><a href="#offres">{{t020}}</a><a href="/console/?lang={{locale}}#overview">{{t362}}</a></nav>
     <div class="lang" role="group" aria-label="{{t021}}">
       <a {{active_en}} href="/" hreflang="en" lang="en">{{t022}}</a>
       <a {{active_fr}} href="/fr/" hreflang="fr" lang="fr">{{t023}}</a>
@@ -67,6 +67,7 @@
 
 <div class="journey-trust"><div class="wrap"><span>{{t364}}</span><span>{{t365}}</span><span>{{t366}}</span></div></div>
 {{journey_steps}}
+{{reading_tracks}}
 {{journey_explorer}}
 {{crm_global}}
 
@@ -598,6 +599,7 @@
       <a href="https://github.com/Geoking2104/GTM-Growth" rel="noopener">{{t357}}</a>
       <a href="/console/?lang={{locale}}" rel="noopener">{{t012}}</a>
       <a href="/console/?lang={{locale}}#indexnow">{{t246}}</a>
+      {{guide_links}}
       <a href="{{privacy}}">{{t358}}</a>
       <button type="button" class="privacy-settings">{{t359}}</button>
       <a href="#top">{{t360}}</a>
