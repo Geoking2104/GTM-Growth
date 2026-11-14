@@ -1,3 +1,6 @@
+import { commerceRoutes } from "../src/console/commerce.js";
+import { sealSecret } from "../src/ecommerce/secrets.js";
+import { ShopifyProvider } from "../src/ecommerce/providers/shopify/client.js";
 import { beforeEach, afterEach, it, expect, vi } from "vitest";
 import { mkdtempSync, rmSync, readFileSync } from "node:fs";
 import { tmpdir } from "node:os";
@@ -576,9 +579,9 @@ it("rolls back an identity-link conflict with all writes in the transaction", ()
 });
 it("mounts raw verified ecommerce webhooks before JSON decoding and keeps CRM out of shared MCP routes", () => {
   const server = readFileSync("src/server.ts", "utf8");
-  expect(server.indexOf('app.use("/webhooks"')).toBeLessThan(
-    server.indexOf("app.use(express.json"),
-  );
+  expect(
+    server.indexOf('app.use("/api/integrations/commerce/webhooks"'),
+  ).toBeLessThan(server.indexOf("app.use(express.json"));
   const api = readFileSync("src/console/api.ts", "utf8");
   expect(api).toContain("crmRoutes");
   expect(readFileSync("src/console/crm.ts", "utf8")).toContain("platformAdmin");
@@ -618,4 +621,59 @@ it("uses the authoritative connection store ID even when a webhook parser suppli
     status: "paid",
   });
   expect(listOrders("acme", "example.myshopify.com")).toHaveLength(0);
+});
+
+it("opens backfill credentials with the connection ID and pseudonymises the fetched customer", async () => {
+  saveConnection("acme", {
+    id: "shop-a",
+    provider: "shopify",
+    domain: "example.myshopify.com",
+    currency: "EUR",
+    timezone: "UTC",
+    connectedAt: "2026-11-01T00:00:00Z",
+    status: "connected",
+    credentialsSealed: JSON.stringify(
+      sealSecret(secret, "acme:shop-a:credentials", "synthetic-shop-token"),
+    ),
+    webhookSecretSealed: null,
+    scopes: [],
+  });
+  const order = mapShopifyOrder("example.myshopify.com", {
+    id: "gid://shopify/Order/999",
+    name: "#999",
+    createdAt: "2026-11-01T10:00:00Z",
+    updatedAt: "2026-11-01T11:00:00Z",
+    currencyCode: "EUR",
+    financialStatus: "PAID",
+    fulfillmentStatus: null,
+    totalPriceSet: { shopMoney: { amount: "120" } },
+    subtotalPriceSet: { shopMoney: { amount: "100" } },
+    totalTaxSet: { shopMoney: { amount: "20" } },
+    totalShippingPriceSet: { shopMoney: { amount: "0" } },
+    totalDiscountsSet: { shopMoney: { amount: "0" } },
+    lineItems: { edges: [] },
+    customer: { id: "gid://shopify/Customer/7" },
+    landingSite: null,
+    referrerUrl: null,
+  });
+  const fetchOrders = vi
+    .spyOn(ShopifyProvider.prototype, "listOrders")
+    .mockResolvedValue({ items: [order], nextCursor: null });
+  try {
+    const route = commerceRoutes.find(
+      (r) => r.path === "/commerce/sync/orders",
+    )!;
+    await route.handler({
+      body: { storeId: "shop-a" },
+      tenancy: { tenant, role: "tenant-admin" },
+      user: { sub: "admin1" },
+    } as any);
+    expect(fetchOrders).toHaveBeenCalledWith(null, 250);
+    expect(listOrders("acme", "shop-a")[0].customerRef).toBe(
+      scopedCustomerRef("acme", "shop-a", "shopify", "7", secret),
+    );
+    expect(readCursor("acme", "orders", "shop-a")?.status).toBe("idle");
+  } finally {
+    fetchOrders.mockRestore();
+  }
 });

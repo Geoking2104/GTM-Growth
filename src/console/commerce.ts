@@ -30,10 +30,10 @@ function dataKey(): Buffer {
   return decodeEcommerceKey(process.env.ECOMMERCE_DATA_KEY_B64);
 }
 
-function providerFromConnection(input: { provider: ProviderId; domain: string; credentialsSealed: string; webhookSecretSealed: string | null }, tenantId: string): ShopifyProvider | PrestaShopProvider {
+function providerFromConnection(input: { id: string; provider: ProviderId; domain: string; credentialsSealed: string; webhookSecretSealed: string | null }, tenantId: string): ShopifyProvider | PrestaShopProvider {
   const key = dataKey();
-  const credential = openSecret(key, `${tenantId}:${input.domain}:credentials`, JSON.parse(input.credentialsSealed));
-  const webhookSecret = input.webhookSecretSealed ? openSecret(key, `${tenantId}:${input.domain}:webhook`, JSON.parse(input.webhookSecretSealed)) : undefined;
+  const credential = openSecret(key, `${tenantId}:${input.id}:credentials`, JSON.parse(input.credentialsSealed));
+  const webhookSecret = input.webhookSecretSealed ? openSecret(key, `${tenantId}:${input.id}:webhook`, JSON.parse(input.webhookSecretSealed)) : undefined;
   if (input.provider === "shopify") return new ShopifyProvider({ shopDomain: input.domain, accessToken: credential, webhookSecret });
   return new PrestaShopProvider({ shopUrl: `https://${input.domain}`, apiKey: credential, webhookSecret });
 }

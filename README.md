@@ -330,7 +330,7 @@ Reliability: zod validation on every tool, enriched Google errors (`[status | re
 2. **Shopify**: create a custom app in the merchant admin (scopes `read_products`, `read_orders` — `read_all_orders` needs Shopify approval for history beyond 60 days), install, copy the Admin API token.
 3. **PrestaShop**: enable the webservice, create a key with rights on `products`, `orders`, `order_details`, `order_states`; serve the shop over HTTPS.
 4. In the console: **Track → Commerce → Connect** (administrator). Scope problems surface as `insufficient_scopes` with the exact missing rights.
-5. Run **Sync catalogue** then **Sync orders** (paginated, resumable); register the webhook endpoint `https://<server>/webhooks/shopify` (or `/webhooks/prestashop` for the module) with the store's webhook secret for real-time updates.
+5. Run **Sync catalogue** then **Sync orders** (paginated, resumable); register the webhook endpoint `https://<server>/api/integrations/commerce/webhooks/shopify` (or `/api/integrations/commerce/webhooks/prestashop` for the module) with the store's webhook secret for real-time updates.
 
 ## 3. Connect your client
 
@@ -438,7 +438,7 @@ Provisioning creates the organization (or realm), role groups, console redirect 
 | Global / Local SEO | Registry · Evidence · Controls · Jobs · Publication | `local-seo/*`; see the exact contracts in the operations guide |
 | Apply Mode | GEO fix preview | `apply/preview` (`robots-ai`, dry-run only) |
 
-Public webhook endpoints (no OIDC — authenticated by HMAC): `POST /webhooks/shopify`, `POST /webhooks/prestashop`.
+Public webhook endpoints (no OIDC — authenticated by HMAC): `POST /api/integrations/commerce/webhooks/shopify`, `POST /api/integrations/commerce/webhooks/prestashop`. These use the existing OVH `/api/` proxy. Legacy `/webhooks/shopify` and `/webhooks/prestashop` remain backend aliases; exposing those legacy paths requires a corresponding reverse-proxy rule.
 
 Code: `src/console/` (API, auth, modules, `commerce.ts`, `ecommerce-webhooks.ts`) · `src/ecommerce/` (types, store, ingest, attribute, secrets, feed, providers) · `site/console/` (app-shell UI) · tests `tests/console-*.test.ts`, `tests/ecommerce.test.ts`.
 

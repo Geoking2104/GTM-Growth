@@ -101,6 +101,7 @@ export async function startServer(transportType: "stdio" | "http" = "stdio") {
     allowedHeaders: ["Content-Type", "Authorization", "MCP-Session-Id"],
   }));
   app.use("/api/internal/data-agent", buildDataAgentBridge());
+  app.use("/api/integrations/commerce/webhooks", ecommerceWebhookRouter());
   app.use("/webhooks", ecommerceWebhookRouter());
   app.use(express.json({ limit: "4mb" }));
 

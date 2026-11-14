@@ -83,6 +83,7 @@ it("authenticates scoped plugin HTTP requests and verifies JSON webhooks on thei
     scopes: [],
   });
   const app = express();
+  app.use("/api/integrations/commerce/webhooks", ecommerceWebhookRouter());
   app.use("/webhooks", ecommerceWebhookRouter());
   app.use(express.json({ limit: "4mb" }));
   app.use("/api/integrations/crm", crmPluginRouter());
@@ -144,7 +145,7 @@ it("authenticates scoped plugin HTTP requests and verifies JSON webhooks on thei
       .update(body)
       .digest("base64");
     const webhook = (raw: string, eventId: string) =>
-      fetch(origin + "/webhooks/shopify", {
+      fetch(origin + "/api/integrations/commerce/webhooks/shopify", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
