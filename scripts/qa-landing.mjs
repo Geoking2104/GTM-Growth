@@ -277,7 +277,8 @@ async function visitReadingGuides(context, locale, viewport, label) {
     // A real click checks the public console handoff, with language and target preserved.
     await page.locator('.guide-hero a.btn').click();
     await page.waitForURL(`${origin}/console/?lang=${locale}#c-public-read`);
-    await page.locator('#c-public-read').waitFor({ state: 'visible' });
+    await page.locator('#c-public-url').waitFor({ state: 'visible' });
+    assert.equal(await page.locator('#c-public-url').inputValue(), '', 'The guide opens an empty analysis form; no implicit fetch');
     assert.deepEqual(errors, [], `${route}: no runtime errors`);
     await page.close();
   }
