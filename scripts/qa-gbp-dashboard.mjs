@@ -18,7 +18,7 @@ try{
  browser=await chromium.launch({executablePath,headless:true,args:['--no-sandbox','--disable-dev-shm-usage']});
  for(const language of ['fr','en'])for(const width of [1200,390]){
   const page=await browser.newPage({viewport:{width,height:1000}}),errors=[];page.on('pageerror',error=>errors.push(error.message));
-  await page.route('**/gbp-fixture*',route=>route.fulfill({contentType:'text/html',body:`<!doctype html><html lang="${language}"><head><meta name="viewport" content="width=device-width,initial-scale=1"><link rel="stylesheet" href="/styles.css"><link rel="stylesheet" href="/console/shell.css"><link rel="stylesheet" href="/local-seo.css"></head><body style="margin:0;background:#fff"><main class="local-seo-workspace" style="max-width:1150px;margin:24px auto;padding:0 16px"><p style="font:12px sans-serif;color:#68727b">GTM Growth · ${language==='fr'?'Données de test, aucun compte Google':'Test data, no Google account'}</p><div id="fixture"></div></main></body></html>`}));
+  await page.route('**/gbp-fixture*',route=>route.fulfill({contentType:'text/html',body:`<!doctype html><html lang="${language}"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><link rel="stylesheet" href="/styles.css"><link rel="stylesheet" href="/console/shell.css"><link rel="stylesheet" href="/local-seo.css"></head><body style="margin:0;background:#fff"><main class="local-seo-workspace" style="max-width:1150px;margin:24px auto;padding:0 16px"><p style="font:12px sans-serif;color:#68727b">GTM Growth · ${language==='fr'?'Données de test, aucun compte Google':'Test data, no Google account'}</p><div id="fixture"></div></main></body></html>`}));
   await page.goto(`${origin}/gbp-fixture?lang=${language}`);
   await page.evaluate(async()=>{
    const {renderGbpDashboard}=await import('/console/gbp-dashboard.js');
@@ -48,7 +48,7 @@ try{
   await page.evaluate(()=>window.resolveLate({reviews:{status:'available',average:5,total:999},fetchedAt:new Date().toISOString()}));
   assert.equal(await dashboard.locator('.gbp-reviews .gbp-number').textContent(),'—');assert.match(await dashboard.locator('.gbp-business-name').innerText(),/Lyon/);
   await dashboard.locator('select').first().selectOption('web');assert.match(await dashboard.locator('[role="status"]').innerText(),language==='fr'?/non applicables/:/not applicable/);
-  assert.equal(await load.isDisabled(),true);assert.deepEqual(errors,[]);await page.close();
+  assert.equal(await load.isDisabled(),true);assert.doesNotMatch(await page.locator('body').innerText(),/Ã|Â·/);assert.deepEqual(errors,[]);await page.close();
  }
  console.log('GBP dashboard: FR/EN desktop/mobile, filters, partial errors, zero/missing and stale-response isolation passed.');
 }finally{await browser?.close();await new Promise(resolve=>server.close(resolve));}
