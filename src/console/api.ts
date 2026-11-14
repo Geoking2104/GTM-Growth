@@ -216,19 +216,19 @@ async function scopeRequest(route: ConsoleRoute, body: Body, tenancy: TenantCont
   const property = str(body.property);
   if (property) {
     if (tenant && !platformAdmin && !tenantOwnsProperty(tenant, property)) return { status: 403, error: `La propriÃ©tÃ© ${property} n'appartient pas au tenant ${tenant.id}.` };
-  } else if (tenant?.gscProperties.length && !(route.path.startsWith("/data-agent/") || route.path.startsWith("/journey/"))) {
+  } else if (tenant?.gscProperties.length && !(route.path.startsWith("/data-agent/") || route.path.startsWith("/journey/") || route.path.startsWith("/local-seo/"))) {
     body.property = tenant.gscProperties[0];
   }
   const ga4 = str(body.ga4Property);
   if (ga4) {
     if (tenant && !platformAdmin && !tenantOwnsGa4(tenant, ga4)) return { status: 403, error: `La propriÃ©tÃ© GA4 ${ga4} n'appartient pas au tenant ${tenant.id}.` };
-  } else if (tenant?.ga4Properties?.length && !(route.path.startsWith("/data-agent/") || route.path.startsWith("/journey/"))) {
+  } else if (tenant?.ga4Properties?.length && !(route.path.startsWith("/data-agent/") || route.path.startsWith("/journey/") || route.path.startsWith("/local-seo/"))) {
     body.ga4Property = tenant.ga4Properties[0];
   }
   const bingSite = str(body.bingSite);
   if (bingSite) {
     if (tenant && !platformAdmin && !tenantOwnsBingSite(tenant, bingSite)) return { status: 403, error: `Le site Bing ${bingSite} n'appartient pas au tenant ${tenant.id}.` };
-  } else if (tenant?.bingSites?.length && !(route.path.startsWith("/data-agent/") || route.path.startsWith("/journey/"))) {
+  } else if (tenant?.bingSites?.length && !(route.path.startsWith("/data-agent/") || route.path.startsWith("/journey/") || route.path.startsWith("/local-seo/"))) {
     body.bingSite = tenant.bingSites[0];
   }
   for (const key of ["container", "workspace", "path"] as const) {

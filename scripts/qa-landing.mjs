@@ -195,6 +195,7 @@ async function visitLocalSeoWorkspace(browser, locale) {
   const root = page.locator(".local-seo-workspace");
   assert.match(await root.innerText(), locale === "fr" ? /SEO global et local/ : /Global and local SEO/);
   assert.match(await root.innerText(), /BE · fr-BE, nl-BE/);
+  await root.getByRole("button", {name: locale === "fr" ? "Relier et contrôler mes fiches" : "Link and check my listings", exact:true}).click();
   await root.locator("summary").filter({hasText: /Brussels — 24/}).click();
   assert.equal(await root.locator(".local-seo-operations li").count(),24);
   assert.match(await root.innerText(),locale === "fr" ? /Preuve manquante/ : /Missing evidence/);

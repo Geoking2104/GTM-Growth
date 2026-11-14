@@ -4,13 +4,14 @@ import express from "express";
 import type { AddressInfo } from "node:net";
 import { JwksCache, verifyAccessToken, type OidcConfig } from "../src/console/auth.js";
 import { buildConsoleRouter } from "../src/console/api.js";
+import { dashboardInput } from "../src/local-seo/dashboard.js";
 import { TenantStore } from "../src/tenants/store.js";
 import { mkdtempSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 
 const store = new TenantStore(join(mkdtempSync(join(tmpdir(), "tenants-")), "tenants.json"));
-store.upsert({ id: "acme", name: "Acme", mode: "organization", issuer: "https://auth.example.com/realms/gtm-growth", domains: ["acme.fr"], emailDomains: ["acme.fr"], gscProperties: [], branding: {}, identityProviders: [], status: "active", createdAt: "" });
+store.upsert({ id: "acme", name: "Acme", mode: "organization", issuer: "https://auth.example.com/realms/gtm-growth", domains: ["acme.fr"], emailDomains: ["acme.fr"], gscProperties: ["sc-domain:acme.fr"], ga4Properties: ["123"], bingSites: ["https://acme.fr"], branding: {}, identityProviders: [], status: "active", createdAt: "" });
 
 const { privateKey, publicKey } = generateKeyPairSync("rsa", { modulusLength: 2048 });
 const jwk = { ...publicKey.export({ format: "jwk" }), kid: "k1", alg: "RS256", use: "sig" };
@@ -47,7 +48,7 @@ describe("console OIDC", () => {
 
   const app = express();
   app.use(express.json());
-  app.use("/api/console", buildConsoleRouter([{ path: "/echo", needsUrl: false, handler: async ({ user }) => ({ who: user?.preferred_username }) }], { config, jwksLoader: loader, store }));
+  app.use("/api/console", buildConsoleRouter([{ path: "/echo", needsUrl: false, handler: async ({ user }) => ({ who: user?.preferred_username }) }, { path: "/local-seo/gbp/dashboard", needsUrl: false, handler: async ({ body }) => dashboardInput.parse(body) }], { config, jwksLoader: loader, store }));
   const server = app.listen(0);
   const base = `http://127.0.0.1:${(server.address() as AddressInfo).port}/api/console`;
   afterAll(() => server.close());
@@ -59,6 +60,14 @@ describe("console OIDC", () => {
     const ok = await fetch(`${base}/echo`, { method: "POST", headers: { Authorization: `Bearer ${token({})}`, "Content-Type": "application/json" }, body: "{}" });
     expect(ok.status).toBe(200);
     expect(await ok.json()).toEqual({ who: "geoffroy" });
+  });
+
+  it("keeps the strict GBP body free of unrelated analytics defaults and prevents caching", async () => {
+    const body = {siteId:"one", month:"2026-11", metric:"WEBSITE_CLICKS"};
+    const response = await fetch(`${base}/local-seo/gbp/dashboard`, {method:"POST", headers:{Authorization:`Bearer ${token({})}`, "Content-Type":"application/json"}, body:JSON.stringify(body)});
+    expect(response.status).toBe(200);
+    expect(response.headers.get("cache-control")).toBe("no-store");
+    expect(await response.json()).toEqual(body);
   });
 
   it("returns 503 when OIDC is not configured", async () => {
