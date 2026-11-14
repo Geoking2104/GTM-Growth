@@ -144,7 +144,7 @@ export class PrestaShopProvider implements EcommerceProvider {
     }));
     return {
       id: prestashopOrderId(id), storeId: new URL(this.options.shopUrl).hostname, number: node.reference ?? id,
-      createdAt: node.date_add ?? new Date().toISOString(), currency: "", total: money(node.total_paid_tax_incl),
+      createdAt: node.date_add ?? new Date().toISOString(), updatedAt: node.date_upd, currency: "", total: money(node.total_paid_tax_incl),
       subtotal: money(node.total_products_wt), discount: money(node.total_discounts), shipping: money(node.total_shipping_tax_incl ?? node.total_shipping),
       tax: money(money(node.total_paid_tax_incl) - money(node.total_paid_tax_ex)), status: this.statusOf(node.current_state),
       lines, customerRef: node.id_customer ? `prestashop-cust:${node.id_customer}` : null,

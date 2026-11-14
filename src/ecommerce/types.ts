@@ -69,6 +69,8 @@ export interface Attribution {
 }
 
 export interface Order {
+  updatedAt?: string;
+  provider?: ProviderId;
   id: string;
   storeId: string;
   /** Provider order number — never the customer name. */

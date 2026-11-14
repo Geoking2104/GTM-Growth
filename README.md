@@ -16,6 +16,27 @@ Start with a public page read without signup, explore customer questions, then c
 | **Hosting** | OVH VPS with Docker Compose, Nginx and Keycloak; the address above is the primary product website |
 | **Validation** | CI: typecheck, lint, Vitest, build, CLI/site smoke, production image, FR/EN browser QA, Node-RED and real ZenML runtime smoke |
 
+## CRM and observed customer journeys
+
+Use a **lightweight CRM inside GTM Growth**, or connect a **client CRM through a server plugin**. Both modes share one contact timeline across web, social, manual, Shopify and PrestaShop touchpoints. Start in [CRM setup](https://gtm.kayroslab.com/console/?lang=en#crm/connections), then open [contacts and timelines](https://gtm.kayroslab.com/console/?lang=en#crm/timeline). The English and French website now explain this global follow-up with a labelled synthetic example.
+
+| Step | What you can do | Evidence and prerequisites |
+| --- | --- | --- |
+| Choose a CRM | Create native contacts or upsert external CRM records | Tenant administrator enables collection; external mode needs a server adapter |
+| Link identities | Bind exact CRM, web account/session, social account or store customer IDs | Explicit proof, source/store scope, conflict rejection; session links last at most 24 hours |
+| Read the journey | Filter a clickable timeline by contact, channel and dates; inspect/open source records | Human declarations, source assertions and store observations remain distinct |
+| Follow up | Add a call, meeting or note; review unlinked events; export the selected contact | Explicit CRM reader/editor roles; administrators control identity links |
+| Control collection | Revoke a link, pause a contact or erase current bindings and their events | Opaque blocked keys prevent routine source replay; source-system deletion is separate |
+
+The timeline does **not** infer identities from campaigns, IPs, names, GA4 audiences or Postiz impressions. Shopify/PrestaShop order imports and webhooks use the same store-scoped pseudonymisation and durable delivery outbox. Source timestamps, unknown currencies and missing identities remain explicit; lifecycle snapshots are not added into a fabricated revenue total. The existing editorial **Customer journey** planner remains separate from observed CRM activity.
+
+Native CRM uses the current Node/Express/Keycloak/SQLite stack. It adds no paid dependency and is not a complete sales-pipeline CRM. The server-only plugin contract includes scoped hashed bearer credentials, contact upsert, identity assertions, atomic event batches, and contact-scoped timeline reads. A reference Node client is provided; named vendor CRM connectors and live client credentials are **not preconfigured**. Collection is disabled until a tenant administrator enables it. Main-branch source publication is distinct from production deployment, which still requires the existing OVH/GitHub production-environment gate.
+
+- [Implementation specification](docs/product/CRM-CUSTOMER-JOURNEY-SPEC.md)
+- [Plugin setup, API, operational limits and source requirements](integrations/crm-plugin/README.md)
+- [Reference server client](integrations/crm-plugin/client.mjs) and [synthetic example](integrations/crm-plugin/example.mjs)
+
+
 ## Current delivery status
 
 The website journey redesign is live in production. The [OVH release completed on 14 November 2026 (UTC+8)](https://github.com/Geoking2104/GTM-Growth/actions/runs/43522090712) deployed [`83c8720`](https://github.com/Geoking2104/GTM-Growth/commit/83c8720a153a5224f38c74c688083ab992335c44), including [PR #43](https://github.com/Geoking2104/GTM-Growth/pull/43). [CI passed on the merged revision](https://github.com/Geoking2104/GTM-Growth/actions/runs/43521515234): 585 tests, typecheck, lint, build, production image, FR/EN browser checks and Node-RED runtime smoke.
@@ -309,7 +330,7 @@ Reliability: zod validation on every tool, enriched Google errors (`[status | re
 2. **Shopify**: create a custom app in the merchant admin (scopes `read_products`, `read_orders` — `read_all_orders` needs Shopify approval for history beyond 60 days), install, copy the Admin API token.
 3. **PrestaShop**: enable the webservice, create a key with rights on `products`, `orders`, `order_details`, `order_states`; serve the shop over HTTPS.
 4. In the console: **Track → Commerce → Connect** (administrator). Scope problems surface as `insufficient_scopes` with the exact missing rights.
-5. Run **Sync catalogue** then **Sync orders** (paginated, resumable); register the webhook endpoint `https://<server>/webhooks/shopify` (or `/webhooks/prestashop` for the module) with the store's webhook secret for real-time updates.
+5. Run **Sync catalogue** then **Sync orders** (paginated, resumable); register the webhook endpoint `https://<server>/api/integrations/commerce/webhooks/shopify` (or `/api/integrations/commerce/webhooks/prestashop` for the module) with the store's webhook secret for real-time updates.
 
 ## 3. Connect your client
 
@@ -417,7 +438,7 @@ Provisioning creates the organization (or realm), role groups, console redirect 
 | Global / Local SEO | Registry · Evidence · Controls · Jobs · Publication | `local-seo/*`; see the exact contracts in the operations guide |
 | Apply Mode | GEO fix preview | `apply/preview` (`robots-ai`, dry-run only) |
 
-Public webhook endpoints (no OIDC — authenticated by HMAC): `POST /webhooks/shopify`, `POST /webhooks/prestashop`.
+Public webhook endpoints (no OIDC — authenticated by HMAC): `POST /api/integrations/commerce/webhooks/shopify`, `POST /api/integrations/commerce/webhooks/prestashop`. These use the existing OVH `/api/` proxy. Legacy `/webhooks/shopify` and `/webhooks/prestashop` remain backend aliases; exposing those legacy paths requires a corresponding reverse-proxy rule.
 
 Code: `src/console/` (API, auth, modules, `commerce.ts`, `ecommerce-webhooks.ts`) · `src/ecommerce/` (types, store, ingest, attribute, secrets, feed, providers) · `site/console/` (app-shell UI) · tests `tests/console-*.test.ts`, `tests/ecommerce.test.ts`.
 

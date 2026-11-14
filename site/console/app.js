@@ -1,3 +1,4 @@
+import { renderCrm } from './crm.js';
 import { renderSocial } from './social.js';
 import { renderLocalSeo } from "./local-seo-network.js";
 import { renderLocalSeoWorkspace } from "./local-seo.js";
@@ -194,6 +195,7 @@ const SECTIONS = {
       { id: "map", label: LANG === "fr" ? "Mon parcours client" : "My customer journey", needsDomain: false, async: async () => renderCustomerJourneyWorkspace({ state, api }) },
       { id: "prompts", label: LANG === "fr" ? "Questions suivies" : "Tracked questions", needsDomain: false, async: async () => renderOpsPrompts({ api, me: state.me }) },
     ]) },
+    { id: "crm", icon: "crm", build: () => custom("crm", [['timeline','Contacts et timeline','Contacts and timeline'],['connections','Connexions et accès','Connections and access']].map(([id,fr,en])=>({id,label:LANG==='fr'?fr:en,needsDomain:false,async:async()=>renderCrm({api,me:state.me,tab:id})}))) },
     { id: "social", icon: "social", build: () => custom("social", [['campaigns','Campagnes','Campaigns'],['posts','Contenus','Content'],['calendar','Calendrier','Calendar'],['approvals','Validations','Approvals'],['analytics','Résultats','Results'],['creators','Créateurs et contacts','Creators and outreach'],['connections','Comptes','Accounts'],['runs','Traitements','Runs']].map(([id,fr,en])=>({id,label:LANG==='fr'?fr:en,needsDomain:false,async:async()=>renderSocial({api,me:state.me,tab:id})}))) },
     { id: "apply_mode", icon: "fixes", build: () => custom("apply_mode", [
       { id: "preview", label: LANG === "fr" ? "Correctifs GEO" : "GEO fixes", needsDomain: false, async: async () => renderApplyMode({ api, me: state.me, url: state.url }) }]) },

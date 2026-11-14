@@ -25,6 +25,7 @@ interface ShopifyOrderNode {
 }
 
 const orderStatus = (financial: string, fulfillment: string | null | undefined): OrderStatus => {
+  financial = financial.toLowerCase(); fulfillment = fulfillment?.toLowerCase();
   if (financial === "refunded") return "refunded";
   if (financial === "partially_refunded") return "partial_refund";
   if (financial === "voided") return "cancelled";
@@ -54,7 +55,7 @@ export function mapShopifyOrder(storeId: string, node: ShopifyOrderNode): Order 
     unitPrice: money(item.originalUnitPriceSet.shopMoney.amount), total: money(item.discountedTotalSet.shopMoney.amount),
   }));
   return {
-    id: shopifyOrderId(node.id), storeId, number: node.name.replace(/^#/, ""), createdAt: node.createdAt, currency: node.currencyCode,
+    id: shopifyOrderId(node.id), storeId, number: node.name.replace(/^#/, ""), createdAt: node.createdAt, updatedAt: node.updatedAt, currency: node.currencyCode,
     total: money(node.totalPriceSet.shopMoney.amount), subtotal: money(node.subtotalPriceSet.shopMoney.amount),
     discount: money(node.totalDiscountsSet.shopMoney.amount), shipping: money(node.totalShippingPriceSet.shopMoney.amount),
     tax: money(node.totalTaxSet.shopMoney.amount), status: orderStatus(node.financialStatus, node.fulfillmentStatus),
@@ -121,7 +122,7 @@ export class ShopifyProvider implements EcommerceProvider {
 
   async listOrders(cursor: string | null, limit = 100): Promise<Page<Order>> {
     const data = await this.graphql<{ orders: { edges: Array<{ cursor: string; node: ShopifyOrderNode }>; pageInfo: { hasNextPage: boolean } } }>(
-      `query Orders($after: String, $limit: Int!) { orders(first: $limit, after: $after, sortKey: CREATED_AT) { edges { cursor node { id name createdAt updatedAt currencyCode financialStatus fulfillmentStatus customer { id } landingSite referrerUrl totalPriceSet { shopMoney { amount } } subtotalPriceSet { shopMoney { amount } } totalTaxSet { shopMoney { amount } } totalShippingPriceSet { shopMoney { amount } } totalDiscountsSet { shopMoney { amount } } lineItems(first: 50) { edges { node { id name quantity sku product { id } originalUnitPriceSet { shopMoney { amount } } discountedTotalSet { shopMoney { amount } } } } } } } pageInfo { hasNextPage } } }`,
+      `query Orders($after: String, $limit: Int!) { orders(first: $limit, after: $after, sortKey: CREATED_AT) { edges { cursor node { id name createdAt updatedAt currencyCode financialStatus: displayFinancialStatus fulfillmentStatus: displayFulfillmentStatus customer { id } landingSite: landingPageUrl referrerUrl totalPriceSet { shopMoney { amount } } subtotalPriceSet { shopMoney { amount } } totalTaxSet { shopMoney { amount } } totalShippingPriceSet { shopMoney { amount } } totalDiscountsSet { shopMoney { amount } } lineItems(first: 50) { edges { node { id name quantity sku product { id } originalUnitPriceSet { shopMoney { amount } } discountedTotalSet { shopMoney { amount } } } } } } } pageInfo { hasNextPage } } }`,
       { after: cursor, limit: Math.min(limit, 250) },
     );
     return {
@@ -151,7 +152,7 @@ export class ShopifyProvider implements EcommerceProvider {
     }));
     return {
       id: shopifyOrderId(`gid://shopify/Order/${raw.id}`), storeId: this.options.shopDomain, number: String(raw.name ?? raw.order_number ?? raw.id).replace(/^#/, ""),
-      createdAt: raw.created_at ?? new Date().toISOString(), currency: raw.currency ?? "",
+      createdAt: raw.created_at ?? new Date().toISOString(), updatedAt: raw.updated_at, currency: raw.currency ?? "",
       total: money(raw.total_price), subtotal: money(raw.subtotal_price), discount: money(raw.total_discounts),
       shipping: money(raw.total_shipping_price_set?.shop_money?.amount ?? raw.shipping_lines?.[0]?.price ?? 0), tax: money(raw.total_tax),
       status: orderStatus(raw.financial_status ?? "pending", raw.fulfillment_status ?? null),
