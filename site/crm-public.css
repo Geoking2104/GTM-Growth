@@ -147,7 +147,7 @@
 }
 
 .crm-public-demo summary::after {
-  content: none;
+  content: none !important;
 }
 .crm-public-demo details[open] summary > span:last-child {
   font-size: 0;

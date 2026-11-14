@@ -323,5 +323,5 @@
 }
 
 .crm-workspace summary::after {
-  content: none;
+  content: none !important;
 }
