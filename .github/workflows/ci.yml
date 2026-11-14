@@ -86,6 +86,11 @@ jobs:
           LANDING_QA_OUTPUT_DIR: qa-landing
         run: node scripts/qa-landing.mjs
 
+      - name: Google Business Profile dashboard QA
+        env:
+          LANDING_QA_OUTPUT_DIR: qa-landing
+        run: node scripts/qa-gbp-dashboard.mjs
+
       - name: Upload bilingual screenshots
         if: always()
         uses: actions/upload-artifact@v4
