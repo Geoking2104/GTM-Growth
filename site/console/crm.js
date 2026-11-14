@@ -328,8 +328,8 @@ export async function renderCrm({ api, me, tab = "timeline" }) {
         body,
         L("Choisissez votre CRM pour commencer", "Choose your CRM to begin"),
         L(
-          "Activez le CRM intégré ou connectez le CRM du client. Aucune collecte CRM n’a démarré.",
-          "Enable the built-in CRM or connect the client’s CRM. CRM collection has not started.",
+          "Activez le CRM intégré ou connectez le CRM du client. La collecte CRM est désactivée.",
+          "Enable the built-in CRM or connect the client’s CRM. CRM collection is disabled.",
         ),
       );
       const a = el(
