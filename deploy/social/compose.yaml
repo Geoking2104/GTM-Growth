@@ -1,0 +1,26 @@
+# Merge after deploy/kayroslab-vps/docker-compose.prod.yml. Opt-in only.
+# Use one worker and token per tenant; do not share its artifact volume across clients.
+services:
+  social-zenml:
+    profiles: [social]
+    build:
+      context: ../../integrations/social-zenml
+    environment:
+      SOCIAL_BACKEND: http://gtm-growth:3000/api/internal/social
+      SOCIAL_WORKER_TOKEN_FILE: /run/secrets/social_worker_token
+      ZENML_ANALYTICS_OPT_IN: "false"
+      ZENML_CONFIG_PATH: /var/lib/social-zenml/config
+    volumes:
+      - social_zenml:/var/lib/social-zenml
+    secrets:
+      - social_worker_token
+    mem_limit: 1536m
+    cpus: 1.0
+    pids_limit: 128
+    security_opt: [no-new-privileges:true]
+    restart: unless-stopped
+secrets:
+  social_worker_token:
+    file: ${SOCIAL_WORKER_TOKEN_PATH:?Set SOCIAL_WORKER_TOKEN_PATH}
+volumes:
+  social_zenml:
