@@ -27,9 +27,9 @@ Slack remains an optional, separately configured integration; this release does 
 | Area | Included in the deployed core or optional integration source | Remaining conditions or scope |
 | --- | --- | --- |
 | **Free public read** | Single-page GEO v1 readiness, observed SEO evidence, ranked recommendations and outbound social-profile references | No measured search/AI visibility, inbound backlink coverage or public Playwright scan |
-| **Customer journey** | Five awareness stages, editable hypothetical questions, tentative heading matches, copied action plan and explicitly selected tracked prompts | Multi-page journey persistence, scheduled SEO Autopilot and commercial entitlements remain future work |
+| **Customer journey** | Evidence-gated questions using actual Product/Service schema or product microdata; confirmed brand, product, category, buyer and need; up to two customer-selected comparable offers; source links and tracked-prompt handoff | Multi-page journey persistence, scheduled SEO Autopilot and commercial entitlements remain future work |
 | **Contextual data assistant** | FR/EN entry points in public scan, onboarding and every console section; personal role, goal, audience, lifecycle stage and optional 28-day target; guided read-only metrics with source/period and missing-data states | Connected data needs authorized tenant sources; business preferences never grant permissions |
-| **Slack / Eve** | Optional pinned integration and tenant-bound HMAC read bridge, exact workspace/channel/user bindings, four curated tools and tenant-preserving console links | Separate operator installation, model credentials, secrets, channel audience review and real Slack acceptance required; Slack is not activated by the OVH core deployment |
+| **Slack / Eve** | Optional pinned integration and tenant-bound HMAC read bridge, exact workspace/channel/user bindings, five curated tools and tenant-preserving console links | Separate operator installation, model credentials, secrets, channel audience review and real Slack acceptance required; Slack is not activated by the OVH core deployment |
 | **AI visibility accounts** | Named encrypted API accounts; explicit OpenAI, Claude, Mistral and Grok collectors alongside the Gemini panel; distinct navigation icons | A supported provider API account/key is required; consumer chat subscriptions do not supply API access |
 | **Global and local SEO** | CSV/JSON registry, exact location grants, declared rank imports, 24 LOC rules, scoped actions/exports and SQLite audit history | Several controls need declared evidence; missing or stale evidence stays unknown |
 | **GBP / Node-RED** | Operator-configured Google Business Profile reader, five durable job pollers, supervised phone/website changes with independent approval and API readback | Google project approval, manager OAuth, tenant credentials and worker configuration required; writes disabled by default |
@@ -38,6 +38,28 @@ Slack remains an optional, separately configured integration; this release does 
 | **Apply Mode** | Read-only CLI/console diff preview; encrypted approval/snapshot registry and HMAC audit primitives | Registry integration, production writers, independent verification and real rollback remain pending |
 | **E-commerce connectors** | Shopify (GraphQL Admin API, custom app) and PrestaShop (webservice) connectors: sealed credentials, idempotent webhook ingestion, deterministic attribution, Commerce console tab, four read-only MCP tools, feed readiness; 23 dedicated tests | Live store pilots pending; PrestaShop real-time needs the companion PHP module (polling fallback works without it); App Store distribution is a later phase |
 | **Cloud / Mollie** | Bilingual pilot offer displayed; self-hosted option remains free | Checkout disabled pending payment profile, terms, tax treatment, plan limits and subscription implementation |
+
+## Contextual buyer questions (14 November 2026)
+
+The former heading-based questions are removed. A featured heading such as “Bel Air”
+is no longer treated as a brand or a complete product context. The public read extracts
+actual Product/Service JSON-LD and product microdata, keeps brand identity separate,
+and shows the source. Select a product and confirm its category, target buyer and
+need before preparing questions. Change any of these and the previous questions clear.
+
+Read a specific product page when the homepage has no usable catalog. For competition,
+add at most two public product pages, select their identified products and explicitly
+confirm comparability. No rival, price, market share or product advantage is invented.
+Missing context, failed reads and unsupported stages remain empty with a next step.
+These are constrained, source-grounded hypotheses, not measured queries or unrestricted
+LLM copy. English and French share the same behavior. The authenticated read enforces
+the selected tenant's domain, including redirects; rival reads use only public data.
+
+Eve's new `get_customer_journey` tool uses the **same extraction and question builder**
+through the signed tenant bridge. It reads context first, requests missing customer
+choices and returns only grounded proposals. Eve remains a separately configured
+optional service: adding this tool does not activate live Slack/model replies or a
+console LLM session. No paid generation or automatic publishing is introduced.
 
 ## How to read this README
 
@@ -67,7 +89,7 @@ GTM Growth brings public-page checks, authorized analytics and search data, cust
 | --- | --- | --- |
 | **Can crawlers understand my page?** | GEO v1 readiness score, observed checks and prioritized technical fixes | A technical rubric, not a probability of being cited by an AI assistant |
 | **What should I fix first?** | Three leading fixes, with up to six observed recommendations shown at a time | Deterministic ordering by quick wins, blockers, customer intent, rubric impact or AI discoverability |
-| **What might buyers ask?** | Five awareness stages with editable questions and tentative matches to page headings | Hypotheses for review, not observed queries, search volumes or proven demand |
+| **What might buyers ask?** | Five awareness stages with sourced questions after product and buyer-context confirmation; unsupported stages stay empty | Hypotheses for review, not observed queries, search volumes or proven demand |
 | **Where does useful traffic come from?** | GA4 / Search Console reports after authorized connection; PageSpeed and CrUX where data exists | Provider results with evidence; disconnected examples are labelled as samples |
 | **Did AI assistants actually sell?** | With a connected Shopify/PrestaShop store: revenue by channel, AI-assistant share, per-engine detail, per-order attribution with method and confidence | Correlation to a referrer or UTM, deterministically derived and always explained — never a causal claim |
 | **Which product pages should I optimize first?** | Catalogue sync plus feed readiness (id, title, link, image, availability, price, brand, gtin) with missing-field counts | Prioritization input for catalogue-level GEO work |

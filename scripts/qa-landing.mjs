@@ -103,6 +103,7 @@ async function visitPublicConsole(browserInstance, locale, viewport, label) {
     finalUrl: "https://example.com/", httpStatus: 200, score: 71, recoverablePoints: 29,
     checksSummary: { passed: 22, toImprove: 13, total: 35 },
     pageSignals: { title: "Example services for professionals", description: "Independent services for companies", htmlLang: "en", h1: ["Example services"], h2: ["How our services work", "Compare services"] },
+    journeyContext: { url: "https://example.com/", brand: "Example", brandSource: "schema:organization", products: [{ id: "bookkeeping", name: "Monthly bookkeeping", kind: "Service", category: "bookkeeping services", url: "https://example.com/bookkeeping", sourceUrl: "https://example.com/", source: "schema", description: "Monthly invoices and reporting", attributes: {} }], links: [] },
     opportunities: [
       { checkId: "robots.citation_bots", category: "robots", priority: "high", status: "partial", points: 3, evidence: "5 citation crawlers need explicit rules", action: "Add explicit crawler rules" },
       { checkId: "schema.article", category: "schema", priority: "medium", status: "fail", points: 3, evidence: "No Article found", action: "Add Article schema" },
@@ -145,10 +146,19 @@ async function visitPublicConsole(browserInstance, locale, viewport, label) {
   assert.equal(await page.locator(".journey-stage").count(), 5);
   const intro = await page.locator(".journey-panel").innerText();
   assert.match(intro, locale === "fr" ? /hypothèses modifiables/ : /editable hypotheses/);
-  await page.locator(".journey-context summary").click();
-  await page.locator(".journey-context-fields input").first().fill(locale === "fr" ? "professionnels indépendants" : "independent professionals");
-  await page.locator(".journey-context-fields button").click();
-  assert.equal(await page.locator(".journey-stage").count(), 5);
+  assert.equal(await page.locator(".journey-question-label textarea").count(), 0, "no questions before context confirmation");
+  await page.locator(".journey-context-fields select").selectOption("bookkeeping");
+  const fields = page.locator(".journey-context-fields input");
+  await fields.nth(1).fill(locale === "fr" ? "services de comptabilité" : "bookkeeping services");
+  await fields.nth(2).fill(locale === "fr" ? "professionnels indépendants" : "independent professionals");
+  await fields.nth(3).fill(locale === "fr" ? "suivre mes factures" : "track my invoices");
+  await page.locator('.journey-context button[type="submit"]').click();
+  assert.equal(await page.locator(".journey-question-label textarea").count(), 3);
+  assert.match(await page.locator(".journey-question-label textarea").first().inputValue(), locale === "fr" ? /professionnels indépendants/ : /independent professionals/);
+  assert.ok(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth + 2), `${label}: grounded journey has no overflow`);
+  await fields.nth(3).fill(locale === "fr" ? "préparer mon bilan" : "prepare my accounts");
+  assert.equal(await page.locator(".journey-question-label textarea").count(), 0, "context edit invalidates old questions");
+  await page.locator('.journey-context button[type="submit"]').click();
   await page.screenshot({ path: path.join(outputDir, `${screenshotPrefix}-journey.png`), fullPage: true });
   await page.locator('.public-rank-mode[data-mode="impact"]').click();
   await page.locator(".public-action-details summary").first().click();

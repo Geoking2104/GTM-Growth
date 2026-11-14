@@ -232,7 +232,7 @@ function renderResult(box, data, url, lang) {
   box.append(renderJourneyPreview({
     language: lang,
     mode: "public",
-    data: { url: finalUrl, finalUrl, pageSignals: data.pageSignals || {}, opportunities: data.opportunities || [] },
+    data: { url: finalUrl, finalUrl, journeyContext: data.journeyContext, pageSignals: data.pageSignals || {}, opportunities: data.opportunities || [] },
   }));
   const enginePanel = el("section", "public-panel public-engine-panel");
   enginePanel.append(el("h2", "", copy.engines));

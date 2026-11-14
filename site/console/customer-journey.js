@@ -1,202 +1,91 @@
-/** Five-stage customer journey UI shared by the anonymous read and the tenant console.
- * No paid engines, storage, remote write, or claims of observed prompt demand. */
+/** Evidence-gated buyer questions. No provider call, automatic collection or publication. */
 import { buildJourneyPreview } from "./customer-journey-model.js";
-import { rankRecommendations, explainRecommendation } from "./public-read-model.js";
-
-const WORDS = {
-  fr: {
-    eyebrow: "PARCOURS DE VOS CLIENTS", title: "Les questions que vos clients pourraient poser",
-    intro: "Cinq étapes, de la découverte à la décision. Les questions ci-dessous sont des hypothèses modifiables, jamais des requêtes observées dans Google ou les assistants IA.",
-    adjust: "Préciser mon audience et mon objectif (facultatif)", audience: "À qui vendez-vous ?",
-    goal: "Quel résultat cherchez-vous ?", update: "Adapter les questions",
-    hypothetical: "Hypothèse générée · non mesurée", provided: "Votre formulation · non mesurée",
-    mind: "Intention", alternative: "Choisir une autre question", edit: "Modifier cette question",
-    discard: "Écarter", restore: "Conserver", discarded: "Question écartée de votre plan",
-    matched: "Titre de page observé pouvant correspondre (couverture non vérifiée)",
-    unknown: "Correspondance avec les titres de la page non vérifiée",
-    missing: "Aucun H1/H2 dans le HTML observé ; contenu non vérifié",
-    measured: "Contrôles techniques concernés", copy: "Copier mon plan gratuit",
-    copied: "Plan copié. À relire avant toute modification.", copyError: "Copie impossible : vérifiez les droits du navigateur.",
-    save: "Suivre cette question dans mon espace", saved: "Question ajoutée aux prompts suivis.", saveError: "Impossible d'ajouter cette question : ",
-    cta: "Suivre mes progrès dans mon espace", note: "Le rapprochement des titres reste exploratoire ; les recommandations techniques sont fondées sur le diagnostic affiché.",
-    checks: "Premières corrections observées", noChecks: "Aucune correction technique issue des contrôles n'est disponible.",
-  },
-  en: {
-    eyebrow: "YOUR CUSTOMERS' JOURNEY", title: "Questions your future customers might ask",
-    intro: "Five stages, from discovery to decision. Questions below are editable hypotheses, never observed Google searches or real prompts sent to AI assistants.",
-    adjust: "Specify my audience and goal (optional)", audience: "Who are you selling to?",
-    goal: "What result are you looking for?", update: "Adapt the questions",
-    hypothetical: "Generated hypothesis · not measured", provided: "Your wording · not measured",
-    mind: "Intent", alternative: "Choose another question", edit: "Edit this question",
-    discard: "Discard", restore: "Keep", discarded: "Question removed from your plan",
-    matched: "Observed heading that may match (coverage unverified)",
-    unknown: "Heading match on this page has not been verified",
-    missing: "No H1/H2 in observed HTML; content coverage unverified",
-    measured: "Related technical checks", copy: "Copy my free action plan",
-    copied: "Plan copied. Review before making changes.", copyError: "Could not copy: check browser permissions.",
-    save: "Track this question in my workspace", saved: "Question added to tracked prompts.", saveError: "Could not add this question: ",
-    cta: "Track progress in my workspace", note: "Heading matches are exploratory; technical fixes come only from the observed diagnostic.",
-    checks: "First observed technical fixes", noChecks: "No evidence-backed technical fixes are available.",
-  },
-};
-function el(tag, className = "", text) {
-  const node = document.createElement(tag);
-  if (className) node.className = className;
-  if (text !== undefined) node.textContent = String(text);
-  return node;
-}
-function line(value) { return String(value || "").replace(/[\r\n]+/g, " ").trim(); }
-
-export function makeJourneyPlanMarkdown(journey, states, opportunities, language) {
-  const lang = language === "en" ? "en" : "fr";
-  const w = WORDS[lang];
-  const lines = [
-    "# " + w.title, "",
-    "URL: " + journey.url, "Language: " + lang,
-    "Audience: " + (journey.audience || "—"), "Goal: " + (journey.goal || "—"),
-    "", "> " + journey.limitation, "",
-  ];
-  for (let i = 0; i < journey.stages.length; i++) {
-    const stage = journey.stages[i];
-    const selected = states.get(stage.id) || { index: 0, custom: "", enabled: true };
-    if (!selected.enabled) continue;
-    const prompt = line(selected.custom || stage.prompts[selected.index]?.text || stage.prompts[0].text);
-    if (!prompt) continue;
-    lines.push("## " + (i + 1) + ". " + stage.title, "", "- " + w.mind + ": " + stage.mindset,
-      "- " + (selected.custom ? w.provided : w.hypothetical) + ": " + prompt,
-      "- Target URL: " + journey.url,
-      "- " + (stage.heading ? w.matched + ": " + stage.heading.level + " " + stage.heading.text : w.unknown), "");
+const el = (tag, cls = "", text) => { const n = document.createElement(tag); n.className = cls; if (text !== undefined) n.textContent = text; return n; };
+const line = v => String(v || "").replace(/[\r\n]+/g, " ").trim();
+const safeLink = (url, label) => { const a = el("a", "", label); try { const u = new URL(url); if (["https:", "http:"].includes(u.protocol) && !u.username && !u.password) { a.href = u.href; a.target = "_blank"; a.rel = "noopener noreferrer"; } } catch {} return a; };
+export function makeJourneyPlanMarkdown(journey, states, _opportunities, language) {
+  const fr = language === "fr", lines = ["# " + (fr ? "Parcours client contextualisé" : "Contextual customer journey"), "", `URL: ${journey.url}`, `Brand: ${journey.brand}`, `Product: ${journey.product?.name || "—"}`, `Category: ${journey.category}`, `Audience: ${journey.audience}`, `Customer need: ${journey.goal}`, "", "> " + journey.limitation];
+  for (const stage of journey.stages) {
+    const state = states.get(stage.id); if (!state?.enabled) continue;
+    const selected = stage.prompts[state.index || 0], text = state.custom ?? selected?.text; if (!text) continue;
+    lines.push("", "## " + stage.title, "", line(text), "", state.custom !== null ? (fr ? "Formulation du client · non mesurée" : "Customer wording · not measured") : (fr ? "Hypothèse · non mesurée" : "Hypothesis · not measured"));
+    for (const source of selected?.evidence || []) lines.push(`- ${line(source.label)}: ${source.url} — ${line(source.detail)}`);
   }
-  lines.push("## " + w.checks, "");
-  const fixes = rankRecommendations(opportunities || [], "quick", 3);
-  if (!fixes.length) lines.push(w.noChecks);
-  for (const fix of fixes) {
-    const info = explainRecommendation(fix, lang);
-    lines.push("- " + info.title + " (" + fix.checkId + "): " + info.steps,
-      "  - " + info.effect + "; " + w.measured + ": " + line(fix.evidence));
-  }
-  lines.push("", w.note, "");
-  return lines.join("\n");
+  return lines.join("\n") + "\n";
 }
-
-/** @param {{data:object,language?:string,mode?:string,savePrompt?:(prompt:object)=>Promise<unknown>}} options */
-export function renderJourneyPreview({ data, language = "fr", mode = "public", savePrompt } = {}) {
-  const lang = language === "en" ? "en" : "fr";
-  const w = WORDS[lang];
-  const panel = el("section", mode === "workspace" ? "app-strip journey-panel journey-workspace" : "public-panel journey-panel");
+export function renderJourneyPreview({ data = {}, language = "fr", mode = "public", savePrompt, readPage } = {}) {
+  const fr = language === "fr", t = (a, b) => fr ? a : b;
+  const panel = el("section", (mode === "workspace" ? "app-strip" : "public-panel") + " journey-panel");
   panel.id = mode === "workspace" ? "journey-workspace" : "public-journey-preview";
-  panel.append(el("p", "public-eyebrow", w.eyebrow), el("h2", "", w.title), el("p", "public-description", w.intro));
-  let audience = "";
-  let goal = "";
-  let journey = buildJourneyPreview({ ...data, language: lang, audience, goal });
-  let states = new Map();
-  const init = () => {
-    states = new Map(journey.stages.map((stage) => [stage.id, { index: 0, custom: "", enabled: true }]));
-  };
-  init();
-  const status = el("p", "public-micro journey-status"); status.setAttribute("role", "status");
-  const form = el("form", "journey-context");
-  const settings = el("details");
-  settings.append(el("summary", "", w.adjust));
-  const fields = el("div", "journey-context-fields");
-  const audienceLabel = el("label", "", w.audience);
-  const audienceInput = el("input"); audienceInput.type = "text"; audienceInput.maxLength = 100;
-  audienceLabel.append(audienceInput);
-  const goalLabel = el("label", "", w.goal);
-  const goalInput = el("input"); goalInput.type = "text"; goalInput.maxLength = 100;
-  goalLabel.append(goalInput);
-  const update = el("button", "public-rank-mode", w.update); update.type = "submit";
-  fields.append(audienceLabel, goalLabel, update);
-  settings.append(fields); form.append(settings);
-  panel.append(form);
+  panel.append(el("p", "public-eyebrow", t("PARCOURS DE VOS CLIENTS", "YOUR CUSTOMERS’ JOURNEY")), el("h2", "", t("Des questions ancrées dans vos produits", "Questions grounded in your products")), el("p", "public-description", t("Confirmez la marque, le produit et le besoin du client. Les hypothèses modifiables seront fondées sur ce contexte et les sources affichées. Aucune question n’est inventée pour remplir une étape vide.", "Confirm the brand, product and customer need. The editable hypotheses will use this context and the sources shown. Empty stages are never filled with invented questions.")));
+  let current = data, competitors = [], revision = 0, states = new Map(), journey;
+  const form = el("form", "journey-context"), fields = el("div", "journey-context-fields");
+  const field = (label, type = "text", max = 100) => { const l = el("label", "", label), n = el("input"); n.type = type; n.maxLength = max; l.append(n); fields.append(l); return n; };
+  const brand = field(t("Marque (à confirmer)", "Brand (confirm)")); brand.value = current.journeyContext?.brand || ""; brand.required = true;
+  const productLabel = el("label", "", t("Produit ou service lu sur la page", "Product or service read on the page")), product = el("select"); product.required = true; productLabel.append(product); fields.append(productLabel);
+  const category = field(t("Catégorie précise du produit", "Specific product category")); category.required = true;
+  const audience = field(t("Qui achète ce produit ?", "Who buys this product?")); audience.required = true;
+  const goal = field(t("Pour quel usage ou besoin ?", "For which use or need?")); goal.required = true;
+  const status = el("p", "journey-status"); status.setAttribute("role", "status");
+  const sourceInfo = el("div", "journey-source-context");
+  const setProducts = () => { product.replaceChildren(); const blank = el("option", "", t("Choisir un produit identifié", "Choose an identified product")); blank.value = ""; product.append(blank); for (const p of current.journeyContext?.products || []) { const o = el("option", "", p.name + (p.attributes?.variant ? " · " + p.attributes.variant : "")); o.value = p.id; product.append(o); } };
+  setProducts();
+  const selections = () => ({ ...current, language, brand: brand.value, productId: product.value, category: category.value, audience: audience.value, goal: goal.value, competitors: competitors.map(c => ({ context: c.context, productId: c.select.value, comparable: c.check.checked })) });
   const list = el("ol", "journey-stages");
-  panel.append(list);
-  const actions = el("div", "journey-actions");
-  const copy = el("button", "public-recommend-button", w.copy); copy.type = "button";
-  copy.onclick = async () => {
-    const markdown = makeJourneyPlanMarkdown(journey, states, data?.opportunities || [], lang);
-    try { await navigator.clipboard.writeText(markdown); status.textContent = w.copied; }
-    catch { status.textContent = w.copyError; }
-  };
-  actions.append(copy);
-  if (mode === "public") {
-    const link = el("a", "public-action-cta", w.cta);
-    link.href = "#c-login-form"; actions.append(link);
+  const copy = el("button", "public-recommend-button", t("Copier les questions retenues", "Copy selected questions")); copy.type = "button";
+  function draw(confirmed = false) {
+    journey = buildJourneyPreview({ ...selections(), contextConfirmed: confirmed });
+    states = new Map(journey.stages.map(s => [s.id, { index: 0, custom: null, enabled: true }]));
+    list.replaceChildren(); sourceInfo.replaceChildren();
+    if (current.journeyContext) sourceInfo.append(el("p", "c-note", t("Source de la marque : ", "Brand source: ") + current.journeyContext.brandSource), safeLink(current.journeyContext.url, t("Ouvrir la page lue", "Open the page read")));
+    if (!journey.ready) sourceInfo.append(el("p", "journey-missing", t("Contexte à compléter : ", "Context to complete: ") + journey.missing.join(" · ")));
+    copy.disabled = !journey.stages.some(s => s.prompts.length);
+    for (const [index, stage] of journey.stages.entries()) {
+      const state = states.get(stage.id), card = el("li", "journey-stage"), head = el("div", "journey-stage-head");
+      head.append(el("strong", "journey-stage-number", String(index + 1)), el("h3", "", stage.title)); card.append(head, el("p", "journey-mindset", stage.mindset));
+      if (!stage.prompts.length) { card.append(el("p", "journey-missing", stage.missing)); list.append(card); continue; }
+      const badge = el("p", "public-pill", t("Hypothèse sourcée · à relire · non mesurée", "Sourced hypothesis · review required · not measured")); card.append(badge);
+      const editLabel = el("label", "journey-question-label", t("Question à relire", "Review question")), edit = el("textarea"); edit.maxLength = 500; edit.rows = 3; edit.value = stage.prompts[0].text; editLabel.append(edit);
+      const evidence = el("div", "journey-evidence");
+      const showEvidence = () => { evidence.replaceChildren(); for (const s of stage.prompts[state.index].evidence) { const p = el("p", ""); p.append(safeLink(s.url, s.label), document.createTextNode(s.detail ? " — " + s.detail : "")); evidence.append(p); } };
+      if (stage.prompts.length > 1) { const l = el("label", "journey-question-label", t("Autre angle fondé sur les sources", "Another angle grounded in sources")), select = el("select"); for (const [i, p] of stage.prompts.entries()) { const o = el("option", "", p.text); o.value = String(i); select.append(o); } select.onchange = () => { state.index = Number(select.value); state.custom = null; edit.value = stage.prompts[state.index].text; showEvidence(); }; l.append(select); card.append(l); }
+      edit.oninput = () => { state.custom = edit.value.trim(); badge.textContent = t("Votre formulation · à relire · non mesurée", "Your wording · review required · not measured"); };
+      showEvidence(); card.append(editLabel, evidence);
+      const toggle = el("button", "public-rank-mode", t("Écarter", "Discard")); toggle.type = "button"; toggle.onclick = () => { state.enabled = !state.enabled; edit.disabled = !state.enabled; toggle.textContent = state.enabled ? t("Écarter", "Discard") : t("Conserver", "Keep"); card.classList.toggle("journey-stage-discarded", !state.enabled); }; card.append(toggle);
+      if (savePrompt) { const save = el("button", "public-rank-mode", t("Suivre cette question", "Track this question")); save.type = "button"; save.onclick = async () => { if (!state.enabled || !edit.value.trim()) return; save.disabled = true; try { await savePrompt({ prompt: edit.value.trim(), group: stage.id, sourceKind: state.custom === null ? "inferred" : "provided:user", sourceRef: "gtm-journey-context:" + journey.version, targetUrl: stage.targetUrl, locale: language }); status.textContent = t("Question ajoutée.", "Question added."); } catch { status.textContent = t("Ajout impossible. Vérifiez vos droits.", "Could not save. Check your permissions."); } finally { save.disabled = false; } }; card.append(save); }
+      list.append(card);
+    }
   }
-  panel.append(actions, status, el("p", "public-micro", w.note));
-
-  function draw() {
-    list.replaceChildren();
-    journey.stages.forEach((stage, index) => {
-      const state = states.get(stage.id);
-      const item = el("li", "journey-stage" + (state.enabled ? "" : " journey-stage-discarded"));
-      const heading = el("div", "journey-stage-head");
-      const sourceBadge = el("span", "public-pill", state.custom ? w.provided : w.hypothetical);
-      heading.append(el("strong", "journey-stage-number", String(index + 1)),
-        el("h3", "", stage.title), sourceBadge);
-      item.append(heading, el("p", "journey-mindset", stage.mindset));
-      if (stage.prompts.length > 1) {
-        const label = el("label", "journey-question-label", w.alternative);
-        const select = el("select");
-        for (const [i, value] of stage.prompts.entries()) {
-          const option = el("option", "", value.text); option.value = String(i); option.selected = i === state.index; select.append(option);
-        }
-        select.onchange = () => { state.index = Number(select.value); state.custom = ""; draw(); };
-        label.append(select); item.append(label);
-      }
-      const editLabel = el("label", "journey-question-label", w.edit);
-      const edit = el("input");
-      edit.type = "text"; edit.maxLength = 240;
-      edit.value = state.custom || stage.prompts[state.index]?.text || stage.prompts[0].text;
-      edit.disabled = !state.enabled;
-      edit.oninput = () => {
-        const value = edit.value.trim().slice(0, 240);
-        state.custom = value === stage.prompts[state.index]?.text ? "" : value;
-        sourceBadge.textContent = state.custom ? w.provided : w.hypothetical;
-      };
-      editLabel.append(edit); item.append(editLabel);
-      const coverage = el("p", "journey-evidence",
-        stage.heading ? w.matched + " : " + stage.heading.level + " — " + stage.heading.text
-          : stage.coverage === "no-headings-observed" ? w.missing : w.unknown);
-      item.append(coverage);
-      if (stage.observedControls.length) item.append(el("p", "journey-evidence", w.measured + " : " + stage.observedControls.join(", ")));
-      const buttons = el("div", "journey-card-actions");
-      const toggle = el("button", "public-rank-mode", state.enabled ? w.discard : w.restore);
-      toggle.type = "button";
-      toggle.setAttribute("aria-pressed", String(!state.enabled));
-      toggle.onclick = () => { state.enabled = !state.enabled; draw(); };
-      buttons.append(toggle);
-      if (typeof savePrompt === "function" && state.enabled) {
-        const save = el("button", "public-rank-mode", w.save); save.type = "button";
-        save.onclick = async () => {
-          const prompt = line(edit.value).slice(0, 240);
-          if (!prompt) return;
-          save.disabled = true;
-          try {
-            await savePrompt({
-              prompt, group: stage.id,
-              sourceKind: prompt === stage.prompts[state.index]?.text ? "inferred" : "provided:user",
-              sourceRef: "gtm-journey-template:" + journey.version,
-              targetUrl: journey.url, locale: lang,
-            });
-            status.textContent = w.saved;
-          } catch (error) { status.textContent = w.saveError + String(error?.message || error); }
-          finally { save.disabled = false; }
-        };
-        buttons.append(save);
-      }
-      item.append(buttons);
-      if (!state.enabled) item.append(el("p", "journey-evidence", w.discarded));
-      list.append(item);
-    });
-  }
-  form.onsubmit = (event) => {
-    event.preventDefault();
-    audience = line(audienceInput.value).slice(0, 100);
-    goal = line(goalInput.value).slice(0, 100);
-    journey = buildJourneyPreview({ ...data, language: lang, audience, goal });
-    init(); draw(); status.textContent = "";
-  };
-  draw();
-  return panel;
+  const invalidate = () => { revision++; draw(false); status.textContent = t("Contexte modifié. Confirmez-le pour régénérer les questions.", "Context changed. Confirm it to regenerate questions."); };
+  form.addEventListener("input", invalidate);
+  product.onchange = () => { for (const c of competitors) c.check.checked = false; category.value = current.journeyContext?.products.find(p => p.id === product.value)?.category || ""; invalidate(); };
+  category.onchange = () => { for (const c of competitors) c.check.checked = false; invalidate(); };
+  const read = readPage || (async url => { const response = await fetch("/api/free-read", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ url }), signal: AbortSignal.timeout(25000) }); if (!response.ok) throw new Error("read unavailable"); const result = await response.json(); if (result.httpStatus < 200 || result.httpStatus >= 400) throw new Error("read unavailable"); return result; });
+  const extra = el("details", "journey-add-sources"); extra.append(el("summary", "", t("Lire une fiche produit ou une page concurrente", "Read a product page or competitor page")));
+  const pageLabel = el("label", "", t("URL publique de la fiche", "Public page URL")), pageInput = el("input"); pageInput.type = "url"; pageInput.maxLength = 2048; pageLabel.append(pageInput); extra.append(pageLabel);
+  const competitorList = el("div", "journey-competitors");
+  for (const isCompetitor of [false, true]) { const b = el("button", "public-rank-mode", isCompetitor ? t("Lire un concurrent", "Read a competitor") : t("Lire mon produit", "Read my product")); b.type = "button"; b.onclick = async () => {
+    const url = pageInput.value.trim(); let parsed; try { parsed = new URL(url); } catch { status.textContent = t("Saisissez une URL valide.", "Enter a valid URL."); return; }
+    if (!isCompetitor && parsed.hostname.replace(/^www\./, "") !== new URL(current.finalUrl || current.url).hostname.replace(/^www\./, "")) { status.textContent = t("La fiche doit appartenir au site analysé.", "The product must belong to the analysed site."); return; }
+    if (isCompetitor && competitors.length >= 2) { status.textContent = t("Deux concurrents maximum. Retirez une source pour la remplacer.", "Maximum two competitors. Remove a source to replace it."); return; }
+    invalidate(); const version = revision; b.disabled = true; status.textContent = t("Lecture de la source…", "Reading source…");
+    try { const result = await read(url, isCompetitor); if (version !== revision || !panel.isConnected) return; const ctx = result.journeyContext;
+      if (!ctx?.products?.length) throw new Error("no products");
+      if (!isCompetitor && new URL(ctx.url).hostname.replace(/^www\./, "") !== new URL(current.finalUrl || current.url).hostname.replace(/^www\./, "")) throw new Error("foreign redirect");
+      if (isCompetitor) {
+        const row = el("div", "journey-competitor"), l = el("label", "", ctx.brand || ctx.url), select = el("select"), checkLabel = el("label", ""), check = el("input"); check.type = "checkbox";
+        const placeholder = el("option", "", t("Choisir un produit concurrent", "Choose a competitor product")); placeholder.value = ""; select.append(placeholder);
+        for (const p of ctx.products) { const o = el("option", "", p.name); o.value = p.id; select.append(o); }
+        checkLabel.append(check, document.createTextNode(t("Je confirme que cette offre est comparable au produit sélectionné.", "I confirm this offer is comparable to the selected product."))); l.append(select); row.append(l, checkLabel, safeLink(ctx.url, t("Source concurrente", "Competitor source")));
+        const choice = { context: ctx, select, check }, remove = el("button", "public-rank-mode", t("Retirer", "Remove")); remove.type = "button"; remove.onclick = () => { competitors = competitors.filter(c => c !== choice); row.remove(); invalidate(); }; row.append(remove); competitorList.append(row); competitors.push(choice);
+      } else { current = result; brand.value = ctx.brand || ""; category.value = ""; competitors = []; competitorList.replaceChildren(); setProducts(); }
+      invalidate(); status.textContent = t("Source lue. Sélectionnez le produit puis confirmez le contexte.", "Source read. Select the product, then confirm the context.");
+    } catch { if (version === revision) status.textContent = t("Source insuffisante ou inaccessible. Aucune question n’a été générée. Essayez une fiche produit contenant des données structurées.", "Insufficient or unavailable source. No questions generated. Try a product page with structured product data."); } finally { b.disabled = false; }
+  }; extra.append(b); }
+  const submit = el("button", "public-recommend-button", t("Confirmer le contexte et préparer les questions", "Confirm context and prepare questions")); submit.type = "submit";
+  form.onsubmit = event => { event.preventDefault(); revision++; draw(true); status.textContent = journey.ready ? t("Questions préparées à partir des sources. Relisez-les avant de les suivre.", "Questions prepared from the sources. Review them before tracking.") : t("Complétez le contexte pour continuer.", "Complete the context to continue."); };
+  form.append(fields, extra, competitorList, submit); panel.append(form, sourceInfo, list, copy, status);
+  copy.onclick = async () => { try { await navigator.clipboard.writeText(makeJourneyPlanMarkdown(journey, states, [], language)); status.textContent = t("Questions et sources copiées.", "Questions and sources copied."); } catch { status.textContent = t("Copie indisponible.", "Copy unavailable."); } };
+  if (mode === "public") { const link = el("a", "public-action-cta", t("Suivre mes questions dans mon espace", "Track my questions in my workspace")); link.href = "#c-login-form"; panel.append(link); }
+  draw(); panel.append(el("p", "public-micro", journey.limitation)); return panel;
 }

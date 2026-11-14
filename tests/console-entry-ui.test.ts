@@ -70,14 +70,15 @@ describe.each(["fr", "en"])("first-click console entry (%s)", lang => {
     }
   });
 
-  it("automatically reads a journey and supplies a labelled manual outline on failure", async () => {
+  it("shows no invented journey questions when reading fails", async () => {
     const fetcher = vi.fn().mockResolvedValue({ ok: false, status: 503 }); vi.stubGlobal("fetch", fetcher);
     const { renderCustomerJourneyWorkspace } = await import("../site/console/customer-journey-workspace.js");
-    const api = vi.fn();
+    const api = vi.fn().mockRejectedValue(new Error("HTTP 503"));
     const panel = renderCustomerJourneyWorkspace({ state: { url: "https://example.com", me: { tenant: { domains: ["example.com"] }, role: "tenant-admin" } }, api });
-    await vi.waitFor(() => expect(panel.querySelectorAll(".journey-stage").length).toBe(5));
+    await vi.waitFor(() => expect(panel.querySelector(".c-data-guide")).toBeTruthy());
+    expect(panel.querySelectorAll(".journey-stage")).toHaveLength(0);
     expect(panel.textContent).toContain(lang === "fr" ? "aucun contenu de page n’a été observé" : "no page content was observed");
-    expect(fetcher).toHaveBeenCalledTimes(1); expect(api).not.toHaveBeenCalled();
+    expect(fetcher).not.toHaveBeenCalled(); expect(api).toHaveBeenCalledWith("/journey/read", { pageUrl: "https://example.com/" });
   });
 
   it("does not read unauthorised journey domains", async () => {

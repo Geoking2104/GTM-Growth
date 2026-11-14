@@ -1,4 +1,4 @@
-﻿/** Console routes for the operations layer: prompt pool + live AI-visibility
+/** Console routes for the operations layer: prompt pool + live AI-visibility
  * (T-9/T-10), alerts and automation config (T-11). All tenant-scoped through
  * the standard scopeRequest guard; writes are explicit and bounded. */
 import type { ConsoleRoute } from "./util.js";
@@ -29,7 +29,7 @@ export const visibilityRoutes: ConsoleRoute[] = [
     if (locale !== undefined && locale !== "fr" && locale !== "en") throw new Error("Langue non autorisée.");
     const targetUrl = str(ctx.body.targetUrl);
     if (targetUrl && (!ctx.tenancy?.tenant || !tenantOwnsUrl(ctx.tenancy.tenant, targetUrl))) throw new Error("Domaine hors périmètre client.");
-    const sourceRef = sourceKind ? "gtm-journey-template:1.0.0" : undefined;
+    const sourceRef = sourceKind ? (ctx.body.sourceRef === "gtm-journey-context:2.0.0" ? "gtm-journey-context:2.0.0" : "gtm-journey-template:1.0.0") : undefined;
     return { prompt: addPrompt(tenantId(ctx), prompt, str(ctx.body.group) ?? "general", {
       ...(sourceKind ? { sourceKind, sourceRef } : {}), ...(locale ? { locale } : {}), ...(targetUrl ? { targetUrl } : {}),
     }) };

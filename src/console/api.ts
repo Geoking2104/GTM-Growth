@@ -1,4 +1,4 @@
-﻿/**
+/**
  * Console API â€” /api/console/* â€” protected by Keycloak (OIDC bearer tokens).
  *
  * Every route takes JSON with a `url` (the domain or page to analyse) and, for
@@ -53,6 +53,7 @@ import { analyzePositioning } from "../geo/positioning.js";
 import { extractOnboardingProfile } from "./onboarding-profile.js";
 import { visualCatalogRoutes } from "./visual-catalog.js";
 import { dataAgentRoutes } from "./data-agent.js";
+import { journeyRoutes } from "./journey.js";
 import { commerceRoutes } from "./commerce.js";
 
 import { str, num, type Body, type ConsoleRoute } from "./util.js";
@@ -215,19 +216,19 @@ async function scopeRequest(route: ConsoleRoute, body: Body, tenancy: TenantCont
   const property = str(body.property);
   if (property) {
     if (tenant && !platformAdmin && !tenantOwnsProperty(tenant, property)) return { status: 403, error: `La propriÃ©tÃ© ${property} n'appartient pas au tenant ${tenant.id}.` };
-  } else if (tenant?.gscProperties.length && !route.path.startsWith("/data-agent/")) {
+  } else if (tenant?.gscProperties.length && !(route.path.startsWith("/data-agent/") || route.path.startsWith("/journey/"))) {
     body.property = tenant.gscProperties[0];
   }
   const ga4 = str(body.ga4Property);
   if (ga4) {
     if (tenant && !platformAdmin && !tenantOwnsGa4(tenant, ga4)) return { status: 403, error: `La propriÃ©tÃ© GA4 ${ga4} n'appartient pas au tenant ${tenant.id}.` };
-  } else if (tenant?.ga4Properties?.length && !route.path.startsWith("/data-agent/")) {
+  } else if (tenant?.ga4Properties?.length && !(route.path.startsWith("/data-agent/") || route.path.startsWith("/journey/"))) {
     body.ga4Property = tenant.ga4Properties[0];
   }
   const bingSite = str(body.bingSite);
   if (bingSite) {
     if (tenant && !platformAdmin && !tenantOwnsBingSite(tenant, bingSite)) return { status: 403, error: `Le site Bing ${bingSite} n'appartient pas au tenant ${tenant.id}.` };
-  } else if (tenant?.bingSites?.length && !route.path.startsWith("/data-agent/")) {
+  } else if (tenant?.bingSites?.length && !(route.path.startsWith("/data-agent/") || route.path.startsWith("/journey/"))) {
     body.bingSite = tenant.bingSites[0];
   }
   for (const key of ["container", "workspace", "path"] as const) {
@@ -339,7 +340,7 @@ export function buildConsoleRouter(routes: ConsoleRoute[], options: ConsoleOptio
 
   for (const route of routes) {
     router.post(route.path, async (req: Request, res: Response) => {
-      if (route.path.startsWith("/ai-visibility/accounts") || route.path.startsWith("/data-agent/")) res.setHeader("Cache-Control", "no-store");
+      if (route.path.startsWith("/ai-visibility/accounts") || (route.path.startsWith("/data-agent/") || route.path.startsWith("/journey/"))) res.setHeader("Cache-Control", "no-store");
       const body = { ...((req.body ?? {}) as Body) };
       const { user, tenancy } = res.locals as Locals;
       const scoped = await scopeRequest(route, body, tenancy!);
@@ -399,7 +400,7 @@ export function discoverTenant(store: TenantStore, query: { email?: string; host
 }
 
 export function allConsoleRoutes(): ConsoleRoute[] {
-  return [...phase1Routes, ...phase2Routes, ...phase3Routes, ...analyticsRoutes, ...gtmRoutes, ...aiVisibilityRoutes, ...aiProviderRoutes, ...aiConnectionRoutes, ...competitionRoutes, ...operationsRoutes, ...applyPreviewRoutes, ...localSeoRoutes, ...visualCatalogRoutes, ...dataAgentRoutes, ...commerceRoutes];
+  return [...phase1Routes, ...phase2Routes, ...phase3Routes, ...analyticsRoutes, ...gtmRoutes, ...aiVisibilityRoutes, ...aiProviderRoutes, ...aiConnectionRoutes, ...competitionRoutes, ...operationsRoutes, ...applyPreviewRoutes, ...localSeoRoutes, ...visualCatalogRoutes, ...dataAgentRoutes, ...journeyRoutes, ...commerceRoutes];
 }
 
 export function mountConsoleApi(app: Express, options: ConsoleOptions = {}): void {

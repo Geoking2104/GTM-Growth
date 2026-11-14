@@ -8,6 +8,7 @@ RUN apk add --no-cache python3 make g++ && npm ci
 
 COPY tsconfig.json ./
 COPY src ./src
+COPY site/console/customer-journey-model.* ./site/console/
 
 RUN npm run build
 
@@ -24,6 +25,7 @@ COPY package*.json ./
 RUN apk add --no-cache libstdc++ && apk add --no-cache --virtual .build-deps python3 make g++ && npm ci --omit=dev && npm cache clean --force && apk del .build-deps
 
 COPY --from=builder /app/dist ./dist
+COPY site/console/customer-journey-model.js ./site/console/customer-journey-model.js
 
 # Create directory for secrets (optional volume)
 RUN mkdir -p /secrets /data && chown -R mcp:nodejs /secrets /data
