@@ -321,3 +321,7 @@
     padding: 14px;
   }
 }
+
+.crm-workspace summary::after {
+  content: none;
+}

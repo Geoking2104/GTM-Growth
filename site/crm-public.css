@@ -145,3 +145,14 @@
     gap: 16px;
   }
 }
+
+.crm-public-demo summary::after {
+  content: none;
+}
+.crm-public-demo details[open] summary > span:last-child {
+  font-size: 0;
+}
+.crm-public-demo details[open] summary > span:last-child::after {
+  content: "−";
+  font-size: 16px;
+}

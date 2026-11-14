@@ -461,6 +461,9 @@ try {
       await page.goto(
         `${origin}/${lang === "fr" ? "fr/index.html" : "index.html"}`,
       );
+      await page
+        .getByRole("button", { name: L("Refuser", "Reject"), exact: true })
+        .click();
       await page.locator("#crm-global").scrollIntoViewIfNeeded();
       assert.equal(await page.locator("#crm-global details").count(), 5);
       await page.locator("#crm-global summary").nth(1).click();
@@ -472,6 +475,8 @@ try {
       );
       await page.locator("#crm-global").screenshot({
         path: path.join(output, `crm-website-${lang}-${width}.png`),
+        // The full-height section crop must not include an unrelated sticky header.
+        style: ".site-header { visibility: hidden !important; }",
       });
       assert.equal(
         await page.evaluate(

@@ -25,6 +25,15 @@ const provenance = {
   commerce_observed: L("Observé dans la boutique", "Store observation"),
   native: L("Fiche GTM", "GTM record"),
 };
+const orderStatusLabel = (value) =>
+  ({
+    pending: L("En attente", "Pending"),
+    paid: L("Payée", "Paid"),
+    fulfilled: L("Traitée", "Fulfilled"),
+    cancelled: L("Annulée", "Cancelled"),
+    refunded: L("Remboursée", "Refunded"),
+    partial_refund: L("Remboursement partiel", "Partial refund"),
+  })[value] || value;
 const timezone = Intl.DateTimeFormat().resolvedOptions().timeZone;
 const date = (v) =>
   new Intl.DateTimeFormat(LANG, {
@@ -540,7 +549,18 @@ export async function renderCrm({ api, me, tab = "timeline" }) {
       );
       summary.append(
         meta,
-        el("strong", "", e.summary),
+        el(
+          "strong",
+          "",
+          e.provenance === "commerce_observed" && e.details?.orderNumber
+            ? L("Commande ", "Order ") +
+                e.details.orderNumber +
+                " · " +
+                (e.type === "order_created"
+                  ? L("Créée", "Created")
+                  : orderStatusLabel(e.details.orderStatus || ""))
+            : e.summary,
+        ),
         el(
           "span",
           "crm-muted",
@@ -613,7 +633,9 @@ export async function renderCrm({ api, me, tab = "timeline" }) {
             "",
             L("Commande : ", "Order: ") +
               e.details.orderNumber +
-              (e.details.orderStatus ? " · " + e.details.orderStatus : ""),
+              (e.details.orderStatus
+                ? " · " + orderStatusLabel(e.details.orderStatus)
+                : ""),
           ),
         );
       if (e.details?.amount !== undefined)
