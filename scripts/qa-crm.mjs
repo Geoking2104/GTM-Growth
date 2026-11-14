@@ -296,10 +296,10 @@ try {
           L("date d’observation", "observation time"),
         ),
       );
-      assert.ok(
-        (await page.locator(".crm-event time").first().innerText()).includes(
-          "18:00",
-        ),
+      assert.match(
+        await page.locator(".crm-event time").first().innerText(),
+        /18:00|6:00\s*PM/,
+        "10:00 UTC displays as 18:00 / 6:00 PM in Asia/Shanghai",
       );
       await page.screenshot({
         path: path.join(output, `crm-timeline-${lang}-${width}.png`),
