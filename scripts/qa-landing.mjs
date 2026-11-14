@@ -301,9 +301,12 @@ try {
   await verifySharedLanding(en, fr);
   for (const [page, locale] of [[en, 'en'], [fr, 'fr']]) {
     await page.locator('#reading-guides').screenshot({ path: path.join(outputDir, `${locale}-reading-tracks.png`) });
-    await page.locator(`#reading-guides a[href="${locale === 'fr' ? '/fr' : ''}/guides/marketing/"]`).click();
-    await page.waitForURL(`${origin}${locale === 'fr' ? '/fr' : ''}/guides/marketing/`);
-    await page.goto(`${origin}/${locale === 'fr' ? 'fr/' : ''}`);
+    // Keep the homepage's consent-test page intact; its init script resets consent on reload.
+    const entry = await context.newPage();
+    await entry.goto(`${origin}/${locale === 'fr' ? 'fr/' : ''}`);
+    await entry.locator(`#reading-guides a[href="${locale === 'fr' ? '/fr' : ''}/guides/marketing/"]`).click();
+    await entry.waitForURL(`${origin}${locale === 'fr' ? '/fr' : ''}/guides/marketing/`);
+    await entry.close();
     await visitReadingGuides(context, locale, desktop, 'desktop');
     await visitReadingGuides(context, locale, mobile, 'mobile');
   }
