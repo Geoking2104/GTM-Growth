@@ -1,7 +1,7 @@
 /** Deterministic, source-labelled customer journey preview.
  * Adapts the five awareness stages from Illyism/customer-journey; no LLM call,
  * prompt volume claim, conversion prediction, or implicit site crawl. */
-export const JOURNEY_VERSION = "1.0.0";
+export const JOURNEY_VERSION = "2.0.0";
 
 export const JOURNEY_STAGES = Object.freeze([
   { id: "unaware", fr: "Découverte", en: "Unaware", intent: "problem-discovery",
@@ -16,89 +16,60 @@ export const JOURNEY_STAGES = Object.freeze([
     mindset: { fr: "Lever une dernière objection avant d'agir.", en: "Remove the last objection before acting." } },
 ]);
 
-function clean(value, limit = 110) {
-  return typeof value === "string"
-    ? value.replace(/[\u0000-\u001f\u007f]/g, " ").replace(/\s+/g, " ").trim().slice(0, limit)
-    : "";
-}
-function stemWords(value) {
-  const stop = new Set(["avec", "dans", "pour", "the", "this", "that", "from", "what", "your", "vous", "votre", "quels", "quelle", "quelles", "comment", "pourquoi", "dont", "peut", "site", "page", "vers", "plus", "quel"]);
-  return new Set(clean(value, 220).toLocaleLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "")
-    .split(/[^a-z0-9]+/).filter((word) => word.length > 3 && !stop.has(word)));
-}
-function headingMatch(prompt, headings) {
-  const wanted = stemWords(prompt);
-  if (wanted.size < 2) return null;
-  for (const h of headings) {
-    const actual = stemWords(h.text);
-    const shared = [...wanted].filter((word) => actual.has(word));
-    if (shared.length >= 2) return h;
-  }
-  return null;
-}
-function promptsFor(stage, lang, brand, subject, audience, goal) {
-  const who = audience || (lang === "fr" ? "mon activité" : "my business");
-  const outcome = goal || (lang === "fr" ? "répondre à ce besoin" : "meet this need");
-  const topic = subject || (lang === "fr" ? "ce service" : "this service");
-  const values = lang === "fr" ? {
-    unaware: ["Pourquoi est-il difficile de choisir une solution pour " + topic + " ?", "Quels problèmes faut-il anticiper avant de " + outcome + " ?"],
-    "problem-aware": ["Comment reconnaître un problème lié à " + topic + " ?", "Quelles questions poser pour " + outcome + " ?"],
-    "solution-aware": ["Quelles options existent pour " + outcome + " ?", "Comment comparer les approches possibles pour " + who + " ?"],
-    "product-aware": [brand + " convient-il à " + who + " ?", "Quelles différences faut-il vérifier avant de choisir " + brand + " ?"],
-    "most-aware": ["Comment commencer avec " + brand + " ?", "Que faut-il vérifier avant de faire confiance à " + brand + " ?"],
-  } : {
-    unaware: ["Why is choosing a solution for " + topic + " difficult?", "What problems should I anticipate before trying to " + outcome + "?"],
-    "problem-aware": ["How can I recognise a problem related to " + topic + "?", "What should I ask before trying to " + outcome + "?"],
-    "solution-aware": ["What options are available to " + outcome + "?", "How should I compare approaches for " + who + "?"],
-    "product-aware": ["Is " + brand + " suitable for " + who + "?", "What should I compare before choosing " + brand + "?"],
-    "most-aware": ["How do I get started with " + brand + "?", "What should I verify before trusting " + brand + "?"],
-  };
-  return values[stage] || [];
-}
+const clean = (v, max = 160) => typeof v === "string" ? v.replace(/[\u0000-\u001f\u007f]/g, " ").replace(/\s+/g, " ").trim().slice(0, max) : "";
+const sameSite = (a, b) => { try { return new URL(a).hostname.replace(/^www\./, "") === new URL(b).hostname.replace(/^www\./, ""); } catch { return false; } };
 
-/** Preview is about the buyer of the analysed website, not the GTM buyer.
- * All suggested prompts are hypotheses even if page headings were observed. */
+/** Fail closed. A heading/hostname alone never creates a question. The customer
+ * confirms the product, category, buyer and use case; only read product facts and
+ * explicitly selected comparisons can then shape the hypotheses. Shared by Eve. */
 export function buildJourneyPreview(input = {}) {
-  const lang = input.language === "en" ? "en" : "fr";
-  const page = input.pageSignals && typeof input.pageSignals === "object" ? input.pageSignals : {};
-  const url = clean(input.finalUrl || input.url, 2048);
-  let brand = clean(input.brand, 70);
-  if (!brand) {
-    try { brand = new URL(url).hostname; } catch { brand = lang === "fr" ? "ce fournisseur" : "this provider"; }
+  const language = input.language === "en" ? "en" : "fr", fr = language === "fr";
+  const context = input.journeyContext || {}, url = clean(input.finalUrl || input.url, 2048);
+  const validContext = context.url === url && Array.isArray(context.products);
+  const product = validContext && context.products.find(p => p.id === input.productId && sameSite(p.url, url));
+  const brand = clean(input.brand || context.brand, 70), category = clean(input.category || product?.category, 100);
+  const audience = clean(input.audience, 100), goal = clean(input.goal, 100);
+  const ready = Boolean(input.contextConfirmed === true && product && brand && category && audience && goal);
+  const missing = [];
+  if (!validContext) missing.push(fr ? "Lecture de la page" : "Page reading");
+  if (!product) missing.push(fr ? "Produit ou service identifié" : "Identified product or service");
+  if (!brand) missing.push(fr ? "Marque" : "Brand");
+  if (!category) missing.push(fr ? "Catégorie du produit" : "Product category");
+  if (!audience) missing.push(fr ? "Client cible" : "Target customer");
+  if (!goal) missing.push(fr ? "Besoin du client" : "Customer need");
+  if (input.contextConfirmed !== true) missing.push(fr ? "Confirmation du contexte" : "Context confirmation");
+  const ref = "gtm-journey-context:" + JOURNEY_VERSION;
+  const proposals = Object.fromEntries(JOURNEY_STAGES.map(s => [s.id, []]));
+  const evidence = product ? [{ url: product.sourceUrl, label: product.name, detail: product.description || Object.values(product.attributes || {}).join(" · "), kind: product.source }] : [];
+  const add = (stage, text, sources = evidence) => proposals[stage].push({ text: clean(text, 500), sourceKind: "inferred", sourceRef: ref, evidence: sources });
+  const competitors = [];
+  if (ready) {
+    const item = `${brand} — ${product.name}`;
+    add("unaware", fr ? `Pour ${audience}, comment choisir ${category} pour ${goal} ?` : `For ${audience}, how should I choose ${category} for ${goal}?`);
+    add("problem-aware", fr ? `Quels critères de ${category} dois-je examiner pour ${goal} ?` : `Which criteria should I check in ${category} for ${goal}?`);
+    // Every comparison is customer-selected and references a real product, never
+    // an automatically detected brand, an unverified rival or an invented feature.
+    for (const choice of (input.competitors || []).slice(0, 2)) {
+      const c = choice.context;
+      const cp = c?.products?.find(p => p.id === choice.productId && sameSite(p.url, c.url));
+      if (!cp || !c.brand || choice.comparable !== true || sameSite(c.url, url)) continue;
+      competitors.push({ brand: c.brand, product: cp.name, url: cp.url });
+      add("solution-aware", fr ? `Comment comparer ${item} et ${c.brand} — ${cp.name} pour ${goal} ?` : `How do ${item} and ${c.brand} — ${cp.name} compare for ${goal}?`, [...evidence, { url: cp.sourceUrl, label: `${c.brand} — ${cp.name}`, detail: cp.description || Object.values(cp.attributes || {}).join(" · "), kind: cp.source }]);
+    }
+    add("product-aware", fr ? `Quelles caractéristiques de ${item} répondent au besoin « ${goal} » ?` : `Which characteristics of ${item} address the need “${goal}”?`);
+    const attrs = product.attributes || {};
+    if (attrs.material) add("product-aware", fr ? `Que faut-il savoir sur le matériau « ${attrs.material} » de ${item} pour ${goal} ?` : `What should I know about the “${attrs.material}” material of ${item} for ${goal}?`);
+    if (attrs.variant) add("product-aware", fr ? `La variante « ${attrs.variant} » de ${item} correspond-elle à mon usage : ${goal} ?` : `Does the “${attrs.variant}” variant of ${item} suit my use: ${goal}?`);
+    for (const link of (context.links || []).filter(l => sameSite(l.url, url))) {
+      const texts = {
+        size: [ `Comment choisir ma taille pour ${item} ?`, `How do I choose my size for ${item}?` ],
+        delivery: [ `Quelles conditions de livraison vérifier avant de commander ${item} ?`, `Which delivery terms should I check before ordering ${item}?` ],
+        returns: [ `Quelles conditions de retour vérifier avant de commander ${item} ?`, `Which return terms should I check before ordering ${item}?` ],
+        care: [ `Quels conseils d’entretien vérifier pour ${item} ?`, `Which care instructions should I check for ${item}?` ],
+      };
+      if (texts[link.kind] && product.kind === "Product") add("most-aware", texts[link.kind][fr ? 0 : 1], [...evidence, { url: link.url, label: link.label, detail: fr ? "Lien observé ; conditions non vérifiées" : "Observed link; terms not verified", kind: "link" }]);
+    }
   }
-  const title = clean(page.title, 130);
-  const description = clean(page.description, 180);
-  const h1 = (Array.isArray(page.h1) ? page.h1 : []).slice(0, 4).map((text) => ({ level: "H1", text: clean(text, 130) })).filter((h) => h.text);
-  const h2 = (Array.isArray(page.h2) ? page.h2 : []).slice(0, 8).map((text) => ({ level: "H2", text: clean(text, 130) })).filter((h) => h.text);
-  const headings = [...h1, ...h2];
-  const audience = clean(input.audience, 100);
-  const goal = clean(input.goal, 100);
-  const subject = clean(h1[0]?.text || title || description || brand, 75);
-  const opportunities = Array.isArray(input.opportunities) ? input.opportunities : [];
-  const measured = opportunities.filter((fix) => fix?.status === "fail" || fix?.status === "partial");
-  const controlIds = measured.map((fix) => fix.checkId).filter((id) => typeof id === "string");
-  const stages = JOURNEY_STAGES.map((stage) => {
-    const prompts = promptsFor(stage.id, lang, brand, subject, audience, goal).map((text) => ({
-      text: clean(text, 240), sourceKind: "inferred", sourceRef: "gtm-journey-template:" + JOURNEY_VERSION,
-    }));
-    const heading = prompts.map((p) => headingMatch(p.text, headings)).find(Boolean) || null;
-    return {
-      id: stage.id, title: stage[lang], intent: stage.intent, mindset: stage.mindset[lang],
-      prompts, targetUrl: url,
-      coverage: heading ? "possible-heading" : headings.length ? "not-verified" : "no-headings-observed",
-      heading,
-      observedControls: stage.id === "unaware" || stage.id === "problem-aware"
-        ? controlIds.filter((id) => id.startsWith("content.") || id.startsWith("meta.")).slice(0, 3)
-        : stage.id === "product-aware"
-          ? controlIds.filter((id) => id.startsWith("brand.") || id.startsWith("schema.")).slice(0, 3)
-          : controlIds.filter((id) => id.startsWith("content.") || id.startsWith("schema.")).slice(0, 3),
-    };
-  });
-  return {
-    version: JOURNEY_VERSION, url, title, description, brand, language: lang,
-    audience, goal, observed: { headings, title: Boolean(title), description: Boolean(description) },
-    stages, limitation: lang === "fr"
-      ? "Questions hypothétiques, pas des requêtes GSC, prompts réellement posés, citations ou positions mesurées."
-      : "Hypothetical questions, not observed GSC queries, real AI prompts, citations, or measured rankings.",
-  };
+  const stages = JOURNEY_STAGES.map(s => ({ id: s.id, title: s[language], intent: s.intent, mindset: s.mindset[language], prompts: proposals[s.id], targetUrl: product?.url || url, coverage: "not-verified", heading: null, observedControls: [], missing: s.id === "solution-aware" ? (fr ? "Ajoutez une fiche concurrente et confirmez sa comparabilité." : "Add a competitor product page and confirm it is comparable.") : s.id === "most-aware" ? (fr ? "Aucune information de décision exploitable observée sur cette page." : "No usable decision information observed on this page.") : (fr ? "Confirmez le contexte ci-dessus pour préparer cette étape." : "Confirm the context above to prepare this stage.") }));
+  return { version: JOURNEY_VERSION, url, brand, category, product, audience, goal, language, ready, missing, competitors, stages, limitation: fr ? "Questions hypothétiques fondées sur les sources et votre contexte confirmé. Ni demande observée, ni réponse IA mesurée. Relisez leur pertinence avant utilisation." : "Hypothetical questions grounded in sources and your confirmed context. Neither observed demand nor measured AI answers. Review relevance before use." };
 }

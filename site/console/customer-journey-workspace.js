@@ -31,7 +31,8 @@ export function renderCustomerJourneyWorkspace({ state, api }) {
   button.type = "button";
   const render = (url, data = {}) => renderJourneyPreview({
     language: LANG, mode: "workspace",
-    data: { url: data.finalUrl || url, finalUrl: data.finalUrl || url, pageSignals: data.pageSignals || {}, opportunities: data.opportunities || [] },
+    data: { ...data, url: data.finalUrl || url, finalUrl: data.finalUrl || url },
+    readPage: (pageUrl, competitor = false) => api("/journey/read", { pageUrl, competitor }),
     savePrompt: (prompt) => {
       if (!state.me?.platformAdmin && state.me?.role !== "tenant-admin") throw new Error(L("Droits administrateur requis.", "Administrator permissions required."));
       return api("/visibility/prompts/add", prompt);
@@ -46,20 +47,14 @@ export function renderCustomerJourneyWorkspace({ state, api }) {
     button.disabled = true;
     status.textContent = L("Lecture limitée à une page publique…", "Reading one public page…");
     try {
-      const response = await fetch("/api/free-read", {
-        method: "POST",
-        headers: { "Content-Type": "application/json", Accept: "application/json" },
-        body: JSON.stringify({ url }),
-        signal: AbortSignal.timeout(25000),
-      });
-      if (!response.ok) throw new Error("HTTP " + response.status);
-      const data = await response.json();
+      const data = await api("/journey/read", { pageUrl: url });
+      if (!data?.journeyContext) throw new Error("No product context returned");
       if (data.httpStatus && (data.httpStatus < 200 || data.httpStatus >= 400)) throw new Error("HTTP " + data.httpStatus);
       output.replaceChildren(render(url, data));
-      status.textContent = L("Parcours prêt. Les questions sont des hypothèses non observées.", "Journey ready. Questions are unobserved hypotheses.");
+      status.textContent = L("Sources lues. Confirmez le produit et le besoin du client pour préparer les questions.", "Sources read. Confirm the product and customer need to prepare questions.");
     } catch (error) {
-      status.textContent = L("Lecture indisponible. La trame ci-dessous est manuelle : aucun contenu de page n’a été observé.", "Reading unavailable. The outline below is manual: no page content was observed.");
-      output.replaceChildren(renderDataGuide("journey", { error, retry: load }), render(url));
+      status.textContent = L("Lecture indisponible : aucun contenu de page n’a été observé. Aucune question ne sera générée.", "Reading unavailable: no page content was observed. No questions will be generated.");
+      output.replaceChildren(renderDataGuide("journey", { error, retry: load }));
     } finally {
       button.disabled = false;
     }

@@ -10,6 +10,7 @@
  * supplied; otherwise they carry `sample: true`.
  */
 
+import { extractJourneyContext, type JourneyContext } from "./journey-context.js";
 import { runGeoAudit } from "../geo/audit.js";
 import { fetchText, type FetchResult, type Fetcher } from "../geo/http.js";
 import { HtmlDoc } from "../geo/html.js";
@@ -59,6 +60,7 @@ export interface FreeReadResult {
   /** Outbound social profile links only; inbound backlinks are never inferred. */
   socialProfiles: FreeReadSocialProfile[];
   /** Observed page facts for a clearly hypothetical customer journey. */
+  journeyContext: JourneyContext;
   pageSignals: { title: string; description: string; htmlLang: string; h1: string[]; h2: string[] };
   tables: DataTable[];
   /** Sitemap architecture and freshness data for the free visual map. */
@@ -227,6 +229,7 @@ export async function runFreeRead(options: FreeReadOptions): Promise<FreeReadRes
       total: audit.checks.filter((check) => check.status !== "info").length,
     },
     socialProfiles: socialProfiles(doc, audit.details.schema.sameAsUrls),
+    journeyContext: extractJourneyContext(doc, finalUrl),
     pageSignals: {
       title: (doc.title() ?? "").replace(/\s+/g, " ").trim().slice(0, 130),
       description: (doc.metaByName("description")?.attrs.content ?? "").replace(/\s+/g, " ").trim().slice(0, 180),

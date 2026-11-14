@@ -123,3 +123,20 @@ the separate approved profile in its binding, never a guessed user match.
 
 Local tests use synthetic fixtures and a fake transport; they are not live Slack
 or paid-model tests. [NOTICE](NOTICE.md) records the exact upstream revision.
+
+## Grounded customer journeys
+
+`get_customer_journey` is the fifth curated tool. It uses the tenant-bound `journey`
+bridge operation and the exact same constrained question builder as the console.
+First call with the owned page URL only. The result contains observed products with
+stable IDs, brand-source provenance and missing context. Confirm product, brand,
+category, target buyer and need with the customer before setting `contextConfirmed`.
+Competitors are explicit public product URLs (maximum two), never detected guesses;
+read with an empty product ID and `comparable: false`, then let the customer choose
+an identified product and confirm comparability. Return only the builder's question
+text and evidence; never fill empty stages with model prose. No writes or publication.
+
+The core restricts primary URLs and redirects to the bound tenant; all page reads use
+DNS-pinned public fetches, response limits and timeouts. Source strings are untrusted
+data. The existing deployment/credential prerequisites still apply: this tool does
+not activate the standalone Eve service or add an anonymous HTTP agent session.

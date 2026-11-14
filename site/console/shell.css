@@ -375,3 +375,17 @@ body.console-page:has(.public-console:not([hidden])) { --pc-bg:#06060f; --pc-pan
 .c-agent-profile, .c-agent-slack { margin: 12px 0; }
 .c-data-agent summary:focus-visible, .c-data-agent a:focus-visible { outline: 2px solid var(--app-accent, #6366f1); outline-offset: 4px; }
 @media (max-width: 640px) { .c-data-agent { margin: 8px; padding: 12px; } .c-agent-actions .app-pill { white-space: normal; } }
+
+/* Buyer context and source review: retain readable controls on narrow screens. */
+.journey-context-fields { align-items: end; }
+.journey-context-fields label, .journey-add-sources > label, .journey-competitor > label { display: grid; gap: .5rem; min-width: 0; }
+.journey-context select, .journey-context input:not([type="checkbox"]), .journey-question-label textarea { width: 100%; min-width: 0; box-sizing: border-box; color: var(--text, #f4f2ff); background: #090812; border: 1px solid #363248; border-radius: 10px; padding: .75rem; font: inherit; }
+.journey-question-label textarea { resize: vertical; line-height: 1.5; }
+.journey-context button, .journey-competitor { margin: .7rem .5rem .7rem 0; }
+.journey-add-sources, .journey-source-context { margin: 1rem 0; }
+.journey-add-sources summary { cursor: pointer; padding: .5rem 0; }
+.journey-competitor { padding: 1rem; border: 1px solid #363248; border-radius: 12px; }
+.journey-competitor input[type="checkbox"] { width: 1.2rem; height: 1.2rem; }
+.journey-source-context a, .journey-evidence a, .journey-competitor a { color: #b6a0ff; overflow-wrap: anywhere; }
+.journey-missing { color: #c8bfdc; line-height: 1.6; }
+.journey-stage > button { margin: .5rem .5rem 0 0; }
