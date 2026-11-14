@@ -61,7 +61,7 @@ The public website's shared catalogue and pre-login handoff explain the benefit,
 | `influencer_outreach` (P6) | Record draft/review workflow receipt | None; automatic sequences are not implemented |
 | `social_account_sync` (P7) | Read accounts, intersect exact operator allowlist, record status | Read-only |
 
-With `autoRefresh: true`, worker claims enqueue one account-sync intent per hour and one analytics intent per active campaign per UTC day; these are polling buckets, not a promise of a particular local publication time. A publication uses the explicitly stored ISO-8601 time. With auto-refresh off, refreshes are requested manually in the console. P1/P2/P5/P6 are driven by specific human or permitted draft actions.
+With `autoRefresh: true`, worker claims enqueue one account-sync intent per hour and one analytics intent per active campaign per UTC day; these are polling buckets, not a promise of a particular local publication time. Date fields use the browser time zone, displayed beside the field; the API stores the exact resulting ISO-8601 time. With auto-refresh off, refreshes are requested manually in the console. P1/P2/P5/P6 are driven by specific human or permitted draft actions.
 
 ZenML parameters contain only intent ID and input digest; artifacts contain execution IDs/digests/status. The lease and worker token are read from environment/secret file inside the step. The runtime smoke executes all eight real pipelines and repeats the same input to verify that caching is disabled; it scans runtime files for the fixture token and lease.
 
@@ -70,6 +70,7 @@ ZenML parameters contain only intent ID and input digest; artifacts contain exec
 - Open-ended LLM variants and image generation; autonomous campaign optimisation; guaranteed recommendations based on unavailable social/competitor data. Current content preparation uses explicit product facts and human editing.
 - Commercial multi-platform creator discovery, historical audience growth/authenticity signals, embeddings/composite ranking, automated contracts and ROI attribution.
 - Automatic Mautic/Twenty outreach, reply ingestion, follow-up sequences and reminder notifications. Each future message/follow-up must retain its own human approval and consent evidence.
+- Automated brand-ban/hashtag/disclosure controls and independent rights verification. The current preflight checks product context, source scope, length, dates, account duplication, UTM and media declarations; human review remains necessary.
 - Self-service account OAuth in GTM, Postiz provisioning, media upload, platform-specific video transcoding and API approval/quotas. The current adapter accepts pre-uploaded media IDs and configured provider settings; operators qualify each intended platform on a test account before enabling writes.
 - Drag/drop rescheduling, campaign editing after creation, deletion/retention administration, batch approval and multi-client aggregate dashboards. Pausing and completing/archiving campaigns are available through the API; scope exports are available in the UI.
 - Separate warehouse, pgvector, Metabase/Superset, cloud ZenML or a Kubernetes/Airflow stack. These need capacity, licence and operational decisions before deployment.

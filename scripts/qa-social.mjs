@@ -45,7 +45,10 @@ try {
   });
   for (const lang of ["en", "fr"])
     for (const width of [1280, 390]) {
-      const page = await browser.newPage({ viewport: { width, height: 1000 } }),
+      const page = await browser.newPage({
+          viewport: { width, height: 1000 },
+          timezoneId: "Asia/Shanghai",
+        }),
         errors = [];
       page.on("pageerror", (e) => errors.push(e.message));
       await page.route("**/social-fixture*", (route) =>
@@ -211,6 +214,55 @@ try {
             path: path.join(output, `social-${tab}-${lang}-${width}.png`),
             fullPage: true,
           });
+        if (tab === "posts") {
+          const composer = page
+            .locator(".social-card")
+            .filter({
+              has: page.getByRole("heading", {
+                name:
+                  lang === "fr"
+                    ? "Préparer un brouillon adapté"
+                    : "Prepare a contextual draft",
+                exact: true,
+              }),
+            });
+          await composer
+            .getByLabel(lang === "fr" ? "Titre interne" : "Internal title", {
+              exact: true,
+            })
+            .fill("Bel Air test draft");
+          const date = composer.locator('input[type="datetime-local"]');
+          await date.fill("2026-11-15T10:30");
+          const network = composer.locator(".social-variants details").first();
+          await network.locator("summary").click();
+          await network
+            .getByRole("button", {
+              name:
+                lang === "fr"
+                  ? "Reprendre les faits du produit"
+                  : "Use product facts",
+              exact: true,
+            })
+            .click();
+          await composer
+            .getByRole("button", {
+              name: lang === "fr" ? "Enregistrer le brouillon" : "Save draft",
+              exact: true,
+            })
+            .click();
+          await page.waitForFunction(() =>
+            window.calls.some((c) => c.route === "/social/post"),
+          );
+          const saved = await page.evaluate(
+            () =>
+              window.calls.find((c) => c.route === "/social/post").body.input
+                .post,
+          );
+          assert.equal(saved.scheduledAt, "2026-11-15T02:30:00.000Z");
+          assert.equal(saved.variants[0].accountId, "atelier-linkedin");
+          assert.match(saved.variants[0].caption, /Bel Air/);
+          assert.match(saved.variants[0].link, /utm_campaign=campaign1/);
+        }
         if (tab === "approvals") {
           await page
             .locator(".social-card input")

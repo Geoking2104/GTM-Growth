@@ -202,9 +202,13 @@ export function savePost(p: Principal, key: string, raw: unknown) {
     if (
       old &&
       (old.version !== i.version ||
-        ["PUBLISHING", "PUBLISHED", "ACCEPTED", "UNCERTAIN"].includes(
-          old.status,
-        ) ||
+        [
+          "PUBLISHING",
+          "PUBLISHED",
+          "ACCEPTED",
+          "UNCERTAIN",
+          "PARTIAL",
+        ].includes(old.status) ||
         (role(p, s) === "contributor" && old.createdBy !== p.actor))
     )
       throw new Error("SOCIAL_CHANGED");
@@ -275,16 +279,20 @@ export function requestApproval(p: Principal, key: string, raw: unknown) {
       if (!entity.policy.passed) throw new Error("SOCIAL_POLICY_REQUIRED");
       if (c.status !== "ACTIVE") throw new Error("SOCIAL_CAMPAIGN_INACTIVE");
       if (
+        [
+          "PUBLISHING",
+          "PUBLISHED",
+          "ACCEPTED",
+          "UNCERTAIN",
+          "PARTIAL",
+        ].includes(entity.status)
+      )
+        throw new Error("SOCIAL_CHANGED");
+      if (
         Date.parse(entity.scheduledAt) < Date.now() ||
         Date.parse(entity.scheduledAt) > Date.now() + 7 * 86400000
       )
         throw new Error("SOCIAL_SCHEDULE_WINDOW");
-      if (
-        ["PUBLISHING", "PUBLISHED", "ACCEPTED", "UNCERTAIN"].includes(
-          entity.status,
-        )
-      )
-        throw new Error("SOCIAL_CHANGED");
     } else {
       allow(p, s, ["admin", "strategist"]);
       entity =
@@ -466,7 +474,13 @@ export function saveCreator(p: Principal, key: string, raw: unknown) {
       score: scoreCreator(i),
     };
     s.creators.push(c);
-    const job = enqueue(s, "influencer_scoring_vetting", c.id, i, p.actor);
+    const job = enqueue(
+      s,
+      "influencer_scoring_vetting",
+      c.id,
+      entitySnapshot(s, "CREATOR_VET", c.id),
+      p.actor,
+    );
     audit(s, p.actor, "creator-added", c.id);
     return { creator: c, pipelineRunId: job.id };
   });
@@ -488,7 +502,13 @@ export function saveOutreach(p: Principal, key: string, raw: unknown) {
       status: "DRAFT",
     };
     s.outreach.push(o);
-    const job = enqueue(s, "influencer_outreach", o.id, i, p.actor);
+    const job = enqueue(
+      s,
+      "influencer_outreach",
+      o.id,
+      entitySnapshot(s, "OUTREACH_APPROVE", o.id),
+      p.actor,
+    );
     audit(s, p.actor, "outreach-drafted", o.id);
     return { outreach: o, pipelineRunId: job.id };
   });

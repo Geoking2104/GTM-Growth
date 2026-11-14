@@ -702,3 +702,35 @@ it("can revise a rejected outreach draft without retaining its old approval", ()
   expect(revised.version).toBe(2);
   expect("approvalId" in revised).toBe(false);
 });
+
+it("reports a verified platform rejection separately and locks partial publication against replay", async () => {
+  const post = draft(campaign(), true),
+    job = publishJob(approval(post)),
+    provider = fakeProvider();
+  provider.readPosts = vi.fn(async () => ({
+    posts: [
+      {
+        id: "external-account1",
+        integration: { id: "account1" },
+        state: "PUBLISHED",
+        releaseURL: "https://social.example/1",
+      },
+      {
+        id: "external-account2",
+        integration: { id: "account2" },
+        state: "ERROR",
+        releaseURL: null,
+      },
+    ],
+  }));
+  await executeJob(tenant, job, provider, () => true);
+  expect(readState(tenant.id).posts[0].status).toBe("PARTIAL");
+  expect(readState(tenant.id).posts[0].targets[1].status).toBe("failed");
+  expect(() =>
+    social.requestApproval(author, key(), {
+      type: "POST_APPROVE",
+      entityId: post.id,
+    }),
+  ).toThrow("SOCIAL_CHANGED");
+  expect(provider.publish).toHaveBeenCalledTimes(2);
+});

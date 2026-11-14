@@ -60,6 +60,8 @@ const errors = {
   ],
 };
 const names = {
+  PARTIAL: ["Publication partielle", "Partially published"],
+  FAILED: ["Refusé par la plateforme", "Rejected by platform"],
   DRAFT: ["Brouillon", "Draft"],
   ACTIVE: ["Active", "Active"],
   PAUSED: ["En pause", "Paused"],
@@ -105,6 +107,57 @@ function field(parent, title, value = "", type = "text") {
   parent.append(label);
   return input;
 }
+const timezone = Intl.DateTimeFormat().resolvedOptions().timeZone;
+const displayDate = (value) =>
+  new Intl.DateTimeFormat(LANG, {
+    dateStyle: "medium",
+    timeStyle: "short",
+  }).format(new Date(value)) +
+  " · " +
+  timezone;
+const inputDate = (value) => new Date(value).toISOString();
+function dateField(parent, title, value) {
+  const d = new Date(value);
+  const local = new Date(d.getTime() - d.getTimezoneOffset() * 60000)
+    .toISOString()
+    .slice(0, 16);
+  return field(parent, title + " · " + timezone, local, "datetime-local");
+}
+const findings = {
+  PRODUCT_CONTEXT_REQUIRED: [
+    "Choisissez un produit de cette campagne.",
+    "Choose a product from this campaign.",
+  ],
+  DUPLICATE_ACCOUNT: [
+    "Utilisez une seule variante par compte.",
+    "Use one variant per account.",
+  ],
+  OUTSIDE_CAMPAIGN: [
+    "Choisissez une date comprise dans la campagne.",
+    "Choose a date within the campaign.",
+  ],
+  PRODUCT_NAME_REQUIRED: [
+    "Nommez le produit concerné dans chaque variante.",
+    "Name the relevant product in each variant.",
+  ],
+  CAPTION_TOO_LONG: [
+    "Raccourcissez le texte, lien compris, pour ce réseau.",
+    "Shorten the text, including its link, for this network.",
+  ],
+  MEDIA_REQUIRED: [
+    "Ajoutez un média autorisé pour ce réseau.",
+    "Add authorised media for this network.",
+  ],
+  UTM_REQUIRED: [
+    "Reprenez le lien suivi du produit pour cette campagne.",
+    "Use the tracked product link for this campaign.",
+  ],
+  NO_ATTRIBUTION_LINK: [
+    "Sans lien suivi, les résultats de ce contenu ne pourront pas être attribués dans GA4.",
+    "Without a tracked link, this content cannot be attributed in GA4.",
+  ],
+};
+const finding = (value) => (findings[value] ? L(...findings[value]) : value);
 function select(parent, title, rows) {
   const wrap = el("label", "social-field"),
     input = el("select");
@@ -362,14 +415,14 @@ export async function renderSocial({ api, me, tab = "campaigns" }) {
             "",
             "textarea",
           ),
-          start = field(
+          start = dateField(
             form,
-            L("Début UTC (ISO 8601)", "Start UTC (ISO 8601)"),
+            L("Début de campagne", "Campaign starts"),
             new Date().toISOString(),
           ),
-          end = field(
+          end = dateField(
             form,
-            L("Fin UTC (ISO 8601)", "End UTC (ISO 8601)"),
+            L("Fin de campagne", "Campaign ends"),
             new Date(Date.now() + 30 * 86400000).toISOString(),
           );
         button(
@@ -410,8 +463,8 @@ export async function renderSocial({ api, me, tab = "campaigns" }) {
               products: [
                 { name: product.value, url: source.value, facts: facts.value },
               ],
-              start: start.value,
-              end: end.value,
+              start: inputDate(start.value),
+              end: inputDate(end.value),
               budgetCents: 0,
               currency: "EUR",
               utmRequired: true,
@@ -432,7 +485,7 @@ export async function renderSocial({ api, me, tab = "campaigns" }) {
         table(
           content,
           [
-            L("Date UTC", "UTC date"),
+            L("Date prévue", "Scheduled date"),
             L("Contenu", "Content"),
             L("Réseaux", "Networks"),
             L("État", "State"),
@@ -440,7 +493,7 @@ export async function renderSocial({ api, me, tab = "campaigns" }) {
           [...data.posts]
             .sort((a, b) => a.scheduledAt.localeCompare(b.scheduledAt))
             .map((p) => [
-              p.scheduledAt,
+              displayDate(p.scheduledAt),
               p.title,
               p.variants.map((v) => v.platform).join(", "),
               label(p.status),
@@ -450,7 +503,7 @@ export async function renderSocial({ api, me, tab = "campaigns" }) {
         const n = card(
           content,
           p.title,
-          `${label(p.status)} · ${p.scheduledAt} · v${p.version}`,
+          `${label(p.status)} · ${displayDate(p.scheduledAt)} · v${p.version}`,
         );
         for (const v of p.variants) {
           n.append(
@@ -464,23 +517,28 @@ export async function renderSocial({ api, me, tab = "campaigns" }) {
             el(
               "p",
               "social-warning",
-              L("À corriger : ", "Resolve: ") + p.policy.errors.join(", "),
+              L("À corriger : ", "Resolve: ") +
+                p.policy.errors.map(finding).join(" "),
             ),
           );
         if (
           edit &&
-          !["PUBLISHING", "PUBLISHED", "ACCEPTED", "UNCERTAIN"].includes(
-            p.status,
-          )
+          ![
+            "PUBLISHING",
+            "PUBLISHED",
+            "ACCEPTED",
+            "UNCERTAIN",
+            "PARTIAL",
+          ].includes(p.status)
         ) {
           const d = el("details");
           d.append(
             el("summary", "", L("Modifier ce contenu", "Edit this content")),
           );
           const title = field(d, L("Titre interne", "Internal title"), p.title),
-            date = field(
+            date = dateField(
               d,
-              L("Date UTC (ISO 8601)", "UTC date (ISO 8601)"),
+              L("Date de publication", "Publication date"),
               p.scheduledAt,
             ),
             fields = p.variants.map((v) => {
@@ -527,7 +585,7 @@ export async function renderSocial({ api, me, tab = "campaigns" }) {
                       campaignId: p.campaignId,
                       title: title.value,
                       productUrl: p.productUrl,
-                      scheduledAt: date.value,
+                      scheduledAt: inputDate(date.value),
                       variants: fields.map((f) => ({
                         ...f.v,
                         accountId: f.account.value,
@@ -545,7 +603,9 @@ export async function renderSocial({ api, me, tab = "campaigns" }) {
         }
         if (
           edit &&
-          ["DRAFT", "NEEDS_REVISION", "REJECTED", "EXPIRED"].includes(p.status)
+          ["DRAFT", "NEEDS_REVISION", "REJECTED", "EXPIRED", "FAILED"].includes(
+            p.status,
+          )
         )
           button(n, L("Demander une validation", "Request approval"), () =>
             change("approval/request", {
@@ -563,7 +623,12 @@ export async function renderSocial({ api, me, tab = "campaigns" }) {
             () => change("publish", { approvalId: p.approvalId }),
             true,
           );
-        if (admin && ["ACCEPTED", "UNCERTAIN", "PUBLISHED"].includes(p.status))
+        if (
+          admin &&
+          ["ACCEPTED", "UNCERTAIN", "PUBLISHED", "PARTIAL", "FAILED"].includes(
+            p.status,
+          )
+        )
           button(
             n,
             L(
@@ -576,9 +641,11 @@ export async function renderSocial({ api, me, tab = "campaigns" }) {
                 await load();
               }),
           );
-        for (const t of p.targets)
+        for (const t of p.targets) {
+          n.append(el("p", "c-note", t.platform + " · " + label(t.status)));
           if (t.url)
             link(n, t.url, L("Voir la publication", "View published post"));
+        }
       }
       if (edit && campaigns.length && tab === "posts") {
         const form = card(
@@ -606,12 +673,9 @@ export async function renderSocial({ api, me, tab = "campaigns" }) {
           ),
           title = field(form, L("Titre interne", "Internal title")),
           product = select(form, L("Produit", "Product"), []),
-          date = field(
+          date = dateField(
             form,
-            L(
-              "Publication prévue UTC (ISO 8601)",
-              "Planned publication UTC (ISO 8601)",
-            ),
+            L("Publication prévue", "Planned publication"),
             new Date(Date.now() + 86400000).toISOString(),
           ),
           variants = el("div", "social-variants");
@@ -726,7 +790,7 @@ export async function renderSocial({ api, me, tab = "campaigns" }) {
                 campaignId: campaign.value,
                 title: title.value,
                 productUrl: product.value,
-                scheduledAt: date.value,
+                scheduledAt: inputDate(date.value),
                 variants: variantFields
                   .filter((v) => v.enabled.checked)
                   .map((v) => ({
@@ -767,13 +831,13 @@ export async function renderSocial({ api, me, tab = "campaigns" }) {
                 context?.outreach?.subject ||
                 context?.name ||
                 a.type),
-            `${label(a.status)} · ${L("Expire le ", "Expires ")}${a.expiresAt}`,
+            `${label(a.status)} · ${L("Expire le ", "Expires ")}${displayDate(a.expiresAt)}`,
           );
         n.append(
           el("p", "c-note", L("Demandeur : ", "Requester: ") + a.requestedBy),
         );
         if (context?.post) {
-          n.append(el("p", "", context.post.scheduledAt));
+          n.append(el("p", "", displayDate(context.post.scheduledAt)));
           for (const v of context.post.variants) {
             n.append(
               el("h4", "", v.platform + " · " + v.accountId),

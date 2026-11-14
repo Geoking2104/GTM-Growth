@@ -245,6 +245,10 @@ export async function readback(
         (r) =>
           r.id === target.externalId && r.integration?.id === target.accountId,
       );
+      if (row?.state === "ERROR" && target.status !== "published") {
+        target.status = "failed";
+        target.error = "SOCIAL_PLATFORM_REJECTED";
+      }
       if (row?.state === "PUBLISHED" && row.releaseURL) {
         let u;
         try {
@@ -263,6 +267,16 @@ export async function readback(
       p.targets.every((t) => t.status === "published")
     )
       p.status = "PUBLISHED";
+    else if (
+      p.targets.length === p.variants.length &&
+      p.targets.every((t) => t.status === "failed")
+    )
+      p.status = "FAILED";
+    else if (
+      p.targets.some((t) => t.status === "published") &&
+      p.targets.some((t) => t.status === "failed")
+    )
+      p.status = "PARTIAL";
     audit(s, "zenml", "publication-readback", p.id);
     return { postId: p.id, status: p.status };
   });
@@ -516,12 +530,18 @@ export async function executeJob(
         if (job.pipeline === "influencer_scoring_vetting") {
           const c = s.creators.find((c) => c.id === job.entityId)!;
           if (!c) throw new Error("SOCIAL_NOT_FOUND");
+          if (digest(entitySnapshot(s, "CREATOR_VET", c.id)) !== job.inputHash)
+            throw new Error("SOCIAL_CHANGED");
           c.score = scoreCreator(c);
           if (c.status === "DISCOVERED") c.status = "SCORED";
           return { entityId: c.id, score: c.score };
         }
         const o = s.outreach.find((o) => o.id === job.entityId);
         if (!o) throw new Error("SOCIAL_NOT_FOUND");
+        if (
+          digest(entitySnapshot(s, "OUTREACH_APPROVE", o.id)) !== job.inputHash
+        )
+          throw new Error("SOCIAL_CHANGED");
         return {
           entityId: o.id,
           status: o.status,
