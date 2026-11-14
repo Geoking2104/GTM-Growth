@@ -1,6 +1,6 @@
 # GTM Growth
 
-**Open-source SEO/GEO, analytics and commerce workspace**, available through a bilingual web console with a contextual data assistant, an MCP server and a CLI. An optional Eve integration supports natural-language replies in approved Slack channels. Connect Google Analytics 4, Google Tag Manager (web and server-side), Measurement Protocol, Search Console, PageSpeed Insights and CrUX; connect **Shopify and PrestaShop stores** to attribute orders — including orders coming from AI assistants — to their acquisition channel; turn measured evidence into reviewed actions.
+**Open-source SEO/GEO, analytics, commerce and social workspace**, available through a bilingual web console with a contextual data assistant, an MCP server and a CLI. An optional Eve integration supports natural-language replies in approved Slack channels. Connect Google Analytics 4, Google Tag Manager (web and server-side), Measurement Protocol, Search Console, PageSpeed Insights and CrUX; connect **Shopify and PrestaShop stores** to attribute orders — including orders coming from AI assistants — to their acquisition channel; turn measured evidence into reviewed actions.
 
 **Website: [https://gtm.kayroslab.com/](https://gtm.kayroslab.com/)** · [Français](https://gtm.kayroslab.com/fr/) · [Console EN](https://gtm.kayroslab.com/console/?lang=en#c-public-read) · [Console FR](https://gtm.kayroslab.com/console/?lang=fr#c-public-read)
 
@@ -14,7 +14,7 @@ Start with a public page read without signup, explore customer questions, then c
 | **Data and costs** | Public checks and local SEO workflows need no paid data provider. Optional AI collectors and the Eve Slack agent use configured model credentials and may incur provider/hosting charges; guided console answers need no model key. |
 | **Cloud offer** | Solo €39/month and Agency €149/month are indicative pilot hypotheses; Mollie checkout and subscription entitlements are not active |
 | **Hosting** | OVH VPS with Docker Compose, Nginx and Keycloak; the address above is the primary product website |
-| **Validation** | CI: typecheck, lint, Vitest, build, CLI/site smoke, production image, FR/EN browser QA and Node-RED runtime smoke |
+| **Validation** | CI: typecheck, lint, Vitest, build, CLI/site smoke, production image, FR/EN browser QA, Node-RED and real ZenML runtime smoke |
 
 ## Current delivery status
 
@@ -37,7 +37,20 @@ Slack remains an optional, separately configured integration; this release does 
 | **GEO v2** | Category budgets, ownership-verification primitives and isolation architecture on `main`; foundation PR #28 merged | [PR #30](https://github.com/Geoking2104/GTM-Growth/pull/30) remains open: 42-control integration and expanded instrumentation are not in the deployed release; no live isolated Playwright worker |
 | **Apply Mode** | Read-only CLI/console diff preview; encrypted approval/snapshot registry and HMAC audit primitives | Registry integration, production writers, independent verification and real rollback remain pending |
 | **E-commerce connectors** | Shopify (GraphQL Admin API, custom app) and PrestaShop (webservice) connectors: sealed credentials, idempotent webhook ingestion, deterministic attribution, Commerce console tab, four read-only MCP tools, feed readiness; 23 dedicated tests | Live store pilots pending; PrestaShop real-time needs the companion PHP module (polling fallback works without it); App Store distribution is a later phase |
+| **Social / ZenML** | Source implementation: bilingual campaigns, platform drafts, independent approvals, calendar, Postiz dispatch/readback, sourced analytics, creator vetting and reviewed outreach drafts; isolated eight-pipeline ZenML worker and tenant MCP | Worker/provider setup and live platform pilots required. Outreach is manual after approval; automatic Mautic/Twenty sequences and open-ended LLM generation are not implemented |
 | **Cloud / Mollie** | Bilingual pilot offer displayed; self-hosted option remains free | Checkout disabled pending payment profile, terms, tax treatment, plan limits and subscription implementation |
+
+## Social Toolkit — source implementation and activation
+
+The [reviewed Social specification](docs/product/SOCIAL-TOOLKIT-SPEC-REVIEW.md) adapts the [supplied ZenML specification](docs/product/SOCIAL-TOOLKIT-SOURCE-SPEC.md) to the existing Node/TypeScript, Keycloak, client-scoping and OVH stack. **Social networks** adds eight bilingual console views: campaigns, content, calendar, approvals, results, creators/outreach, accounts and runs. The website includes the same purpose, prerequisites and direct console handoff.
+
+Create an editorial context from a specific client product page and verified facts, prepare network variants, request an independent administrator's review, then explicitly confirm the approved schedule. Editing text, accounts, time or relevant context requires a new review. Postiz acceptance and verified publication are distinct states; ambiguous dispatches are never automatically repeated. Existing GBP Node-RED workflows are preserved.
+
+Results distinguish provider-reported series, scoped GA4 attribution and source-labelled daily imports. Missing metrics remain unknown, reach is not summed across networks, and creator authenticity/composite scores are not invented. YouTube discovery is optional; other profiles can be added with sources and human assessment. Outreach drafts require vetted creators and a separate exact-message approval; sending remains manual with a recorded receipt.
+
+The optional Python worker runs eight **real, uncached ZenML 0.96.2 pipelines** against durable GTM intents. Human approval lives in the existing API, not in a seven-day `wait()` process. Each worker has a client-specific credential and runtime volume; only execution IDs and digests enter artifacts. The separate `/api/mcp/social` endpoint allows explicitly scoped read/draft tools and cannot approve, publish or send messages. See [setup, platform qualification and recovery](deploy/social/README.md).
+
+**Deployment status:** this section describes source capabilities, not an activated client connection. The core must pass CI and the existing OVH production approval before its live assets can be verified. Postiz credentials/accounts, an optional YouTube key, a scoped ZenML worker and real-platform pilots are separate prerequisites. This change does not automatically install Postiz or enable provider writes, paid generation or outbound campaigns. Automatic outreach sequences, a warehouse/BI stack and wider commercial creator discovery remain explicit follow-up scope.
 
 ## Contextual buyer questions (14 November 2026)
 
@@ -110,7 +123,7 @@ Outbound profiles can be detected in page links and schema `sameAs`, including I
 
 ## 2. The customer journey
 
-The bilingual website now presents five stages: **diagnose → understand → prepare → measure → coordinate**. Four starting paths adapt the suggested sequence for a website owner, marketing team, agency or head-office/location network. A searchable, stage-filtered catalog explains **31 functions** with their benefit, output, prerequisites and a direct console link. Source setup, manual imports, preview-only capabilities and optional integrations are labelled explicitly.
+The bilingual website now presents five stages: **diagnose → understand → prepare → measure → coordinate**. Four starting paths adapt the suggested sequence for a website owner, marketing team, agency or head-office/location network. A searchable, stage-filtered catalog explains **32 functions** with their benefit, output, prerequisites and a direct console link. Source setup, manual imports, preview-only capabilities and optional integrations are labelled explicitly.
 
 Every customer console section uses the same product descriptions for its purpose, expected output and next action. A selected feature survives sign-in without selecting a customer or granting permissions. Historical examples and the roadmap remain available as expandable detail; planned Cloud offers lead to the contact form, not an inactive checkout. See [Website journey architecture](docs/product/WEBSITE-CUSTOMER-JOURNEY.md).
 
@@ -400,6 +413,7 @@ Provisioning creates the organization (or realm), role groups, console redirect 
 | **Commerce** | Stores & revenue | `commerce/{connect,stores,disconnect}`, `commerce/sync/{products,orders}`, `commerce/{dashboard,orders,products,feed/readiness}` |
 | Competition | AI answers | `ai-visibility/*`, `competition/*` (+ read-only per-tenant MCP at `/api/mcp/competition`) |
 | Ops / Journey | Visibility · Rankings · Articles · Alerts · Customer journey | `visibility/*`, `rank/*`, `content/*`, `ops/*`; selected journey prompts reuse the existing tenant prompt pool |
+| Social networks | Campaigns · Content · Calendar · Approvals · Results · Creators · Accounts · Runs | `social/*`; tenant-scoped API/MCP, optional ZenML execution |
 | Global / Local SEO | Registry · Evidence · Controls · Jobs · Publication | `local-seo/*`; see the exact contracts in the operations guide |
 | Apply Mode | GEO fix preview | `apply/preview` (`robots-ai`, dry-run only) |
 
@@ -570,6 +584,7 @@ docs/                          # all guides (see index below)
 | [docs/PRESENTATION.md](docs/PRESENTATION.md) | Background pitch; use this README for current delivery and offer status |
 | [Free console value plan](docs/product/FREE-CONSOLE-VALUE-PLAN.md) | Public-read evidence, screenshots and experiments |
 | [Customer Journey integration](docs/product/CUSTOMER-JOURNEY-INTEGRATION.md) | Five-stage journey, provenance, acceptance and future increments |
+| [Social specification review](docs/product/SOCIAL-TOOLKIT-SPEC-REVIEW.md) · [Social operations](deploy/social/README.md) | Verified design decisions, implemented scope, ZenML/Postiz setup and recovery |
 | [Global/Local SEO](docs/product/GLOBAL-LOCAL-SEO.md) · [Local SEO operations](docs/product/LOCAL-SEO-OPERATIONS.md) | Registry, permissions, LOC controls, GBP activation and publication gates |
 | [Node-RED setup](deploy/node-red/README.md) | Optional worker runtime and workflow boundaries |
 | [docs/DEPLOYMENT.md](docs/DEPLOYMENT.md) · [VPS_DEPLOY.md](docs/VPS_DEPLOY.md) | Docker / Fly / Railway · KayrosLab VPS |

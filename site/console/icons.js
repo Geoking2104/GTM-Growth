@@ -1,5 +1,6 @@
 /* Icônes de la console (mêmes tracés que la démo publique). */
 const P = {
+  social: '<circle cx="6" cy="12" r="3"/><circle cx="18" cy="5" r="3"/><circle cx="18" cy="19" r="3"/><path d="M8.6 10.5l6.8-4M8.6 13.5l6.8 4"/>',
   local_seo: '<circle cx="10" cy="10" r="7"/><path d="M3 10h10M10 3a13 13 0 0 0 0 14M10 3a13 13 0 0 1 3 7"/><path d="M21 15c0 3-4 7-4 7s-4-4-4-7a4 4 0 0 1 8 0z"/><circle cx="17" cy="15" r="1"/>',
   competition: '<path d="M8 3h8v5c0 4-2 6-4 6s-4-2-4-6zM8 5H4v3c0 3 2 4 5 4M16 5h4v3c0 3-2 4-5 4M12 14v5M8 21h8M9 19h6"/>',
   journey: '<circle cx="5" cy="5" r="2"/><circle cx="19" cy="19" r="2"/><path d="M7 5h9a4 4 0 0 1 0 8H8a3 3 0 0 0 0 6h9M13 10l3 3-3 3"/>',

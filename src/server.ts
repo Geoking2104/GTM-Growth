@@ -1,3 +1,5 @@
+import { buildSocialMcpRouter } from './console/social-mcp.js';
+import { socialWorkerRouter } from "./social/worker.js";
 import { localWorkerRouter } from "./local-seo/worker.js";
 import { Server } from "@modelcontextprotocol/sdk/server/index.js";
 import { StdioServerTransport } from "@modelcontextprotocol/sdk/server/stdio.js";
@@ -129,8 +131,10 @@ export async function startServer(transportType: "stdio" | "http" = "stdio") {
   // Console API â€” Keycloak-protected (OIDC bearer tokens validated via JWKS).
   mountConsoleApi(app);
   app.use("/api/internal/local-seo", localWorkerRouter());
+  app.use("/api/internal/social", socialWorkerRouter());
   app.use("/webhooks", ecommerceWebhookRouter());
   app.use("/api/mcp/competition", buildCompetitionMcpRouter());
+  app.use("/api/mcp/social", buildSocialMcpRouter());
   // Operations scheduler (T-11): periodic visibility + rank checks per tenant.
   // Opt-in through env so tests, stdio runs and CI stay quiet.
   if (process.env.OPS_SCHEDULER_ENABLED === "true") startScheduler();

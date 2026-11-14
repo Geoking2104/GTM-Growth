@@ -91,6 +91,11 @@ jobs:
           LANDING_QA_OUTPUT_DIR: qa-landing
         run: node scripts/qa-gbp-dashboard.mjs
 
+      - name: Social console browser QA
+        env:
+          SOCIAL_QA_OUTPUT_DIR: qa-landing/social
+        run: node scripts/qa-social.mjs
+
       - name: Upload bilingual screenshots
         if: always()
         uses: actions/upload-artifact@v4
@@ -129,3 +134,19 @@ jobs:
         env:
           NODE_RED_ENTRY: /tmp/gtm-node-red/node_modules/node-red/red.js
         run: node scripts/qa-local-seo-flows.mjs
+
+  social-zenml:
+    name: Social · Real ZenML runtime smoke
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+      - name: Install pinned optional runtime
+        run: pip install -r integrations/social-zenml/requirements.txt
+      - name: Execute all eight pipelines and inspect secret isolation
+        run: python integrations/social-zenml/smoke.py
+      - name: Build isolated optional worker image
+        run: docker build -t gtm-social-zenml-ci integrations/social-zenml
