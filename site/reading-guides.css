@@ -1,7 +1,7 @@
 /* Shared public guides: existing GTM colours/type, no third-party runtime. */
 .reading-section { background: #f5f1fb; border-block: 1px solid #e7ddf2; }
 .reading-heading { max-width: 760px; }
-.reading-heading .lede { max-width: 65ch; }
+.reading-heading .lede { max-width: 65ch; color: #61566e; }
 .reading-cards { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 1.3rem; margin-top: 2rem; }
 .reading-card { display: flex; flex-direction: column; padding: 2rem; border: 1px solid #ddd0ec; border-radius: 18px; background: #fff; min-width: 0; }
 .reading-index { color: #7442a5; font: 600 .72rem var(--mono); letter-spacing: .035em; }
