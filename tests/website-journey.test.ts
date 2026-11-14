@@ -1,6 +1,7 @@
 import { readFileSync } from 'node:fs';
 import { afterEach, expect, it, vi } from 'vitest';
 import { parseHTML } from 'linkedom';
+import { guideContent } from '../site/guides-content.js';
 import { journeyContent, consoleFeature } from '../site/journey-content.js';
 import { featureHandoff } from '../site/console/workspace-context.js';
 
@@ -72,4 +73,15 @@ it.each(['en', 'fr'])('explains the selected function before sign-in in %s', asy
   expect(entry?.querySelector('a')?.getAttribute('href')).toBe('#c-login-form');
   expect(entry?.textContent).toContain(journeyContent(language).features.find(f => f.id === 'ga4')?.input);
   expect(renderFeatureEntry('#unknown', language)).toBeNull();
+});
+
+
+it.each(['en', 'fr'])('reading guides send every stage to an existing console destination in %s', language => {
+  const app = readFileSync('site/console/app.js', 'utf8');
+  const sections = [...app.slice(app.indexOf('const SECTIONS ='), app.indexOf('const ALL =')).matchAll(/\{ id: "(\w+)", icon:/g)].map(m => m[1]);
+  for (const track of ['marketing', 'technical']) {
+    for (const row of guideContent(language)[track].steps) {
+      expect(row[3] === '#c-public-read' || sections.includes(row[3].slice(1).split('/')[0]), row[3]).toBe(true);
+    }
+  }
 });

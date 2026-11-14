@@ -6,6 +6,8 @@ import { fileURLToPath } from "node:url";
 import { parseHTML } from "linkedom";
 import { crmMarkup } from "./crm-markup.mjs";
 import { journeyMarkup } from "./journey-markup.mjs";
+import { readingTracks, guidePage, guidePath } from "./guides-markup.mjs";
+import { guideContent } from "../site/guides-content.js";
 
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
 const template = fs.readFileSync(path.join(root, "site/landing/template.html"), "utf8");
@@ -17,7 +19,9 @@ for (const locale of ["en", "fr"]) {
   if (JSON.stringify(Object.keys(copy).sort()) !== JSON.stringify(keys)) throw new Error(`${locale}: translation keys differ from the template`);
   for (const [key, value] of Object.entries(copy)) if (typeof value !== "string" || !value.trim()) throw new Error(`${locale}: empty translation ${key}`);
   const canonical = `https://gtm.kayroslab.com/${locale === "fr" ? "fr/" : ""}`;
-  const config = { crm_global: crmMarkup(locale), ...journeyMarkup(locale), locale, canonical, privacy: locale === "fr" ? "/fr/confidentialite.html" : "/privacy.html", active_en: locale === "en" ? 'aria-current="page"' : "", active_fr: locale === "fr" ? 'aria-current="page"' : "" };
+  const guides = guideContent(locale);
+  const guideLinks = ['marketing', 'technical'].map(track => `<a href="${guidePath(locale, track)}">${escape(guides[track].label)}</a>`).join('');
+  const config = { reading_tracks: readingTracks(locale), guide_links: guideLinks, crm_global: crmMarkup(locale), ...journeyMarkup(locale), locale, canonical, privacy: locale === "fr" ? "/fr/confidentialite.html" : "/privacy.html", active_en: locale === "en" ? 'aria-current="page"' : "", active_fr: locale === "fr" ? 'aria-current="page"' : "" };
   let html = template.replace(/\{\{(\w+)\}\}/g, (_, key) => {
     if (key in copy) return escape(copy[key]);
     if (key in config) return config[key];
@@ -37,5 +41,15 @@ for (const locale of ["en", "fr"]) {
   if (check) {
     if (fs.readFileSync(target, "utf8") !== html) throw new Error(`${target} is stale; run node scripts/render-landing.mjs`);
   } else fs.writeFileSync(target, html);
+  for (const track of ['marketing', 'technical']) {
+    const guideTarget = path.join(root, 'site', guidePath(locale, track), 'index.html');
+    const guideHtml = guidePage(locale, track);
+    if (check) {
+      if (!fs.existsSync(guideTarget) || fs.readFileSync(guideTarget, 'utf8') !== guideHtml) throw new Error(`${guideTarget} is stale; run npm run site:render`);
+    } else {
+      fs.mkdirSync(path.dirname(guideTarget), { recursive: true });
+      fs.writeFileSync(guideTarget, guideHtml);
+    }
+  }
 }
-console.log(`Landing ${check ? "check" : "render"} OK: shared layout and ${keys.length} complete translations per locale`);
+console.log(`Landing ${check ? "check" : "render"} OK: shared layout and ${keys.length} complete homepage translations per locale, plus four reading guides`);

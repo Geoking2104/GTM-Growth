@@ -13,6 +13,9 @@ The English presentation is the shared visual reference. Both homepages retain t
 | `landing.css` + `styles.css` | Shared English visual system, light content sections and responsive layouts |
 | `landing.js` | Shared free-read and lead-form behavior, localized through the page language |
 | `assets/screens/geo-board-en.svg`, `geo-board-fr.svg` | Same illustration with localized labels |
+| `guides-content.js` + `../scripts/guides-markup.mjs` | Paired marketing/technical copy and shared static guide renderer |
+| `reading-guides.css` | Reading cards, diagrams, tables and responsive guide layout |
+| `guides/*/index.html`, `fr/guides/*/index.html` | Generated bilingual guides with same-track language switches |
 | `index.html`, `fr/index.html` | Generated, committed static output; do not edit directly |
 
 After changing the template or a dictionary:
@@ -25,6 +28,21 @@ npm run site:check
 The renderer rejects missing, extra or empty translations. The site check rejects stale output, structural divergence, broken local asset references or fragments, missing sections and console links without the selected locale. It also checks canonical URLs and the EN/FR language switch. JSON-LD FAQ content is generated from the visible localized questions and answers.
 
 The shared script preserves existing English section links such as `#plans` and `#talk`. Links to the console carry `?lang=en` or `?lang=fr`; privacy links remain localized. The console keeps its own styles and language shell.
+
+## Two reading tracks
+
+The homepage, Resources menu and footer link to `/guides/marketing/` and
+`/guides/technical/` (French equivalents under `/fr/`). Each guide follows the same
+five product stages, linking directly to the relevant console entry with its locale.
+The marketing guide explains decisions, source evidence and contact identity; the
+technical guide maps the stack, integration prerequisites and activation checks.
+Accessible HTML/CSS diagrams distinguish planning hypotheses, aggregate observations
+and exact CRM identity. No third-party runtime or tracking is loaded by these pages.
+
+Both guides link to the repository's current capability registry and detailed track.
+Edit the paired source, regenerate all six pages, and update the review date and
+sitemap when the content changes. Browser QA captures the four guides on desktop and
+mobile, checks language round-trips, console handoffs and page overflow.
 
 ## Forms and evidence
 
