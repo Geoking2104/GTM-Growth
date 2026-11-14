@@ -55,23 +55,31 @@ export function claim(tenant: string, allowed: readonly string[]) {
       auto = socialConfig(tenant).autoRefresh;
     } catch {}
     if (auto) {
+      const due = (
+        pipeline: Job["pipeline"],
+        entityId: string,
+        input: unknown,
+      ) => {
+        const hash = digest(input);
+        if (
+          !s.jobs.some(
+            (j) =>
+              j.pipeline === pipeline &&
+              j.entityId === entityId &&
+              j.inputHash === hash,
+          )
+        )
+          enqueue(s, pipeline, entityId, input, "scheduler");
+      };
       if (allowed.includes("social_account_sync"))
-        enqueue(
-          s,
-          "social_account_sync",
-          "accounts",
-          { hour: Math.floor(now / 3600000) },
-          "scheduler",
-        );
+        due("social_account_sync", "accounts", {
+          hour: Math.floor(now / 3600000),
+        });
       if (allowed.includes("social_analytics_daily"))
         for (const c of s.campaigns.filter((c) => c.status === "ACTIVE"))
-          enqueue(
-            s,
-            "social_analytics_daily",
-            c.id,
-            { day: Math.floor(now / 86400000) },
-            "scheduler",
-          );
+          due("social_analytics_daily", c.id, {
+            day: Math.floor(now / 86400000),
+          });
     }
     for (const j of s.jobs)
       if (j.status === "running" && j.leaseUntil! <= now) {
@@ -440,7 +448,18 @@ export async function executeJob(
   tenant: Tenant,
   input: { id: string; lease: string; zenmlRunId: string },
   provider = new SocialProvider(tenant.id),
-  active = () => new TenantStore().get(tenant.id)?.status === "active",
+  active = () => {
+    const current = new TenantStore().get(tenant.id);
+    return (
+      current?.status === "active" &&
+      digest([
+        current.domains,
+        current.ga4Properties,
+        current.googleCredential,
+      ]) ===
+        digest([tenant.domains, tenant.ga4Properties, tenant.googleCredential])
+    );
+  },
 ) {
   if (!active()) throw new Error("SOCIAL_ACCESS");
   const job = updateState(tenant.id, (s) => {

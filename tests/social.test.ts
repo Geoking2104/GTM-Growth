@@ -734,3 +734,19 @@ it("reports a verified platform rejection separately and locks partial publicati
   ).toThrow("SOCIAL_CHANGED");
   expect(provider.publish).toHaveBeenCalledTimes(2);
 });
+it("does not continuously requeue a failed scheduled refresh in the same period", () => {
+  writeFileSync(
+    path.join(dir, "acme.json"),
+    JSON.stringify({ autoRefresh: true }),
+  );
+  const first = claim(tenant.id, ["social_account_sync"])!;
+  expect(first.pipeline).toBe("social_account_sync");
+  updateState(tenant.id, (s) => {
+    s.jobs[0].status = "failed";
+  });
+  expect(claim(tenant.id, ["social_account_sync"])).toBeNull();
+  expect(readState(tenant.id).jobs).toHaveLength(1);
+  vi.setSystemTime(now + 3600001);
+  expect(claim(tenant.id, ["social_account_sync"])?.id).not.toBe(first.id);
+  expect(readState(tenant.id).jobs).toHaveLength(2);
+});
