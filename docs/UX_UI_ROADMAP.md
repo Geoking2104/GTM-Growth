@@ -1,5 +1,7 @@
 # Feuille de route UX/UI — site GTM Growth
 
+> Historical planning snapshot. Use the [documentation hub](README.md), [website contract](product/WEBSITE-CUSTOMER-JOURNEY.md) and [capability register](journey/CAPABILITIES.md) for current behavior and delivery status.
+
 ## Point de départ — 4 novembre 2026
 
 Le site est déjà cohérent sur le fond : une lecture gratuite, un exemple concret,

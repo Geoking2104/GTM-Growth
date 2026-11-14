@@ -1,9 +1,9 @@
 # Data agent across the customer journey
 
-Status: merged in [PR #42](https://github.com/Geoking2104/GTM-Growth/pull/42); core assistant deployed to OVH on 13 November 2026 in
-[run #44](https://github.com/Geoking2104/GTM-Growth/actions/runs/43462628681) at `1749446`.
-Live Slack activation and real Slack acceptance remain pending. Website: https://gtm.kayroslab.com/. English is the reference;
-the implemented public, onboarding and authenticated UI has matching FR/EN copy.
+Source implementation includes the guided console assistant and optional Eve bridge.
+Use the [capability/release register](../journey/CAPABILITIES.md) for current dated
+status. Live Slack activation and real Slack acceptance require their own setup.
+English is the reference; public, onboarding and authenticated UI have matching FR/EN copy.
 
 ## Product decision
 
@@ -69,7 +69,7 @@ metric read starts merely because the user navigates to a section.
 ```mermaid
 flowchart TD
   C["Console / Keycloak user"] --> A["Tenant-scoped metric service"]
-  S["Allowed Slack conversation"] --> E["Eve admission + four tools"]
+  S["Allowed Slack conversation"] --> E["Eve admission + five tools"]
   E --> B["Signed bridge + channel binding"]
   B --> A
   A --> G["Authorized Google property"]
@@ -129,12 +129,11 @@ the core app keeps its existing Node 20 deployment. See the
 Automated checks cover SSO/tenant/source isolation, private preference scope,
 missing/error data, reviewed/sample metric semantics, raw-data exclusion,
 signature freshness/tampering/replays, changed bindings and suspension, bilingual
-UI behavior, stable navigation and adapter transport bounds. Core CI passed 556 tests;
-Eve CI passed two adapter tests and its build. The production release passed health,
-asset parity, public analysis and unauthenticated API boundary checks. Real Google
-reads and live Slack replies require their configured accounts and were not
-validated by those checks; fixtures do not establish those outcomes. The normal CI and deployment controls,
-including OVH SSH pinning, remain in force.
+UI behavior, stable navigation and adapter transport bounds. Test counts and build
+results belong to the exact CI revision, not a permanent capability count. Real
+Google reads and live Slack replies require configured accounts and separate
+acceptance; fixtures do not establish those outcomes. Follow the
+[release sequence](../technical/OPERATIONS.md#release-sequence), including OVH SSH pinning.
 
 ## Résumé français
 
