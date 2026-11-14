@@ -262,9 +262,10 @@ export async function renderCrm({ api, me, tab = "timeline" }) {
       root.setAttribute("aria-busy", "false");
     }
   };
-  const reload = async () => {
+  const reload = async (append = false) => {
+    if (!append) offset = 0;
     data = await call("overview", { search, offset });
-    contacts = offset ? [...contacts, ...data.contacts] : data.contacts;
+    contacts = append ? [...contacts, ...data.contacts] : data.contacts;
     render();
     if (tab !== "connections" && data.settings.enabled) await loadTimeline();
   };
@@ -390,7 +391,7 @@ export async function renderCrm({ api, me, tab = "timeline" }) {
       button(aside, L("Contacts suivants", "More contacts"), () =>
         run(async () => {
           offset += 100;
-          await reload();
+          await reload(true);
         }),
       );
     if (["admin", "editor"].includes(data.role)) {

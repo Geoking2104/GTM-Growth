@@ -196,11 +196,13 @@ try {
             return {
               settings,
               role: "admin",
-              contacts: contacts.filter(
-                (c) => !body.search || c.label.includes(body.search),
-              ),
-              hasMore: false,
-              counts: { contacts: 2, linked: 6, unlinked: 1 },
+              contacts: body.offset
+                ? [{ ...contacts[1], id: "contact-003", label: "Contact 003" }]
+                : contacts.filter(
+                    (c) => !body.search || c.label.includes(body.search),
+                  ),
+              hasMore: !body.offset,
+              counts: { contacts: 3, linked: 6, unlinked: 1 },
               capabilities: { configured: true, plugins: [] },
               audit: [],
             };
@@ -239,21 +241,19 @@ try {
           throw new Error("Unexpected QA route " + route);
         };
         window.mount = async (tab) =>
-          document
-            .getElementById("fixture")
-            .replaceChildren(
-              await renderCrm({
-                api,
-                me: {
-                  tenant: {
-                    name: fr
-                      ? "Maison Atelier · espace fictif"
-                      : "Maison Atelier · synthetic workspace",
-                  },
+          document.getElementById("fixture").replaceChildren(
+            await renderCrm({
+              api,
+              me: {
+                tenant: {
+                  name: fr
+                    ? "Maison Atelier · espace fictif"
+                    : "Maison Atelier · synthetic workspace",
                 },
-                tab,
-              }),
-            );
+              },
+              tab,
+            }),
+          );
         await window.mount("timeline");
       });
       const L = (fr, en) => (lang === "fr" ? fr : en);
@@ -305,6 +305,17 @@ try {
         path: path.join(output, `crm-timeline-${lang}-${width}.png`),
         fullPage: true,
       });
+      await page
+        .getByRole("button", {
+          name: L("Contacts suivants", "More contacts"),
+          exact: true,
+        })
+        .click();
+      await page.waitForFunction(
+        () =>
+          document.querySelectorAll(".crm-contact-list .crm-contact").length ===
+          3,
+      );
       await page
         .getByLabel(L("Canal", "Channel"), { exact: true })
         .selectOption("social");
@@ -406,6 +417,11 @@ try {
         ),
         "contact-001",
       );
+      assert.equal(
+        await page.locator(".crm-contact-list .crm-contact").count(),
+        2,
+        "A fresh reload resets pagination without duplicate contacts",
+      );
       await page.evaluate(() => window.mount("connections"));
       await page
         .getByLabel(L("Mode principal", "Primary mode"))
@@ -454,11 +470,9 @@ try {
           .nth(1)
           .evaluate((e) => e.open),
       );
-      await page
-        .locator("#crm-global")
-        .screenshot({
-          path: path.join(output, `crm-website-${lang}-${width}.png`),
-        });
+      await page.locator("#crm-global").screenshot({
+        path: path.join(output, `crm-website-${lang}-${width}.png`),
+      });
       assert.equal(
         await page.evaluate(
           () => document.documentElement.scrollWidth > innerWidth + 1,

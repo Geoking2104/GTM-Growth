@@ -80,6 +80,8 @@
   min-width: 0;
 }
 .crm-contact-list {
+  max-height: 480px;
+  overflow-y: auto;
   display: grid;
   gap: 8px;
   margin: 16px 0;
@@ -263,6 +265,8 @@
     grid-template-columns: 1fr;
   }
   .crm-contact-list {
+    max-height: 480px;
+    overflow-y: auto;
     grid-template-columns: repeat(2, minmax(0, 1fr));
   }
 }
@@ -285,6 +289,8 @@
     font-size: 12px;
   }
   .crm-contact-list {
+    max-height: 480px;
+    overflow-y: auto;
     grid-template-columns: 1fr;
   }
   .crm-timeline {
