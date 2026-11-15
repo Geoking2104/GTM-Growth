@@ -23,8 +23,13 @@ export async function authorized(id: string, store: PapStore, tenants: TenantSto
         store.revoke(id);
         demand(false, "invalid_token", 401);
     }
-    // Re-read after asynchronous identity checks: a concurrent revocation wins.
-    store.active(id);
-    demand(grant.expires > now(), "invalid_token", 401);
-    return { grant, tenant: restrict(tenant, grant.resources) };
+    // Identity I/O yields: refresh ALL local policy/resource state afterwards.
+    // A source removal during that I/O must not use the earlier tenant snapshot.
+    const latestGrant = store.active(id);
+    const latestTenant = tenants.get(grant.tenant);
+    const latestPolicy = store.get<Policy>("policy", grant.tenant);
+    demand(latestTenant && latestTenant.status === "active" && latestPolicy?.enabled && latestPolicy.clients.includes(grant.client) && config.clients.includes(grant.client), "invalid_token", 401);
+    demand(latestTenant.issuer === tenant.issuer && latestTenant.organizationId === tenant.organizationId && latestTenant.mode === tenant.mode, "invalid_token", 401);
+    demand(latestGrant.expires > now(), "invalid_token", 401);
+    return { grant: latestGrant, tenant: restrict(latestTenant, latestGrant.resources) };
 }

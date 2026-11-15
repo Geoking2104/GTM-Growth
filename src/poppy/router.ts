@@ -296,7 +296,7 @@ export function mountPoppy(app: Express, options: PapOptions = {}): PapStore | n
     }, options.readTimeoutMs ?? 15000));
     router.use((_req, res) => res.status(404).json({ error: "not_found" }));
     router.use((error: unknown, _req: Request, res: Response, _next: NextFunction) => {
-        const e = error instanceof PapError ? error : error instanceof ZodError || (error as {
+        let e = error instanceof PapError ? error : error instanceof ZodError || (error as {
             type?: string;
         })?.type === "entity.parse.failed" ? new PapError(400, "invalid_request") : (error as {
             type?: string;
@@ -304,8 +304,10 @@ export function mountPoppy(app: Express, options: PapOptions = {}): PapStore | n
         if (e.status === 401 || e.code === "insufficient_scope")
             res.set("WWW-Authenticate", `Bearer error="${e.code}", resource_metadata="${config.origin}/.well-known/oauth-protected-resource"`);
         const g = res.locals.papGrant as Grant | undefined;
-        if (g)
-            store.audit(g.tenant, g.id, "read", e.code, res.locals.papModel, res.locals.papRequestId, Date.now() - res.locals.papStarted);
+        if (g) {
+            try { store.audit(g.tenant, g.id, "read", e.code, res.locals.papModel, res.locals.papRequestId, Date.now() - res.locals.papStarted); }
+            catch { e = new PapError(503, "service_unavailable"); }
+        }
         if (e.status === 429)
             res.set("Retry-After", "60");
         return res.status(e.status).json({ error: e.code, requestId: res.locals.papRequestId });

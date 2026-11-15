@@ -26,7 +26,9 @@ try {
     if (consent) {
       const inputs = page.locator('input[type=checkbox]'); if (await inputs.count() !== 8) throw new Error('Missing permissions or sources');
       if ((await inputs.evaluateAll(xs => xs.filter(x => x.checked).length)) !== 0) throw new Error('Consent is preselected');
-      await page.keyboard.press('Tab'); await page.keyboard.press('Tab');
+      await inputs.first().focus(); await page.keyboard.press('Space');
+      if (!await inputs.first().isChecked()) throw new Error('Keyboard selection failed');
+      await page.keyboard.press('Space'); if (await inputs.first().isChecked()) throw new Error('Keyboard deselection failed');
     } else {
       await page.getByRole('button', { name: lang === 'fr' ? 'Révoquer l’accès' : 'Revoke access' }).click();
       await page.getByRole('status').getByText(lang === 'fr' ? 'Accès révoqué. Les nouvelles lectures sont bloquées.' : 'Access revoked. New reads are blocked.').waitFor();

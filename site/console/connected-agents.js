@@ -24,10 +24,10 @@ export async function papApi(path, body) {
   const r = await fetch(`/api/poppy/console/${path}`, { method: "POST", headers: { Authorization: `Bearer ${token}`, "Content-Type": "application/json" }, body: JSON.stringify(body) });
   const data = await r.json(); if (!r.ok) throw new Error(data.error); return data;
 }
-function check(label, value) { const wrapper = el("label", "c-field"); const input = el("input"); input.type = "checkbox"; input.value = value; wrapper.append(input, document.createTextNode(label)); return { wrapper, input }; }
+function check(label, value) { const wrapper = el("label", "c-field pap-option"); const input = el("input"); input.type = "checkbox"; input.value = value; wrapper.append(input, document.createTextNode(label)); return { wrapper, input }; }
 const date = value => value ? new Date(value * 1000).toLocaleString(LANG) : L("Jamais", "Never");
 export async function renderConnectedAgents({ tenant, request, api = papApi } = {}) {
-  const root = el("section", "c-card"); root.append(el("h2", "", L("Agents connectés", "Connected agents")));
+  const root = el("section", "c-card pap-panel"); root.append(el("h2", "", L("Agents connectés", "Connected agents")));
   const feedback = el("p", "c-note"); feedback.setAttribute("role", "status"); feedback.setAttribute("aria-live", "polite");
   const content = el("div"); root.append(content, feedback);
   const perform = async (button, task) => { button.disabled = true; feedback.textContent = ""; try { await task(); } catch (e) { feedback.textContent = agentError(e.message); } finally { button.disabled = false; } };

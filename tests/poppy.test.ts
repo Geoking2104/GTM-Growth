@@ -78,15 +78,16 @@ describe("PAP HTTP consent and read lifecycle", () => {
     const store = new PapStore(":memory:"), dir = mkdtempSync(join(tmpdir(), "pap-http-")), tenants = new TenantStore(join(dir, "tenants.json"));
     tenants.upsert(tenant);
     tenants.upsert({ ...tenant, id: "other", domains: ["other.example"] });
-    let activeMember = true, outage = false;
+    let activeMember = true, outage = false, memberCalls = 0;
+    let memberHook: ((call: number) => void) | undefined;
     const read = vi.fn(async (t: Tenant, q: unknown) => readModel(t, q));
     const app = express();
-    mountPoppy(app, { config, store, tenants, readTimeoutMs: 1000, client: async () => client, read, member: async (p, t) => { if (outage)
+    mountPoppy(app, { config, store, tenants, readTimeoutMs: 1000, client: async () => client, read, member: async (p, t) => { memberHook?.(++memberCalls); if (outage)
             throw new Error("Identity credentials must never leak"); return activeMember && p.user === "user" && t.id === "acme" ? "tenant-admin" : null; }, oidc: { issuer: oidcIssuer, clientId: "gtm-console", jwksUrl: oidcIssuer + "/certs" }, jwks: async () => ({ keys: [ej] }) });
     let server: ReturnType<typeof app.listen>, base: string;
     beforeAll(async () => { server = await new Promise(resolve => { const s = app.listen(0, "127.0.0.1", () => resolve(s)); }); base = `http://127.0.0.1:${(server.address() as AddressInfo).port}`; config.origin = base.replace("http:", "https:"); config.issuer = config.origin + "/api/poppy/oauth"; });
     afterAll(async () => { await new Promise<void>(resolve => server.close(() => resolve())); store.close(); });
-    beforeEach(() => { store.db.exec("DELETE FROM pap_records; DELETE FROM pap_audit"); activeMember = true; outage = false; read.mockReset(); read.mockImplementation((t, q) => readModel(t, q)); store.put("policy", "acme", { enabled: true, clients: [client.client_id] }, now() + 86400); tenants.upsert(tenant); });
+    beforeEach(() => { store.db.exec("DELETE FROM pap_records; DELETE FROM pap_audit"); activeMember = true; outage = false; memberCalls = 0; memberHook = undefined; read.mockReset(); read.mockImplementation((t, q) => readModel(t, q)); store.put("policy", "acme", { enabled: true, clients: [client.client_id] }, now() + 86400); tenants.upsert(tenant); });
     const http = (url: string, init: RequestInit = {}) => fetch(url, { ...init, headers: { Host: new URL(config.origin).host, ...init.headers } });
     const post = (path: string, body: object, extra: Record<string, string> = {}) => http(base + "/api/poppy/" + path, { method: "POST", headers: { "Content-Type": "application/json", Origin: config.origin, ...extra }, body: JSON.stringify(body) });
     const consolePost = (path: string, body: object, extra: Record<string, string> = {}) => post("console/" + path, body, { Authorization: `Bearer ${consoleJwt()}`, ...extra });
@@ -171,6 +172,13 @@ describe("PAP HTTP consent and read lifecycle", () => {
     });
     it("does not emit data when revocation completes during a read", async () => { const { raw, g } = access(); read.mockImplementationOnce(async (t, q) => { const result = await readModel(t, q); store.revoke(g.id); return result; }); const r = await query(raw); expect(r.status).toBe(401); expect(await r.text()).not.toContain("metrics"); });
     it("does not emit data when a property is removed during a read", async () => { const { raw } = access(); read.mockImplementationOnce(async (t, q) => { const result = await readModel(t, q); tenants.upsert({ ...tenant, domains: [] }); return result; }); expect((await query(raw)).status).toBe(403); });
+    it("refreshes resource policy after the final asynchronous identity check", async () => {
+        const { raw } = access();
+        memberHook = call => { if (call === 2) tenants.upsert({ ...tenant, domains: [] }); };
+        const result = await query(raw);
+        expect(result.status).toBe(403);
+        expect(await result.text()).not.toContain("metrics");
+    });
     it("revokes through console disconnect and admin suspension", async () => { const a = access(); expect((await consolePost("revoke", { tenant: "other", grant: a.g.id })).status).toBe(403); expect((await consolePost("revoke", { tenant: "acme", grant: a.g.id })).status).toBe(200); expect((await query(a.raw)).status).toBe(401); const b = access(); await consolePost("policy", { tenant: "acme", enabled: false, clients: [] }); expect((await query(b.raw)).status).toBe(401); });
     it("bounds the complete response and retains capacity until timed-out work settles", async () => {
         const { raw } = access(); const finishes: Array<() => void> = [];
@@ -183,6 +191,29 @@ describe("PAP HTTP consent and read lifecycle", () => {
         await vi.waitFor(() => expect(store.all("lease")).toHaveLength(0));
         expect(store.db.prepare("SELECT count(*) AS n FROM pap_audit WHERE outcome='read_timeout'").get()).toEqual({ n: 2 });
     });
+    it("fails closed with a sanitized JSON error when durable auditing fails", async () => {
+        const { raw } = access();
+        const audit = vi.spyOn(store, "audit").mockImplementation(() => { throw new Error("private database failure"); });
+        try {
+            const response = await query(raw);
+            expect(response.status).toBe(503);
+            const result = await response.json();
+            expect(result.error).toBe("service_unavailable");
+            expect(JSON.stringify(result)).not.toContain("private database");
+            expect(result.data).toBeUndefined();
+        } finally { audit.mockRestore(); }
+    });
     it("returns Retry-After and keeps audits free of tokens and result content", async () => { const { raw, g } = access(); for (let i = 0; i < 30; i++)
         store.rate(`grant:${g.id}`, 30); const r = await query(raw); expect(r.status).toBe(429); expect(r.headers.get("retry-after")).toBe("60"); const audit = JSON.stringify(store.db.prepare("SELECT * FROM pap_audit").all()); expect(audit).not.toContain(raw); expect(audit).not.toContain("metrics"); });
+});
+
+it("leaves discovery unpublished and private routes unavailable when disabled", async () => {
+    const app = express(); expect(mountPoppy(app, { config: null })).toBeNull();
+    const server = await new Promise<ReturnType<typeof app.listen>>(resolve => { const s = app.listen(0, "127.0.0.1", () => resolve(s)); });
+    const url = `http://127.0.0.1:${(server.address() as AddressInfo).port}`;
+    try {
+        expect((await fetch(url + "/.well-known/poppy.json")).status).toBe(404);
+        const response = await fetch(url + "/api/poppy/read", { method: "POST" });
+        expect(response.status).toBe(503); expect(await response.json()).toEqual({ error: "pilot_disabled" });
+    } finally { await new Promise<void>(resolve => server.close(() => resolve())); }
 });

@@ -5,6 +5,7 @@ import { renderConnectedAgents, agentError } from "./connected-agents.js";
 const request = new URLSearchParams(location.search).get("request");
 if (request) sessionStorage.setItem("gtm-pap-request", request);
 const root = document.getElementById("pap-consent");
+const brand = el("a", "pap-brand", "GTM Growth"); brand.href = `/console/?lang=${LANG}#agents`; root.append(brand);
 try {
   await handleRedirect();
   if (!await accessToken()) {
