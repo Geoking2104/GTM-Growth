@@ -119,3 +119,6 @@
 
 .vh-mobile-console { display:none; }
 @media(max-width:760px) { .growth-home .site-header .btn-small { display:none; }.vh-mobile-console { display:inline-flex; align-items:center; padding:10px 12px; border-radius:7px; text-decoration:none; background:#6935dc; color:white; font-size:11px; font-weight:650; } }
+
+/* Compact mobile navigation retains direct product, pricing and resource access. */
+@media(max-width:760px) { .growth-home .site-header .header-inner .nav { display:flex; order:3; flex:1 0 100%; justify-content:center; gap:18px; }.growth-home .site-header .header-inner .nav > a { display:inline-flex; font-size:11px; }.growth-home .site-header .header-inner .nav > a:last-child { display:none; }.growth-home .site-header .nav-menu summary { font-size:11px; }.growth-home .header-inner { padding-block:12px; } }

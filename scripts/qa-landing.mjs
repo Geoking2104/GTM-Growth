@@ -293,9 +293,7 @@ async function visitReadingGuides(context, locale, viewport, label) {
     const prefix = locale === 'fr' ? '/fr' : '';
     const route = `${prefix}/guides/${track}/`;
     assert.equal((await page.goto(`${origin}${route}`, { waitUntil: 'networkidle' }))?.status(), 200);
-    await page.locator("#local-preview > summary").click();
-  await page.evaluate(() => document.fonts.ready);
-  await page.locator(".brand").click();
+    await page.evaluate(() => document.fonts.ready);
     assert.equal(await page.locator('html').getAttribute('lang'), locale);
     assert.equal(await page.locator('.guide-stages > li').count(), 5);
     assert.equal(await page.locator('.site-header .nav').isVisible(), true);
@@ -336,10 +334,12 @@ try {
   const fr = await visit(context, "fr", "fr-desktop", desktop);
   await verifySharedLanding(en, fr);
   for (const [page, locale] of [[en, 'en'], [fr, 'fr']]) {
+    await page.locator('.vh-technical > summary').click();
     await page.locator('#reading-guides').screenshot({ path: path.join(outputDir, `${locale}-reading-tracks.png`) });
     // Keep the homepage's consent-test page intact; its init script resets consent on reload.
     const entry = await context.newPage();
     await entry.goto(`${origin}/${locale === 'fr' ? 'fr/' : ''}`);
+    await entry.locator('.vh-technical > summary').click();
     await entry.locator(`#reading-guides a[href="${locale === 'fr' ? '/fr' : ''}/guides/marketing/"]`).click();
     await entry.waitForURL(`${origin}${locale === 'fr' ? '/fr' : ''}/guides/marketing/`);
     await entry.close();
