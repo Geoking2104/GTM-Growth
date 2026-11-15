@@ -9,6 +9,28 @@ the CLI or a configured MCP client.
 [Console EN](https://gtm.kayroslab.com/console/?lang=en#c-public-read) ·
 [Console FR](https://gtm.kayroslab.com/console/?lang=fr#c-public-read)
 
+## Explore the platform visually
+
+The [English homepage](https://gtm.kayroslab.com/) and
+[French homepage](https://gtm.kayroslab.com/fr/) now lead with a free page analysis
+and six original interactive product illustrations: SEO/GEO, AI visibility, local
+presence, Social, CRM journeys, and data-assisted decisions. Each scene links to
+its real console destination. Figures are explicitly fictional demo data; the
+showcase does not call providers or imply customer results.
+
+The full 35-function catalogue, local planner, clickable CRM example and technical
+guides remain available through progressive disclosure and direct links. Motion
+can be paused, stops during keyboard interaction, and respects reduced-motion
+preferences. Both locales share the same layout and behavior; no external video
+player or third-party tracking is added.
+
+Maintain the experience in `site/landing/template.html`, its EN/FR dictionaries,
+`scripts/visual-home-markup.mjs`, and `site/visual-home.{css,js}`. Run
+`npm run site:render` after content changes and `npm run site:check` before release.
+The browser QA checks the six scenes, keyboard controls, reduced motion, mobile
+layout and existing free-audit journey. Source changes require a separate verified
+OVH deployment; Cloud merchant activation remains a separate operation.
+
 ## Choose your reading track
 
 | Reader | Start here | Result |

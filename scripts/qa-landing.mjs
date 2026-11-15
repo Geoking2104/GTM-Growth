@@ -45,6 +45,7 @@ async function visit(browserContext, locale, label, viewport) {
   assert.equal(response?.status(), 200, `${label} homepage loaded`);
   assert.equal(await page.locator("html").getAttribute("lang"), locale, `${label} correct html lang`);
   assert.equal(await page.locator('link[rel="canonical"]').getAttribute("href"), `https://gtm.kayroslab.com/${locale === "fr" ? "fr/" : ""}`);
+  await page.locator("#local-preview > summary").click();
   const planner = page.locator("#local-seo-planner");
   await planner.waitFor();
   await planner.locator("select").selectOption("web-only");
@@ -52,7 +53,9 @@ async function visit(browserContext, locale, label, viewport) {
   assert.match(await planner.locator("a").getAttribute("href"), new RegExp(`lang=${locale}`));
   await planner.locator("select").selectOption("service-area");
   assert.match(await planner.innerText(), locale === "fr" ? /adresse privée/ : /private address/);
+  await page.locator("#local-preview > summary").click();
   await page.evaluate(() => document.fonts.ready);
+  await page.locator(".brand").click();
   const sizing = await page.evaluate(() => ({ width: innerWidth, documentWidth: document.documentElement.scrollWidth }));
   assert.ok(sizing.documentWidth <= sizing.width + 2, `${label}: horizontal overflow ${JSON.stringify(sizing)}`);
   const urlFieldHeight = await page.locator('#url-input').evaluate(input => input.getBoundingClientRect().height);
@@ -68,6 +71,32 @@ async function visit(browserContext, locale, label, viewport) {
   await privacy.getByRole("button", { name: locale === "fr" ? "Refuser" : "Reject" }).click();
   await privacy.waitFor({ state: "hidden" });
   await page.screenshot({ path: path.join(outputDir, `${label}.png`) });
+  // Exercise the actual product reel, including its routes and accessibility contract.
+  const sceneIds = ['search', 'ai', 'local', 'social', 'crm', 'decide'];
+  for (const id of sceneIds) {
+    await page.locator(`#tab-${id}`).click();
+    assert.equal(await page.locator('[role="tabpanel"]:visible').count(), 1);
+    assert.equal(await page.locator(`#tab-${id}`).getAttribute('aria-selected'), 'true');
+    assert.equal(await page.locator('#demo-motion').getAttribute('aria-pressed'), 'false', 'manual selection stops rotation');
+    const href = await page.locator(`#demo-${id} .vh-action`).getAttribute('href');
+    assert.ok(href === '#url-form' || href.startsWith(`/console/?lang=${locale}#`));
+    assert.ok(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth + 2), `${label}: ${id} has no overflow`);
+    if (viewport.width > 1000) await page.locator('#console').screenshot({ path: path.join(outputDir, `${label}-scene-${id}.png`) });
+  }
+  await page.locator('#tab-decide').press('Home');
+  assert.equal(await page.locator('#tab-search').getAttribute('aria-selected'), 'true');
+  await page.locator('#tab-search').press('ArrowRight');
+  assert.equal(await page.locator('#tab-ai').getAttribute('aria-selected'), 'true');
+  await page.locator('#tab-ai').press('End');
+  assert.equal(await page.locator('#tab-decide').getAttribute('aria-selected'), 'true');
+  await page.emulateMedia({ reducedMotion: 'reduce' });
+  assert.equal(await page.locator('#demo-motion').getAttribute('aria-pressed'), 'false');
+  await page.locator('#tab-search').click();
+  await page.locator('#console').screenshot({ path: path.join(outputDir, `${label}-product.png`) });
+  await page.goto(`${origin}/${locale === 'fr' ? 'fr/' : ''}#features`);
+  await page.getByRole('button', { name: locale === 'fr' ? 'Refuser' : 'Reject', exact: true }).click();
+  assert.equal(await page.locator('#tool-explorer').evaluate(node => node.open), true, 'bookmarked catalogue opens its disclosure');
+  await page.locator('#tool-explorer > summary').click();
   const plans = page.locator("#offres");
   const pricingCopy = await plans.innerText();
   assert.match(pricingCopy, /39/, `${label}: Solo pilot price`);
@@ -75,6 +104,7 @@ async function visit(browserContext, locale, label, viewport) {
   assert.match(pricingCopy, locale === "fr" ? /HT\/TTC/ : /VAT/, `${label}: VAT status is explicit`);
   assert.equal(await plans.locator('a[href="#contact"]').count(), 3, `${label}: pilot and support CTAs lead to contact, not inactive checkout`);
   if (viewport.width > 1000) await plans.screenshot({ path: path.join(outputDir, `${label}-pricing.png`) });
+  await page.locator('#tool-explorer > summary').click();
   await page.locator('[data-profile="growth"]').click();
   assert.equal(await page.locator('#journey-recommendation a').count(), 4);
   assert.equal(await page.locator('[data-stage="understand"]').getAttribute('aria-pressed'), 'true');
@@ -259,7 +289,9 @@ async function visitReadingGuides(context, locale, viewport, label) {
     const prefix = locale === 'fr' ? '/fr' : '';
     const route = `${prefix}/guides/${track}/`;
     assert.equal((await page.goto(`${origin}${route}`, { waitUntil: 'networkidle' }))?.status(), 200);
-    await page.evaluate(() => document.fonts.ready);
+    await page.locator("#local-preview > summary").click();
+  await page.evaluate(() => document.fonts.ready);
+  await page.locator(".brand").click();
     assert.equal(await page.locator('html').getAttribute('lang'), locale);
     assert.equal(await page.locator('.guide-stages > li').count(), 5);
     assert.equal(await page.locator('.site-header .nav').isVisible(), true);

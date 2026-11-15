@@ -464,6 +464,7 @@ try {
       await page
         .getByRole("button", { name: L("Refuser", "Reject"), exact: true })
         .click();
+      await page.locator("#crm-preview > summary").click();
       await page.locator("#crm-global").scrollIntoViewIfNeeded();
       assert.equal(await page.locator("#crm-global details").count(), 5);
       await page.locator("#crm-global summary").nth(1).click();

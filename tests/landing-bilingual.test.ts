@@ -21,9 +21,9 @@ describe("French and English landing pages", () => {
       expect(html).toContain('id="lead-form"');
     }
   });
-  it("preserves the French editorial sections and their English translations", () => {
-    expect(fr).toContain("Sachez quoi améliorer.");
-    expect(en).toContain("Know what to improve.");
+  it("leads with outcomes and keeps detailed bilingual resources accessible", () => {
+    expect(fr).toContain("Attirez. Convainquez.");
+    expect(en).toContain("Get seen. Get chosen.");
     for (const id of ["audit", "fonctionnement", "outils", "ops", "console", "roadmap", "toolkit", "mesure", "preuve", "offres", "contact", "faq", "credit"]) {
       for (const html of [en, fr]) expect(html).toContain(`id="${id}"`);
     }
