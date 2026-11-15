@@ -22,7 +22,7 @@ try {
         plans:[{key:'solo',name:'Cloud Solo',chargeCents:null,testChargeCents:3900,pilotPriceCents:3900,limits:{monthlyOperations:100,maxDomains:1}},{key:'agency',name:'Cloud Agence',chargeCents:null,testChargeCents:14900,pilotPriceCents:14900,limits:{monthlyOperations:500,maxDomains:5}}],
         ...(active?{plan:'solo',status:'active',cloudAccess:'paid',paidUntil:'2027-01-01T00:00:00Z',nextPaymentDate:'2027-01-01',limits:{monthlyOperations:100,maxDomains:1},usagePeriod:'2026-11',usage:[{period:'2026-11',metric:'operations',quantity:24}]}:{})};
       window.billingCalls=[];
-      const request=async (route,body)=>{window.billingCalls.push({route,body});if(route==='/checkout')return{checkoutUrl:base+'/checkout-fixture'};if(route==='/cancel'){status.status='canceled';status.cancelRequested=true;}return structuredClone(status);};
+      const request=async (route,body)=>{window.billingCalls.push({route,body});if(route==='/checkout')return{checkoutUrl:base+'/checkout-fixture'};if(route==='/cancel'){status.status='canceled';status.cancelRequested=true;status.nextPaymentDate=null;}return structuredClone(status);};
       document.querySelector('main').append(await renderBilling({me:{role:'tenant-admin'},request,fr:lang==='fr'}));
     },{lang,active,base});
     if (active) {

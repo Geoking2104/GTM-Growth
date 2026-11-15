@@ -13,6 +13,7 @@ the source baseline for this review is `353e658`.
 | --- | --- | --- |
 | Core | Node ≥20, TypeScript, Express, Zod | Public API, authenticated console API, MCP and CLI |
 | UI | Static FR/EN HTML/CSS and JavaScript modules in `site/` | Shared landing generation, console navigation and source-aware states |
+| Billing | Dedicated Mollie GTM profile; `src/billing/` and isolated SQLite | Verified payments, paid/grace/read-only policy, explicit enrollment and atomic quotas; disabled by default. [Activation runbook](../billing/MOLLIE-SUBSCRIPTIONS-IMPLEMENTATION.md) |
 | Identity | Keycloak; PostgreSQL for Keycloak | OIDC/JWKS validation, tenant membership and resource scope |
 | Application state | Module SQLite stores on the local persistent volume | Tenant registry, observations, approvals, CRM events and workflow state |
 | Cache | Optional Redis | Caching; not the durable workflow database |

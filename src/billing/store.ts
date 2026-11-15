@@ -243,7 +243,7 @@ export class BillingStore {
   }
   setCanceled(accountId: string, actor: string | null = null) {
     this.db.transaction(() => {
-      this.db.prepare("UPDATE billing_subscriptions SET status=CASE WHEN status='review_required' THEN status ELSE 'canceled' END,cancel_requested=1,next_payment_date=NULL,updated_at=? WHERE account_id=?")
+      this.db.prepare("UPDATE billing_subscriptions SET status=CASE WHEN status='review_required' THEN status ELSE 'canceled' END,cancel_requested=1,pending_plan_key=NULL,pending_amount_cents=NULL,next_payment_date=NULL,updated_at=? WHERE account_id=?")
         .run(now(), accountId);
       this.event(accountId, "subscription_canceled", null, actor);
     }).immediate();

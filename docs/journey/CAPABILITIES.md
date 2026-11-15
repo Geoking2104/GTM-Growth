@@ -40,7 +40,7 @@ in the reviewed source. It does not mean deployed, connected or accepted by a li
 | Coordinate: GBP jobs and writes | Implemented + optional Node-RED | Five queued-job pollers; only phone/website writes after separate approval/readback. WF-04 scheduled performance collection remains pending | [Node-RED](../../deploy/node-red/README.md), [publication](../../src/local-seo/publication.ts) |
 | Coordinate: data assistant | Implemented | Guided tenant-authorised reads and preferences; no model key for console answers | [Assistant contract](../product/DATA-AGENT-JOURNEY.md), [service](../../src/data-agent/service.ts) |
 | Coordinate: Slack/Eve | Optional integration | Separate Node 26 service, model credentials and exact workspace/channel/user binding; five curated reads including customer journey | [Eve runbook](../../integrations/eve-data-agent/README.md), [bridge](../../src/data-agent/bridge.ts) |
-| Cross-cutting: Cloud billing | Deferred | €39 Solo / €149 Agency are hypotheses. No active checkout, quotas or subscription entitlements | [Shared website copy](../../site/journey-content.js), [website contract](../product/WEBSITE-CUSTOMER-JOURNEY.md) |
+| Cross-cutting: Cloud billing | Implemented, disabled by default | €39 Solo / €149 Agency are hypotheses. Verified payment access, configured quotas and bilingual management exist; live merchant setup and sandbox acceptance remain pending | [Shared website copy](../../site/journey-content.js), [website contract](../product/WEBSITE-CUSTOMER-JOURNEY.md) |
 
 ## Release evidence
 

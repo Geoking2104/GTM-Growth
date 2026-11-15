@@ -241,8 +241,9 @@ describe("Cloud subscriptions / Mollie (no live charges)", () => {
   it("cancels recurring collection but preserves paid access until expiry", async () => {
     const { service, mollie } = harness(); await initial(service, mollie);
     const paidUntil = service.status(ctx()).paidUntil;
+    await service.changePlan(ctx(), user, consent("agency"));
     await service.cancel(ctx(), user, { confirm: "CANCEL_SUBSCRIPTION" });
-    expect(service.status(ctx())).toMatchObject({ status: "canceled", cloudAccess: "paid", cancelRequested: true, paidUntil });
+    expect(service.status(ctx())).toMatchObject({ status: "canceled", cloudAccess: "paid", cancelRequested: true, pendingPlan: null, nextPaymentDate: null, paidUntil });
     expect(mollie.cancelCalls).toBe(1);
   });
   it("schedules plan change for next renewal, never reprices the already paid period", async () => {
