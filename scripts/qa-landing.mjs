@@ -81,7 +81,7 @@ async function visit(browserContext, locale, label, viewport) {
   await page.locator('#feature-query').fill('zzzz-no-match');
   assert.equal(await page.locator('[data-feature]:visible').count(), 0);
   await page.locator('#feature-reset').click();
-  assert.equal(await page.locator('[data-feature]:visible').count(), 33);
+  assert.equal(await page.locator('[data-feature]:visible').count(), 34);
   await page.locator('#feature-query').fill('Slack');
   assert.equal(await page.locator('[data-feature]:visible').count(), 1);
   assert.ok((await page.locator('#feature-slack a').getAttribute('href')).endsWith(`/console/?lang=${locale}#overview`));

@@ -1,3 +1,4 @@
+import { renderConnectedAgents } from "./connected-agents.js";
 import { renderCrm } from './crm.js';
 import { renderSocial } from './social.js';
 import { renderLocalSeo } from "./local-seo-network.js";
@@ -206,6 +207,7 @@ const SECTIONS = {
       { id: "tags", label: t("t_tags"), async: async () => renderTags(await api("/tracking/status", scope())) },
       { id: "settings", label: t("t_settings"), needsDomain: false, async: async () => { const status = await api("/tracking/status", scope()).catch(() => null); return renderSettings(state.me, saveSettings, status?.serviceAccount ?? null, api); } },
       { id: "access", label: LANG === "fr" ? "Accès" : "Access", needsDomain: false, async: async () => renderAccessManagement(state.me, api) }]) },
+    { id: "agents", icon: "agents", build: () => custom("agents", [{ id: "connections", label: LANG === "fr" ? "Agents connectés" : "Connected agents", needsDomain: false, async: async () => renderConnectedAgents({ tenant: state.me?.tenant?.id }) }]) },
     { id: "gtm", icon: "tag", build: () => custom("gtm", [
       { id: "workspace", label: t("t_gtm"), needsDomain: false, async: async () => renderGtm(await api("/gtm/inventory", scope({ container: state.gtmContainer || undefined })), api, rerender) }]) },
     { id: "audit", icon: "audit", build: fromTool("audit") },

@@ -6,6 +6,11 @@ export function guideContent(locale) {
     return locale === 'fr' ? fr : en;
   };
   return {
+    papTitle: L('Your agent, your authorized workspace', 'Votre agent, votre espace autorisé'),
+    papValue: L('Read authorized GTM Growth workspace data through a compatible agent, with visible sources and revocable access. Choose one workspace, the requested read permissions and the sources you want to share.', 'Lisez les données autorisées de votre espace GTM Growth via un agent compatible, avec des sources visibles et un accès révocable. Choisissez un espace, les permissions de lecture demandées et les sources à partager.'),
+    papTechnical: L('The PAP 1.0 facade reuses five aggregate read models. Delegated signatures, OAuth grants, current Keycloak membership and resource consent are checked before returning data. Connected agents provides EN/FR consent and revocation.', 'La façade PAP 1.0 réutilise cinq modèles de lecture agrégée. Signatures déléguées, autorisations OAuth, appartenance Keycloak courante et consentement aux sources sont vérifiés avant de retourner les données. Agents connectés propose le consentement et la révocation en FR/EN.'),
+    papGate: L('Opt-in pilot, disabled by default: staging acceptance and testing of the actual agent are required. No publishing, purchases, new collection, general MCP access or CRM identity linking. Consent lasts at most 30 days and ends earlier on Keycloak logout or session expiry.', 'Pilote sur activation, désactivé par défaut : une recette de préproduction et un test de l’agent réel sont requis. Aucune publication, aucun achat, aucune nouvelle collecte, aucun accès MCP général ni rapprochement d’identité CRM. Le consentement dure au maximum 30 jours et prend fin plus tôt à la déconnexion ou à l’expiration de la session Keycloak.'),
+    papAction: L('Review connected agents', 'Consulter les agents connectés'),
     homeTitle: L('One journey. Two ways to understand it.', 'Un parcours. Deux façons de le comprendre.'),
     homeIntro: L('Choose the business view or the implementation view. Both follow the same decisions, sources and next steps.', 'Choisissez la lecture métier ou la lecture technique. Toutes deux suivent les mêmes décisions, sources et prochaines étapes.'),
     kicker: L('Understand before connecting', 'Comprendre avant de connecter'),

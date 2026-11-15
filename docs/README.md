@@ -88,3 +88,7 @@ The journey blueprint owns vocabulary and handoffs. The capability register owns
 availability and release evidence. Reading tracks explain the same facts for their
 audiences. Domain contracts own API/detail, runbooks own activation/recovery, and
 historical documents preserve intent. Run `npm run docs:check` after edits.
+
+## PAP 1.0 read pilot
+
+[Personal Agent Protocol read pilot](PAP.md). Implemented behind a disabled feature flag; production and real-agent interoperability require staging evidence.

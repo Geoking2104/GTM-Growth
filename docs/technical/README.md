@@ -138,3 +138,7 @@ CI also runs the production image, bilingual browser flows and optional runtime
 smoke tests. [Operations](OPERATIONS.md) covers activation, release evidence and
 recovery; [CI/CD](../CI_CD.md) maps the workflows. Live provider acceptance is
 separate from fixture/CI success.
+
+## PAP 1.0 read pilot
+
+[PAP authorization, activation and rollback](PAP-RUNBOOK.md). Implemented behind a disabled feature flag; production and real-agent interoperability require staging evidence.

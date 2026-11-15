@@ -119,3 +119,7 @@ order and manual follow-up in CRM. Missing touchpoints remain missing.
 
 The example contains no claimed customer result or revenue uplift. Agree targets
 after a baseline exists. [Technical acceptance sequence](../technical/OPERATIONS.md#qualification-by-customer-handoff).
+
+## PAP 1.0 read pilot
+
+[Personal agent journey and customer benefits](../PAP.md). Implemented behind a disabled feature flag; production and real-agent interoperability require staging evidence.

@@ -24,6 +24,13 @@ services:
       OIDC_EXTRA_ISSUERS: ${OIDC_EXTRA_ISSUERS:-}
       TENANTS_PATH: /data/tenants.json
       REPORTS_PATH: /data/reports
+      PAP_ENABLED: ${PAP_ENABLED:-false}
+      PAP_PUBLIC_ORIGIN: ${PAP_PUBLIC_ORIGIN:-https://gtm.kayroslab.com}
+      PAP_ALLOWED_CLIENTS: ${PAP_ALLOWED_CLIENTS:-}
+      PAP_DB_PATH: /data/poppy.sqlite3
+      PAP_MEMBERSHIP_AUTH_REALM: ${PAP_MEMBERSHIP_AUTH_REALM:-gtm-growth}
+      PAP_MEMBERSHIP_CLIENT_ID: ${PAP_MEMBERSHIP_CLIENT_ID:-}
+      PAP_MEMBERSHIP_CLIENT_SECRET: ${PAP_MEMBERSHIP_CLIENT_SECRET:-}
       CONSOLE_DOMAIN: gtm.kayroslab.com
       # Tenant provisioning (service account, secret only in .env.local).
       KEYCLOAK_ADMIN_REALM: ${KEYCLOAK_ADMIN_REALM:-gtm-growth}

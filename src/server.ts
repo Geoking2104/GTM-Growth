@@ -1,3 +1,4 @@
+import { mountPoppy } from "./poppy/router.js";
 import { crmPluginRouter } from "./crm/plugins.js";
 import { buildSocialMcpRouter } from './console/social-mcp.js';
 import { socialWorkerRouter } from "./social/worker.js";
@@ -103,6 +104,7 @@ export async function startServer(transportType: "stdio" | "http" = "stdio") {
   app.use("/api/internal/data-agent", buildDataAgentBridge());
   app.use("/api/integrations/commerce/webhooks", ecommerceWebhookRouter());
   app.use("/webhooks", ecommerceWebhookRouter());
+  mountPoppy(app);
   app.use(express.json({ limit: "4mb" }));
 
   const port = parseInt(process.env.PORT || "3000", 10);

@@ -66,3 +66,7 @@ update the two reading tracks and the relevant contract. Add a dated release row
 only from an observed run and deployment evidence. Do not copy “live” labels into
 multiple guides; link to this register. Historical specifications describe intent,
 not proof of current availability.
+
+## Personal agent access (PAP 1.0)
+
+Read-only facade, delegated Session verification, explicit workspace/resource consent, live Keycloak membership checks, rotating tokens and durable revocation are implemented behind `PAP_ENABLED=false`. The EN/FR console includes Connected agents. Deployed Keycloak qualification, upstream validator results and real-agent production compatibility remain **not verified**. See [scope and acceptance](../PAP.md) and [runbook](../technical/PAP-RUNBOOK.md). PAP access events are not CRM touchpoints. L2 writes and L3 merchant/customer identity integration are outside this release.
