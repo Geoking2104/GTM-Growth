@@ -138,6 +138,7 @@ export function buildSocialMcpRouter(options: ConsoleOptions = {}) {
       const parsed = d.schema.safeParse(request.params.arguments ?? {});
       if (!parsed.success) return fail("Invalid arguments");
       try {
+        options.cloud?.authorize(p.tenant.id, d.name === "social_state" ? "/social/state" : d.name === "social_analytics" ? "/social/analytics" : "/mcp/social");
         return success(await d.run(p, parsed.data));
       } catch {
         return fail("Unable to access or prepare requested data");

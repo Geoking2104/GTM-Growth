@@ -13,7 +13,7 @@ it('covers every customer console section with a real destination and bilingual 
   for (const language of ['en', 'fr']) {
     const { features, stages } = journeyContent(language);
     const page = parseHTML(readFileSync(language === 'fr' ? 'site/fr/index.html' : 'site/index.html', 'utf8')).document;
-    expect(features).toHaveLength(34);
+    expect(features).toHaveLength(35);
     for (const section of sections) expect(consoleFeature(section, '', language), section).toBeTruthy();
     for (const f of features) {
       expect(stages.some(s => s.id === f.stage)).toBe(true);
@@ -40,7 +40,7 @@ it.each(['en', 'fr'])('filters, searches, recovers and recommends without hiding
   search.value = 'nonexistent-feature-xyz'; search.dispatchEvent(new window.Event('input'));
   expect(visible()).toHaveLength(0);
   expect(document.getElementById('feature-count')?.textContent).toMatch(language === 'fr' ? /Aucune/ : /No matching/);
-  document.getElementById('feature-reset')!.click(); expect(visible()).toHaveLength(34);
+  document.getElementById('feature-reset')!.click(); expect(visible()).toHaveLength(35);
   search.value = 'Slack'; search.dispatchEvent(new window.Event('input'));
   expect(visible()).toHaveLength(1); expect(visible()[0].id).toBe('feature-slack');
   expect(fetcher).not.toHaveBeenCalled();
@@ -56,7 +56,7 @@ it('restores a selected function through sign-in without tenant selection or arb
   expect(featureHandoff({ hash: '#c-public-read', search: '' }, storage, 3000)).toBeNull();
   featureHandoff({ hash: '#local_seo/network', search: '' }, storage, 1000);
   expect(featureHandoff({ hash: '', search: '' }, storage, 601001)).toBeNull();
-  for (const hash of ['https://evil.example', '#platform', '#billing', '#c-public-read', '#javascript:alert(1)']) expect(featureHandoff({ hash, search: '' }, storage, 700000)).toBeNull();
+  for (const hash of ['https://evil.example', '#platform', '#unknown', '#c-public-read', '#javascript:alert(1)']) expect(featureHandoff({ hash, search: '' }, storage, 700000)).toBeNull();
   storage.setItem('gtm-console-feature-handoff', '{bad json');
   expect(featureHandoff({ hash: '', search: '' }, storage)).toBeNull();
   expect(featureHandoff({ hash: '#ga4', search: '' }, { getItem() { throw new Error('Storage blocked'); }, setItem() { throw new Error('Storage blocked'); } })).toBeNull();

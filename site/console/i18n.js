@@ -8,6 +8,7 @@ document.documentElement.lang = LANG;
 
 const DICT = {
   fr: {
+    s_billing: "Abonnement Cloud",
     s_agents: "Agents connectés",
     s_catalog: "Produits & pages",
     s_commerce: "Commerce",
@@ -33,6 +34,7 @@ const DICT = {
     t_status: "Statut des accès", t_tags: "Balises GA4 / GTM", t_settings: "Paramètres", ga4Property: "Propriété GA4 (ID)", bingSite: "Site Bing Webmaster",
   },
   en: {
+    s_billing: "Cloud subscription",
     s_agents: "Connected agents",
     s_catalog: "Products & pages",
     s_commerce: "Commerce",

@@ -1,3 +1,4 @@
+import { CloudAccessError, type CloudAccess } from "../billing/access.js";
 import fs from "node:fs";
 import { createHash } from "node:crypto";
 import { Router } from "express";
@@ -223,7 +224,7 @@ export function pluginOperation(
   }
   throw new Error("CRM_NOT_FOUND");
 }
-export function crmPluginRouter() {
+export function crmPluginRouter(cloud?: CloudAccess) {
   const router = Router();
   router.post("/:operation", (req, res) => {
     try {
@@ -239,12 +240,14 @@ export function crmPluginRouter() {
         return res.status(403).json({ error: "CRM_ACCESS" });
       if (Buffer.byteLength(JSON.stringify(req.body ?? {})) > 256000)
         return res.status(413).json({ error: "CRM_PAYLOAD_LIMIT" });
+      cloud?.authorize(tenant.id, req.params.operation === "timeline" ? "/crm/timeline" : "/plugin/crm");
       quota(config);
       res.setHeader("Cache-Control", "no-store");
       return res.json(
         pluginOperation(tenant, config, req.params.operation, req.body),
       );
     } catch (error) {
+      if (error instanceof CloudAccessError) return res.status(error.status).json({ error: error.code });
       const code =
         error instanceof Error && /^CRM_[A-Z_]+$/.test(error.message)
           ? error.message

@@ -1,3 +1,4 @@
+import { CloudAccessError } from "../billing/access.js";
 import express, { type Express, type Request, type Response, type NextFunction, type RequestHandler } from "express";
 import { z, ZodError } from "zod";
 import { requireOidc, oidcConfigFromEnv, type OidcConfig, type JwksLoader, type TokenClaims } from "../console/auth.js";
@@ -13,6 +14,7 @@ import { authorized, availableResources, resourceSubset, type Policy } from "./p
 import { authorizationMetadata, discovery, metadataPath, openapi } from "./discovery.js";
 import { configFromEnv, demand, hash, now, PapError, random, resourcesSchema, scopes, type Code, type Grant, type PapConfig, type Pending, type Principal, type Token } from "./types.js";
 export interface PapOptions {
+    cloud?: import("../billing/access.js").CloudAccess;
     config?: PapConfig | null;
     store?: PapStore;
     tenants?: TenantStore;
@@ -283,6 +285,7 @@ export function mountPoppy(app: Express, options: PapOptions = {}): PapStore | n
             const current = await authorized(g.id, store, tenants, config, member);
             demand(!res.headersSent, "read_timeout", 504);
             demand(!q.source || (q.model === "search" ? current.tenant.gscProperties : q.model === "analytics" ? current.tenant.ga4Properties ?? [] : []).includes(q.source), "resource_denied", 403);
+            options.cloud?.authorize(g.tenant, "/poppy/read", { domainCount: current.tenant.domains.length });
             const release = store.lease(g.tenant);
             const work = Promise.resolve().then(() => (options.read ?? readModel)(current.tenant, q));
             void work.then(release, release);
@@ -296,7 +299,7 @@ export function mountPoppy(app: Express, options: PapOptions = {}): PapStore | n
     }, options.readTimeoutMs ?? 15000));
     router.use((_req, res) => res.status(404).json({ error: "not_found" }));
     router.use((error: unknown, _req: Request, res: Response, _next: NextFunction) => {
-        let e = error instanceof PapError ? error : error instanceof ZodError || (error as {
+        let e = error instanceof CloudAccessError ? new PapError(error.status, error.code) : error instanceof PapError ? error : error instanceof ZodError || (error as {
             type?: string;
         })?.type === "entity.parse.failed" ? new PapError(400, "invalid_request") : (error as {
             type?: string;

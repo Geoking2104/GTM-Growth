@@ -1,3 +1,4 @@
+import { mountBillingApi } from "./billing/api.js";
 import { mountPoppy } from "./poppy/router.js";
 import { crmPluginRouter } from "./crm/plugins.js";
 import { buildSocialMcpRouter } from './console/social-mcp.js';
@@ -101,10 +102,12 @@ export async function startServer(transportType: "stdio" | "http" = "stdio") {
     methods: ["GET", "POST", "OPTIONS", "DELETE"],
     allowedHeaders: ["Content-Type", "Authorization", "MCP-Session-Id"],
   }));
-  app.use("/api/internal/data-agent", buildDataAgentBridge());
+  const billing = mountBillingApi(app);
+  const cloud = billing?.access;
+  app.use("/api/internal/data-agent", buildDataAgentBridge({ cloud }));
   app.use("/api/integrations/commerce/webhooks", ecommerceWebhookRouter());
   app.use("/webhooks", ecommerceWebhookRouter());
-  mountPoppy(app);
+  mountPoppy(app, { cloud });
   app.use(express.json({ limit: "4mb" }));
 
   const port = parseInt(process.env.PORT || "3000", 10);
@@ -134,15 +137,15 @@ export async function startServer(transportType: "stdio" | "http" = "stdio") {
   mountPublicApi(app);
 
   // Console API â€” Keycloak-protected (OIDC bearer tokens validated via JWKS).
-  mountConsoleApi(app);
-  app.use("/api/internal/local-seo", localWorkerRouter());
-  app.use("/api/internal/social", socialWorkerRouter());
-  app.use("/api/integrations/crm", crmPluginRouter());
-  app.use("/api/mcp/competition", buildCompetitionMcpRouter());
-  app.use("/api/mcp/social", buildSocialMcpRouter());
+  mountConsoleApi(app, { cloud });
+  app.use("/api/internal/local-seo", localWorkerRouter(undefined, cloud));
+  app.use("/api/internal/social", socialWorkerRouter(cloud));
+  app.use("/api/integrations/crm", crmPluginRouter(cloud));
+  app.use("/api/mcp/competition", buildCompetitionMcpRouter({ cloud }));
+  app.use("/api/mcp/social", buildSocialMcpRouter({ cloud }));
   // Operations scheduler (T-11): periodic visibility + rank checks per tenant.
   // Opt-in through env so tests, stdio runs and CI stay quiet.
-  if (process.env.OPS_SCHEDULER_ENABLED === "true") startScheduler();
+  if (process.env.OPS_SCHEDULER_ENABLED === "true") startScheduler({ cloud });
 
   // â”€â”€ Modern: Streamable HTTP transport at /mcp (stateless) â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
   app.post("/mcp", requireToken, async (req: Request, res: Response) => {

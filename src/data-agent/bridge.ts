@@ -1,4 +1,5 @@
 /** Eve authenticates Slack; this bridge independently binds that principal to one tenant. */
+import { CloudAccessError, type CloudAccess } from "../billing/access.js";
 import express from "express";
 import fs from "node:fs";
 import { createHmac, timingSafeEqual } from "node:crypto";
@@ -50,7 +51,7 @@ const requestSchema = z.object({
 export function bridgeSignature(secret: string, timestamp: string, nonce: string, raw: Buffer | string) {
   return createHmac("sha256", secret).update(`v1:${timestamp}:${nonce}:`).update(raw).digest("hex");
 }
-export function buildDataAgentBridge(options: { store?: TenantStore; env?: NodeJS.ProcessEnv } = {}) {
+export function buildDataAgentBridge(options: { store?: TenantStore; env?: NodeJS.ProcessEnv; cloud?: CloudAccess } = {}) {
   const env = options.env ?? process.env; const store = options.store ?? new TenantStore(); const router = express.Router();
   // Mount before express.json in the HTTP server. Only signed, bounded payloads reach JSON parsing.
   router.post("/read", express.raw({ type: "application/json", limit: "16kb" }), async (req, res) => {
@@ -72,6 +73,7 @@ export function buildDataAgentBridge(options: { store?: TenantStore; env?: NodeJ
       if (input.operation === "journey") {
         const selected = input.journey;
         if (!selected || !tenantOwnsUrl(tenant, selected.url)) return res.status(403).json({ error: "Select a page in this workspace" });
+        options.cloud?.authorize(tenant.id, "/agent/journey", { domainCount: tenant.domains.length });
         const primary = await readJourneyPage(tenant, { pageUrl: selected.url, competitor: false });
         const competitors = await Promise.all(selected.competitors.map(async c => ({ ...c, context: (await readJourneyPage(tenant, { pageUrl: c.url, competitor: true })).journeyContext })));
         const journey = buildJourneyPreview({ ...primary, ...selected, url: primary.url, language: input.locale, competitors });
@@ -79,8 +81,10 @@ export function buildDataAgentBridge(options: { store?: TenantStore; env?: NodeJ
       }
       if (!input.model) return res.status(400).json({ error: "Model required" });
       if (input.operation === "definition") return res.json(catalog.find(m => m.id === input.model));
+      options.cloud?.authorize(tenant.id, "/agent/query", { domainCount: tenant.domains.length });
       return res.json(await readModel(tenant, { model: input.model, days: input.days, source: input.source, locale: input.locale }));
     } catch (error) {
+      if (error instanceof CloudAccessError) return res.status(error.status).json({ error: error.code });
       // No upstream details, credentials, raw payloads or tenant data in error responses/logs.
       return res.status(error instanceof z.ZodError || error instanceof SyntaxError ? 400 : 503).json({ error: "Agent read unavailable. Check configuration and selected source." });
     }

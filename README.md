@@ -49,7 +49,7 @@ implemented behavior, configuration requirements, incomplete work and release ev
 - **Connected workspace:** tenant-scoped analytics, AI-answer imports and optional API collection, local SEO, Shopify/PrestaShop, Social and native/client-plugin CRM. Each source has separate activation requirements.
 - **Reviewed action:** generators and Apply Mode previews; WordPress drafts, supervised GBP phone/website changes and Social publication have different approval contracts.
 - **Optional services:** Node-RED for local jobs, ZenML/Postiz for Social, Eve for approved Slack channels. Installing the core does not activate these services.
-- **Still incomplete:** public live Playwright/GEO v2 execution, Apply Mode production writers, named vendor CRM adapters, autonomous outreach and Mollie subscription entitlements.
+- **Still incomplete:** public live Playwright/GEO v2 execution, Apply Mode production writers, named vendor CRM adapters, autonomous outreach and live Mollie merchant activation.
 
 Readiness is not measured AI visibility. A question hypothesis is not observed
 demand. Referrer/UTM attribution is not causal revenue proof. The
@@ -119,3 +119,21 @@ Track 1 now lives in the [Marketing guide](docs/marketing/README.md).
 
 <a id="track-2--technical--how-it-works-and-how-to-run-it"></a>
 Track 2 now lives in the [Technical guide](docs/technical/README.md).
+
+## Cloud subscriptions — Mollie
+
+The console now includes an English/French **Cloud subscription** view (`/console/#billing`):
+explicit monthly consent, payment status, usage, cancellation and next-renewal plan changes.
+Self-hosted GTM Growth remains free. Solo €39 and Agency €149 are pilot hypotheses;
+final gross prices, commercial quotas and subscription terms must be configured before launch.
+
+Only workspaces listed in `BILLING_CLOUD_TENANTS` are subject to subscription controls.
+Verified Mollie payments unlock operations; expiry or refund review blocks new cloud work
+while existing reports and selected exports remain available. A shared SQLite ledger
+atomically enforces configured monthly operation and domain limits across the console,
+PAP, Slack bridge, tenant MCP, CRM plugins and worker endpoints.
+
+**Default: billing disabled; no live merchant connection is claimed.** A platform administrator
+can use the read-only connection check to verify the dedicated GTM profile and recurring
+methods. This does not replace a real Mollie test-mode payment and webhook acceptance run.
+See [implementation, access policy and activation checklist](docs/billing/MOLLIE-SUBSCRIPTIONS-IMPLEMENTATION.md).

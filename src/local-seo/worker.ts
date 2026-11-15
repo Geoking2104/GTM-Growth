@@ -1,3 +1,4 @@
+import { CloudAccessError, type CloudAccess } from "../billing/access.js";
 /** Private Node-RED polling bridge. Worker tokens resolve one tenant and allowed commands server-side. */
 import fs from "node:fs";
 import { createHash, randomUUID } from "node:crypto";
@@ -41,7 +42,7 @@ export async function runJob(tenant:string,allowed:readonly string[],provider:Gb
       j.status=revoked?"revoked":j.attempt<3?"queued":"failed";j.error=code;j.leaseUntil=Date.now()+(code==="GBP_QUOTA"?3600000:60000);log(s,"worker",`job-${j.status}`,j.siteId);return {jobId:j.id,status:j.status,error:code};});
   }
 }
-export function localWorkerRouter(execute:typeof runJob=runJob) {
+export function localWorkerRouter(execute:typeof runJob=runJob, cloud?: CloudAccess) {
   const router=Router();
   router.post("/tick",async(req,res)=>{
     try {
@@ -51,7 +52,8 @@ export function localWorkerRouter(execute:typeof runJob=runJob) {
       if(!worker)return res.status(403).json({error:"LOCAL_ACCESS"});
       const input=z.object({workflow:z.enum(workflows)}).strict().parse(req.body);
       if(!worker.workflows.includes(input.workflow))return res.status(403).json({error:"LOCAL_ACCESS"});
+      cloud?.authorize(worker.tenant, "/worker/local-seo");
       return res.json(await execute(worker.tenant,[input.workflow]));
-    }catch(e){return res.status(e instanceof z.ZodError?400:503).json({error:e instanceof z.ZodError?"LOCAL_INVALID":"WORKER_UNAVAILABLE"});}
+    }catch(e){if(e instanceof CloudAccessError)return res.status(e.status).json({error:e.code});return res.status(e instanceof z.ZodError?400:503).json({error:e instanceof z.ZodError?"LOCAL_INVALID":"WORKER_UNAVAILABLE"});}
   });return router;
 }

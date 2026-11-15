@@ -1,3 +1,4 @@
+import { CloudAccessError, type CloudAccess } from "../billing/access.js";
 import fs from "node:fs";
 import { createHash } from "node:crypto";
 import { Router } from "express";
@@ -611,7 +612,7 @@ const workersSchema = z.record(
     })
     .strict(),
 );
-export function socialWorkerRouter() {
+export function socialWorkerRouter(cloud?: CloudAccess) {
   const router = Router();
   router.use((req, res, next) => {
     try {
@@ -628,9 +629,11 @@ export function socialWorkerRouter() {
       const tenant = new TenantStore().get(config.tenant);
       if (tenant?.status !== "active")
         return res.status(403).json({ error: "SOCIAL_ACCESS" });
+      cloud?.authorize(tenant.id, "/worker/social", { consume: req.path === "/execute" });
       res.locals.worker = { config, tenant };
       next();
-    } catch {
+    } catch (error) {
+      if (error instanceof CloudAccessError) return res.status(error.status).json({ error: error.code });
       return res.status(503).json({ error: "SOCIAL_WORKER_UNAVAILABLE" });
     }
   });

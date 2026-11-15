@@ -100,7 +100,7 @@ This is an operating recommendation, not an implemented automatic 30/60/90-day p
 ## Offer and claims
 
 - Self-hosted software remains free under Apache-2.0. Operators still supply hosting and any optional provider access.
-- Solo €39/month and Agency €149/month are pilot hypotheses. Mollie checkout, plan quotas and subscription entitlements are not active.
+- Solo €39/month and Agency €149/month are pilot hypotheses. Mollie checkout, configured quotas and subscription controls are implemented but disabled by default. Live payments remain pending merchant setup, approved gross prices, quota values, terms and real sandbox acceptance. See the [billing rollout guide](../billing/MOLLIE-SUBSCRIPTIONS-IMPLEMENTATION.md).
 - Public analysis, manual answer imports and guided console answers need no paid model API. Optional API collections and Slack may incur costs.
 - GEO v2, live isolated rendering, Apply Mode writers and named vendor CRM connectors must not be sold as activated features.
 

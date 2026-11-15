@@ -1,3 +1,4 @@
+import { CloudAccessError, type CloudAccess } from "../billing/access.js";
 import { crmRoutes } from "./crm.js";
 /**
  * Console API â€” /api/console/* â€” protected by Keycloak (OIDC bearer tokens).
@@ -164,6 +165,7 @@ export const phase1Routes: ConsoleRoute[] = [
 ];
 
 export interface ConsoleOptions {
+  cloud?: CloudAccess;
   config?: OidcConfig | null;
   jwksLoader?: JwksLoader;
   routes?: ConsoleRoute[];
@@ -320,6 +322,8 @@ export function buildConsoleRouter(routes: ConsoleRoute[], options: ConsoleOptio
       siteProfiles = { ...t.siteProfiles, [profile.domain]: { name: String(profile.name).trim(), description: String(profile.description).trim(), industry: String(profile.industry).trim() } };
     }
     let updated: Tenant;
+    try { options.cloud?.authorize(t.id, "/tenant/settings", { consume: false, domainCount: new Set(list(body.domains) ?? t.domains).size }); }
+    catch (error) { if (error instanceof CloudAccessError) return fail(res, error.status, error.code); throw error; }
     try { updated = store.upsert({ ...t, usageType, watchedQueries, siteProfiles, ga4Properties: ga4List ?? t.ga4Properties, bingSites: bingList ?? t.bingSites, gtmContainers: gtmList ?? t.gtmContainers, clarityProjects: clarityList ?? t.clarityProjects, bingApiKey: bingKey === undefined ? t.bingApiKey : bingKey || undefined, domains: list(body.domains) ?? t.domains, gscProperties: list(body.gscProperties) ?? t.gscProperties, branding: { ...t.branding, ...(color ? { primaryColor: color } : {}), ...(logo ? { logoUrl: logo } : {}), ...(str(branding.displayName) ? { displayName: str(branding.displayName) } : {}) } }, t); } catch (error) {
       if (error instanceof TenantConflictError) return fail(res, 409, error.message);
       throw error;
@@ -335,9 +339,10 @@ export function buildConsoleRouter(routes: ConsoleRoute[], options: ConsoleOptio
     const email = str(body.email);
     if (!email) return fail(res, 400, "E-mail requis.");
     try {
+      options.cloud?.authorize(tenancy.tenant.id, "/tenant/users", { consume: false });
       const userId = await inviteUser(tenancy.tenant, { email, role: body.role === "tenant-admin" ? "tenant-admin" : "tenant-user" }, { admin: kcAdmin });
       return res.status(201).json({ userId, invited: email });
-    } catch (error) { return fail(res, 502, (error as Error).message); }
+    } catch (error) { return fail(res, error instanceof CloudAccessError ? error.status : 502, (error as Error).message); }
   });
 
   for (const route of routes) {
@@ -348,12 +353,13 @@ export function buildConsoleRouter(routes: ConsoleRoute[], options: ConsoleOptio
       const scoped = await scopeRequest(route, body, tenancy!);
       if ("error" in scoped) return fail(res, scoped.status, scoped.error);
       try {
+        if (tenancy?.tenant) options.cloud?.authorize(tenancy.tenant.id, route.path, { domainCount: tenancy.tenant.domains.length });
         const data = await withCredential(tenancy?.tenant?.googleCredential, () => route.handler({ url: scoped.url, body, user, tenancy }));
         if (Buffer.isBuffer(data)) return res.type("application/pdf").setHeader("Content-Disposition", "attachment; filename=rapport-geo.pdf").send(data);
         return res.json(data);
       } catch (error) {
         logger.info(`[console] ${route.path} failed: ${(error as Error).message}`);
-        return fail(res, error instanceof TenantAccessError ? error.status : 502, (error as Error).message);
+        return fail(res, error instanceof TenantAccessError || error instanceof CloudAccessError ? error.status : 502, (error as Error).message);
       }
     });
   }

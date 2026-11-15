@@ -1,3 +1,4 @@
+import { renderBilling } from "./billing.js";
 import { renderConnectedAgents } from "./connected-agents.js";
 import { renderCrm } from './crm.js';
 import { renderSocial } from './social.js';
@@ -50,6 +51,24 @@ const rerender = () => show(current.section, current.tab);
 const live = (route, render, opts = {}) => ({ needsDomain: false, async: async () => [toolbar(state, rerender, opts), ...[render(await api(route, scope()))].flat()] });
 const tool = (id) => TABS.find((x) => x.id === id);
 const host = (u) => { try { return new URL(u).hostname.replace(/^www\./, ""); } catch { return u || "—"; } };
+
+function billingView() {
+  const tenant = selectedTenant();
+  const me = state.me;
+  const request = async (route, body) => {
+    const token = await accessToken();
+    if (!token || selectedTenant() !== tenant) throw new Error(LANG === "fr" ? "Espace ou session modifié. Rechargez la page." : "Workspace or session changed. Reload this page.");
+    const res = await fetch(`${API_BASE.replace(/\/console\/?$/, "/billing")}${route}`, {
+      method: body === undefined ? "GET" : "POST", headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}`, "X-Tenant": tenant },
+      ...(body === undefined ? {} : { body: JSON.stringify(body) }), cache: "no-store",
+    });
+    const data = await res.json();
+    if (!res.ok) { const error = new Error(data.error || `HTTP ${res.status}`); error.status = res.status; throw error; }
+    if (selectedTenant() !== tenant) throw new Error("Workspace changed. Reload this page.");
+    return data;
+  };
+  return renderBilling({ me, request, fr: LANG === "fr" });
+}
 
 async function fetchApi(route, body, { binary = false } = {}) {
   const token = await accessToken();
@@ -207,6 +226,7 @@ const SECTIONS = {
       { id: "tags", label: t("t_tags"), async: async () => renderTags(await api("/tracking/status", scope())) },
       { id: "settings", label: t("t_settings"), needsDomain: false, async: async () => { const status = await api("/tracking/status", scope()).catch(() => null); return renderSettings(state.me, saveSettings, status?.serviceAccount ?? null, api); } },
       { id: "access", label: LANG === "fr" ? "Accès" : "Access", needsDomain: false, async: async () => renderAccessManagement(state.me, api) }]) },
+    { id: "billing", icon: "billing", build: () => custom("billing", [{ id: "subscription", label: t("s_billing"), needsDomain: false, async: billingView }]) },
     { id: "agents", icon: "agents", build: () => custom("agents", [{ id: "connections", label: LANG === "fr" ? "Agents connectés" : "Connected agents", needsDomain: false, async: async () => renderConnectedAgents({ tenant: state.me?.tenant?.id }) }]) },
     { id: "gtm", icon: "tag", build: () => custom("gtm", [
       { id: "workspace", label: t("t_gtm"), needsDomain: false, async: async () => renderGtm(await api("/gtm/inventory", scope({ container: state.gtmContainer || undefined })), api, rerender) }]) },
