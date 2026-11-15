@@ -4,6 +4,11 @@
 
 ## Configuration and gates
 
+The deployment workflow offers `pap_readiness_only`: after updating the checkout,
+it inspects the running container and HTTPS routes without rebuilding, restarting,
+or editing configuration. The report contains presence flags, counts and HTTP
+statuses only; credentials, tenant records and tokens never enter workflow logs.
+
 The code is shipped with `PAP_ENABLED=false`. The production Compose template persists the PAP database in the existing `/data` volume. No new containers or cloud services are required. Do not expose the existing `/mcp` endpoint as a PAP channel.
 
 | Variable | Meaning |
