@@ -4,6 +4,7 @@ import fs from "node:fs";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 import { parseHTML } from "linkedom";
+import { visualHomeMarkup } from "./visual-home-markup.mjs";
 import { crmMarkup } from "./crm-markup.mjs";
 import { journeyMarkup } from "./journey-markup.mjs";
 import { readingTracks, guidePage, guidePath } from "./guides-markup.mjs";
@@ -21,7 +22,7 @@ for (const locale of ["en", "fr"]) {
   const canonical = `https://gtm.kayroslab.com/${locale === "fr" ? "fr/" : ""}`;
   const guides = guideContent(locale);
   const guideLinks = ['marketing', 'technical'].map(track => `<a href="${guidePath(locale, track)}">${escape(guides[track].label)}</a>`).join('');
-  const config = { reading_tracks: readingTracks(locale), guide_links: guideLinks, crm_global: crmMarkup(locale), ...journeyMarkup(locale), locale, canonical, privacy: locale === "fr" ? "/fr/confidentialite.html" : "/privacy.html", active_en: locale === "en" ? 'aria-current="page"' : "", active_fr: locale === "fr" ? 'aria-current="page"' : "" };
+  const config = { ...visualHomeMarkup(locale), reading_tracks: readingTracks(locale), guide_links: guideLinks, crm_global: crmMarkup(locale), ...journeyMarkup(locale), locale, canonical, privacy: locale === "fr" ? "/fr/confidentialite.html" : "/privacy.html", active_en: locale === "en" ? 'aria-current="page"' : "", active_fr: locale === "fr" ? 'aria-current="page"' : "" };
   let html = template.replace(/\{\{(\w+)\}\}/g, (_, key) => {
     if (key in copy) return escape(copy[key]);
     if (key in config) return config[key];

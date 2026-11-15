@@ -9,7 +9,7 @@ execFileSync(process.execPath, ['scripts/render-landing.mjs', '--check'], { stdi
 const root = path.resolve('site');
 const read = file => fs.readFileSync(path.join(root, file), 'utf8');
 const documents = ['index.html', 'fr/index.html'].map(file => parseHTML(read(file)).document);
-const translatedAttributes = new Set(['lang', 'aria-label', 'alt', 'title', 'placeholder', 'aria-current']);
+const translatedAttributes = new Set(['lang', 'aria-label', 'alt', 'title', 'placeholder', 'aria-current', 'data-pause', 'data-play']);
 function structure(document) {
   return [...document.body.querySelectorAll('*')].map(node => [node.localName, [...node.attributes]
     .filter(a => !translatedAttributes.has(a.name))
