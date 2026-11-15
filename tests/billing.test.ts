@@ -6,6 +6,8 @@ import { join } from "node:path";
 import type { AddressInfo } from "node:net";
 import express from "express";
 import { billingConfigFromEnv, type BillingConfig } from "../src/billing/config.js";
+import { CloudAccess } from "../src/billing/access.js";
+import { mountConsoleApi } from "../src/console/api.js";
 import { mountBillingApi } from "../src/billing/api.js";
 import { MollieHttpGateway, type MollieGateway, type MolliePayment, type MollieSubscription, type MollieMandate } from "../src/billing/mollie.js";
 import { BillingService } from "../src/billing/service.js";
@@ -22,6 +24,7 @@ afterEach(() => {
 
 const directory = () => { const dir = mkdtempSync(join(tmpdir(), "gtm-billing-")); dirs.push(dir); return dir; };
 const conf = (extra: Partial<BillingConfig> = {}): BillingConfig => ({
+  cloudTenants: ["acme", "globex"], limits: { version: "test-v1", solo: { monthlyOperations: 10, maxDomains: 1 }, agency: { monthlyOperations: 100, maxDomains: 5 } }, termsUrls: { en: "", fr: "" },
   mode: "test", checkoutEnabled: true, apiKey: "test_distinct_gtm_key", profileId: "pfl_gtm123",
   publicOrigin: "https://gtm.kayroslab.com", webhookUrl: "https://gtm.kayroslab.com/api/billing/mollie/webhook",
   returnUrl: "https://gtm.kayroslab.com/console/?checkout=return", termsVersion: "pilot-v1",
@@ -35,7 +38,7 @@ const ctx = (id = "acme", role: "tenant-user" | "tenant-admin" = "tenant-admin")
   role, platformAdmin: false, memberships: [{ id, role }],
 });
 const user = { sub: "u1", email: "owner@acme.fr", email_verified: true };
-const consent = (planKey: "solo" | "agency" = "solo") => ({ planKey, termsVersion: "pilot-v1", acceptedRecurring: true });
+const consent = (planKey: "solo" | "agency" = "solo") => ({ planKey, termsVersion: "pilot-v1", acceptedRecurring: true, amountCents: planKey === "solo" ? 3900 : 14900, limitsVersion: "test-v1" });
 
 /** Fully in-memory Mollie test double. Never makes an external request or charges a card. */
 class FakeMollie implements MollieGateway {
@@ -50,6 +53,8 @@ class FakeMollie implements MollieGateway {
   rejectSubscription = false;
   private id(prefix: string) { return `${prefix}_${++this.next}`; }
 
+  async getProfile() { return { id: "pfl_gtm123", status: "verified" }; }
+  async listMethods() { return [{ id: "creditcard" }]; }
   async createCustomer(body: { name: string; email: string }, key: string) {
     let id = this.customers.get(key);
     if (!id) { id = this.id("cst"); this.customers.set(key, id); }
@@ -106,7 +111,7 @@ class FakeMollie implements MollieGateway {
   renewal(subscription: MollieSubscription, amount = subscription.amount) {
     const id = this.id("tr");
     const payment: MolliePayment = { id, status: "open", profileId: "pfl_gtm123", mode: "test",
-      customerId: subscription.customerId, subscriptionId: subscription.id, amount };
+      createdAt: new Date().toISOString(), customerId: subscription.customerId, subscriptionId: subscription.id, amount };
     this.payments.set(id, payment);
     return payment;
   }
@@ -243,7 +248,7 @@ describe("Cloud subscriptions / Mollie (no live charges)", () => {
   it("schedules plan change for next renewal, never reprices the already paid period", async () => {
     const { service, mollie } = harness(); await initial(service, mollie);
     const firstUntil = service.status(ctx()).paidUntil;
-    await service.changePlan(ctx(), user, { planKey: "agency" });
+    await service.changePlan(ctx(), user, consent("agency"));
     expect(service.status(ctx())).toMatchObject({ plan: "solo", pendingPlan: "agency", paidUntil: firstUntil });
     const recurring = mollie.renewal([...mollie.subscriptions.values()][0]); mollie.pay(recurring.id);
     await service.processPayment(recurring.id);
@@ -266,6 +271,79 @@ describe("Cloud subscriptions / Mollie (no live charges)", () => {
     expect(() => billingConfigFromEnv({ BILLING_MODE: "live", MOLLIE_GTM_API_KEY: "live_abc", MOLLIE_GTM_PROFILE_ID: "pfl_gtm123" })).toThrow(/Live billing blocked/);
     expect(() => billingConfigFromEnv({ BILLING_MODE: "disabled", BILLING_CHECKOUT_ENABLED: "true" })).toThrow();
     expect(billingConfigFromEnv({}).mode).toBe("disabled");
+  });
+  it("verifies provider connectivity without creating financial objects", async () => {
+    const { service, mollie } = harness();
+    expect(await service.connection()).toMatchObject({ mode: "test", profileMatches: true, providerReady: true });
+    expect(mollie.customers.size + mollie.payments.size + mollie.subscriptions.size).toBe(0);
+    mollie.getProfile = async () => ({ id: "pfl_foreign", status: "verified" });
+    await expect(service.checkout(ctx(), user, consent())).rejects.toMatchObject({ status: 503 });
+    expect(mollie.customers.size).toBe(0);
+  });
+  it("requires enrollment and consent to current price and quota version", async () => {
+    const { service } = harness();
+    await expect(service.checkout(ctx("selfhost"), user, consent())).rejects.toMatchObject({ status: 403 });
+    await expect(service.checkout(ctx(), user, { ...consent(), amountCents: 1 })).rejects.toMatchObject({ status: 400 });
+    await expect(service.checkout(ctx(), user, { ...consent(), limitsVersion: "old" })).rejects.toMatchObject({ status: 400 });
+  });
+  it("recognizes Mollie refunds while payment status stays paid and keeps review sticky", async () => {
+    const { service, mollie, store } = harness(); const { remote } = await initial(service, mollie);
+    remote.amountRefunded = { currency: "EUR", value: "1.00" };
+    await service.processPayment(remote.id);
+    expect(service.status(ctx()).cloudAccess).toBe("read_only");
+    await service.cancel(ctx(), user, { confirm: "CANCEL_SUBSCRIPTION" });
+    const sub = store.subscription(store.account("acme", "test")!.id)!;
+    store.setRemoteSubscription(sub.account_id, sub.mollie_subscription_id!, null);
+    expect(service.status(ctx())).toMatchObject({ status: "review_required", cloudAccess: "read_only" });
+  });
+  it("cancels a subscription created while cancellation was in flight", async () => {
+    const { service, mollie } = harness();
+    const original = mollie.createSubscription.bind(mollie);
+    mollie.createSubscription = async (...args) => {
+      const sub = await original(...args);
+      await service.cancel(ctx(), user, { confirm: "CANCEL_SUBSCRIPTION" });
+      return sub;
+    };
+    await initial(service, mollie);
+    expect([...mollie.subscriptions.values()][0].status).toBe("canceled");
+    expect(service.status(ctx()).cancelRequested).toBe(true);
+  });
+  it("ignores an old failed renewal after a newer successful payment", async () => {
+    const { service, mollie } = harness(); await initial(service, mollie);
+    const old = mollie.renewal([...mollie.subscriptions.values()][0]); old.createdAt = "2020-01-01T00:00:00.000Z"; old.status = "failed";
+    await service.processPayment(old.id);
+    expect(service.status(ctx()).status).toBe("active");
+  });
+  it("requires review for an unseen older paid renewal rather than overextending access", async () => {
+    const { service, mollie } = harness(); await initial(service, mollie);
+    const paidUntil = service.status(ctx()).paidUntil;
+    const old = mollie.renewal([...mollie.subscriptions.values()][0]); mollie.pay(old.id, "paid", "2020-01-01T00:00:00.000Z");
+    await service.processPayment(old.id);
+    expect(service.status(ctx())).toMatchObject({ status: "review_required", paidUntil, cloudAccess: "read_only" });
+  });
+  it("enforces persisted quotas, expiration, grace and retained reads without gating self-hosting", async () => {
+    const { service, mollie, store, config } = harness();
+    expect(() => service.access.authorize("acme", "/overview")).toThrow("cloud_subscription_required");
+    expect(() => service.access.authorize("acme", "/local-seo/export")).not.toThrow();
+    expect(() => service.access.authorize("selfhost", "/overview")).not.toThrow();
+    await initial(service, mollie);
+    expect(() => service.access.authorize("acme", "/overview", { domainCount: 2 })).toThrow("cloud_domain_limit");
+    const second = new BillingStore(config.dataPath); stores.push(second);
+    const otherProcess = new CloudAccess(config, second);
+    for (let i=0; i<10; i++) (i%2 ? otherProcess : service.access).authorize("acme", "/overview");
+    expect(() => otherProcess.authorize("acme", "/overview")).toThrow("cloud_operation_limit");
+    expect(store.usage(store.account("acme", "test")!.id)[0].quantity).toBe(10);
+    expect(() => service.access.authorize("acme", "/local-seo/export")).not.toThrow();
+    const accountId = store.account("acme", "test")!.id;
+    store.db.prepare("UPDATE billing_subscriptions SET status='past_due',paid_until=? WHERE account_id=?").run(new Date(Date.now()-86400000).toISOString(), accountId);
+    expect(service.status(ctx()).cloudAccess).toBe("grace");
+    store.db.prepare("UPDATE billing_subscriptions SET paid_until=? WHERE account_id=?").run(new Date(Date.now()-8*86400000).toISOString(), accountId);
+    expect(() => service.access.authorize("acme", "/agent/query")).toThrow("cloud_subscription_required");
+    const live = new CloudAccess({ ...config, mode: "live" }, store);
+    expect(() => live.authorize("acme", "/overview")).toThrow("cloud_subscription_required");
+  });
+  it("rejects enrolled cloud workspaces without configured limits", () => {
+    expect(() => billingConfigFromEnv({ BILLING_CLOUD_TENANTS: "acme" })).toThrow(/enrollment/);
   });
   it("computes monthly periods correctly for short months and leap years", () => {
     expect(plusCalendarMonth("2024-01-31T12:00:00.000Z")).toBe("2024-02-29T12:00:00.000Z");
@@ -318,9 +396,13 @@ describe("billing HTTP boundary", () => {
     };
     const app = express(); app.use(express.json());
     mountBillingApi(app, { config, store, gateway: mollie, tenantStore: tenants, oidc, jwksLoader: async () => ({ keys: [jwk] }), scheduler: false });
+    let dispatched = 0;
+    mountConsoleApi(app, { config: oidc, store: tenants, jwksLoader: async () => ({ keys: [jwk] }), cloud: new CloudAccess(config, store), routes: [{ path: "/billing-probe", needsUrl: false, handler: async () => ({ dispatched: ++dispatched }) }] });
     const server = app.listen(0);
     try {
       const root = `http://127.0.0.1:${(server.address() as AddressInfo).port}`;
+      const protectedCall = () => fetch(`${root}/api/console/billing-probe`, { method: "POST", headers: { Authorization: `Bearer ${token("acme", "tenant-admin")}`, "X-Tenant": "acme", "Content-Type": "application/json" }, body: "{}" });
+      expect((await protectedCall()).status).toBe(402); expect(dispatched).toBe(0);
       const call = (route: string, tenant: string, role = "tenant-admin", body?: object, origin = config.publicOrigin) =>
         fetch(`${root}/api/billing${route}`, { method: body ? "POST" : "GET",
           headers: { Authorization: `Bearer ${token(tenant, role)}`, "X-Tenant": tenant,
@@ -336,6 +418,8 @@ describe("billing HTTP boundary", () => {
       const webhook = await fetch(`${root}/api/billing/mollie/webhook`, { method: "POST",
         headers: { "Content-Type": "application/x-www-form-urlencoded" }, body: `id=${payment.id}` });
       expect(webhook.status).toBe(200);
+      expect((await protectedCall()).status).toBe(200); expect(dispatched).toBe(1);
+      expect((await call("/connection", "acme")).status).toBe(403);
       expect((await (await call("/status", "acme")).json()).plan).toBe("solo");
       expect((await (await call("/status", "globex")).json()).plan).toBeNull();
       expect((await fetch(`${root}/api/billing/mollie/webhook`, { method: "POST", headers: { "Content-Type": "application/x-www-form-urlencoded" }, body: "id=tr_wrong&status=paid" })).status).toBe(400);

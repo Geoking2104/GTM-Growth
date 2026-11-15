@@ -31,7 +31,7 @@ const metaContent = (node: HtmlNode | null): string | null => {
 
 export function extractOnboardingProfile(doc: HtmlDoc, finalUrl: string, httpStatus: number): OnboardingProfile {
   const schema = auditSchema(doc).data;
-  const named = schema.objects.find((o) => typeof o["name"] === "string" && String(o["name"]).trim().length >= 2);
+  const named = schema.objects.find((o) => [o["@type"]].flat().some(t => ["Organization", "Brand", "WebSite", "LocalBusiness"].includes(String(t))) && typeof o["name"] === "string" && String(o["name"]).trim().length >= 2);
   const schemaName = typeof named?.["name"] === "string" ? named["name"].trim() : null;
   const metaSiteName = metaContent(doc.metaByProperty("og:site_name"));
   const siteName = schemaName ?? metaSiteName;

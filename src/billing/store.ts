@@ -101,7 +101,7 @@ export class BillingStore {
   }
 
   /** BEGIN IMMEDIATE serialises concurrent checkouts on the same shared VPS. */
-  prepareCheckout(input: { tenantId: string; mode: BillingMode; plan: PlanKey; cents: number; actor: string; termsVersion: string }):
+  prepareCheckout(input: { tenantId: string; mode: BillingMode; plan: PlanKey; cents: number; actor: string; termsVersion: string; limitsVersion?: string }):
     { account: BillingAccount; attempt: BillingAttempt; reused: boolean } {
     return this.db.transaction(() => {
       const stamp = now();
@@ -126,6 +126,7 @@ export class BillingStore {
         (id,account_id,tenant_id,mode,plan_key,amount_cents,currency,actor_sub,terms_version,accepted_at,status,created_at,updated_at)
         VALUES (?,?,?,?,?,?,'EUR',?,?,?,'initializing',?,?)`)
         .run(id, account.id, input.tenantId, input.mode, input.plan, input.cents, input.actor, input.termsVersion, stamp, stamp, stamp);
+      this.db.prepare("UPDATE billing_attempts SET limits_version=? WHERE id=?").run(input.limitsVersion ?? null, id);
       this.event(account.id, "checkout_started", id, input.actor, input.plan);
       return { account, attempt: this.attempt(id)!, reused: false };
     }).immediate();
@@ -151,7 +152,7 @@ export class BillingStore {
   /** Call only after comparing the remote payment to local customer, amount, profile and plan. */
   recordVerifiedPayment(input: {
     accountId: string; attemptId?: string; paymentId: string; subscriptionId?: string;
-    status: string; cents: number; currency: string; paidAt?: string;
+    status: string; cents: number; currency: string; paidAt?: string; createdAt?: string;
     kind: "first" | "renewal";
   }): { applied: boolean; setupPending: boolean } {
     return this.db.transaction(() => {
@@ -164,7 +165,7 @@ export class BillingStore {
           .run(input.paymentId, input.status, now(), attempt.id);
       }
       const existing = this.payment(input.paymentId);
-      if (existing && (existing.account_id !== account.id || existing.kind !== input.kind || existing.amount_cents !== input.cents)) throw new BillingConflict("Recorded payment mismatch");
+      if (existing && (existing.account_id !== account.id || existing.kind !== input.kind || existing.amount_cents !== input.cents || existing.currency !== input.currency || existing.mollie_subscription_id !== (input.subscriptionId ?? null))) throw new BillingConflict("Recorded payment mismatch");
       this.db.prepare(`INSERT INTO billing_payments
         (mollie_payment_id,account_id,attempt_id,mollie_subscription_id,kind,amount_cents,currency,status,paid_at,updated_at)
         VALUES (?,?,?,?,?,?,?,?,?,?)
@@ -176,6 +177,12 @@ export class BillingStore {
       let applied = false;
       if (input.status === "paid" && !existing?.applied_at) {
         if (!input.paidAt) throw new BillingConflict("Missing paidAt from Mollie");
+        const latest = this.db.prepare("SELECT MAX(paid_at) AS stamp FROM billing_payments WHERE account_id=? AND applied_at IS NOT NULL AND mollie_payment_id<>?").get(account.id, input.paymentId) as { stamp: string | null };
+        // An older unseen success needs period reconciliation, not another month after the latest success.
+        if (sub && latest.stamp && input.paidAt < latest.stamp) {
+          this.db.prepare("UPDATE billing_subscriptions SET status='review_required',last_error='Out-of-order payment needs reconciliation' WHERE account_id=?").run(account.id);
+          sub = this.subscription(account.id);
+        }
         const anchor = sub?.paid_until && sub.paid_until > input.paidAt ? sub.paid_until : input.paidAt;
         const end = plusCalendarMonth(anchor);
         if (!sub) {
@@ -200,13 +207,14 @@ export class BillingStore {
         this.db.prepare("UPDATE billing_payments SET applied_at=? WHERE mollie_payment_id=?").run(now(), input.paymentId);
         this.event(account.id, "payment_paid", input.paymentId, null, input.kind);
         applied = true;
-      } else if (["refunded", "charged_back"].includes(input.status) && existing?.applied_at && sub) {
+      } else if (["refunded", "charged_back"].includes(input.status) && sub) {
         // A manual review is needed to re-evaluate the already-granted period.
         this.db.prepare("UPDATE billing_subscriptions SET status='review_required',last_error='Refund/chargeback needs reconciliation',updated_at=? WHERE account_id=?")
           .run(now(), account.id);
         this.event(account.id, "payment_reversed", input.paymentId);
       } else if (["failed", "canceled", "expired"].includes(input.status) && input.kind === "renewal" && sub && sub.status === "active") {
-        this.db.prepare("UPDATE billing_subscriptions SET status='past_due',updated_at=? WHERE account_id=?").run(now(), account.id);
+        const latest = this.db.prepare("SELECT MAX(paid_at) AS stamp FROM billing_payments WHERE account_id=? AND applied_at IS NOT NULL").get(account.id) as { stamp: string | null };
+        if (input.createdAt && (!latest.stamp || input.createdAt > latest.stamp)) this.db.prepare("UPDATE billing_subscriptions SET status='past_due',updated_at=? WHERE account_id=?").run(now(), account.id);
         this.event(account.id, "renewal_failed", input.paymentId, null, input.status);
       }
       sub = this.subscription(account.id);
@@ -218,7 +226,7 @@ export class BillingStore {
     this.db.transaction(() => {
       const sub = this.subscription(accountId);
       if (!sub || (sub.mollie_subscription_id && sub.mollie_subscription_id !== subscriptionId)) throw new BillingConflict("Subscription mismatch");
-      this.db.prepare("UPDATE billing_subscriptions SET mollie_subscription_id=?,next_payment_date=?,status=CASE WHEN cancel_requested=1 THEN status ELSE 'active' END,last_error=NULL,updated_at=? WHERE account_id=?")
+      this.db.prepare("UPDATE billing_subscriptions SET mollie_subscription_id=?,next_payment_date=?,status=CASE WHEN cancel_requested=1 OR status='review_required' THEN status ELSE 'active' END,last_error=NULL,updated_at=? WHERE account_id=?")
         .run(subscriptionId, nextPaymentDate, now(), accountId);
       this.event(accountId, "subscription_created", subscriptionId);
     }).immediate();
@@ -235,13 +243,15 @@ export class BillingStore {
   }
   setCanceled(accountId: string, actor: string | null = null) {
     this.db.transaction(() => {
-      this.db.prepare("UPDATE billing_subscriptions SET status='canceled',cancel_requested=1,next_payment_date=NULL,updated_at=? WHERE account_id=?")
+      this.db.prepare("UPDATE billing_subscriptions SET status=CASE WHEN status='review_required' THEN status ELSE 'canceled' END,cancel_requested=1,next_payment_date=NULL,updated_at=? WHERE account_id=?")
         .run(now(), accountId);
       this.event(accountId, "subscription_canceled", null, actor);
     }).immediate();
   }
   schedulePlan(accountId: string, plan: PlanKey, cents: number, actor: string) {
     this.db.transaction(() => {
+      const sub = this.subscription(accountId);
+      if (!sub || sub.cancel_requested || sub.status !== "active" || (sub.pending_plan_key && sub.pending_plan_key !== plan)) throw new BillingConflict("Plan change conflict");
       this.db.prepare("UPDATE billing_subscriptions SET pending_plan_key=?,pending_amount_cents=?,updated_at=? WHERE account_id=?")
         .run(plan, cents, now(), accountId);
       this.event(accountId, "plan_change_requested", plan, actor);

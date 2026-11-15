@@ -5,10 +5,17 @@
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <meta name="robots" content="noindex, nofollow">
 <title>Console GTM Growth</title>
-<link rel="icon" href="../assets/logo-64.png" type="image/png">
+<link rel="icon" href="../fr/assets/logo-rocket.png" type="image/png">
 <link rel="stylesheet" href="../styles.css">
 <link rel="stylesheet" href="../sitemap-map.css">
+<link rel="stylesheet" href="../brand.css">
 <link rel="stylesheet" href="shell.css">
+<link rel="stylesheet" href="billing.css">
+<link rel="stylesheet" href="../local-seo.css">
+<link rel="stylesheet" href="social.css">
+<link rel="stylesheet" href="crm.css">
+<link rel="stylesheet" href="visual.css">
+<link rel="stylesheet" href="connected-agents.css">
 </head>
 <body class="console-page">
 <!-- Connexion : même coque .app que la console publique -->
@@ -16,6 +23,7 @@
   <header class="public-header">
     <a class="public-brand" href="/fr/"><img src="/fr/assets/logo-rocket.png" alt="" width="42" height="42"><span>GTM Growth</span></a>
     <span class="public-header-label">Console · Lecture gratuite</span>
+    <div class="c-public-languages" role="group" aria-label="Language / Langue"><a href="?lang=en" lang="en" hreflang="en">EN</a><a href="?lang=fr" lang="fr" hreflang="fr">FR</a></div>
     <a class="public-back" href="/fr/">Retour au site <span aria-hidden="true">↗</span></a>
   </header>
   <div class="public-layout">
@@ -28,6 +36,15 @@
     </aside>
     <main class="public-main">
       <div class="public-heading"><div><p class="public-eyebrow">LECTURE GRATUITE</p><h1>Votre site, vu par l’IA.</h1><p>Une première lecture de votre visibilité et des pistes pour progresser.</p></div><span class="public-live">● &nbsp; Analyse du site</span></div>
+      <form id="c-public-url-form" class="public-url-form" aria-label="Analyse gratuite d’un site">
+        <label for="c-public-url">Adresse de la page à analyser</label>
+        <div class="public-url-controls">
+          <input id="c-public-url" name="url" type="text" inputmode="url" autocomplete="url" placeholder="https://www.exemple.fr/" required>
+          <button type="submit" class="public-url-button">Analyser gratuitement <span aria-hidden="true">↗</span></button>
+        </div>
+        <p class="public-micro public-url-help">Sans compte · page publique uniquement · recommandations basées sur des mesures.</p>
+        <p id="c-public-url-error" class="c-error" role="alert" aria-live="polite"></p>
+      </form>
       <section id="c-public-read" class="c-public-read" hidden aria-live="polite"></section>
       <section class="public-login-card" aria-labelledby="public-login-title">
         <div><p class="public-eyebrow">ALLER PLUS LOIN</p><h2 id="public-login-title">Continuez dans votre espace</h2><p>Connectez-vous pour retrouver le démarrage guidé et les analyses détaillées de vos domaines autorisés.</p><img id="c-login-logo" class="c-logo" alt="" hidden></div>
@@ -42,7 +59,6 @@
 
 <!-- Console : reprend exactement la structure de la section #console du site -->
 <div id="c-app" class="app c-app" hidden>
-  <div class="app-tabs" id="c-tabs" role="tablist"></div>
   <div class="app-body">
     <aside class="app-side">
       <button type="button" class="app-switch" id="c-switch" aria-expanded="false" aria-controls="c-picker">
@@ -75,6 +91,9 @@
           <button class="app-pill" id="c-logout" type="button" data-i18n="logout">Déconnexion</button>
         </div>
       </div>
+      <div id="c-visual-context"></div>
+      <div id="c-data-agent"></div>
+      <div class="app-tabs" id="c-tabs" role="tablist"></div>
       <details class="c-background" id="c-background" hidden>
         <summary id="c-background-summary"></summary>
         <ul id="c-background-jobs" aria-live="polite"></ul>
@@ -84,5 +103,6 @@
   </div>
 </div>
 <script type="module" src="app.js"></script>
+<script type="module" src="locale-shell.js"></script>
 </body>
 </html>

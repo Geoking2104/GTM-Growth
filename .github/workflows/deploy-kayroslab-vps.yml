@@ -2,7 +2,8 @@ name: Deploy GTM Growth to KayrosLab VPS
 
 # The VPS is shared with OpenDPE and KayrosLab. GTM Growth stays isolated in
 # /opt/gtm-growth and binds only to 127.0.0.1:4300; Nginx is the public edge.
-# Required repository secrets: VPS_SSH_USER, VPS_SSH_KEY, VPS_SSH_FINGERPRINT.
+# Required repository secrets: VPS_SSH_USER, VPS_SSH_KEY.
+# The public ED25519 host fingerprint is versioned below; credentials stay secret.
 # Configure required reviewers on the GitHub `production` environment before enabling.
 on:
   workflow_dispatch:
@@ -11,31 +12,62 @@ on:
         description: 'Type DEPLOY to confirm the production VPS release'
         required: true
         type: string
+      sync_login_titles:
+        description: 'Synchronize the FR/EN login title overrides in the GTM Growth realm'
+        required: false
+        default: false
+        type: boolean
+      pap_readiness_only:
+        description: 'Inspect PAP prerequisites without rebuilding or changing configuration'
+        required: false
+        default: false
+        type: boolean
 
 jobs:
   deploy:
     if: ${{ github.ref == 'refs/heads/main' && inputs.confirmation == 'DEPLOY' }}
     runs-on: ubuntu-latest
     environment: production
+    env:
+      # Verified from the operator's strict SSH session on 2026-11-08.
+      VPS_HOST_FINGERPRINT: 'SHA256:iWJ+4asSlFAKA9UllEF2ZjYneUzm9OeRfZaUqQf9Ruc'
     steps:
       - name: Require pinned VPS SSH host fingerprint
         env:
-          HOST_FINGERPRINT: ${{ secrets.VPS_SSH_FINGERPRINT }}
+          HOST_FINGERPRINT: ${{ env.VPS_HOST_FINGERPRINT }}
         run: |
-          if [ -z "$HOST_FINGERPRINT" ]; then
-            echo 'Missing VPS_SSH_FINGERPRINT; refusing unverified SSH connection.' >&2
+          if [[ ! "$HOST_FINGERPRINT" =~ ^SHA256:[A-Za-z0-9+/]{43}$ ]]; then
+            echo 'Invalid VPS host fingerprint; refusing unverified SSH connection.' >&2
             exit 1
           fi
       - name: Deploy through the shared OVH VPS
-        uses: appleboy/ssh-action@v1.2.0
-        with:
-          host: 51.210.9.71
-          username: ${{ secrets.VPS_SSH_USER }}
-          key: ${{ secrets.VPS_SSH_KEY }}
-          fingerprint: ${{ secrets.VPS_SSH_FINGERPRINT }}
-          port: 22
-          command_timeout: 30m
-          script: |
+        env:
+          VPS_DEPLOY_USER: ${{ secrets.VPS_SSH_USER }}
+          VPS_DEPLOY_KEY: ${{ secrets.VPS_SSH_KEY }}
+          SYNC_LOGIN_TITLES: ${{ inputs.sync_login_titles }}
+          PAP_READINESS_ONLY: ${{ inputs.pap_readiness_only }}
+        run: |
+          set -euo pipefail
+          ssh_dir="$(mktemp -d)"
+          trap 'rm -rf "$ssh_dir"' EXIT
+          chmod 700 "$ssh_dir"
+          # The trusted pin is ED25519. Do not negotiate a different host key.
+          # A scan is untrusted until its fingerprint matches the versioned pin.
+          ssh-keyscan -T 15 -p 22 -t ed25519 51.210.9.71 > "$ssh_dir/known_hosts"
+          presented="$(ssh-keygen -lf "$ssh_dir/known_hosts" -E sha256 | awk '{print $2}')"
+          if [ "$presented" != "$VPS_HOST_FINGERPRINT" ]; then
+            echo "ED25519 host fingerprint mismatch; refusing SSH: $presented" >&2
+            exit 1
+          fi
+          echo "Verified ED25519 host fingerprint: $presented"
+          printf '%s\n' "$VPS_DEPLOY_KEY" > "$ssh_dir/deploy_key"
+          chmod 600 "$ssh_dir/deploy_key"
+          timeout 30m ssh -T -p 22 -i "$ssh_dir/deploy_key" \
+            -o BatchMode=yes -o IdentitiesOnly=yes \
+            -o StrictHostKeyChecking=yes -o HostKeyAlgorithms=ssh-ed25519 \
+            -o UserKnownHostsFile="$ssh_dir/known_hosts" -o GlobalKnownHostsFile=/dev/null \
+            -o ConnectTimeout=30 -o ServerAliveInterval=30 -o ServerAliveCountMax=3 \
+            "$VPS_DEPLOY_USER@51.210.9.71" "bash -se -- ${SYNC_LOGIN_TITLES:-false} ${PAP_READINESS_ONLY:-false}" <<'REMOTE'
             set -euo pipefail
             git config --global --add safe.directory /opt/gtm-growth
             cd /opt/gtm-growth
@@ -45,4 +77,12 @@ jobs:
             fi
             git fetch origin main
             git merge --ff-only origin/main
+            if [ "${2:-false}" = true ]; then
+              bash deploy/kayroslab-vps/pap-readiness.sh
+              exit
+            fi
             bash deploy/kayroslab-vps/deploy.sh
+            if [ "${1:-false}" = true ]; then
+              bash deploy/kayroslab-vps/sync-login-titles.sh
+            fi
+          REMOTE

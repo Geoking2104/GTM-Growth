@@ -1,15 +1,17 @@
 /** AI visibility from tenant-owned, explicitly imported observations.
  * This first implementation stores one versioned, reviewable panel per import. */
+import { resolveAIAccount, accountHeaders, type AICredential } from "./ai-connections.js";
 import { createHash, randomUUID } from "node:crypto";
 import { validTenantId } from "../tenants/store.js";
 import type { ConsoleRoute } from "./util.js";
 import { listDatasets, getDataset, insertDataset, updateDataset } from "./ai-visibility-store.js";
+import { visualUrl } from "./visual-catalog.js";
 
 type Sentiment = "positive" | "neutral" | "negative" | "mixed" | "unknown";
-interface Brand { name: string; aliases: string[] }
+interface Brand { name: string; aliases: string[]; website?: string; logoUrl?: string }
 interface InputResponse { prompt: string; answer: string; source: string; observedAt: string; citations?: string[]; citationSpans?: Array<{ start: number; end: number; url: string }> }
 interface Observation extends InputResponse { id: string; mentions: Array<{ brand: string; evidence: string; sentiment: Sentiment; method: string; status?: "confirmed" | "rejected" }> }
-interface Dataset { id: string; createdAt: string; brands: Brand[]; observations: Observation[]; audit?: Array<{ at: string; actor: string; responseId: string; brand: string; status: string; sentiment: string }> }
+export interface Dataset { id: string; createdAt: string; brands: Brand[]; observations: Observation[]; audit?: Array<{ at: string; actor: string; responseId: string; brand: string; status: string; sentiment: string }> }
 const LIMIT = 1000;
 const clean = (v: unknown, max: number) => typeof v === "string" && v.trim().length > 0 && v.trim().length <= max ? v.trim() : "";
 const escape = (s: string) => s.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
@@ -30,7 +32,9 @@ export function normalizeImport(input: unknown): Dataset {
     const aliases = [...new Set([name, ...raw.map((v) => clean(v, 100))])];
     if (aliases.some((a) => a.length < 3)) throw new Error("Aliases must contain at least three characters");
     for (const alias of aliases) { const key = alias.toLocaleLowerCase(); if (seenAliases.has(key)) throw new Error("An alias belongs to multiple brands"); seenAliases.add(key); }
-    return { name, aliases };
+    const website = b.website ? visualUrl(b.website) : null, logoUrl = b.logoUrl ? visualUrl(b.logoUrl) : null;
+    if (b.website && !website || b.logoUrl && !logoUrl) throw new Error("Brand website and logo require public HTTPS URLs");
+    return { name, aliases, ...(website ? { website } : {}), ...(logoUrl ? { logoUrl } : {}) };
   });
   const hashes = new Set<string>();
   const observations: Observation[] = body.responses.map((item) => {
@@ -80,7 +84,7 @@ export async function collectGemini(input: unknown, key: string, transport: type
   const successes: InputResponse[] = []; const failures: Array<{ prompt: string; reason: string }> = [];
   for (const prompt of prompts) {
     try {
-      const response = await transport("https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent", { method: "POST", headers: { "Content-Type": "application/json", "x-goog-api-key": key }, body: JSON.stringify({ contents: [{ role: "user", parts: [{ text: prompt }] }], tools: [{ google_search: {} }] }), signal: AbortSignal.timeout(25000) });
+      const response = await transport("https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent", { method: "POST", headers: { "Content-Type": "application/json", "x-goog-api-key": key }, body: JSON.stringify({ contents: [{ role: "user", parts: [{ text: prompt }] }], tools: [{ google_search: {} }] }), signal: AbortSignal.timeout(25000), redirect: "error" });
       if (!response.ok) { failures.push({ prompt, reason: `HTTP ${response.status}` }); continue; }
       const result = await response.json() as { candidates?: Array<{ content?: { parts?: Array<{ text?: string; thought?: boolean }> }; groundingMetadata?: { groundingChunks?: Array<{ web?: { uri?: string } }> } }> };
       const candidate = result.candidates?.[0]; const answer = candidate?.content?.parts?.filter((p) => !p.thought && typeof p.text === "string").map((p) => p.text).join("\n").trim();
@@ -91,7 +95,7 @@ export async function collectGemini(input: unknown, key: string, transport: type
   }
   return { successes, failures, brands: body.brands };
 }
-export async function collectOpenAI(input: unknown, key: string, transport: typeof fetch = fetch) {
+export async function collectOpenAI(input: unknown, key: string, transport: typeof fetch = fetch, account?: AICredential) {
   if (!input || typeof input !== "object" || Array.isArray(input)) throw new Error("Invalid collection request");
   const body = input as Record<string, unknown>;
   if (body.confirmed !== true || !Array.isArray(body.prompts) || body.prompts.length < 1 || body.prompts.length > 5) throw new Error("Confirm 1–5 prompts before collection");
@@ -102,7 +106,7 @@ export async function collectOpenAI(input: unknown, key: string, transport: type
   const successes: InputResponse[] = []; const failures: Array<{ prompt: string; reason: string }> = [];
   for (const prompt of prompts) {
     try {
-      const response = await transport("https://api.openai.com/v1/responses", { method: "POST", headers: { "Content-Type": "application/json", Authorization: `Bearer ${key}` }, body: JSON.stringify({ model: "gpt-4.1-mini", input: prompt, max_output_tokens: 1500, tools: [{ type: "web_search" }] }), signal: AbortSignal.timeout(25000) });
+      const response = await transport("https://api.openai.com/v1/responses", { method: "POST", headers: { "Content-Type": "application/json", ...accountHeaders("openai", account || { key }) }, body: JSON.stringify({ model: "gpt-4.1-mini", store: false, input: prompt, max_output_tokens: 1500, tools: [{ type: "web_search" }] }), signal: AbortSignal.timeout(25000), redirect: "error" });
       if (!response.ok) { failures.push({ prompt, reason: `HTTP ${response.status}` }); continue; }
       const result = await response.json() as { status?: string; output?: Array<{ type?: string; content?: Array<{ type?: string; text?: string; annotations?: Array<{ type?: string; url?: string; start_index?: number; end_index?: number }> }> }> };
       if (result.status !== "completed") { failures.push({ prompt, reason: "Incomplete response" }); continue; }
@@ -138,7 +142,7 @@ export const aiVisibilityRoutes: ConsoleRoute[] = [
   // Fail closed until Search Suggestions can be safely displayed alongside the response.
   { path: "/ai-visibility/gemini-run", needsUrl: false, adminOnly: true, handler: async () => { throw new Error("Gemini Search is disabled pending compliant Search Suggestions display"); } },
   { path: "/ai-visibility/openai-status", needsUrl: false, adminOnly: true, handler: async (ctx) => ({ configured: Boolean(openAIKey(tenant(ctx))), model: "gpt-4.1-mini", maxCalls: 5 }) },
-  { path: "/ai-visibility/openai-run", needsUrl: false, adminOnly: true, handler: async (ctx) => { const tenantId = tenant(ctx), result = await collectOpenAI(ctx.body, openAIKey(tenantId)); if (!result.successes.length) return { id: null, succeeded: 0, failed: result.failures }; const dataset = normalizeImport({ brands: result.brands, responses: result.successes }); insertDataset(tenantId, dataset); return { id: dataset.id, succeeded: result.successes.length, failed: result.failures }; } },
+  { path: "/ai-visibility/openai-run", needsUrl: false, adminOnly: true, handler: async (ctx) => { const tenantId = tenant(ctx), account = resolveAIAccount(tenantId, "openai", ctx.body.accountId), result = await collectOpenAI(ctx.body, account.key, fetch, account); if (!result.successes.length) return { id: null, succeeded: 0, failed: result.failures }; const dataset = normalizeImport({ brands: result.brands, responses: result.successes }); insertDataset(tenantId, dataset); return { id: dataset.id, succeeded: result.successes.length, failed: result.failures }; } },
   { path: "/ai-visibility/import-preview", needsUrl: false, adminOnly: true, handler: async ({ body }) => { const data = normalizeImport(body); return { brands: data.brands, count: data.observations.length, sources: [...new Set(data.observations.map((r) => r.source))], warning: "Heuristic sentiment requires human review; no external calls." }; } },
   { path: "/ai-visibility/import", needsUrl: false, adminOnly: true, handler: async (ctx) => { const data = normalizeImport(ctx.body); insertDataset(tenant(ctx), data); return { id: data.id, count: data.observations.length }; } },
   { path: "/ai-visibility/datasets", needsUrl: false, handler: async (ctx) => ({ datasets: listDatasets<Dataset>(tenant(ctx)).map(({ id, createdAt, brands, observations }) => ({ id, createdAt, brands, count: observations.length })) }) },

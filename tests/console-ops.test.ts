@@ -15,6 +15,19 @@ const dir = () => mkdtempSync(path.join(tmpdir(), "ops-"));
 afterEach(() => { closeOpsStores(); stopScheduler(); vi.unstubAllEnvs(); vi.unstubAllGlobals(); });
 
 describe("ops store (T-2/T-4/T-11)", () => {
+  it("preserves declared journey provenance without claiming observed AI searches", () => {
+    process.env.OPS_STORE_PATH = dir();
+    const prompt = addPrompt("acme", "What do freelancers compare?", "solution-aware", {
+      sourceKind: "inferred", sourceRef: "gtm-journey-template:1.0.0",
+      locale: "en", targetUrl: "https://acme.fr/services",
+    });
+    expect(prompt.sourceKind).toBe("inferred");
+    expect(listPrompts("acme")[0]).toMatchObject({
+      group: "solution-aware", sourceKind: "inferred", locale: "en",
+      targetUrl: "https://acme.fr/services",
+    });
+  });
+
   it("manages the prompt pool with dedupe and bounds", () => {
     process.env.OPS_STORE_PATH = dir();
     addPrompt("acme", "quel est le meilleur outil GA4 ?");

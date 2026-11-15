@@ -4,7 +4,7 @@ import { buildSitemap, buildSitemapXml, extractLinks } from "../src/geosuite/sit
 import { HtmlDoc } from "../src/geo/html.js";
 
 const validDoc = {
-  protocol_version: "0.3",
+  protocol_version: "1.0",
   organization: { name: "Acme", domain: "acme.com" },
   apis: [{ type: "mcp", url: "https://acme.com/mcp", description: "Orders" }],
 };
@@ -28,7 +28,7 @@ describe("poppy.json validation", () => {
   });
 
   it("flags a document with no channel", () => {
-    expect(validatePoppyDocument({ protocol_version: "0.3", organization: { name: "A", domain: "acme.com" } }, "acme.com").issues).toContain("no_channels");
+    expect(validatePoppyDocument({ protocol_version: "1.0", organization: { name: "A", domain: "acme.com" } }, "acme.com").issues).toContain("no_channels");
   });
 
   it("flags a non-https API and a missing description", () => {
@@ -36,16 +36,16 @@ describe("poppy.json validation", () => {
     expect(validatePoppyDocument(doc, "acme.com").issues).toContain("invalid_api_entry");
   });
 
-  it("flags sign-in offered without an issuer, and the disabled conflict", () => {
-    expect(validatePoppyDocument({ ...validDoc, auth: { sign_in: ["direct"] } }, "acme.com").issues).toContain("sign_in_without_issuer");
+  it("flags legacy sign-in and permits a disabled issuer", () => {
+    expect(validatePoppyDocument({ ...validDoc, auth: { sign_in: ["direct"] } }, "acme.com").issues).toContain("legacy_sign_in");
     expect(
       validatePoppyDocument({ ...validDoc, auth: { disabled: true, issuer: "https://auth.acme.com" } }, "acme.com").issues,
-    ).toContain("sign_in_conflict");
+    ).toEqual([]);
   });
 
-  it("accepts camelCase variants the spec allows", () => {
-    const camel = { protocolVersion: "0.3", organization: { name: "Acme", domain: "acme.com" }, apis: validDoc.apis };
-    expect(validatePoppyDocument(camel, "acme.com").valid).toBe(true);
+  it("requires the canonical protocol_version field", () => {
+    const camel = { protocolVersion: "1.0", organization: { name: "Acme", domain: "acme.com" }, apis: validDoc.apis };
+    expect(validatePoppyDocument(camel, "acme.com").issues).toContain("missing_protocol_version");
   });
 });
 
@@ -72,7 +72,7 @@ describe("poppy probe", () => {
     const fetcher = vi.fn(async (url: string) => {
       if (url.includes("poppy.json")) {
         return new Response(
-          JSON.stringify({ ...validDoc, auth: { issuer: "https://auth.acme.com", sign_in: ["direct"] } }),
+          JSON.stringify({ ...validDoc, auth: { issuer: "https://auth.acme.com" } }),
           { status: 200 },
         );
       }
@@ -83,7 +83,8 @@ describe("poppy probe", () => {
         JSON.stringify({
           issuer: "https://auth.acme.com",
           protected_resources: ["https://acme.com"],
-          grant_types_supported: ["refresh_token"],
+          grant_types_supported: ["refresh_token", "authorization_code"],
+          authorization_endpoint: "https://auth.acme.com/authorize", response_types_supported: ["code"], code_challenge_methods_supported: ["S256"], token_endpoint_auth_methods_supported: ["private_key_jwt"], token_endpoint_auth_signing_alg_values_supported: ["ES256", "PS384"],
           token_endpoint: "https://auth.acme.com/token",
           revocation_endpoint: "https://auth.acme.com/revoke",
         }),
@@ -99,7 +100,7 @@ describe("poppy probe", () => {
   it("catches an issuer that does not list the domain", async () => {
     const fetcher = vi.fn(async (url: string) => {
       if (url.includes("poppy.json")) {
-        return new Response(JSON.stringify({ ...validDoc, auth: { issuer: "https://auth.acme.com", sign_in: ["direct"] } }), { status: 200 });
+        return new Response(JSON.stringify({ ...validDoc, auth: { issuer: "https://auth.acme.com" } }), { status: 200 });
       }
       if (url.includes("oauth-protected-resource")) {
         return new Response(JSON.stringify({ authorization_servers: ["https://auth.acme.com"] }), { status: 200 });
@@ -118,10 +119,11 @@ describe("poppy generation", () => {
     expect(validatePoppyDocument(json, "acme.com").valid).toBe(true);
   });
 
-  it("emits both OAuth documents when an issuer is given", () => {
+  it("does not fabricate issuer metadata or endpoints", () => {
     const result = generatePoppy({ name: "Acme", domain: "acme.com", issuer: "https://auth.acme.com", mcp: ["https://acme.com/mcp"] });
     expect(result.protectedResource?.url).toContain("oauth-protected-resource");
-    expect(result.issuerMetadata?.json.protected_resources).toEqual(["https://acme.com"]);
+    expect(result.issuerMetadata).toBeNull();
+    expect(result.prerequisites.join(" ")).toContain("real metadata");
   });
 
   it("emits no OAuth document without an issuer", () => {

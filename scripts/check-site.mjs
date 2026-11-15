@@ -1,144 +1,88 @@
 #!/usr/bin/env node
-/**
- * Static checks for the landing site.
- *
- * Catches the failures that a marketing page actually ships with: a missing
- * asset, a form hook renamed in the HTML but not in the JS, placeholder copy,
- * a canonical URL that disagrees with the sitemap, or a broken language pair.
- */
-
-import fs from "node:fs";
-import path from "node:path";
-
-const root = path.resolve("site");
-const failures = [];
-
-function read(file) {
-  const full = path.join(root, file);
-  if (!fs.existsSync(full)) {
-    failures.push(`missing file: site/${file}`);
-    return "";
+/** Verify the bilingual static contract, not merely that both pages exist. */
+import assert from 'node:assert/strict';
+import fs from 'node:fs';
+import path from 'node:path';
+import { execFileSync } from 'node:child_process';
+import { parseHTML } from 'linkedom';
+execFileSync(process.execPath, ['scripts/render-landing.mjs', '--check'], { stdio: 'inherit' });
+const root = path.resolve('site');
+const read = file => fs.readFileSync(path.join(root, file), 'utf8');
+const documents = ['index.html', 'fr/index.html'].map(file => parseHTML(read(file)).document);
+const translatedAttributes = new Set(['lang', 'aria-label', 'alt', 'title', 'placeholder', 'aria-current']);
+function structure(document) {
+  return [...document.body.querySelectorAll('*')].map(node => [node.localName, [...node.attributes]
+    .filter(a => !translatedAttributes.has(a.name))
+    .map(a => [a.name, a.value.replace(/lang=(en|fr)/g, 'lang=LOCALE').replace(/geo-board-(en|fr)\.svg/g, 'geo-board-LOCALE.svg').replace('/fr/confidentialite.html', '/privacy.html').replace(/^\/fr\/(?=guides\/|$|#)/, '/')])]);
+}
+assert.deepEqual(structure(documents[0]), structure(documents[1]), 'EN/FR structure, actions and assets must match');
+for (const [i, document] of documents.entries()) {
+  const locale = i ? 'fr' : 'en';
+  const base = i ? 'fr' : '';
+  const canonical = `https://gtm.kayroslab.com/${i ? 'fr/' : ''}`;
+  assert.equal(document.documentElement.lang, locale);
+  assert.equal(document.querySelector('link[rel="canonical"]').href, canonical);
+  assert.ok(read('sitemap.xml').includes(canonical));
+  assert.equal(document.querySelector('.lang [aria-current="page"]').textContent, locale.toUpperCase());
+  const ids = [...document.querySelectorAll('[id]')].map(n => n.id);
+  assert.equal(new Set(ids).size, ids.length, `${locale}: duplicate IDs`);
+  for (const id of ['main','url-form','url-input','read-result','lead-form','lead-name','lead-email','lead-url','audit','ops','console','roadmap','offres','faq']) assert.ok(document.getElementById(id), `${locale}: missing ${id}`);
+  for (const script of document.querySelectorAll('script[type="application/ld+json"]')) JSON.parse(script.textContent);
+  assert.ok(document.querySelector('script[type="application/ld+json"]'));
+  for (const node of document.querySelectorAll('[src],link[href],a[href]')) {
+    const value = node.getAttribute('src') || node.getAttribute('href');
+    if (!value || /^(https?:|data:)/.test(value)) continue;
+    if (value.startsWith('#')) { assert.ok(document.getElementById(value.slice(1)), `${locale}: missing anchor ${value}`); continue; }
+    if (value.startsWith('/console/')) { assert.ok(value.includes(`lang=${locale}`), `${locale}: console language lost`); continue; }
+    const file = path.resolve(root, value.startsWith('/') ? '.' + value : path.join(base, value));
+    assert.ok(file.startsWith(root + path.sep) || file === root, `Path outside site: ${value}`);
+    assert.ok(fs.existsSync(file), `${locale}: missing asset ${value}`);
   }
-  return fs.readFileSync(full, "utf8");
+  const text = document.querySelector('#offres').textContent;
+  assert.match(text, /39/); assert.match(text, /149/); assert.match(text, /Mollie/);
+  assert.match(text, locale === 'fr' ? /HT\/TTC/ : /VAT/);
+  assert.equal(document.querySelectorAll('#faq details').length, 8, 'Keep the full French FAQ');
+  assert.equal(document.querySelectorAll('#ops .loop-node').length, 6, 'Keep all French Ops stages');
+  assert.equal(document.querySelectorAll('#roadmap .phase').length, 3, 'Keep all French roadmap phases');
+  assert.equal(document.querySelectorAll('#toolkit .lever').length, 7, 'Keep all French toolkit items');
 }
 
-const required = [
-  "index.html",
-  "fr/index.html",
-  "styles.css",
-  "app.js",
-  "preview.js",
-  "i18n.js",
-  "tables.js",
-  "indexnow.js",
-  "console.js",
-  "robots.txt",
-  "sitemap.xml",
-  "llms.txt",
-  "llms-full.txt",
-  "ai/summary.json",
-  "ai/faq.json",
-  "ai/service.json",
-  ".well-known/ai.txt",
-  "404.html",
-  "assets/logo.png",
-  "assets/logo-128.png",
-  "assets/logo-64.png",
-  "reports/opendpe.html",
-  "reports/opendpe.json",
-  "reports/opendpe.pdf",
-];
-for (const file of required) read(file);
-
-const html = read("index.html");
-const frHtml = read("fr/index.html");
-const js = read("app.js");
-const sitemap = read("sitemap.xml");
-const llms = read("llms.txt");
-
-const hooks = [
-  'id="check-form"',
-  'id="site-url"',
-  'id="lead-form"',
-  'id="lead-site"',
-  'id="lead-company"',
-  'id="result-heading"',
-  'id="result-tables"',
-  'id="tab-overview"',
-  'id="panel-overview"',
-];
-for (const hook of hooks) {
-  if (!html.includes(hook)) failures.push(`index.html lost hook ${hook}`);
-}
-
-// The French landing page is standalone: its own URL and lead forms are
-// handled by an inline script, not the English app.js widget identifiers.
-for (const hook of ['id="url-form"', 'id="url-input"', 'id="lead-form"', 'id="lead-name"', 'id="lead-email"', 'id="lead-url"']) {
-  if (!frHtml.includes(hook)) failures.push(`fr/index.html lost hook ${hook}`);
-}
-for (const behavior of ["getElementById('url-form').addEventListener", "getElementById('lead-form').addEventListener", "fetch('/api/lead'", "window.location.assign('/console/')"]) {
-  if (!frHtml.includes(behavior)) failures.push(`fr/index.html lost form behavior ${behavior}`);
-}
-
-for (const needle of ['type="application/ld+json"', 'rel="canonical"', 'name="description"', "app.js", "styles.css"]) {
-  if (!html.includes(needle)) failures.push(`index.html missing ${needle}`);
-}
-
-for (const selector of ["#check-form", "#lead-form", "#site-url"]) {
-  if (!js.includes(selector)) failures.push(`app.js no longer wires ${selector}`);
-}
-if (!js.includes("dictFor")) failures.push("app.js no longer loads the translation dictionary");
-
-// The form must never hand the visitor to a mail client.
-if (/mailto:/.test(js) || /mailto:/.test(html)) failures.push("the lead form still opens a mail client");
-if (!js.includes("/api/lead")) failures.push("app.js no longer posts to /api/lead");
-if (!js.includes("/api/free-read")) failures.push("app.js no longer calls /api/free-read");
-for (const meta of ["gg-api", "gg-form"]) {
-  if (!html.includes(`name="${meta}"`)) failures.push(`index.html missing the ${meta} meta`);
-}
-if (!js.includes("result-tables")) failures.push("app.js no longer renders the tables");
-if (!html.includes("/console/#indexnow") || !frHtml.includes("/console/#indexnow")) failures.push("landing pages no longer link to IndexNow in the console");
-if (!read("console/app.js").includes("renderIndexNow")) failures.push("console no longer initialises IndexNow");
-if (!js.includes("initConsole")) failures.push("app.js no longer initialises the console");
-if (!html.includes("reports/opendpe.html")) failures.push("index.html no longer links the sample report");
-const reportHtml = read("reports/opendpe.html");
-if (!reportHtml.includes("opendpe.pdf")) failures.push("sample report no longer links its PDF");
-
-const placeholders = /lorem ipsum|TODO|FIXME|your-domain\.example/i;
-if (placeholders.test(html) || placeholders.test(js) || placeholders.test(frHtml)) {
-  failures.push("placeholder text found");
-}
-
-const canonical = html.match(/<link rel="canonical" href="([^"]+)"/)?.[1] ?? "";
-if (!canonical) failures.push("canonical URL not found");
-if (canonical && !sitemap.includes(canonical)) failures.push(`sitemap does not list canonical ${canonical}`);
-if (!llms.startsWith("# ")) failures.push("llms.txt must start with an H1");
-
-// Language pair
-const frCanonical = frHtml.match(/<link rel="canonical" href="([^"]+)"/)?.[1] ?? "";
-if (!frHtml.includes('<html lang="fr">')) failures.push("fr/index.html must declare lang=fr");
-if (!frCanonical.endsWith("/fr/")) failures.push("fr/index.html canonical must end with /fr/");
-if (!sitemap.includes(frCanonical)) failures.push(`sitemap does not list ${frCanonical}`);
-for (const page of [html, frHtml]) {
-  if (!page.includes('hreflang="en"')) failures.push("missing hreflang=en alternate");
-  if (!page.includes('hreflang="fr"')) failures.push("missing hreflang=fr alternate");
-}
-
-// Local asset references must exist (resolve relative to the page folder).
-for (const [page, base] of [
-  [html, ""],
-  [frHtml, "fr"],
-]) {
-  for (const match of page.matchAll(/(?:src|href)="((?:\.\.\/)?(?:assets\/|styles\.css|app\.js)[^"]*)"/g)) {
-    const target = path.normalize(path.join(base, match[1]));
-    if (!fs.existsSync(path.join(root, target))) failures.push(`broken local reference: ${match[1]} in ${base || "."}`);
+// Guides are static, indexable pages. Every local destination and fragment must resolve.
+for (const track of ['marketing', 'technical']) {
+  const guides = ['en', 'fr'].map(locale => ({ locale, url: `${locale === 'fr' ? '/fr' : ''}/guides/${track}/` }));
+  const pages = guides.map(({url}) => parseHTML(read(url.slice(1) + 'index.html')).document);
+  assert.deepEqual(structure(pages[0]), structure(pages[1]), `${track}: translated structure/actions must match`);
+  for (const [i, document] of pages.entries()) {
+    const {locale, url} = guides[i];
+    assert.equal(document.documentElement.lang, locale);
+    assert.equal(document.querySelector('link[rel="canonical"]').href, `https://gtm.kayroslab.com${url}`);
+    assert.equal(document.querySelectorAll('h1').length, 1);
+    assert.equal(document.querySelectorAll('.guide-stages > li').length, 5);
+    assert.equal(document.querySelector('.lang [aria-current="page"]').textContent, locale.toUpperCase());
+    assert.ok(read('sitemap.xml').includes(`https://gtm.kayroslab.com${url}`));
+    const ids = [...document.querySelectorAll('[id]')].map(n => n.id);
+    assert.equal(new Set(ids).size, ids.length, `${url}: duplicate IDs`);
+    for (const script of document.querySelectorAll('script[type="application/ld+json"]')) JSON.parse(script.textContent);
+    for (const node of document.querySelectorAll('[src],link[href],a[href]')) {
+      const value = node.getAttribute('src') || node.getAttribute('href');
+      if (!value || /^(https?:|data:)/.test(value)) continue;
+      const target = new URL(value, `https://gtm.kayroslab.com${url}`);
+      if (target.pathname.startsWith('/console/')) {
+        assert.equal(target.searchParams.get('lang'), locale, `${url}: console language lost`);
+        continue;
+      }
+      let file = path.join(root, target.pathname);
+      assert.ok(fs.existsSync(file), `${url}: missing destination ${value}`);
+      if (fs.statSync(file).isDirectory()) file = path.join(file, 'index.html');
+      assert.ok(fs.existsSync(file), `${url}: missing index ${value}`);
+      if (target.hash) assert.ok(parseHTML(fs.readFileSync(file, 'utf8')).document.getElementById(target.hash.slice(1)), `${url}: missing fragment ${value}`);
+    }
   }
 }
 
-if (failures.length) {
-  console.error("site check failed:");
-  for (const failure of failures) console.error(` - ${failure}`);
-  process.exit(1);
-}
-
-console.log("site check OK — files, hooks, JSON-LD, canonical, sitemap, llms.txt and the en/fr pair");
+const behavior = read('landing.js');
+for (const hook of ['url-form','lead-form','/api/free-read','/api/lead','auditUrlShape','sampleTables(dict)','translateLiveTables','renderSitemapMap']) assert.ok(behavior.includes(hook), `Missing shared behavior: ${hook}`);
+assert.doesNotMatch(behavior, /mailto:/);
+assert.ok(read('console/index.html').includes('src="locale-shell.js"'));
+assert.ok(read('reports/opendpe.html').includes('opendpe.pdf'));
+console.log('site check OK — English layout, full French content, bilingual actions, four guides, assets, SEO and generated-file parity');

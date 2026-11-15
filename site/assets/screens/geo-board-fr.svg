@@ -1,0 +1,60 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1400" height="880" viewBox="0 0 1400 880" role="img" aria-labelledby="title desc">
+  <title id="title">Tableau de bord GTM Growth illustratif pour opendpe.net</title>
+  <desc id="desc">Score GEO 71 sur 100, citabilité IA 53 sur 100, préparation IndexNow 35 sur 100. La courbe est une projection, pas un historique.</desc>
+  <defs>
+    <linearGradient id="accent" x1="0" x2="1" y1="0" y2="1">
+      <stop stop-color="#7c3aed"/><stop offset="1" stop-color="#ec4899"/>
+    </linearGradient>
+    <linearGradient id="plot" x1="0" x2="0" y1="0" y2="1">
+      <stop stop-color="#a78bfa" stop-opacity=".33"/><stop offset="1" stop-color="#a78bfa" stop-opacity="0"/>
+    </linearGradient>
+    <filter id="shadow"><feDropShadow dx="0" dy="13" stdDeviation="18" flood-color="#17203d" flood-opacity=".09"/></filter>
+  </defs>
+  <rect width="1400" height="880" rx="25" fill="#f6f7fb"/>
+  <rect width="250" height="880" rx="25" fill="#0d0d1f"/>
+  <rect x="225" y="0" width="25" height="880" fill="#0d0d1f"/>
+  <circle cx="44" cy="47" r="17" fill="url(#accent)"/>
+  <path d="M39 55L51 39M40 44l9-4-2 10" fill="none" stroke="white" stroke-width="3.2" stroke-linecap="round" stroke-linejoin="round"/>
+  <g font-family="Inter,Segoe UI,Arial,sans-serif">
+    <text x="74" y="53" font-size="21" font-weight="760" fill="#faf9ff">GTM Growth</text>
+    <rect x="18" y="105" width="214" height="42" rx="11" fill="#262044"/>
+    <circle cx="43" cy="126" r="7" fill="#a78bfa"/>
+    <text x="59" y="133" font-size="17" font-weight="630" fill="#eee7ff">Vue d’ensemble</text>
+    <g font-size="17" fill="#a9a8c3">
+      <text x="39" y="194">Audit GEO</text><text x="39" y="242">Citabilité</text>
+      <text x="39" y="290">Recherche</text><text x="39" y="338">IndexNow</text>
+      <text x="39" y="386">Suivi</text><text x="39" y="434">Plan d’action</text>
+    </g>
+    <rect x="268" y="19" width="1114" height="72" rx="14" fill="white"/>
+    <text x="303" y="64" font-size="26" font-weight="750" fill="#151a2a">Vue d’ensemble</text>
+    <rect x="1125" y="35" width="230" height="40" rx="20" fill="#f3eeff"/>
+    <text x="1240" y="61" text-anchor="middle" font-size="16" font-weight="650" fill="#6d28d9">opendpe.net</text>
+    <text x="290" y="137" font-size="26" font-weight="730" fill="#151a2a">Votre visibilité en un coup d’œil</text>
+    <text x="291" y="164" font-size="16" fill="#5d6577">Exemple d’audit public · données mesurées et améliorations projetées</text>
+    <g filter="url(#shadow)">
+      <rect x="286" y="188" width="340" height="166" rx="17" fill="white"/>
+      <rect x="648" y="188" width="340" height="166" rx="17" fill="white"/>
+      <rect x="1010" y="188" width="342" height="166" rx="17" fill="white"/>
+    </g>
+    <g font-size="16" font-weight="620" fill="#5d6577"><text x="314" y="226">Score GEO</text><text x="677" y="226">Citabilité IA</text><text x="1039" y="226">Préparation IndexNow</text></g>
+    <text x="314" y="291" font-size="60" font-weight="810" fill="#5224aa">71<tspan fill="#9aa2b2" font-size="22">/100</tspan></text>
+    <text x="677" y="291" font-size="60" font-weight="810" fill="#c02688">53<tspan fill="#9aa2b2" font-size="22">/100</tspan></text>
+    <text x="1039" y="291" font-size="60" font-weight="810" fill="#d97706">35<tspan fill="#9aa2b2" font-size="22">/100</tspan></text>
+    <g font-size="16" fill="#596377"><text x="314" y="327">+29 possibles après correctifs</text><text x="677" y="327">Signaux de contenu à améliorer</text><text x="1039" y="327">4 contrôles de préparation</text></g>
+    <rect x="286" y="382" width="1066" height="369" rx="18" fill="white" filter="url(#shadow)"/>
+    <text x="321" y="423" font-size="23" font-weight="750" fill="#182033">Trajectoire du score projetée</text>
+    <text x="321" y="449" font-size="15" fill="#667085">Progression illustrative après les correctifs prioritaires</text>
+    <g stroke="#e8e9f0" stroke-width="1">
+      <line x1="354" y1="512" x2="1310" y2="512"/><line x1="354" y1="577" x2="1310" y2="577"/><line x1="354" y1="642" x2="1310" y2="642"/>
+      <line x1="354" y1="707" x2="1310" y2="707"/>
+    </g>
+    <g fill="#9198aa" font-size="15" text-anchor="end"><text x="339" y="517">100</text><text x="339" y="582">90</text><text x="339" y="647">80</text><text x="339" y="712">70</text></g>
+    <path d="M380 697L500 675L630 640L758 610L885 576L1014 546L1150 522L1290 512L1290 707L380 707Z" fill="url(#plot)"/>
+    <path d="M380 697L500 675L630 640L758 610L885 576L1014 546L1150 522L1290 512" stroke="url(#accent)" stroke-width="5.5" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
+    <g fill="white" stroke="#7c3aed" stroke-width="3.2"><circle cx="380" cy="697" r="7"/><circle cx="630" cy="640" r="7"/><circle cx="885" cy="576" r="7"/><circle cx="1150" cy="522" r="7"/><circle cx="1290" cy="512" r="8"/></g>
+    <g font-size="15" fill="#646b7e" text-anchor="middle"><text x="385" y="734">Aujourd’hui</text><text x="630" y="734">Action 4</text><text x="885" y="734">Action 8</text><text x="1150" y="734">Action 13</text><text x="1290" y="734">Action 16</text></g>
+    <rect x="286" y="776" width="1066" height="70" rx="14" fill="#f0e9ff"/>
+    <text x="316" y="806" font-size="18" font-weight="740" fill="#5b21b6">71 → 100 : score GEO potentiel</text>
+    <text x="316" y="829" font-size="14" fill="#6d607e">Illustration en français · projection, pas un historique de résultats</text>
+  </g>
+</svg>

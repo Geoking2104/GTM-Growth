@@ -49,4 +49,5 @@ export const BILLING_MIGRATIONS = [
       );
     `,
   },
+  { version: 2, sql: "ALTER TABLE billing_attempts ADD COLUMN limits_version TEXT;" },
 ] as const;

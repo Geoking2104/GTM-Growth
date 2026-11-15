@@ -1,3 +1,4 @@
+import { renderDataGuide } from "./data-guidance.js";
 import { el } from "./render.js";
 import { LANG } from "./i18n.js";
 const L = (fr, en) => LANG === "fr" ? fr : en;
@@ -11,13 +12,14 @@ export function renderTrackedQueries({ state, api, scope, saveSettings }) {
   const admin = state.me?.platformAdmin || state.me?.role === "tenant-admin";
   const content = el("div"); const message = el("p", "c-note"); message.setAttribute("role", "status");
   box.append(el("h3", "", L("Requêtes à suivre", "Tracked queries")), el("p", "c-note", L("Requêtes réellement observées dans Search Console, par propriété. Les scores sont des opportunités estimées, pas des prévisions.", "Queries actually observed in Search Console, by property. Scores are estimated opportunities, not forecasts.")), content, message);
-  if (!property) { content.append(el("p", "c-note", L("Ajoutez une propriété Search Console pour commencer.", "Add a Search Console property to get started."))); return box; }
+  if (!property) { content.append(renderDataGuide("gsc")); return box; }
   const load = async () => {
     message.textContent = L("Chargement des données Search Console…", "Loading Search Console data…");
     try {
       const [queries, scored] = await Promise.all([api("/search/queries", scope({ rowLimit: 100 })), api("/keywords/opportunities", scope({ minImpressions: 0 }))]);
+      if (queries.problem || scored.problem) { message.textContent = ""; content.replaceChildren(renderDataGuide("gsc", { error: queries.problem?.message || scored.problem?.message, retry: load })); return; }
       rows = queries.rows || []; opportunities = scored.opportunities || []; message.textContent = ""; draw();
-    } catch { message.textContent = L("Impossible de lire cette propriété. Vérifiez son accès dans Tracking → Statut, puis réessayez.", "Cannot read this property. Check access under Tracking → Status, then retry."); }
+    } catch (error) { message.textContent = ""; content.replaceChildren(renderDataGuide("gsc", { error, retry: load })); }
   };
   const draw = () => {
     content.replaceChildren(el("p", "c-note", `${L("Propriété", "Property")} : ${property}`));
@@ -39,5 +41,5 @@ export function renderTrackedQueries({ state, api, scope, saveSettings }) {
     else content.append(el("p", "c-note", L("Seul un administrateur peut modifier la sélection.", "Only an administrator can change the selection.")));
     content.append(button(L("Actualiser", "Refresh"), load));
   };
-  draw(); return box;
+  void load(); return box;
 }

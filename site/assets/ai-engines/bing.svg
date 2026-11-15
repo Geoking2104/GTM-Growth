@@ -1,0 +1,4 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" role="img" aria-label="Bing">
+  <defs><linearGradient id="bing" x1="0" y1="0" x2="1" y2="1"><stop stop-color="#00A4EF"/><stop offset="1" stop-color="#008373"/></linearGradient></defs>
+  <path fill="url(#bing)" d="M5.6 1.6 10 3.5v9.2l3.3-1.5-1.6-3.7 6.9 3.3v5.1l-8.8 5.9-4.2-2.6V1.6Zm4.4 13v3.1l4.5-2.5-2-1.1-2.5.5Z"/>
+</svg>

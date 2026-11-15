@@ -1,12 +1,21 @@
-# CI/CD — Validation GTM Growth
+# CI/CD — validation and release workflows
 
-## Workflows GitHub Actions
+[Documentation hub](README.md) · [Operations](technical/OPERATIONS.md) · [Release evidence](journey/CAPABILITIES.md#release-evidence)
 
-| Workflow | Fichier | Déclencheur | Rôle |
-|----------|---------|-------------|------|
-| **CI** | `.github/workflows/ci.yml` | push / PR | `npm ci` · typecheck · lint · test · build · smoke CLI (dont GEO) |
-| **Deploy site** | `.github/workflows/pages.yml` | push sur `site/**` | Publie la landing page sur GitHub Pages |
-| **Validate** | `.github/workflows/validate.yml` | manual + schedule optionnel | Pipeline live audit → cutover → health |
+Workflow definitions are authoritative. A passing source check does not imply
+production deployment or live provider acceptance.
+
+| Workflow | Trigger | Scope |
+| --- | --- | --- |
+| [CI](../.github/workflows/ci.yml) | Push / PR targeting main or master | Documentation links, typecheck, lint, Vitest, build, CLI/site smoke, production image, FR/EN browser QA, Node-RED and real ZenML smoke |
+| [Data agent](../.github/workflows/data-agent.yml) | Matching Eve package/workflow paths on PR or push to main | Separate Node 26 package typecheck, tests and build |
+| [OVH release](../.github/workflows/deploy-kayroslab-vps.yml) | Manual on main, `DEPLOY`, production environment | Pinned SSH host verification, source update and primary Compose deployment |
+| [GitHub Pages](../.github/workflows/pages.yml) | Manual on main, `DEPLOY`, github-pages environment | Alternative static-site publication |
+| [Cloudflare Worker](../.github/workflows/worker.yml) | Manual on main, owner guard, `DEPLOY`, production environment | Alternative public API; missing Cloudflare secrets skip deployment steps |
+| [Validate](../.github/workflows/validate.yml) | Manual, or weekly when `ENABLE_SCHEDULED_VALIDATE=true` | Selected live Google validation steps with configured credentials |
+
+A documentation push/PR runs validation; it does not dispatch OVH, Pages or Worker
+publication. Optional source activation has its own acceptance criteria.
 
 ## CI (toujours on)
 

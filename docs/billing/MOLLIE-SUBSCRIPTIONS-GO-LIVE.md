@@ -1,10 +1,10 @@
 # GTM Growth — Mise en ligne du moteur d'abonnement Mollie
 
-**Runbook d'architecture, d'implémentation et de déploiement**  
-**Version :** 1.0 — 9 novembre 2026  
-**Application :** <https://gtm.kayroslab.com/fr/> · Console : <https://gtm.kayroslab.com/console/>  
-**Dépôt cible :** <https://github.com/Geoking2104/GTM-Growth>  
-**Référence de paiement :** <https://github.com/Geoking2104/openDPE>  
+**Runbook d'architecture, d'implémentation et de déploiement**
+**Version :** 1.0 — 9 novembre 2026
+**Application :** <https://gtm.kayroslab.com/fr/> · Console : <https://gtm.kayroslab.com/console/>
+**Dépôt cible :** <https://github.com/Geoking2104/GTM-Growth>
+**Référence de paiement :** <https://github.com/Geoking2104/openDPE>
 **Statut :** instructions préparatoires — **aucune modification, aucun paiement et aucun déploiement effectués**.
 
 > **Principe directeur :** conserver le moteur open source GTM Growth gratuit et facturer uniquement le service Cloud opéré. Réutiliser **l'organisation marchande Mollie** d'openDPE, **sous réserve que l'entité juridique soit identique**, mais créer un **profil de site GTM Growth distinct** avec ses propres clés test et production. Ne jamais connecter GTM Growth au backend de paiement d'openDPE ni réutiliser ses clés.

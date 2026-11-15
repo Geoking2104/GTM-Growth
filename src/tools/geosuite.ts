@@ -19,7 +19,7 @@ export const geoSuiteTools = [
   {
     name: "poppy_check",
     description:
-      "Check /.well-known/poppy.json (Personal Agent Protocol draft 0.3) the way a personal agent reads it: file present, protocol version, organization domain against the serving host, channels, and the OAuth discovery chain when sign-in is offered. Ported from GeoSuite's MIT poppy-json checker. Read-only.",
+      "Check /.well-known/poppy.json (Personal Agent Protocol 1.0) the way a personal agent reads it: file present, protocol version, organization domain against the serving host, channels, and the OAuth discovery chain when sign-in is offered. Ported from GeoSuite's MIT poppy-json checker. Read-only.",
     schema: strict({
       url: z.string(),
     }),
@@ -35,11 +35,12 @@ export const geoSuiteTools = [
   {
     name: "poppy_generate",
     description:
-      "Generate a valid poppy.json for a domain, plus the two OAuth documents an agent needs when sign-in is offered (RFC 9728 protected-resource metadata and RFC 8414 issuer metadata). Returns the JSON bodies and the exact URLs to serve them at. Ported from GeoSuite's MIT poppy-json generator.",
+      "Generate PAP 1.0 discovery and protected-resource proposals. Issuer metadata is returned only when supplied explicitly; endpoints are never fabricated. Lists deployment prerequisites. Ported from GeoSuite's MIT poppy-json generator.",
     schema: strict({
       name: z.string(),
       domain: z.string(),
       issuer: z.string().optional(),
+      issuerMetadata: z.record(z.unknown()).optional(),
       signIn: z.array(z.enum(["direct", "device", "mediated"])).optional(),
       mcp: z.array(z.string()).optional(),
       openapi: z.array(z.string()).optional(),

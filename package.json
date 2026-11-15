@@ -42,7 +42,10 @@
     "worker:deploy": "wrangler deploy",
     "worker:dry-run": "wrangler deploy --dry-run --outdir=.worker-build",
     "site:api": "node scripts/set-api.mjs",
-    "tenant:provision": "tsx scripts/provision-tenant.ts"
+    "tenant:provision": "tsx scripts/provision-tenant.ts",
+    "site:render": "node scripts/render-landing.mjs",
+    "site:check": "node scripts/check-site.mjs",
+    "docs:check": "node scripts/check-docs.mjs"
   },
   "keywords": [
     "mcp",
@@ -101,6 +104,7 @@
     "@typescript-eslint/eslint-plugin": "^8.18.0",
     "@typescript-eslint/parser": "^8.18.0",
     "eslint": "^9.16.0",
+    "linkedom": "^0.18.12",
     "tsx": "^4.19.2",
     "typescript": "^5.7.2",
     "vitest": "^2.1.8",

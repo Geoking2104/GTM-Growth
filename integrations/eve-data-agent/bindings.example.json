@@ -1,0 +1,10 @@
+[
+  {
+    "tenantId": "replace-with-real-tenant-id",
+    "teamId": "T_REPLACE_WITH_REAL_ID",
+    "channelIds": ["C_REPLACE_WITH_REAL_ID"],
+    "userIds": ["U_REPLACE_WITH_REAL_ID"],
+    "secretEnv": "GTM_AGENT_SECRET_CUSTOMER",
+    "profile": { "role": "marketer", "goal": "leads", "stage": "activate", "audience": "", "target": null }
+  }
+]

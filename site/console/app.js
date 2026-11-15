@@ -1,8 +1,14 @@
-﻿/* Console authentifiÃ©e : mÃªme design que la section #console du site (coque .app),
- * donnÃ©es en direct via /api/console/*. Les dÃ©finitions d'outils viennent de tools.js. */
+import { renderBilling } from "./billing.js";
+import { renderConnectedAgents } from "./connected-agents.js";
+import { renderCrm } from './crm.js';
+import { renderSocial } from './social.js';
+import { renderLocalSeo } from "./local-seo-network.js";
+import { renderLocalSeoWorkspace } from "./local-seo.js";
+/* Console authentifiée : même design que la section #console du site (coque .app),
+ * données en direct via /api/console/*. Les définitions d'outils viennent de tools.js. */
 import { API_BASE, DISCOVER, CONSOLE_DOMAIN } from "./config.js";
 import { login, logout, handleRedirect, accessToken, currentTenant, setTenant, accountConsoleUrl } from "./auth.js";
-import { TABS, raw } from "./tools.js";
+import { TABS } from "./tools.js";
 import { el } from "./render.js";
 import { t, tr, actionLabel, LANG } from "./i18n.js";
 import { icon } from "./icons.js";
@@ -18,52 +24,68 @@ import { renderPlatformSetup } from "./platform-setup.js";
 import { renderTrackedQueries } from "./tracked-queries.js";
 import { renderOpsPrompts, renderOpsRank, renderOpsArticles, renderOpsAlerts } from "./ops.js";
 import { renderApplyMode } from "./apply.js";
-import { renderBilling } from "./billing.js";
 import { openWizard, renderAgentHelp } from "./onboarding-wizard.js";
 import { toolbar, renderSearchPerformance, renderQueryPages, renderSitemaps, renderGa4, renderRealtime, renderEcommerce, renderTechnology, renderGtm, renderBing, renderStatus, renderTags, renderSettings } from "./analytics.js";
+import { mountPublicRead } from "./public-read.js";
+import { renderAction } from "./action-view.js";
+import { renderDataGuide } from "./data-guidance.js";
+import { resolveWorkspace, workspaceHandoff, featureHandoff } from "./workspace-context.js";
+import { renderGlobalSeo } from "./global-seo.js";
+import { renderCustomerJourneyWorkspace } from "./customer-journey-workspace.js";
+import { renderCatalog } from "./catalog.js";
+import { renderCommerce } from "./commerce.js";
+import { clearVisualEntities, setVisualEntities, visualBrief, sectionHeading } from "./visuals.js";
+import { createDataAgent } from "./data-agent.js";
+import { renderFeatureGuide, renderFeatureEntry } from "./feature-guide.js";
+import { consoleFeature } from "../journey-content.js";
 
 const $ = (s) => document.querySelector(s);
 const selectedTenant = () => sessionStorage.getItem("gtm-console-selected") || currentTenant()?.id || "";
 const headers = (token) => ({ Authorization: `Bearer ${token}`, ...(selectedTenant() ? { "X-Tenant": selectedTenant() } : {}) });
 const ls = (k) => localStorage.getItem(`gtm-console-${k}`) || "";
 const state = { url: ls("url"), property: ls("property"), ga4Property: ls("ga4Property"), bingSite: ls("bingSite"), days: Number(ls("days")) || 28, searchType: ls("searchType") || "web", overview: null, overviewFor: "", me: null };
-/** Corps commun des requÃªtes Track : domaine, propriÃ©tÃ©s, pÃ©riode. */
+/** Corps commun des requêtes Track : domaine, propriétés, période. */
 const scope = (extra = {}) => ({ url: state.url || undefined, property: state.property || undefined, ga4Property: state.ga4Property || undefined, bingSite: state.bingSite || undefined, days: state.days, searchType: state.searchType, ...extra });
 const rerender = () => show(current.section, current.tab);
-/** Vue de donnÃ©es : barre de pÃ©riode + rendu ; ne demande pas de domaine. */
+/** Vue de données : barre de période + rendu ; ne demande pas de domaine. */
 const live = (route, render, opts = {}) => ({ needsDomain: false, async: async () => [toolbar(state, rerender, opts), ...[render(await api(route, scope()))].flat()] });
 const tool = (id) => TABS.find((x) => x.id === id);
-const host = (u) => { try { return new URL(u).hostname.replace(/^www\./, ""); } catch { return u || "â€”"; } };
+const host = (u) => { try { return new URL(u).hostname.replace(/^www\./, ""); } catch { return u || "—"; } };
+
+function billingView() {
+  const tenant = selectedTenant();
+  const me = state.me;
+  const request = async (route, body) => {
+    const token = await accessToken();
+    if (!token || selectedTenant() !== tenant) throw new Error(LANG === "fr" ? "Espace ou session modifié. Rechargez la page." : "Workspace or session changed. Reload this page.");
+    const res = await fetch(`${API_BASE.replace(/\/console\/?$/, "/billing")}${route}`, {
+      method: body === undefined ? "GET" : "POST", headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}`, "X-Tenant": tenant },
+      ...(body === undefined ? {} : { body: JSON.stringify(body) }), cache: "no-store",
+    });
+    const data = await res.json();
+    if (!res.ok) { const error = new Error(data.error || `HTTP ${res.status}`); error.status = res.status; throw error; }
+    if (selectedTenant() !== tenant) throw new Error("Workspace changed. Reload this page.");
+    return data;
+  };
+  return renderBilling({ me, request, fr: LANG === "fr" });
+}
 
 async function fetchApi(route, body, { binary = false } = {}) {
   const token = await accessToken();
-  if (!token) { await login(); throw new Error("Session expirÃ©e"); }
-  const res = await fetch(`${API_BASE}${route}`, { method: "POST", headers: { "Content-Type": "application/json", ...headers(token) }, body: JSON.stringify(body) });
-  if (res.status === 401) { await login(); throw new Error("Session expirÃ©e"); }
-  if (!res.ok) { const e = await res.json().catch(() => ({})); throw new Error(e.error || `Erreur ${res.status}`); }
+  if (!token) { await login(); throw new Error("Session expirée"); }
+  const res = await fetch(`${API_BASE}${route}`, { method: "POST", headers: { "Content-Type": "application/json", ...headers(token) }, body: JSON.stringify(body), ...(automaticRoutes.has(route) ? { signal: AbortSignal.timeout(90000) } : {}) });
+  if (res.status === 401) { await login(); throw new Error("Session expirée"); }
+  if (!res.ok) { const e = await res.json().catch(() => ({})); const error = new Error(e.error || `HTTP ${res.status}`); error.status = res.status; throw error; }
   return binary ? res.blob() : res.json();
 }
 
-async function billingRequest(route, body) {
-  const token = await accessToken();
-  if (!token) { await login(); throw new Error("Session expirée"); }
-  const res = await fetch(`/api/billing${route}`, {
-    method: body === undefined ? "GET" : "POST",
-    headers: { "Content-Type": "application/json", ...headers(token) },
-    body: body === undefined ? undefined : JSON.stringify(body), cache: "no-store",
-  });
-  const data = await res.json().catch(() => ({}));
-  if (!res.ok) throw new Error(data.error || `Erreur ${res.status}`);
-  return data;
-}
 
-
-const automaticRoutes = new Set(["/overview", "/tracking/status", "/search/performance", "/search/query-pages", "/search/sitemaps", "/ga4/overview", "/ga4/ecommerce", "/ga4/technology", "/bing/performance", "/sitemap/map", "/geo/citability", "/geo/robots", "/geo/schema", "/performance/weight", "/ai-visibility/datasets", "/competition/state", "/gtm/inventory", "/search/queries", "/search/trends", "/search/losing-pages", "/keywords/opportunities", "/sitemap/audit", "/geo/llms", "/performance/pagespeed", "/performance/crux", "/audit/technical", "/audit/serp-preview"]);
+const automaticRoutes = new Set(["/visual/catalog", "/overview", "/tracking/status", "/search/performance", "/search/query-pages", "/search/sitemaps", "/ga4/overview", "/ga4/ecommerce", "/ga4/technology", "/bing/performance", "/sitemap/map", "/geo/citability", "/geo/robots", "/geo/schema", "/performance/weight", "/ai-visibility/datasets", "/competition/state", "/gtm/inventory", "/search/queries", "/search/trends", "/search/losing-pages", "/keywords/opportunities", "/sitemap/audit", "/geo/llms", "/performance/pagespeed", "/performance/crux", "/audit/technical", "/audit/serp-preview", "/calc/ctr"]);
 const background = createBackgroundLoader((route, body) => fetchApi(route, body), renderBackground);
 export async function api(route, body, options = {}) {
   if (!options.binary && automaticRoutes.has(route)) return background.request(selectedTenant() || state.me?.tenant?.id || "", route, body);
   const result = await fetchApi(route, body, options);
-  if (["/ai-visibility/import", "/ai-visibility/review", "/ai-visibility/openai-run", "/ai-visibility/gemini-run", "/competition/panel", "/competition/revise-panel", "/competition/group", "/competition/alert-config", "/competition/priority", "/competition/action", "/gtm/write", "/gtm/publish"].includes(route)) startBackground();
+  if (["/ai-visibility/import", "/ai-visibility/review", "/ai-visibility/openai-run", "/ai-visibility/gemini-run", "/ai-visibility/claude-run", "/ai-visibility/mistral-run", "/ai-visibility/grok-run", "/competition/panel", "/competition/revise-panel", "/competition/group", "/competition/alert-config", "/competition/priority", "/competition/action", "/gtm/write", "/gtm/publish"].includes(route)) startBackground();
   return result;
 }
 function renderBackground(jobs) {
@@ -72,20 +94,20 @@ function renderBackground(jobs) {
   box.hidden = jobs.length === 0;
   const done = jobs.filter((j) => !["queued", "running"].includes(j.state)).length;
   const errors = jobs.filter((j) => j.state === "error").length;
-  summary.textContent = LANG === "fr" ? `Analyses en arriÃ¨re-plan : ${done}/${jobs.length} terminÃ©es${errors ? ` Â· ${errors} en erreur` : ""}` : `Background analyses: ${done}/${jobs.length} finished${errors ? ` Â· ${errors} failed` : ""}`;
-  const labels = LANG === "fr" ? { queued: "En attente", running: "En cours", done: "TerminÃ©", error: "Indisponible", skipped: "Non configurÃ©" } : { queued: "Queued", running: "Running", done: "Done", error: "Unavailable", skipped: "Not configured" };
-  list.replaceChildren(...jobs.map((job) => { const item = el("li", `c-background-${job.state}`); item.append(el("strong", "", job.label), document.createTextNode(` â€” ${labels[job.state]}${job.detail ? ` : ${job.detail}` : ""}`)); return item; }));
+  summary.textContent = LANG === "fr" ? `Analyses en arrière-plan : ${done}/${jobs.length} terminées${errors ? ` · ${errors} en erreur` : ""}` : `Background analyses: ${done}/${jobs.length} finished${errors ? ` · ${errors} failed` : ""}`;
+  const labels = LANG === "fr" ? { queued: "En attente", running: "En cours", done: "Terminé", error: "Indisponible", skipped: "Non configuré" } : { queued: "Queued", running: "Running", done: "Done", error: "Unavailable", skipped: "Not configured" };
+  list.replaceChildren(...jobs.map((job) => { const item = el("li", `c-background-${job.state}`); item.append(el("strong", "", job.label), document.createTextNode(` — ${labels[job.state]}${job.detail ? ` : ${job.detail}` : ""}`)); return item; }));
 }
 function startBackground() {
-  background.reset(); state.overview = null; state.overviewFor = "";
+  background.reset(); state.overview = null; state.overviewFor = ""; startVisualContext();
   if (!state.me?.tenant) return;
   const base = scope(); const actionBody = { url: state.url, property: state.property || undefined };
-  const missing = LANG === "fr" ? "Renseignez les paramÃ¨tres dans Tracking." : "Configure the connection in Tracking.";
+  const missing = LANG === "fr" ? "Renseignez les paramètres dans Tracking." : "Configure the connection in Tracking.";
   const tasks = [
     ["GEO", "/overview", { url: state.url }, !state.url],
-    [LANG === "fr" ? "AccÃ¨s" : "Connections", "/tracking/status", base, false],
+    [LANG === "fr" ? "Accès" : "Connections", "/tracking/status", base, false],
     ["Search Console", "/search/performance", base, !state.property],
-    [LANG === "fr" ? "RequÃªtes et pages" : "Queries and pages", "/search/query-pages", base, !state.property],
+    [LANG === "fr" ? "Requêtes et pages" : "Queries and pages", "/search/query-pages", base, !state.property],
     ["Sitemaps Search Console", "/search/sitemaps", base, !state.property],
     ["GA4", "/ga4/overview", base, !state.ga4Property],
     ["GA4 e-commerce", "/ga4/ecommerce", base, !state.ga4Property],
@@ -93,11 +115,11 @@ function startBackground() {
     ["Bing", "/bing/performance", base, !state.bingSite],
     ["Google Tag Manager", "/gtm/inventory", scope({ container: state.gtmContainer || undefined }), !state.me.tenant.gtmContainers?.length],
     ["Sitemap", "/sitemap/map", actionBody, !state.url],
-    [LANG === "fr" ? "CitabilitÃ©" : "Citability", "/geo/citability", actionBody, !state.url],
+    [LANG === "fr" ? "Citabilité" : "Citability", "/geo/citability", actionBody, !state.url],
     ["Robots IA", "/geo/robots", actionBody, !state.url],
-    [LANG === "fr" ? "DonnÃ©es structurÃ©es" : "Structured data", "/geo/schema", actionBody, !state.url],
+    [LANG === "fr" ? "Données structurées" : "Structured data", "/geo/schema", actionBody, !state.url],
     [LANG === "fr" ? "Poids de page" : "Page weight", "/performance/weight", actionBody, !state.url],
-    [LANG === "fr" ? "RÃ©ponses IA importÃ©es" : "Imported AI answers", "/ai-visibility/datasets", {}, false],
+    [LANG === "fr" ? "Réponses IA importées" : "Imported AI answers", "/ai-visibility/datasets", {}, false],
     [LANG === "fr" ? "Concurrence" : "Competition", "/competition/state", {}, false],
   ].map(([label, route, body, skip]) => ({ label, route, body, skip: skip ? missing : "" }));
   const preload = new Set(["/search/queries", "/search/trends", "/search/losing-pages", "/keywords/opportunities", "/sitemap/audit", "/geo/llms", "/performance/pagespeed", "/performance/crux", "/audit/technical", "/audit/serp-preview"]);
@@ -111,6 +133,31 @@ function startBackground() {
   void background.start(selectedTenant() || state.me.tenant.id, tasks);
 }
 
+let visualGeneration = 0;
+function updateVisualContext(data) {
+  setVisualEntities(data.items || [], state.url);
+  const box = $("#c-visual-context");
+  if (box && state.url) box.replaceChildren(visualBrief(data.profile, state.url));
+}
+function startVisualContext() {
+  const generation = ++visualGeneration, url = state.url;
+  clearVisualEntities(url);
+  const box = $("#c-visual-context");
+  if (!box) return;
+  box.replaceChildren();
+  if (!url || !state.me?.tenant) return;
+  box.append(visualBrief(null, url));
+  api("/visual/catalog", { url }).then(data => { if (generation === visualGeneration && url === state.url) updateVisualContext(data); }).catch(() => {});
+}
+function catalogWorkspace() {
+  const generation = visualGeneration, url = state.url;
+  return renderCatalog({ api, state: { ...state }, me: state.me, onLoaded: data => {
+    if (generation !== visualGeneration || url !== state.url) return;
+    if (data === null) { background.reset(); clearVisualEntities(url); return; }
+    updateVisualContext(data);
+  } });
+}
+
 async function overview() {
   if (state.overview && state.overviewFor === state.url) return state.overview;
   const url = state.url; const data = await api("/overview", { url }); if (state.url === url) { state.overview = data; state.overviewFor = url; } return data;
@@ -119,24 +166,34 @@ async function overview() {
 async function reportsList() {
   try { const token = await accessToken(); const r = await fetch(`${API_BASE}/reports`, { headers: headers(token) }); return r.ok ? (await r.json()).reports ?? [] : []; } catch { return []; }
 }
+async function latestAiReport() {
+  try {
+    const [result, competition] = await Promise.all([api("/ai-visibility/datasets", {}), api("/competition/state", {}).catch(() => null)]);
+    const dataset = result.datasets?.at(-1); if (!dataset) return null;
+    return await api("/ai-visibility/report", { datasetId: dataset.id, brand: competition?.panels?.[dataset.id] || undefined });
+  } catch { return { unavailable: true }; }
+}
 
-/* â”€â”€ Sections de la barre latÃ©rale : Track / Act, comme la dÃ©mo publique â”€â”€ */
+/* â”€â”€ Sections de la barre latérale : Track / Act, comme la démo publique â”€â”€ */
 const custom = (id, tabs) => ({ id, tabs });
 const fromTool = (id, filter = () => true, intro) => () => { const x = tool(id); return { intro: intro ?? tr(x.intro), tabs: x.actions.filter(filter).map((a) => ({ id: a.id, label: actionLabel(a), action: a })) }; };
 const SECTIONS = {
   track: [
     { id: "overview", icon: "overview", build: () => custom("overview", [
       { id: "board", label: t("s_overview"), async: async () => {
-        const [ov, status, reports] = await Promise.all([overview().catch(() => null), api("/tracking/status", scope()).catch(() => null), reportsList()]);
+        const [ov, status, reports, ai] = await Promise.all([overview().catch(error => ({ loadError: error })), api("/tracking/status", scope()).catch(() => null), reportsList(), latestAiReport()]);
         const [search, ga4] = await Promise.all([
           status?.gsc?.hasAccess === true ? api("/search/performance", scope()).catch(() => ({ problem: true })) : null,
           status?.ga4?.hasAccess === true ? api("/ga4/overview", scope()).catch(() => ({ problem: true })) : null,
         ]);
-        return [renderAudienceOverview({ search, ga4, status, state, rerender }), ...(ov ? renderOverview(ov) : []), renderOnboarding({ status, tenant: state.me?.tenant, overview: ov, reports }), wizardButton(), renderAgentHelp()];
+        return [renderAudienceOverview({ search, ga4, status, state, rerender, ai }), ...(ov?.loadError ? [renderDataGuide("geo", { error: ov.loadError, retry: rerender })] : ov ? renderOverview(ov) : []), renderOnboarding({ status, tenant: state.me?.tenant, overview: ov?.loadError ? null : ov, reports }), wizardButton(), renderAgentHelp()];
       } },
       { id: "plan", label: t("t_plan"), async: async () => renderPlan(await overview()) }]) },
-    { id: "competition", icon: "geo", build: () => custom("competition", [{ id: "board", label: LANG === "fr" ? "Concurrence" : "Competition", needsDomain: false, async: async () => renderCompetition({ api, me: state.me, property: state.property, days: state.days }) }]) },
-    { id: "ai_visibility", icon: "geo", build: () => custom("ai_visibility", [{ id: "board", label: LANG === "fr" ? "RÃ©ponses IA" : "AI answers", needsDomain: false, async: async () => renderAiVisibility({ api, me: state.me }) }]) },
+    { id: "local_seo", icon: "local_seo", build: () => custom("local_seo", [{ id: "website", label: LANG === "fr" ? "SEO du site" : "Website SEO", needsDomain: false, async: async () => renderGlobalSeo({ state, api, scope }) }, { id: "network", label: "Google Business Profile", needsDomain: false, async: async () => renderLocalSeo({ api, me: state.me }) }, { id: "planning", label: LANG === "fr" ? "Préparer mon établissement" : "Plan my business", needsDomain: false, async: async () => renderLocalSeoWorkspace({ state }) }]) },
+    { id: "catalog", icon: "products", build: () => custom("catalog", [{ id: "library", label: LANG === "fr" ? "Catalogue visuel" : "Visual catalogue", needsDomain: false, async: async () => catalogWorkspace() }]) },
+    { id: "commerce", icon: "commerce", build: () => custom("commerce", [{ id: "connect", label: LANG === "fr" ? "Boutiques et revenus" : "Stores and revenue", needsDomain: false, async: async () => renderCommerce({ api, me: state.me }) }]) },
+    { id: "competition", icon: "competition", build: () => custom("competition", [{ id: "board", label: LANG === "fr" ? "Concurrence" : "Competition", needsDomain: false, async: async () => renderCompetition({ api, me: state.me, property: state.property, days: state.days }) }]) },
+    { id: "ai_visibility", icon: "eye", build: () => custom("ai_visibility", [{ id: "board", label: LANG === "fr" ? "Réponses IA" : "AI answers", needsDomain: false, async: async () => renderAiVisibility({ api, me: state.me }) }]) },
     { id: "gsc", icon: "google", build: () => custom("gsc", [
       { id: "performance", label: t("t_gscPerf"), ...live("/search/performance", renderSearchPerformance, { searchType: true }) },
       { id: "query-pages", label: t("t_queryPages"), ...live("/search/query-pages", renderQueryPages) },
@@ -149,28 +206,35 @@ const SECTIONS = {
     { id: "bing", icon: "bing", build: () => custom("bing", [{ id: "performance", label: t("t_bing"), ...live("/bing/performance", renderBing) }]) },
     { id: "geo", icon: "geo", build: fromTool("geo", (a) => a.id !== "citability") },
     { id: "citability", icon: "citability", build: fromTool("geo", (a) => a.id === "citability", t("citIntro")) },
-    { id: "indexnow", icon: "indexnow", build: () => custom("indexnow", [{ id: "readiness", label: t("s_indexnow"), needsDomain: false, async: async () => renderIndexNow(await overview().catch(() => null)) }]) },
+    { id: "indexnow", icon: "indexnow", build: () => custom("indexnow", [{ id: "readiness", label: t("s_indexnow"), needsDomain: false, async: async () => renderIndexNow(await overview()) }]) },
     { id: "sitemap", icon: "sitemap", build: fromTool("sitemap") },
     { id: "performance", icon: "performance", build: fromTool("performance") },
   ],
   act: [
-    { id: "billing", icon: "billing", build: () => custom("billing", [{ id: "subscription", label: LANG === "fr" ? "Mon abonnement" : "My subscription", needsDomain: false, async: async () => renderBilling({ me: state.me, request: billingRequest, fr: LANG === "fr" }) }]) },
-    { id: "apply_mode", icon: "audit", build: () => custom("apply_mode", [
+    { id: "journey", icon: "journey", build: () => custom("journey", [
+      { id: "map", label: LANG === "fr" ? "Mon parcours client" : "My customer journey", needsDomain: false, async: async () => renderCustomerJourneyWorkspace({ state, api }) },
+      { id: "prompts", label: LANG === "fr" ? "Questions suivies" : "Tracked questions", needsDomain: false, async: async () => renderOpsPrompts({ api, me: state.me }) },
+    ]) },
+    { id: "crm", icon: "crm", build: () => custom("crm", [['timeline','Contacts et timeline','Contacts and timeline'],['connections','Connexions et accès','Connections and access']].map(([id,fr,en])=>({id,label:LANG==='fr'?fr:en,needsDomain:false,async:async()=>renderCrm({api,me:state.me,tab:id})}))) },
+    { id: "social", icon: "social", build: () => custom("social", [['campaigns','Campagnes','Campaigns'],['posts','Contenus','Content'],['calendar','Calendrier','Calendar'],['approvals','Validations','Approvals'],['analytics','Résultats','Results'],['creators','Créateurs et contacts','Creators and outreach'],['connections','Comptes','Accounts'],['runs','Traitements','Runs']].map(([id,fr,en])=>({id,label:LANG==='fr'?fr:en,needsDomain:false,async:async()=>renderSocial({api,me:state.me,tab:id})}))) },
+    { id: "apply_mode", icon: "fixes", build: () => custom("apply_mode", [
       { id: "preview", label: LANG === "fr" ? "Correctifs GEO" : "GEO fixes", needsDomain: false, async: async () => renderApplyMode({ api, me: state.me, url: state.url }) }]) },
     { id: "search", icon: "search", build: fromTool("search") },
-    { id: "keywords", icon: "keywords", build: () => { const base = fromTool("keywords")(); base.tabs.push({ id: "tracked", label: LANG === "fr" ? "RequÃªtes suivies" : "Tracked queries", needsDomain: false, async: async () => renderTrackedQueries({ state, api, scope, saveSettings }) }); return base; } },
+    { id: "keywords", icon: "keywords", build: () => { const base = fromTool("keywords")(); base.tabs.push({ id: "tracked", label: LANG === "fr" ? "Requêtes suivies" : "Tracked queries", needsDomain: false, async: async () => renderTrackedQueries({ state, api, scope, saveSettings }) }); return base; } },
     { id: "tracking", icon: "tracking", build: () => custom("tracking", [
       { id: "status", label: t("t_status"), needsDomain: false, async: async () => renderStatus(await api("/tracking/status", scope()), state) },
       { id: "tags", label: t("t_tags"), async: async () => renderTags(await api("/tracking/status", scope())) },
       { id: "settings", label: t("t_settings"), needsDomain: false, async: async () => { const status = await api("/tracking/status", scope()).catch(() => null); return renderSettings(state.me, saveSettings, status?.serviceAccount ?? null, api); } },
-      { id: "access", label: LANG === "fr" ? "AccÃ¨s" : "Access", needsDomain: false, async: async () => renderAccessManagement(state.me, api) }]) },
-    { id: "gtm", icon: "tracking", build: () => custom("gtm", [
+      { id: "access", label: LANG === "fr" ? "Accès" : "Access", needsDomain: false, async: async () => renderAccessManagement(state.me, api) }]) },
+    { id: "billing", icon: "billing", build: () => custom("billing", [{ id: "subscription", label: t("s_billing"), needsDomain: false, async: billingView }]) },
+    { id: "agents", icon: "agents", build: () => custom("agents", [{ id: "connections", label: LANG === "fr" ? "Agents connectés" : "Connected agents", needsDomain: false, async: async () => renderConnectedAgents({ tenant: state.me?.tenant?.id }) }]) },
+    { id: "gtm", icon: "tag", build: () => custom("gtm", [
       { id: "workspace", label: t("t_gtm"), needsDomain: false, async: async () => renderGtm(await api("/gtm/inventory", scope({ container: state.gtmContainer || undefined })), api, rerender) }]) },
     { id: "audit", icon: "audit", build: fromTool("audit") },
     { id: "generators", icon: "generators", build: fromTool("generators") },
     { id: "calculators", icon: "calculators", build: fromTool("calculators") },
     { id: "report", icon: "report", build: fromTool("report") },
-    { id: "ops", icon: "tracking", build: () => custom("ops", [
+    { id: "ops", icon: "operations", build: () => custom("ops", [
       { id: "prompts", label: LANG === "fr" ? "Visibilité IA en direct" : "Live AI visibility", needsDomain: false, async: async () => renderOpsPrompts({ api, me: state.me }) },
       { id: "rank", label: LANG === "fr" ? "Positions suivies" : "Tracked rankings", needsDomain: false, async: async () => renderOpsRank({ api, me: state.me }) },
       { id: "articles", label: LANG === "fr" ? "Articles" : "Articles", needsDomain: false, async: async () => renderOpsArticles({ api, me: state.me }) },
@@ -179,44 +243,9 @@ const SECTIONS = {
 };
 const ALL = [...SECTIONS.track, ...SECTIONS.act];
 
-function paramField(p) {
-  const label = el("label", "c-field"); label.append(el("span", "", tr(p.label)));
-  let input;
-  if (p.type === "select") { input = el("select"); for (const [v, txt] of p.options) { const o = el("option", "", tr(txt)); o.value = v; input.append(o); } }
-  else if (p.type === "textarea") { input = el("textarea"); input.rows = p.rows ?? 4; input.value = p.value ?? ""; }
-  else { input = el("input"); input.type = p.type ?? "text"; if (p.value !== undefined) input.value = p.value; if (p.step) input.step = p.step; if (p.placeholder) input.placeholder = p.placeholder; }
-  input.name = p.name; label.append(input); return label;
-}
-
-function renderAction(action) {
-  const card = el("section", "c-card");
-  card.append(el("h3", "", actionLabel(action)));
-  if (action.help) card.append(el("p", "c-note", tr(action.help)));
-  const form = el("form", "c-form");
-  for (const p of action.params ?? []) form.append(paramField(p));
-  const btn = el("button", "btn btn-small", tr(action.button) ?? t("run")); btn.type = "submit"; form.append(btn);
-  const out = el("div", "c-out");
-  form.onsubmit = async (event) => {
-    event.preventDefault();
-    const body = { url: state.url, property: state.property || undefined };
-    for (const [k, v] of new FormData(form)) body[k] = v;
-    if (action.local) { out.replaceChildren(...[action.local(body)].flat()); return; }
-    if (action.needsUrl !== false && !state.url) { out.replaceChildren(el("p", "c-error", t("noDomain"))); return; }
-    btn.disabled = true; out.replaceChildren(el("p", "c-loading", t("running")));
-    try {
-      if (action.download) { const blob = await api(action.route, body, { binary: true }); const a = el("a", "btn btn-small", t("download")); a.href = URL.createObjectURL(blob); a.download = action.download; out.replaceChildren(a); a.click(); return; }
-      const data = await api(action.route, body);
-      out.replaceChildren(...[action.render ? action.render(data, body) : []].flat(), raw(data));
-    } catch (error) { out.replaceChildren(el("p", "c-error", error.message)); }
-    finally { btn.disabled = false; }
-  };
-  card.append(form, out);
-  if (action.route && automaticRoutes.has(action.route) && (!action.needsUrl || state.url)) form.requestSubmit();
-  return card;
-}
 
 function wizardButton() {
-  const button = el("button", "btn btn-small", LANG === "fr" ? "Refaire le dÃ©marrage guidÃ©" : "Restart guided setup");
+  const button = el("button", "btn btn-small", LANG === "fr" ? "Refaire le démarrage guidé" : "Restart guided setup");
   button.type = "button"; button.onclick = launchWizard; return button;
 }
 function launchWizard() {
@@ -224,9 +253,11 @@ function launchWizard() {
   openWizard({ state, api, scope, saveSettings, renderSettings, renderStatus, onSite: (url) => {
     state.url = url; state.overview = null; state.overviewFor = "";
     localStorage.setItem("gtm-console-url", url); $("#c-url").value = url; refreshSite();
-  }, onClose: () => show("overview") });
+  }, onClose: () => show(current.section, current.tab) });
 }
+let started = false;
 let current = { section: "overview", tab: "" };
+let dataAgent = null;
 async function saveSettings(body) {
   const token = await accessToken();
   const res = await fetch(`${API_BASE}/tenant/settings`, { method: "PUT", headers: { "Content-Type": "application/json", ...headers(token) }, body: JSON.stringify(body) });
@@ -240,13 +271,18 @@ async function saveSettings(body) {
   return data;
 }
 async function show(sectionId, tabId) {
+  if (!started) return;
   const section = ALL.find((s) => s.id === sectionId) ?? ALL[0];
   const def = section.build();
   const tab = def.tabs.find((x) => x.id === tabId) ?? def.tabs[0];
   current = { section: section.id, tab: tab.id };
+  if (state.me?.tenant) {
+    if (!dataAgent) { dataAgent = createDataAgent({ api, language: LANG, workspaceName: state.me.tenant.name }); $("#c-data-agent").replaceChildren(dataAgent.element); }
+    dataAgent.setSection(section.id);
+  }
   history.replaceState(null, "", `#${section.id}${tab.id !== def.tabs[0].id ? `/${tab.id}` : ""}`);
   document.querySelectorAll(".app-nav a").forEach((a) => { const on = a.dataset.section === section.id; a.classList.toggle("is-active", on); if (on) a.setAttribute("aria-current", "true"); else a.removeAttribute("aria-current"); });
-  $("#c-crumb").textContent = (section.id === "platform" ? (LANG === "fr" ? "Administration plateforme" : "Platform administration") : section.id === "competition" ? (LANG === "fr" ? "Concurrence" : "Competition") : section.id === "ai_visibility" ? (LANG === "fr" ? "VisibilitÃ© IA" : "AI visibility") : t(`s_${section.id}`));
+  $("#c-crumb").textContent = (section.id === "platform" ? (LANG === "fr" ? "Administration plateforme" : "Platform administration") : section.id === "competition" ? (LANG === "fr" ? "Concurrence" : "Competition") : section.id === "ai_visibility" ? (LANG === "fr" ? "Visibilité IA" : "AI visibility") : t(`s_${section.id}`));
   const tabs = $("#c-tabs"); tabs.replaceChildren();
   for (const x of def.tabs) {
     const b = el("button", `app-tab${x.id === tab.id ? " is-active" : ""}`); b.type = "button"; b.setAttribute("role", "tab"); b.setAttribute("aria-selected", String(x.id === tab.id));
@@ -255,18 +291,25 @@ async function show(sectionId, tabId) {
   }
   const panel = el("section", "app-panel c-panel"); panel.setAttribute("role", "tabpanel");
   $("#c-panels").replaceChildren(panel);
-  if (def.intro) panel.append(el("p", "c-intro", def.intro));
-  if (tab.action) { panel.append(renderAction(tab.action)); return; }
-  if (!state.url && tab.needsDomain !== false) { panel.append(el("p", "c-intro", t("noDomain"))); return; }
+  const feature = consoleFeature(section.id, tab.id, LANG);
+  panel.append(sectionHeading($("#c-crumb").textContent, feature?.benefit || def.intro || (LANG === "fr" ? "Comprendre les résultats, leurs sources et la prochaine action." : "Understand results, their sources and the next action."), section.icon));
+  const guide = renderFeatureGuide(section.id, tab.id, LANG);
+  if (guide) panel.append(guide);
+  if (!state.me?.tenant && section.id !== "platform") {
+    panel.append(renderDataGuide("tenant", { error: state.contextError })); return;
+  }
+
+  if (tab.action) { panel.append(renderAction(tab.action, { state, api, automaticRoutes })); return; }
+  if (!state.url && tab.needsDomain !== false) { panel.append(renderDataGuide("domain")); return; }
   const loading = el("p", "c-loading", t("loadingOverview")); panel.append(loading);
   try { const nodes = await tab.async(); if (current.section === section.id && current.tab === tab.id) loading.replaceWith(...[nodes].flat()); }
-  catch (error) { loading.replaceWith(el("p", "c-error", error.message)); }
+  catch (error) { if (panel.isConnected) loading.replaceWith(renderDataGuide(section.id, { error, retry: rerender })); }
 }
 
 function mountNav() {
   for (const [group, list] of Object.entries(SECTIONS)) {
     const ul = $(`#c-nav-${group}`);
-    for (const s of list) { const li = el("li"); const a = el("a"); a.href = `#${s.id}`; a.dataset.section = s.id; a.innerHTML = icon(s.icon); a.append(el("span", "", (s.id === "platform" ? (LANG === "fr" ? "Administration plateforme" : "Platform administration") : s.id === "competition" ? (LANG === "fr" ? "Concurrence" : "Competition") : s.id === "ai_visibility" ? (LANG === "fr" ? "VisibilitÃ© IA" : "AI visibility") : t(`s_${s.id}`)))); a.onclick = (e) => { e.preventDefault(); show(s.id); }; li.append(a); ul.append(li); }
+    for (const s of list) { const li = el("li"); const a = el("a"); a.href = `#${s.id}`; a.dataset.section = s.id; a.innerHTML = icon(s.icon); a.append(el("span", "", (s.id === "platform" ? (LANG === "fr" ? "Administration plateforme" : "Platform administration") : s.id === "competition" ? (LANG === "fr" ? "Concurrence" : "Competition") : s.id === "ai_visibility" ? (LANG === "fr" ? "Visibilité IA" : "AI visibility") : s.id === "journey" ? (LANG === "fr" ? "Parcours client" : "Customer journey") : t(`s_${s.id}`)))); a.onclick = (e) => { e.preventDefault(); show(s.id); }; li.append(a); ul.append(li); }
   }
   const search = $("#c-search");
   search.oninput = () => { const q = search.value.trim().toLowerCase(); document.querySelectorAll(".app-nav li").forEach((li) => { li.hidden = q && !li.textContent.toLowerCase().includes(q); }); };
@@ -279,12 +322,12 @@ function i18nStatic() {
   document.querySelectorAll("[data-i18n-ph]").forEach((n) => { n.placeholder = t(n.dataset.i18nPh); n.setAttribute("aria-label", t(n.dataset.i18nPh)); });
   document.title = t("title");
   const other = LANG === "en" ? "fr" : "en"; const l = $("#c-lang"); l.textContent = other.toUpperCase();
-  l.onclick = (e) => { e.preventDefault(); localStorage.setItem("gtm-console-lang", other); const u = new URL(location.href); u.searchParams.delete("lang"); location.replace(u); };
+  l.onclick = (e) => { e.preventDefault(); localStorage.setItem("gtm-console-lang", other); const u = new URL(location.href); u.searchParams.set("lang", other); location.replace(u); };
 }
 
 function refreshSite() {
   $("#c-switch-label").textContent = host(state.url); $("#c-crumb-site").textContent = host(state.url);
-  $("#c-live").textContent = `${t("live")} Â· ${new Date().toLocaleDateString(LANG === "en" ? "en-GB" : "fr-FR", { day: "numeric", month: "short", year: "numeric" })}`;
+  $("#c-live").textContent = `${t("live")} · ${new Date().toLocaleDateString(LANG === "en" ? "en-GB" : "fr-FR", { day: "numeric", month: "short", year: "numeric" })}`;
 }
 
 function applyBranding(branding) {
@@ -297,9 +340,9 @@ async function discover(query) {
   return res.ok ? res.json() : null;
 }
 
-/** DÃ©couverte du tenant : sous-domaine, ?tenant=, puis e-mail saisi.
- * Le gestionnaire est attachÃ© avant tout await : un clic n'est jamais perdu, et
- * toute erreur est affichÃ©e au lieu d'Ã©chouer silencieusement. */
+/** Découverte du tenant : sous-domaine, ?tenant=, puis e-mail saisi.
+ * Le gestionnaire est attaché avant tout await : un clic n'est jamais perdu, et
+ * toute erreur est affichée au lieu d'échouer silencieusement. */
 const onboardingUrlKey = "gtm-console-onboarding-url";
 function pendingOnboardingUrl() {
   try {
@@ -307,35 +350,14 @@ function pendingOnboardingUrl() {
     return ["http:", "https:"].includes(url.protocol) && !url.username && !url.password && url.hostname.includes(".") ? url.href : "";
   } catch { return ""; }
 }
-async function showPublicRead(url) {
-  const box = $("#c-public-read");
-  box.hidden = false;
-  box.replaceChildren(el("p", "public-loading c-loading", LANG === "fr" ? "Analyse du site en cours…" : "Analyzing your website…"));
-  try {
-    const response = await fetch(`${API_BASE.replace(/\/console$/, "")}/free-read`, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ url }) });
-    if (!response.ok) throw new Error();
-    const data = await response.json();
-    box.replaceChildren();
-    const summary = el("div", "public-summary");
-    const info = el("div"); info.append(el("p", "public-eyebrow", LANG === "fr" ? "SITE ANALYSÉ" : "ANALYZED SITE"), el("h2", "public-domain", new URL(data.finalUrl || url).hostname), el("p", "public-description", LANG === "fr" ? "Préparation de votre page aux moteurs de recherche et aux assistants IA." : "Your page’s readiness for search engines and AI assistants."));
-    const score = el("div", "public-score"); score.append(el("span", "", "SCORE GEO"), el("strong", "", String(data.score)), el("small", "", "/ 100")); summary.append(info, score); box.append(summary);
-    const grid = el("div", "public-results-grid");
-    const priorities = el("section", "public-panel"); priorities.append(el("p", "public-eyebrow", LANG === "fr" ? "PLAN D’ACTION" : "ACTION PLAN"), el("h2", "", LANG === "fr" ? "Vos premières priorités" : "Your first priorities"));
-    const translations = { llms_found: "Créer un fichier llms.txt à la racine du site pour présenter vos contenus aux assistants IA.", robots_citation_ok: "Préciser les règles d’accès des robots des moteurs IA dans robots.txt.", schema_organization: "Ajouter les données structurées Organization avec le nom, l’URL et les informations de votre organisation." };
-    if (data.topFixes?.length) { const list = el("ol", "public-priorities"); for (const fix of data.topFixes) { const item = el("li"); item.append(el("span", "", LANG === "fr" && translations[fix.checkId] ? translations[fix.checkId] : fix.action), el("small", "", `+${fix.points} pts`)); list.append(item); } priorities.append(list); }
-    else priorities.append(el("p", "public-description", LANG === "fr" ? "Aucune priorité disponible pour cette lecture." : "No priorities available for this read."));
-    const metrics = el("section", "public-panel"); metrics.append(el("p", "public-eyebrow", LANG === "fr" ? "POTENTIEL" : "POTENTIAL"), el("h2", "", LANG === "fr" ? "La marge de progression" : "Room to improve"));
-    for (const [label, value] of [[LANG === "fr" ? "Score projeté" : "Projected score", `${data.projectedScore}/100`], [LANG === "fr" ? "Points récupérables" : "Recoverable points", `+${data.recoverablePoints}`]]) { const row = el("div", "public-metric"); row.append(el("span", "", label), el("strong", "", value)); metrics.append(row); }
-    metrics.append(el("p", "public-description", LANG === "fr" ? "Projection fondée sur les contrôles de cette lecture, sans garantie de résultat." : "Projection based on this read’s checks, not a guarantee.")); grid.append(priorities, metrics); box.append(grid);
-    const tables = (data.tables || []).filter((table) => !table.sample && table.rows?.length);
-    if (tables.length) { const details = el("details", "public-panel public-details"); details.append(el("summary", "", LANG === "fr" ? "Voir les contrôles de la page" : "See page checks")); for (const table of tables) { details.append(el("h3", "", table.title)); const list = el("ul"); for (const row of table.rows) list.append(el("li", "", `${row.label} : ${row.value}`)); details.append(list); } box.append(details); }
-  } catch { box.replaceChildren(el("p", "public-panel c-error", LANG === "fr" ? "La lecture est momentanément indisponible. Vous pouvez vous connecter et réessayer dans la console." : "The read is temporarily unavailable. Sign in and try again in the console.")); }
-}
-
 async function loginScreen() {
   i18nStaticLogin();
   $("#c-login").hidden = false;
-  const pending = pendingOnboardingUrl(); if (pending) void showPublicRead(pending);
+  document.getElementById('c-feature-entry')?.remove();
+  const destination = featureHandoff(location, sessionStorage);
+  const entry = destination && renderFeatureEntry(destination.hash, LANG);
+  if (entry) document.querySelector('#c-login .public-main')?.prepend(entry);
+  mountPublicRead({ initialUrl: pendingOnboardingUrl(), language: LANG, endpoint: `${API_BASE.replace(/\/console$/, "")}/free-read` });
   const errorBox = $("#c-login-error"); const btn = $("#c-login-btn");
   let tenant = currentTenant();
   let ready = Promise.resolve();
@@ -358,7 +380,7 @@ async function loginScreen() {
   };
   const fromUrl = new URLSearchParams(location.search).get("tenant");
   const sub = location.hostname.endsWith(`.${CONSOLE_DOMAIN}`) ? location.hostname : "";
-  const label = (n) => (LANG === "en" ? `Sign in to ${n}` : `Se connecter Ã  ${n}`);
+  const label = (n) => (LANG === "en" ? `Sign in to ${n}` : `Se connecter à ${n}`);
   if (!tenant && (fromUrl || sub)) {
     ready = discover(fromUrl ? { tenant: fromUrl } : { host: sub }).then((x) => { if (x) { tenant = x; setTenant(x); applyBranding(x.branding); btn.textContent = label(x.name); } }).catch(() => {});
   } else if (tenant) { applyBranding(tenant.branding); btn.textContent = label(tenant.name); }
@@ -366,30 +388,49 @@ async function loginScreen() {
 function i18nStaticLogin() { document.querySelectorAll("#c-login [data-i18n]").forEach((n) => { n.textContent = t(n.dataset.i18n); }); document.title = t("title"); }
 
 async function start() {
+  const handoff = workspaceHandoff(location, sessionStorage);
+  const destination = featureHandoff(location, sessionStorage);
   let tokens;
   try { tokens = await handleRedirect(); } catch (error) { console.error(error); $("#c-login-error").textContent = error.message; }
   if (!tokens) return loginScreen();
   $("#c-app").hidden = false; i18nStatic();
-  $("#c-logout").onclick = () => { setTenant(null); sessionStorage.removeItem("gtm-console-selected"); logout(); };
+  $("#c-logout").onclick = () => { setTenant(null); sessionStorage.removeItem("gtm-console-selected"); sessionStorage.removeItem("gtm-console-handoff"); logout(); };
   $("#c-account").href = accountConsoleUrl();
+  $("#c-account svg").outerHTML = icon("account");
   const picker = $("#c-picker"); const sw = $("#c-switch");
   sw.onclick = () => { picker.hidden = !picker.hidden; sw.setAttribute("aria-expanded", String(!picker.hidden)); };
   try {
     const token = await accessToken();
-    const res = await fetch(`${API_BASE}/me`, { headers: headers(token) });
-    const me = await res.json();
-    if (!res.ok) throw new Error(me.error || `Erreur ${res.status}`);
+    const me = await resolveWorkspace(async (tenant) => {
+      const res = await fetch(`${API_BASE}/me`, { headers: { Authorization: `Bearer ${token}`, ...(tenant ? { "X-Tenant": tenant } : {}) } });
+      const value = await res.json();
+      if (!res.ok) throw new Error(value.error || `Erreur ${res.status}`);
+      return value;
+    }, handoff?.tenant || selectedTenant(), id => sessionStorage.setItem("gtm-console-selected", id));
+    if (handoff) {
+      if (me.tenant?.id !== handoff.tenant) throw new Error(LANG === "fr" ? "L'espace demandé n'est pas accessible avec ce compte." : "The requested workspace is not accessible with this account.");
+      sessionStorage.removeItem("gtm-console-handoff");
+      history.replaceState(null, "", `?lang=${LANG}${handoff.hash}`);
+    } else if (destination && !location.hash) {
+      history.replaceState(null, "", `?lang=${LANG}${destination.hash}`);
+    }
+    sessionStorage.removeItem('gtm-console-feature-handoff');
     state.me = me;
-    $("#c-user").textContent = `${me.username ?? ""}${me.tenant ? ` Â· ${me.tenant.name}` : ""}${me.platformAdmin ? ` Â· ${t("superAdmin")}` : ""}`;
+    $("#c-user").textContent = `${me.username ?? ""}${me.tenant ? ` · ${me.tenant.name}` : ""}${me.platformAdmin ? ` · ${t("superAdmin")}` : ""}`;
     if (me.accountConsole) $("#c-account").href = me.accountConsole;
     applyBranding(me.tenant?.branding);
     const select = $("#c-tenant");
     if ((me.memberships?.length ?? 0) > 1 || me.platformAdmin) {
       $("#c-tenant-wrap").hidden = false;
+      const empty = el("option", "", LANG === "fr" ? "Choisir un client…" : "Choose a customer…"); empty.value = ""; select.append(empty);
       for (const m of me.memberships ?? []) { const o = el("option", "", `${m.id} (${m.role})`); o.value = m.id; select.append(o); }
       if (me.tenant && ![...select.options].some((o) => o.value === me.tenant.id)) { const o = el("option", "", me.tenant.id); o.value = me.tenant.id; select.append(o); }
       select.value = me.tenant?.id ?? selectedTenant() ?? "";
     }
+    select.onchange = () => {
+      if (!select.value || select.value === selectedTenant()) return;
+      sessionStorage.removeItem("gtm-console-handoff"); sessionStorage.setItem("gtm-console-selected", select.value); location.reload();
+    };
     if (me.tenant) {
       // The picker was historically shared by all tenants on this browser.
       // Never reuse another tenant's scope after switching workspaces.
@@ -407,7 +448,7 @@ async function start() {
       if (!me.tenant.ga4Properties?.includes(state.ga4Property)) state.ga4Property = me.tenant.ga4Properties?.[0] || "";
       if (!me.tenant.bingSites?.includes(state.bingSite)) state.bingSite = me.tenant.bingSites?.[0] || "";
     }
-  } catch (error) { $("#c-user").textContent = error.message; }
+  } catch (error) { state.contextError = error; $("#c-user").textContent = LANG === "fr" ? "Espace indisponible" : "Workspace unavailable"; }
   $("#c-url").value = state.url; $("#c-property").value = state.property; $("#c-ga4").value = state.ga4Property; $("#c-bing").value = state.bingSite;
   picker.onsubmit = (e) => {
     e.preventDefault();
@@ -418,7 +459,7 @@ async function start() {
     picker.hidden = true; sw.setAttribute("aria-expanded", "false"); refreshSite(); startBackground(); show(current.section, current.tab);
   };
   if (state.me?.platformAdmin) {
-    const platform = { id: "platform", icon: "tracking", build: () => custom("platform", [{ id: "clients", label: LANG === "fr" ? "Clients" : "Clients", needsDomain: false, async: async () => renderPlatformDashboard(accessToken, (id) => { sessionStorage.setItem("gtm-console-selected", id); location.href = "#overview"; location.reload(); }) }, { id: "setup", label: LANG === "fr" ? "Provisionnement" : "Provisioning", needsDomain: false, async: async () => renderPlatformSetup(accessToken) }]) };
+    const platform = { id: "platform", icon: "platform", build: () => custom("platform", [{ id: "clients", label: LANG === "fr" ? "Clients" : "Clients", needsDomain: false, async: async () => renderPlatformDashboard(accessToken, (id) => { sessionStorage.setItem("gtm-console-selected", id); location.href = "#overview"; location.reload(); }) }, { id: "setup", label: LANG === "fr" ? "Provisionnement" : "Provisioning", needsDomain: false, async: async () => renderPlatformSetup(accessToken) }]) };
     SECTIONS.act.push(platform); ALL.push(platform);
   }
   refreshSite(); mountNav();
@@ -427,10 +468,10 @@ async function start() {
     notice.setAttribute("role", "alert"); $("#c-app").prepend(notice);
   }
   const [s, tb] = location.hash.slice(1).split("/");
-  if (!state.url) { picker.hidden = false; sw.setAttribute("aria-expanded", "true"); }
+  if (!state.url || !state.me?.tenant) { picker.hidden = false; sw.setAttribute("aria-expanded", "true"); }
   startBackground();
-  const checkoutReturn = new URLSearchParams(location.search).get("checkout") === "return";
-  show(checkoutReturn ? "billing" : (s || "overview"), checkoutReturn ? undefined : tb);
+  started = true;
+  show(s || "overview", tb);
   if (state.me?.tenant && !state.requestedDomainUnavailable && (state.openRequestedWizard || !localStorage.getItem(`gtm-console-wizard-v1:${state.me.tenant.id}:${state.me.email || state.me.username || "user"}`))) launchWizard();
 }
 window.addEventListener("hashchange", () => { const [a, b] = location.hash.slice(1).split("/"); if (a && ALL.some((x) => x.id === a)) show(a, b); });

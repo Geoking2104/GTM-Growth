@@ -17,7 +17,7 @@ interface BillingOptions {
   tenantStore?: TenantStore;
   oidc?: OidcConfig | null;
   jwksLoader?: JwksLoader;
-  /** Inject false in unit tests; the production timer never creates payments. */
+  /** Inject false in unit tests; reconciliation can repair recurring setup, never initiate a first charge. */
   scheduler?: boolean;
 }
 
@@ -36,7 +36,7 @@ export function mountBillingApi(app: Express, options: BillingOptions = {}) {
   const config = options.config ?? billingConfigFromEnv();
   app.get("/api/billing/plans", (_req, res) => res.json({
     mode: config.mode, checkoutEnabled: config.checkoutEnabled, pricesApproved: config.pricesApproved,
-    termsVersion: config.termsVersion || null, plans: billingCatalog(config), openSourceFree: true,
+    termsVersion: config.termsVersion || null, termsUrls: config.termsUrls, limitsVersion: config.limits?.version ?? null, plans: billingCatalog(config), openSourceFree: true,
   }));
   if (config.mode === "disabled") {
     app.use("/api/billing", (_req, res) => res.status(503).json({ error: "La facturation Cloud n'est pas activée." }));
@@ -52,9 +52,11 @@ export function mountBillingApi(app: Express, options: BillingOptions = {}) {
     const ip = req.ip ?? "?"; const time = Date.now();
     const rate = webhookRate.get(ip);
     const state = !rate || time - rate.from > 60_000 ? { count: 1, from: time } : { ...rate, count: rate.count + 1 };
+    for (const [key, value] of webhookRate) if (time - value.from > 60_000) webhookRate.delete(key);
+    if (!webhookRate.has(ip) && webhookRate.size >= 10000) return res.status(429).send("Rate limit");
     webhookRate.set(ip, state);
     if (state.count > 180) return res.status(429).send("Rate limit");
-    if (typeof req.body?.id !== "string" || Object.keys(req.body).length !== 1) return res.status(400).send("Invalid webhook");
+    if (!req.is("application/x-www-form-urlencoded") || typeof req.body?.id !== "string" || Object.keys(req.body).length !== 1) return res.status(400).send("Invalid webhook");
     try { await service.processPayment(req.body.id); return res.status(200).send("OK"); }
     catch (error) {
       // Fail/retry without logging API keys, customer metadata or card details.
@@ -84,6 +86,12 @@ export function mountBillingApi(app: Express, options: BillingOptions = {}) {
   const router = express.Router();
   router.use(requireOidc(oidc, options.jwksLoader));
   router.use(tenancyMiddleware(oidc, tenants));
+  router.use(express.json({ limit: "8kb", strict: true }));
+  router.get("/connection", async (_req, res) => {
+    if (!(res.locals as Locals).tenancy?.platformAdmin) return res.status(403).json({ error: "Platform administrator required" });
+    try { return res.set("Cache-Control", "no-store").json(await service.connection()); }
+    catch { return res.status(502).json({ error: "Mollie connection verification failed" }); }
+  });
   router.get("/status", (_req, res) => {
     try { return res.set("Cache-Control", "no-store").json(service.status((res.locals as Locals).tenancy!)); }
     catch (error) { return res.status(errorStatus(error)).json({ error: errorMessage(error) }); }

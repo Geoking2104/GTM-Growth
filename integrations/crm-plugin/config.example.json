@@ -1,0 +1,17 @@
+{
+  "0000000000000000000000000000000000000000000000000000000000000000": {
+    "tenant": "acme",
+    "id": "client-crm",
+    "name": "Client CRM adapter",
+    "permissions": ["contacts:write", "identities:write", "events:write", "timeline:read"],
+    "channels": ["web", "social", "manual"],
+    "identifiers": [
+      {"kind": "crm_id", "scope": "client-crm"},
+      {"kind": "web_user", "scope": "example.com"},
+      {"kind": "web_session", "scope": "example.com"},
+      {"kind": "social_user", "scope": "linkedin-account1"}
+    ],
+    "recordHosts": ["example.com", "crm.example.com", "www.linkedin.com"],
+    "requestsPerHour": 300
+  }
+}

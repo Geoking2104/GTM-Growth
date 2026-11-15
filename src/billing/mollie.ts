@@ -9,6 +9,9 @@ export interface MolliePayment {
   amount: { currency: string; value: string };
   metadata?: Record<string, unknown> | null;
   paidAt?: string;
+  createdAt?: string;
+  amountRefunded?: { currency: string; value: string };
+  amountChargedBack?: { currency: string; value: string };
   _links?: { checkout?: { href: string } };
 }
 
@@ -27,6 +30,8 @@ export interface MollieCustomer { id: string }
 export interface MollieMandate { id: string; status: string }
 
 export interface MollieGateway {
+  getProfile(): Promise<{ id: string; status?: string }>;
+  listMethods(sequence: "first" | "recurring"): Promise<{ id: string }[]>;
   createCustomer(body: { name: string; email: string }, key: string): Promise<MollieCustomer>;
   createPayment(body: Record<string, unknown>, key: string): Promise<MolliePayment>;
   getPayment(id: string): Promise<MolliePayment>;
@@ -52,7 +57,7 @@ export class MollieHttpGateway implements MollieGateway {
     if (data !== undefined) headers["Content-Type"] = "application/json";
     if (key) headers["Idempotency-Key"] = key;
     const res = await this.fetcher(url, {
-      method, headers, body: data === undefined ? undefined : JSON.stringify(data), signal: AbortSignal.timeout(12_000),
+      redirect: "error", method, headers, body: data === undefined ? undefined : JSON.stringify(data), signal: AbortSignal.timeout(12_000),
     });
     if (!res.ok) {
       // Avoid returning Mollie error bodies: they can contain request/customer metadata.
@@ -79,6 +84,11 @@ export class MollieHttpGateway implements MollieGateway {
       next = `${basePath}${url.search}`;
     }
     return items;
+  }
+  getProfile() { return this.request<{ id: string; status?: string }>("GET", "/profiles/me"); }
+  async listMethods(sequence: "first" | "recurring") {
+    const data = await this.request<{ _embedded: { methods: { id: string }[] } }>("GET", `/methods?sequenceType=${sequence}`);
+    return data._embedded.methods;
   }
   createCustomer(body: { name: string; email: string }, key: string) { return this.request<MollieCustomer>("POST", "/customers", body, key); }
   createPayment(body: Record<string, unknown>, key: string) { return this.request<MolliePayment>("POST", "/payments", body, key); }

@@ -1,4 +1,10 @@
-﻿import { Server } from "@modelcontextprotocol/sdk/server/index.js";
+import { mountBillingApi } from "./billing/api.js";
+import { mountPoppy } from "./poppy/router.js";
+import { crmPluginRouter } from "./crm/plugins.js";
+import { buildSocialMcpRouter } from './console/social-mcp.js';
+import { socialWorkerRouter } from "./social/worker.js";
+import { localWorkerRouter } from "./local-seo/worker.js";
+import { Server } from "@modelcontextprotocol/sdk/server/index.js";
 import { StdioServerTransport } from "@modelcontextprotocol/sdk/server/stdio.js";
 import { SSEServerTransport } from "@modelcontextprotocol/sdk/server/sse.js";
 import { StreamableHTTPServerTransport } from "@modelcontextprotocol/sdk/server/streamableHttp.js";
@@ -15,8 +21,9 @@ import { logger } from "./utils/logger.js";
 import { mountPublicApi } from "./http/public-api.js";
 import { buildCompetitionMcpRouter } from "./console/competition-mcp.js";
 import { mountConsoleApi } from "./console/api.js";
+import { ecommerceWebhookRouter } from "./console/ecommerce-webhooks.js";
 import { startScheduler } from "./console/ops-scheduler.js";
-import { mountBillingApi } from "./billing/api.js";
+import { buildDataAgentBridge } from "./data-agent/bridge.js";
 
 function getVersion(): string {
   try {
@@ -95,6 +102,12 @@ export async function startServer(transportType: "stdio" | "http" = "stdio") {
     methods: ["GET", "POST", "OPTIONS", "DELETE"],
     allowedHeaders: ["Content-Type", "Authorization", "MCP-Session-Id"],
   }));
+  const billing = mountBillingApi(app);
+  const cloud = billing?.access;
+  app.use("/api/internal/data-agent", buildDataAgentBridge({ cloud }));
+  app.use("/api/integrations/commerce/webhooks", ecommerceWebhookRouter());
+  app.use("/webhooks", ecommerceWebhookRouter());
+  mountPoppy(app, { cloud });
   app.use(express.json({ limit: "4mb" }));
 
   const port = parseInt(process.env.PORT || "3000", 10);
@@ -124,13 +137,15 @@ export async function startServer(transportType: "stdio" | "http" = "stdio") {
   mountPublicApi(app);
 
   // Console API â€” Keycloak-protected (OIDC bearer tokens validated via JWKS).
-  mountConsoleApi(app);
-  // Cloud-only billing: separate Mollie website profile, isolated ledger, disabled by default.
-  mountBillingApi(app);
-  app.use("/api/mcp/competition", buildCompetitionMcpRouter());
+  mountConsoleApi(app, { cloud });
+  app.use("/api/internal/local-seo", localWorkerRouter(undefined, cloud));
+  app.use("/api/internal/social", socialWorkerRouter(cloud));
+  app.use("/api/integrations/crm", crmPluginRouter(cloud));
+  app.use("/api/mcp/competition", buildCompetitionMcpRouter({ cloud }));
+  app.use("/api/mcp/social", buildSocialMcpRouter({ cloud }));
   // Operations scheduler (T-11): periodic visibility + rank checks per tenant.
   // Opt-in through env so tests, stdio runs and CI stay quiet.
-  if (process.env.OPS_SCHEDULER_ENABLED === "true") startScheduler();
+  if (process.env.OPS_SCHEDULER_ENABLED === "true") startScheduler({ cloud });
 
   // â”€â”€ Modern: Streamable HTTP transport at /mcp (stateless) â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
   app.post("/mcp", requireToken, async (req: Request, res: Response) => {

@@ -1,6 +1,8 @@
 # Cloudflare Worker — the public API
 
-The Worker serves the same two routes as the Node server, from the same modules:
+Alternative public-API target; the primary website uses the [OVH stack](../deploy/kayroslab-vps/README.md). This Worker does not host the authenticated console, CRM or optional workers.
+
+The Worker serves the public read/lead routes, reusing modules from the Node server:
 the GEO audit, the SEO/GA4/GSC tables and the lead validator are shared code, not
 a second implementation.
 
@@ -12,9 +14,9 @@ src/leads/validate.ts lead validation               ← shared
 wrangler.toml         config, bindings, vars
 ```
 
-Bundle size is about 96 KiB (26 KiB gzipped), well under the 1 MiB free-plan
-limit, and there is no Node built-in in the graph — the audit runs unchanged on
-`workerd`.
+Run `npm run worker:dry-run` to inspect the current bundle rather than relying on
+historical size figures. This target runs under `workerd`; Node-specific stores
+and authenticated console workflows remain in the core app.
 
 ## Three ways to deploy — pick one
 
@@ -25,7 +27,7 @@ limit, and there is no Node built-in in the graph — the audit runs unchanged o
 Cloudflare clones the repo, reads `wrangler.toml`, builds and publishes. No CLI,
 no token in a terminal. At the end it shows the `*.workers.dev` URL.
 
-### 2. From GitHub Actions (no CLI, deploys on every push)
+### 2. From GitHub Actions (manual release)
 
 `.github/workflows/worker.yml` is ready. Add two repository secrets once:
 
@@ -34,10 +36,11 @@ no token in a terminal. At the end it shows the `*.workers.dev` URL.
 | `CLOUDFLARE_API_TOKEN` | Cloudflare dashboard → My Profile → API Tokens → *Edit Cloudflare Workers* template |
 | `CLOUDFLARE_ACCOUNT_ID` | Cloudflare dashboard → Workers & Pages → right-hand sidebar |
 
-Then every push that touches `src/worker`, `src/freeread`, `src/geo` or
-`wrangler.toml` redeploys, runs a health check and a CORS preflight, and commits the
-published URL to `.github/worker-url.txt`. Without the secrets the job skips
-instead of failing.
+Open **Actions → Deploy worker → Run workflow** on `main`, enter `DEPLOY` and
+complete the production environment gate. The workflow checks secrets, deploys,
+records the resulting URL and runs health/CORS checks. Missing secrets skip the
+deployment steps; a green skipped workflow is not a published Worker.
+A push alone does not redeploy. See [CI/CD](CI_CD.md).
 
 ### 3. From your machine
 
@@ -66,8 +69,9 @@ npm run site:api -- https://gtm-growth-api.<your-subdomain>.workers.dev
 ```
 
 That writes the `gg-api` meta tag in `site/index.html` and `site/fr/index.html`.
-Commit and push: the free-read tables switch from sample rows to measured ones,
-and the form posts to the Worker, which forwards to Formspree.
+Publish the updated static site through its own release workflow. Public page
+findings are measured; GA4/GSC sample rows do not become private analytics by
+changing the API URL. Lead forwarding uses the configured destination.
 
 ## Local development
 
@@ -136,12 +140,10 @@ metadata and loopback tricks. The Node server resolves DNS first and is stricter
 
 ## Limits to know
 
-- Free plan: 100 000 requests/day, 10 ms CPU per request. This Worker is I/O-bound
-  (one outbound fetch per resource), so CPU is not the constraint.
-- Subrequests: 50 per request on the free plan — the audit uses under 10.
-- `/api/free-read` costs one outbound request per resource of the target site
-  (page, robots.txt, one sitemap, llms.txt, AI discovery probes). It is cached for
-  10 minutes per URL.
+Check your Cloudflare account's current CPU, request and subrequest limits before
+capacity planning. A public read makes bounded requests for page/audit resources
+and uses the configured cache; it is not an unlimited site crawl. Use a dry-run
+build and live scoped acceptance to qualify the deployed revision.
 
 ## Verify after deploy
 

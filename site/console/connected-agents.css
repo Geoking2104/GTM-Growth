@@ -1,0 +1,18 @@
+/* PAP consent and access management: the console's existing brand and controls. */
+.pap-standalone { box-sizing: border-box; max-width: 880px; margin: 1.5rem auto; padding: clamp(1rem, 4vw, 2.5rem); border: 1px solid #e1e3ee; border-radius: 20px; background: #fff; box-shadow: 0 12px 36px #18204a0d; }
+.pap-brand { display: inline-block; margin-bottom: 1.5rem; font-weight: 750; color: var(--gg-accent, #7c3aed); text-decoration: none; }
+.pap-panel, .pap-panel * { box-sizing: border-box; min-width: 0; overflow-wrap: anywhere; }
+.pap-panel { padding: 0; color: var(--ink, #0d0d0f); line-height: 1.6; }
+.pap-panel h2 { margin: 0 0 .5rem; line-height: 1.25; font-size: 1.6rem; }
+.pap-panel h3 { margin: 1.25rem 0 .5rem; line-height: 1.4; }
+.pap-panel p { margin: .7rem 0 1rem; }
+.pap-panel fieldset { margin: 1rem 0; padding: .7rem 1rem; border: 1px solid #dedeea; border-radius: 12px; }
+.pap-panel legend { padding: 0 .4rem; color: #34334c; font-size: .9rem; font-weight: 650; }
+.pap-panel .pap-option { display: flex; flex-direction: row; align-items: center; justify-content: flex-start; gap: .8rem; min-height: 44px; margin: 0; padding: .4rem 0; cursor: pointer; font-size: .9rem; }
+.pap-panel .pap-option input[type="checkbox"] { flex: 0 0 20px; width: 20px; height: 20px; margin: 0; accent-color: var(--gg-accent, #7c3aed); cursor: pointer; }
+.pap-panel .c-btn { min-height: 40px; margin: .25rem .4rem .25rem 0; padding: .6rem 1rem; background: var(--gg-accent, #7c3aed); color: #fff; border: 1px solid transparent; font-weight: 650; }
+.pap-panel .c-btn-ghost { color: #4d3570; background: #f4effb; border-color: #e5dcf3; }
+.pap-panel .c-btn:disabled { opacity: .5; cursor: not-allowed; }
+.pap-panel .c-card { margin-top: 1rem; padding: 1.2rem; border: 1px solid #e1e3ee; border-radius: 14px; background: #fafafe; }
+.pap-panel [role="status"]:not(:empty) { margin-top: 1rem; padding: .8rem 1rem; border-left: 3px solid var(--gg-accent, #7c3aed); background: #f4effb; }
+@media (max-width: 520px) { .pap-standalone { margin: .25rem auto; } .pap-panel .c-card { padding: .9rem; } .pap-panel fieldset { padding: .6rem .8rem; } }

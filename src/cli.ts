@@ -742,6 +742,7 @@ async function main() {
             name: req(args, "name"),
             domain: req(args, "domain"),
             issuer: str(args, "issuer"),
+            openapi: str(args, "openapi") ? [str(args, "openapi") as string] : undefined,
             mcp: str(args, "mcp") ? [str(args, "mcp") as string] : undefined,
             agent: str(args, "agent"),
           })

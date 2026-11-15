@@ -1,6 +1,6 @@
 # Cloud subscriptions — implementation and release checklist
 
-This document describes the proposed backend integration, not an authorized live payment service. The French [owner requirements and detailed T01–T20 / G1–G8 runbook](MOLLIE-SUBSCRIPTIONS-GO-LIVE.md) remains the operational acceptance criteria.
+This document describes the implemented backend integration (disabled by default), not an authorized live payment service. The French [owner requirements and detailed T01–T20 / G1–G8 runbook](MOLLIE-SUBSCRIPTIONS-GO-LIVE.md) remains the operational acceptance criteria.
 
 ## Scope
 
@@ -17,12 +17,13 @@ The commercial model charges only for the operator-managed Cloud service. BYOK t
 - `src/billing/config.ts`: immutable server-side plan catalogue, month prices, origin and URL validation, explicit tax/price/terms/live approvals.
 - `src/billing/migrations.ts` and `store.ts`: isolated SQLite, numbered migrations, billing accounts per Keycloak tenant+Mollie mode, attempts, subscriptions, payments, audit events and usage ledger. Database file has restrictive creation permissions; its storage location must be persisted and backed up by ops.
 - `src/billing/mollie.ts`: Mollie Payments/Customers/Subscriptions v2 adapter using server-side bearer credentials, idempotency headers and bounded HTTP timeouts.
-- `src/billing/service.ts`: tenant-admin checkout with verified email, hosted first-payment flow (`sequenceType: first`), consent version, next-month recurring subscription after a valid/pending mandate, webhook validation via fresh Mollie GET, deferred plan updates, cancellations, reconciliation, seven-day billing grace information.
-- `src/billing/api.ts`: protected `/status`, `/checkout`, `/change-plan`, `/cancel`; public URL-encoded webhook; internal token-protected reconciliation. All billing mutations derive the tenant from the validated Keycloak token (never from an untrusted client-supplied tenant ID).
+- `src/billing/service.ts`: tenant-admin checkout with verified email, hosted first-payment flow (`sequenceType: first`), consent version, next-month recurring subscription after a valid/pending mandate, webhook validation via fresh Mollie GET, deferred plan updates, cancellations, reconciliation, seven-day billing grace enforcement.
+- `src/billing/api.ts`: protected `/status`, platform-only read-only `/connection`, `/checkout`, `/change-plan`, `/cancel`; public URL-encoded webhook; internal token-protected reconciliation. All billing mutations derive the tenant from the validated Keycloak token (never from an untrusted client-supplied tenant ID).
 - `site/console/billing.js`: authenticated plan/status view, explicit recurring-charge consent and cancellation; bilingual labels; no checkout when disabled.
+- `src/billing/access.ts`: explicit Cloud enrollment, shared paid-period checks and atomic persisted monthly operation quotas.
 - `tests/billing.test.ts`: offline-only gateway simulations for first charges, recurring charges, replay, failures, tampering, role/tenant boundaries and API route behavior.
 
-The backend is intentionally **not coupled to the internal Keycloak DB**. It does not grant paid entitlements to unsupported features or restrict existing open-source functionality. Legal invoice generation, actual tax calculation, tenant quotas and compliant terms are separate prerequisites, not functionality claimed here.
+The backend is intentionally **not coupled to the internal Keycloak DB**. It does not grant paid entitlements to unsupported features or restrict existing open-source functionality. Legal invoice generation, actual tax calculation, approved quota values and compliant terms are separate prerequisites, not functionality claimed here.
 
 ## Endpoints
 
@@ -33,7 +34,7 @@ The backend is intentionally **not coupled to the internal Keycloak DB**. It doe
 | POST | `/api/billing/checkout` | Tenant admin; `{planKey, acceptedRecurring:true, termsVersion}`; price never accepted from browser |
 | POST | `/api/billing/mollie/webhook` | Public, URL-encoded `id=tr_...`; backend retrieves payment from Mollie and correlates account, profile, mode and amount |
 | POST | `/api/billing/cancel` | Tenant admin; `{confirm:"CANCEL_SUBSCRIPTION"}`; calls Mollie cancellation and preserves paid-through period |
-| POST | `/api/billing/change-plan` | Tenant admin; `{planKey}`; next renewal, no immediate proration |
+| POST | `/api/billing/change-plan` | Tenant admin; current price, terms and limits consent; next renewal, no immediate proration |
 | POST | `/api/billing/reconcile` | Separate operator bearer token only; never issue to browser |
 
 `/api/billing/status` is the source of truth; the browser's Mollie redirect does not unlock access. Renewals may arrive with an unfamiliar payment ID; correlate by the verified Mollie subscription ID. On timeout or uncertainty, reconcile, never blindly initiate a new charge beyond the remote idempotency window.
@@ -77,8 +78,82 @@ Mocked tests cannot establish that the merchant profile, mandate lifecycle, live
 2. **G2** — Finalize VAT/HT/TTC treatment and exact *chargeable* Solo and Agence prices.
 3. **G3** — Approve versioned entitlements, quotas, and fair usage per plan before public price publication or entitlement enforcement.
 4. **G4–G5** — Finish real sandbox tests, monitor webhook/reconciliation, tenant isolation, backups and restoration.
-5. **G6** — Publish legal CGV/subscription terms, privacy policy, invoicing/receipts, right-to-cancel conditions and support contacts. Frontend currently references `/fr/conditions-abonnement.html` and `/subscription-terms.html`, intentionally **not** fabricated or published before legal review.
+5. **G6** — Publish legal CGV/subscription terms, privacy policy, invoicing/receipts, right-to-cancel conditions and support contacts. Configure existing published same-origin English/French URLs with `BILLING_TERMS_URL_EN` and `BILLING_TERMS_URL_FR`; no legal terms are fabricated.
 6. **G7** — Pass CI, sandbox acceptance T01–T20 and shared-VPS non-regression, then obtain a specific deployment window.
 7. **G8** — Obtain explicit owner authorization to merge/deploy, and *separate* explicit authorization for any live debit.
 
 **Rollback:** Set `BILLING_CHECKOUT_ENABLED=false` immediately to block *new* checkouts. Keep the webhook, reconciliation and ledger operating for charges already in progress. Do not bulk-cancel existing subscriptions or automatically refund customers because of a software rollback. Audit and resolve each case individually.
+
+## Current enforcement and operation model
+
+Enrollment is explicit: `BILLING_CLOUD_TENANTS` is a comma-separated list of tenant IDs.
+An empty list preserves existing self-hosted/pilot access. Enrollment requires non-disabled
+billing and `BILLING_LIMITS_JSON` with a version and positive integer `monthlyOperations`
+and `maxDomains` for both `solo` and `agency`. No production quota values are invented.
+A workspace without a verified paid subscription receives HTTP 402. Quota exhaustion is
+HTTP 429; too many configured domains is HTTP 409. Test records cannot grant live access.
+A cancelled subscription keeps its paid period; a failed renewal has the configured grace
+period (default seven days), then read-only access. Refunds and chargebacks require manual
+review, including partial refunds on payments whose Mollie status still says `paid`.
+An unseen older paid renewal also requires review instead of blindly extending the latest period.
+
+| Entry point | Enforcement |
+|---|---|
+| Console POST operations | After tenant and resource checks, before dispatch; unknown routes require paid access |
+| Tenant settings / invitations | Paid access; settings validate configured domain count, no operation consumed |
+| PAP / Slack agent queries | After authentication and source authorization, before provider work |
+| Tenant MCP | Tool invocation; stored social/competition reports remain available |
+| Scheduled visibility / rank | Per dispatched job |
+| Local SEO workers / social workers | Per accepted tick / execute; social claim checks access without consuming quota |
+| CRM plugin | Writes require access; timeline remains readable |
+| Billing, reports, selected stored exports, disconnection / revocation | Retained, no operation quota |
+| Existing commerce webhooks and local inbox draining during CRM timeline reads | Retained ingestion/reconciliation; do not trigger provider calls or new publications |
+| Operator CLI and raw `/mcp` / SSE | Operator boundary, not customer credentials; never distribute the operator token to Cloud customers |
+
+Usage periods are **UTC calendar months**, not anniversary billing periods. Every accepted
+operation (including automatic console analyses, failed provider calls, worker ticks and agent
+requests) consumes one unit; there are no paid overages. Retried application actions can count
+again. Internal loops have their existing resource bounds. Quotas are operational limits, not
+an invoice meter. Workers and scheduled execution count separately from enqueue actions.
+Authorized protected requests share a SQLite `BEGIN IMMEDIATE` counter across processes.
+A disabled billing configuration with enrolled tenants is rejected at startup rather than bypassing access.
+
+```mermaid
+flowchart TD
+  A[Authenticated workspace request] --> B{Enrolled in Cloud?}
+  B -->|No| C[Existing access policy]
+  B -->|Yes| D{Stored read or protective action?}
+  D -->|Yes| E[Retained access]
+  D -->|No| F{Paid period or grace?}
+  F -->|No| G[402: subscription required]
+  F -->|Yes| H{Atomic quota reservation}
+  H -->|Available| I[Dispatch operation]
+  H -->|Exhausted| J[429: monthly limit]
+```
+
+## Connection check and activation
+
+`GET /api/billing/connection` requires an authenticated **platform administrator**.
+It only GETs `/v2/profiles/me` and payment methods for `sequenceType=first` and `recurring`.
+It returns profile match, mode, method IDs and a readiness boolean, never the API key or
+customer records. Checkout performs the same verification before creating any customer.
+Live mode additionally requires a verified profile. This check proves neither webhook
+reachability nor bank settlement; test mode methods do not prove live method approval.
+
+Live startup requires approved explicit **gross** amounts (`BILLING_PRICE_INCLUDES_TAX=true`),
+versioned limits, at least one enrolled workspace, both terms URLs, terms version,
+reconciliation enabled and the explicit price/live approval flags. Excluding-tax charging is
+blocked until a tax computation/invoicing integration exists. Operators must still establish
+legal invoice/receipt delivery; this branch does not implement a fiscal invoice engine.
+Keep `BILLING_MODE=disabled` until these prerequisites and real sandbox acceptance are complete.
+
+The reconciler repairs recurring setup and retries cancellation; it never creates a new first
+payment. Unknown checkout creation older than Mollie's idempotency window is held for manual
+reconciliation. Re-subscription after a cancelled subscription expires also requires operator
+assistance in this pilot; do not delete ledger records to restart checkout. Alert on reconciliation
+errors and review-required records; back up the ledger and verify restore before launch.
+
+Source references: [recurring payments](https://docs.mollie.com/docs/recurring-payments),
+[idempotency](https://docs.mollie.com/reference/api-idempotency),
+[current profile](https://docs.mollie.com/reference/get-current-profile),
+[payment methods](https://docs.mollie.com/reference/list-methods).

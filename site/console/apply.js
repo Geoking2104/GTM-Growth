@@ -1,5 +1,6 @@
 /* Apply Mode, phase 0.2: a reviewable robots.txt preview, never an execution UI. */
 import { el } from "./render.js";
+import { renderDataGuide } from "./data-guidance.js";
 import { LANG } from "./i18n.js";
 
 const L = (fr, en) => LANG === "fr" ? fr : en;
@@ -68,8 +69,8 @@ export function renderApplyMode({ api, me, url }) {
   const output = el("div", "apply-preview-output");
 
   form.append(label, button);
-  form.onsubmit = async (event) => {
-    event.preventDefault();
+  const load = async () => {
+    if (!input.value) { output.replaceChildren(renderDataGuide("domain")); return; }
     button.disabled = true;
     status.textContent = L("Lecture et calcul du diff…", "Reading robots.txt and preparing the diff…");
     output.replaceChildren();
@@ -78,10 +79,13 @@ export function renderApplyMode({ api, me, url }) {
       output.replaceChildren(renderPreview(result));
       status.textContent = L("Prévisualisation prête. Aucune écriture effectuée.", "Preview ready. No writes performed.");
     } catch (error) {
-      status.textContent = error instanceof Error ? error.message : String(error);
+      status.textContent = "";
+      output.replaceChildren(renderDataGuide("geo", { error, retry: load }));
     } finally { button.disabled = false; }
   };
+  form.onsubmit = event => { event.preventDefault(); void load(); };
 
   box.append(el("h3", "", L("Correctifs GEO — Mode Appliquer", "GEO fixes — Apply Mode")), note, form, status, output);
+  void load();
   return box;
 }

@@ -10,7 +10,7 @@ import { runRankCheck, supplierFromEnv } from "./rank-tracking.js";
 import { TenantStore, type Tenant } from "../tenants/store.js";
 import { logger } from "../utils/logger.js";
 
-export interface SchedulerOptions { intervalMinutes?: number; tenantStore?: TenantStore; transport?: typeof fetch; now?: () => Date }
+export interface SchedulerOptions { cloud?: import("../billing/access.js").CloudAccess; intervalMinutes?: number; tenantStore?: TenantStore; transport?: typeof fetch; now?: () => Date }
 let timer: NodeJS.Timeout | null = null;
 
 export function startScheduler(options: SchedulerOptions = {}): void {
@@ -54,6 +54,7 @@ export async function runDueJobs(options: SchedulerOptions = {}): Promise<{ tena
           try {
             const brands = await brandsForTenant(tenant.id);
             if (brands.length) {
+              options.cloud?.authorize(tenant.id, "/scheduler/visibility");
               const { run } = await runVisibilityCheck(tenant.id, { engines: engines as Array<"openai" | "gemini">, brands, transport: options.transport });
               writeAutomationConfig(tenant.id, { ...config, lastPromptRun: run.ranAt });
               details.push({ tenant: tenant.id, job: "visibility", status: `ok:${run.succeeded}/${run.prompts}` });
@@ -74,6 +75,7 @@ export async function runDueJobs(options: SchedulerOptions = {}): Promise<{ tena
         if (keywords.length && supplier && host) {
           jobs++;
           try {
+            options.cloud?.authorize(tenant.id, "/scheduler/rank");
             const { checked } = await runRankCheck(tenant.id, host, supplier.supplier);
             writeAutomationConfig(tenant.id, { ...readAutomationConfig(tenant.id), lastRankRun: new Date().toISOString() });
             details.push({ tenant: tenant.id, job: "rank", status: `ok:${checked}` });

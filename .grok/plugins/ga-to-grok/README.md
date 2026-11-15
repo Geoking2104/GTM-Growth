@@ -22,4 +22,4 @@ grok mcp doctor ga-to-grok
 grok mcp add --transport http ga-to-grok https://YOUR_HOST/sse
 ```
 
-See [docs/GROK_BUILD.md](../../docs/GROK_BUILD.md).
+See [docs/GROK_BUILD.md](../../../docs/GROK_BUILD.md).

@@ -10,6 +10,9 @@ export const PILOT_PLANS = {
 } as const;
 
 export interface BillingConfig {
+  cloudTenants: string[];
+  limits: { version: string; solo: { monthlyOperations: number; maxDomains: number }; agency: { monthlyOperations: number; maxDomains: number } } | null;
+  termsUrls: { en: string; fr: string };
   mode: BillingMode;
   checkoutEnabled: boolean;
   apiKey: string;
@@ -47,6 +50,7 @@ export function billingConfigFromEnv(env: NodeJS.ProcessEnv = process.env): Bill
   if (urls.some((u) => u.protocol !== "https:" || u.username || u.password || u.origin !== urls[0].origin)) {
     throw new Error("Billing URLs must use HTTPS and the configured GTM origin");
   }
+  if (urls[0].pathname !== "/" || urls[0].search || urls[0].hash) throw new Error("BILLING_PUBLIC_ORIGIN must be an origin");
   if (urls[1].pathname !== "/api/billing/mollie/webhook" || !urls[2].pathname.startsWith("/console/")) {
     throw new Error("Invalid billing webhook/return path");
   }
@@ -56,7 +60,20 @@ export function billingConfigFromEnv(env: NodeJS.ProcessEnv = process.env): Bill
     agency: integer(env.BILLING_AGENCY_AMOUNT_CENTS, PILOT_PLANS.agency.pilotCents),
   };
   const checkoutEnabled = env.BILLING_CHECKOUT_ENABLED === "true";
-  const config: BillingConfig = {
+  const cloudTenants = (env.BILLING_CLOUD_TENANTS ?? "").split(",").map(v => v.trim()).filter(Boolean);
+  if (cloudTenants.some(v => !/^[a-z0-9][a-z0-9-]{0,62}$/.test(v))) throw new Error("Invalid BILLING_CLOUD_TENANTS");
+  const limits = env.BILLING_LIMITS_JSON ? JSON.parse(env.BILLING_LIMITS_JSON) as BillingConfig["limits"] : null;
+  if (limits && (typeof limits.version !== "string" || !limits.version.trim() || [limits.solo, limits.agency].some(v =>
+      !v || !Number.isSafeInteger(v.monthlyOperations) || v.monthlyOperations < 1 || !Number.isSafeInteger(v.maxDomains) || v.maxDomains < 1))) {
+    throw new Error("Invalid BILLING_LIMITS_JSON");
+  }
+  if (cloudTenants.length && (selectedMode === "disabled" || !limits)) throw new Error("Cloud enrollment requires billing and explicit limits");
+  const termsUrls = { en: env.BILLING_TERMS_URL_EN ?? "", fr: env.BILLING_TERMS_URL_FR ?? "" };
+  for (const raw of Object.values(termsUrls).filter(Boolean)) {
+    const u = new URL(raw);
+    if (u.protocol !== "https:" || u.origin !== urls[0].origin || u.username || u.password) throw new Error("Invalid billing terms URL");
+  }
+  const config: BillingConfig = { cloudTenants, limits, termsUrls,
     mode: selectedMode, checkoutEnabled,
     apiKey: env.MOLLIE_GTM_API_KEY ?? "", profileId: env.MOLLIE_GTM_PROFILE_ID ?? "",
     webhookUrl, returnUrl, publicOrigin: urls[0].origin,
@@ -75,8 +92,9 @@ export function billingConfigFromEnv(env: NodeJS.ProcessEnv = process.env): Bill
     if (!config.termsVersion && checkoutEnabled) throw new Error("BILLING_TERMS_VERSION required to enable checkout");
   }
   if (selectedMode === "live") {
-    if (env.BILLING_LIVE_APPROVED !== "true" || !config.pricesApproved || priceIncludesTax === null ||
-        !env.BILLING_SOLO_AMOUNT_CENTS || !env.BILLING_AGENCY_AMOUNT_CENTS || !config.termsVersion) {
+    if (env.BILLING_LIVE_APPROVED !== "true" || !config.pricesApproved || priceIncludesTax !== true ||
+        !env.BILLING_SOLO_AMOUNT_CENTS || !env.BILLING_AGENCY_AMOUNT_CENTS || !config.termsVersion ||
+        !termsUrls.en || !termsUrls.fr || !limits || !cloudTenants.length || !config.reconcileEnabled) {
       throw new Error("Live billing blocked: legal, tax, price or owner approval missing");
     }
   }
@@ -92,7 +110,9 @@ export function planPrice(config: BillingConfig, key: PlanKey): { value: string;
 export function billingCatalog(config: BillingConfig) {
   return Object.values(PILOT_PLANS).map((plan) => ({
     key: plan.key, name: plan.name, interval: plan.interval,
+    testChargeCents: config.mode === "test" ? config.amounts[plan.key] : null,
     pilotPriceCents: plan.pilotCents, chargeCents: config.pricesApproved ? config.amounts[plan.key] : null,
     priceIncludesTax: config.priceIncludesTax,
+    limits: config.limits?.[plan.key] ?? null,
   }));
 }

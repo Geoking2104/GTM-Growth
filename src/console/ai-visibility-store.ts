@@ -16,14 +16,24 @@ function database(): Database.Database {
   try { const fd = fs.openSync(file, "wx", 0o600); fs.closeSync(fd); } catch (error) { if ((error as NodeJS.ErrnoException).code !== "EEXIST") throw error; }
   const db = new Database(file, { timeout: 10000 });
   db.pragma("busy_timeout = 10000"); db.pragma("journal_mode = DELETE"); db.pragma("synchronous = FULL");
-  db.exec(`CREATE TABLE IF NOT EXISTS datasets (tenant_id TEXT NOT NULL, id TEXT NOT NULL, created_at TEXT NOT NULL, payload TEXT NOT NULL, PRIMARY KEY (tenant_id, id));
+  db.exec(`CREATE TABLE IF NOT EXISTS ai_accounts (tenant_id TEXT NOT NULL, id TEXT NOT NULL, payload TEXT NOT NULL, PRIMARY KEY (tenant_id, id));
+           CREATE TABLE IF NOT EXISTS datasets (tenant_id TEXT NOT NULL, id TEXT NOT NULL, created_at TEXT NOT NULL, payload TEXT NOT NULL, PRIMARY KEY (tenant_id, id));
            CREATE TABLE IF NOT EXISTS legacy_imports (tenant_id TEXT PRIMARY KEY, imported_at TEXT NOT NULL);
-           CREATE TABLE IF NOT EXISTS competition_state (tenant_id TEXT PRIMARY KEY, payload TEXT NOT NULL);`);
+           CREATE TABLE IF NOT EXISTS competition_state (tenant_id TEXT PRIMARY KEY, payload TEXT NOT NULL);
+           CREATE TABLE IF NOT EXISTS visual_catalog (tenant_id TEXT NOT NULL, origin TEXT NOT NULL, payload TEXT NOT NULL, PRIMARY KEY (tenant_id, origin));`);
   connections.set(file, db); return db;
 }
 export function readCompetitionState<T>(tenantId: string, fallback: T): T {
   validateTenant(tenantId); const row = database().prepare("SELECT payload FROM competition_state WHERE tenant_id = ?").get(tenantId) as Row | undefined;
   return row ? parse<T>(row) : fallback;
+}
+export function readVisualCatalog<T>(tenantId: string, origin: string, fallback: T): T {
+  validateTenant(tenantId); const row = database().prepare("SELECT payload FROM visual_catalog WHERE tenant_id = ? AND origin = ?").get(tenantId, origin) as Row | undefined;
+  return row ? parse<T>(row) : fallback;
+}
+export function saveVisualCatalog(tenantId: string, origin: string, items: unknown): void {
+  validateTenant(tenantId);
+  database().prepare("INSERT INTO visual_catalog (tenant_id, origin, payload) VALUES (?, ?, ?) ON CONFLICT(tenant_id, origin) DO UPDATE SET payload = excluded.payload").run(tenantId, origin, JSON.stringify(items));
 }
 export function updateCompetitionState<T>(tenantId: string, fallback: T, update: (state: T) => void): T {
   validateTenant(tenantId); const db = database();
@@ -63,6 +73,12 @@ export function getDataset<T extends StoredDataset>(tenantId: string, id: string
   validateTenant(tenantId); const db = database(); migrateLegacy(db, tenantId);
   const row = db.prepare("SELECT payload FROM datasets WHERE tenant_id = ? AND id = ?").get(tenantId, id) as Row | undefined; return row ? parse<T>(row) : undefined;
 }
+/** Bounded read for the agent: never deserialize every historical answer panel. */
+export function latestDataset<T extends StoredDataset>(tenantId: string): T | undefined {
+  validateTenant(tenantId); const db = database(); migrateLegacy(db, tenantId);
+  const row = db.prepare("SELECT payload FROM datasets WHERE tenant_id = ? ORDER BY created_at DESC, id DESC LIMIT 1").get(tenantId) as Row | undefined;
+  return row ? parse<T>(row) : undefined;
+}
 export function insertDataset<T extends StoredDataset>(tenantId: string, data: T) {
   validateTenant(tenantId); const db = database(); migrateLegacy(db, tenantId);
   const insert = db.transaction(() => {
@@ -81,3 +97,17 @@ export function updateDataset<T extends StoredDataset>(tenantId: string, id: str
 }
 /** Used by tests and orderly shutdown. */
 export function closeVisibilityStores() { for (const db of connections.values()) db.close(); connections.clear(); }
+
+export function readAIConnections<T>(tenantId: string): T[] {
+  validateTenant(tenantId); return (database().prepare("SELECT payload FROM ai_accounts WHERE tenant_id = ? ORDER BY rowid").all(tenantId) as Row[]).map(parse<T>);
+}
+export function writeAIConnection(tenantId: string, id: string, account: unknown) {
+  validateTenant(tenantId); const db = database();
+  db.transaction(() => {
+    if ((db.prepare("SELECT COUNT(*) AS n FROM ai_accounts WHERE tenant_id = ?").get(tenantId) as { n: number }).n >= 20) throw new Error("Workspace limit: disconnect an unused API account first (20 maximum)");
+    db.prepare("INSERT INTO ai_accounts (tenant_id, id, payload) VALUES (?, ?, ?)").run(tenantId, id, JSON.stringify(account));
+  }).immediate();
+}
+export function removeAIConnection(tenantId: string, id: string) {
+  validateTenant(tenantId); database().prepare("DELETE FROM ai_accounts WHERE tenant_id = ? AND id = ?").run(tenantId, id);
+}

@@ -1,24 +1,26 @@
 # GTM Growth
 
-> Open-source MCP server for GA4, Google Tag Manager, Search Console and AI-search readiness — free read with SEO, GA4 and Search Console tables, full GEO audit, GTM measurement plan.
+> Open-source workspace for evidence-led SEO/GEO, analytics, local presence, Social, commerce and observed CRM journeys. Apache-2.0; self-hosted software is free.
 
-## Product
+## Start here
 
-- [Landing page](https://geoking2104.github.io/GTM-Growth/): free read — URL hygiene score, then SEO tables plus GA4 and Search Console reports; full audit and assisted GTM engagement after that
-- [Version française](https://geoking2104.github.io/GTM-Growth/fr/): lecture gratuite de l’URL, puis audit complet et accompagnement GTM
-- [Sample report](https://geoking2104.github.io/GTM-Growth/reports/opendpe.html): full audit of opendpe.net, 71/100 with platform readiness and the fix plan
-- [Sample report PDF](https://geoking2104.github.io/GTM-Growth/reports/opendpe.pdf): the same audit as a client-ready 9-page PDF, with the dashboard, radar and entity graph
-- [Repository](https://github.com/Geoking2104/GTM-Growth): Apache-2.0, Node.js 20+
-- [GEO rubric](https://github.com/Geoking2104/GTM-Growth/blob/main/docs/GEO.md): eight categories, 100 points, evidence per check
-- [GTM implementation guide](https://github.com/Geoking2104/GTM-Growth/blob/main/docs/GTM_IMPLEMENTATION.md): snippets, dataLayer, consent, verification
+- [Website](https://gtm.kayroslab.com/): diagnose, understand, act, measure and grow
+- [Site français](https://gtm.kayroslab.com/fr/): the same content and journey in French
+- [Marketing guide](https://gtm.kayroslab.com/guides/marketing/): decisions, useful outputs and measurement limits
+- [Technical guide](https://gtm.kayroslab.com/guides/technical/): architecture, scoped access and integration prerequisites
+- [Guide marketing FR](https://gtm.kayroslab.com/fr/guides/marketing/)
+- [Guide technique FR](https://gtm.kayroslab.com/fr/guides/technical/)
 
-## Documentation
+## Reference documentation
 
-- [CLI reference](https://github.com/Geoking2104/GTM-Growth/blob/main/docs/CLI.md)
-- [IndexNow guide](https://github.com/Geoking2104/GTM-Growth/blob/main/docs/INDEXNOW.md): the push protocol Bing, Yandex, Seznam and Naver share
-- [Tool catalogue](https://github.com/Geoking2104/GTM-Growth/blob/main/skills/gtm-growth/references/tools.md)
-- [Setup](https://github.com/Geoking2104/GTM-Growth/blob/main/skills/gtm-growth/references/setup.md)
+- [Repository](https://github.com/Geoking2104/GTM-Growth)
+- [Documentation hub](https://github.com/Geoking2104/GTM-Growth/blob/main/docs/README.md)
+- [Capability registry](https://github.com/Geoking2104/GTM-Growth/blob/main/docs/journey/CAPABILITIES.md): implemented, setup-dependent and future behavior
+- [Marketing track](https://github.com/Geoking2104/GTM-Growth/blob/main/docs/marketing/README.md)
+- [Technical track](https://github.com/Geoking2104/GTM-Growth/blob/main/docs/technical/README.md)
+- [Integration map](https://github.com/Geoking2104/GTM-Growth/blob/main/docs/technical/INTEGRATION-MAP.md)
+- [Full reference](https://gtm.kayroslab.com/llms-full.txt)
 
-## Optional
+## Interpretation
 
-- [llms-full.txt](https://geoking2104.github.io/GTM-Growth/llms-full.txt): full reference for retrieval
+Public page readiness is not measured AI visibility and does not grant private Google data access. Buyer questions are reviewed hypotheses, not measured demand. Aggregate analytics do not establish contact identity. Provider setup, permissions and independent approvals remain necessary. Solo €39/month and Agency €149/month are pilot hypotheses; checkout and subscription entitlements are inactive.

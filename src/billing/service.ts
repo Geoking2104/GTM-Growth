@@ -1,3 +1,4 @@
+import { CloudAccess, subscriptionAccess } from "./access.js";
 import { createHash } from "node:crypto";
 import type { TokenClaims } from "../console/auth.js";
 import type { TenantContext } from "../tenants/context.js";
@@ -16,16 +17,28 @@ const centsOf = (value: string): number => {
   if (!/^\d+\.\d{2}$/.test(value)) throw new BillingConflict("Invalid Mollie amount");
   return Number(value.replace(".", ""));
 };
-const enabledStates = new Set(["active", "setup_pending", "past_due", "canceled"]);
+
 
 export class BillingService {
   private checkoutInFlight = new Map<string, Promise<{ attemptId: string; checkoutUrl: string; reused: boolean }>>();
-  constructor(readonly config: BillingConfig, readonly store: BillingStore, private mollie: MollieGateway) {}
+  readonly access: CloudAccess;
+  constructor(readonly config: BillingConfig, readonly store: BillingStore, private mollie: MollieGateway) { this.access = new CloudAccess(config, store); }
+
+  /** Read-only provider verification; never creates a customer, payment or subscription. */
+  async connection() {
+    const [profile, first, recurring] = await Promise.all([this.mollie.getProfile(), this.mollie.listMethods("first"), this.mollie.listMethods("recurring")]);
+    return { mode: this.config.mode, profileMatches: profile.id === this.config.profileId,
+      profileStatus: profile.status ?? "unknown", firstMethods: first.map(m => m.id), recurringMethods: recurring.map(m => m.id),
+      providerReady: profile.id === this.config.profileId && first.length > 0 && recurring.length > 0 && (this.config.mode !== "live" || profile.status === "verified"),
+      checkoutEnabled: this.config.checkoutEnabled, checkedAt: new Date().toISOString(),
+      note: "Provider connectivity only; webhook delivery and completed payment lifecycle must be tested separately." };
+  }
 
   publicPlans() {
     return {
       mode: this.config.mode, checkoutEnabled: this.config.checkoutEnabled,
       pricesApproved: this.config.pricesApproved, termsVersion: this.config.termsVersion || null,
+      termsUrls: this.config.termsUrls, limitsVersion: this.config.limits?.version ?? null,
       plans: billingCatalog(this.config), openSourceFree: true,
     };
   }
@@ -53,13 +66,11 @@ export class BillingService {
     const account = this.store.account(tenantId, this.config.mode);
     const sub = account && this.store.subscription(account.id);
     const attempt = account && this.store.recentAttempts(account.id)[0];
-    const until = sub?.paid_until ? Date.parse(sub.paid_until) : NaN;
-    const current = enabledStates.has(sub?.status ?? "") && Number.isFinite(until) && until > Date.now();
-    const grace = sub?.status === "past_due" && Number.isFinite(until) &&
-      until + this.config.graceDays * 86_400_000 > Date.now();
     return {
       ...this.publicPlans(), tenantId, plan: sub?.plan_key ?? null,
-      status: sub?.status ?? attempt?.status ?? "free", cloudAccess: current ? "paid" : grace ? "grace" : "read_only",
+      status: sub?.status ?? attempt?.status ?? "free", cloudAccess: subscriptionAccess(sub, this.config.graceDays),
+      enrolled: this.access.enrolled(tenantId), limits: sub ? this.config.limits?.[sub.plan_key] ?? null : null,
+      usagePeriod: new Date().toISOString().slice(0, 7),
       paidUntil: sub?.paid_until ?? null, nextPaymentDate: sub?.next_payment_date ?? null,
       cancelRequested: Boolean(sub?.cancel_requested), pendingPlan: sub?.pending_plan_key ?? null,
       latestAttempt: attempt ? { id: attempt.id, status: attempt.status, plan: attempt.plan_key } : null,
@@ -70,15 +81,17 @@ export class BillingService {
   async checkout(context: TenantContext, user: TokenClaims, body: Record<string, unknown>) {
     this.assertCheckout();
     const tenantId = this.admin(context);
+    if (!this.access.enrolled(tenantId)) throw new BillingRequestError(403, "This workspace is not enrolled in Cloud billing.");
     if (user.email_verified !== true || !validEmail(user.email) || !user.sub) throw new BillingRequestError(403, "Une identité et une adresse email vérifiées sont requises.");
     const key = body.planKey;
     if (key !== "solo" && key !== "agency") throw new BillingRequestError(400, "Formule inconnue.");
-    if (body.acceptedRecurring !== true || body.termsVersion !== this.config.termsVersion) {
+    if (body.acceptedRecurring !== true || body.termsVersion !== this.config.termsVersion || body.amountCents !== this.config.amounts[key] || body.limitsVersion !== this.config.limits?.version) {
       throw new BillingRequestError(400, "Acceptez les conditions et le renouvellement mensuel en vigueur.");
     }
+    if (!(await this.connection()).providerReady) throw new BillingRequestError(503, "The GTM Mollie profile or recurring methods are not ready.");
     const price = planPrice(this.config, key);
     let prepared: ReturnType<BillingStore["prepareCheckout"]>;
-    try { prepared = this.store.prepareCheckout({ tenantId, mode: this.config.mode, plan: key, cents: price.cents, actor: user.sub, termsVersion: this.config.termsVersion }); }
+    try { prepared = this.store.prepareCheckout({ tenantId, mode: this.config.mode, plan: key, cents: price.cents, actor: user.sub, termsVersion: this.config.termsVersion, limitsVersion: this.config.limits?.version }); }
     catch (error) { if (error instanceof BillingConflict) throw new BillingRequestError(409, error.message); throw error; }
     const { attempt } = prepared;
     if (attempt.checkout_url) return { attemptId: attempt.id, checkoutUrl: attempt.checkout_url, reused: true };
@@ -110,6 +123,7 @@ export class BillingService {
       metadata: { application: "gtm-growth", accountId: account.id, tenantId: attempt.tenant_id, attemptId: attempt.id, planKey: attempt.plan_key },
     }, attempt.id);
     this.assertRemote(remote, account, attempt.amount_cents);
+    if (!/^tr_[A-Za-z0-9]+$/.test(remote.id) || remote.metadata?.attemptId !== attempt.id || remote.subscriptionId) throw new BillingConflict("Invalid first payment");
     const checkoutUrl = remote._links?.checkout?.href;
     if (!checkoutUrl || !this.safeMollieUrl(checkoutUrl)) throw new BillingConflict("Invalid Mollie checkout URL");
     this.store.setCheckoutPayment(attempt.id, remote.id, checkoutUrl);
@@ -117,7 +131,7 @@ export class BillingService {
   }
 
   private safeMollieUrl(raw: string) {
-    try { const u = new URL(raw); return u.protocol === "https:" && (u.hostname === "mollie.com" || u.hostname.endsWith(".mollie.com")); }
+    try { const u = new URL(raw); return u.protocol === "https:" && !u.username && !u.password && !u.port && (u.hostname === "mollie.com" || u.hostname.endsWith(".mollie.com")); }
     catch { return false; }
   }
   private assertRemote(payment: MolliePayment, account: BillingAccount, cents: number) {
@@ -128,7 +142,7 @@ export class BillingService {
   /** The classic webhook only supplies a payment ID. Always GET the full payment. */
   async processPayment(paymentId: string): Promise<{ applied: boolean; kind: string }> {
     this.assertMode();
-    if (!/^[A-Za-z0-9_-]{4,100}$/.test(paymentId)) throw new BillingRequestError(400, "Identifiant de paiement invalide.");
+    if (!/^tr_[A-Za-z0-9]{1,96}$/.test(paymentId)) throw new BillingRequestError(400, "Identifiant de paiement invalide.");
     const payment = await this.mollie.getPayment(paymentId);
     if (payment.id !== paymentId || payment.mode !== this.config.mode || payment.profileId !== this.config.profileId || payment.amount?.currency !== "EUR") {
       throw new BillingConflict("Foreign Mollie payment");
@@ -157,9 +171,14 @@ export class BillingService {
       if (centsOf(payment.amount.value) !== attempt.amount_cents) throw new BillingConflict("First payment amount mismatch");
     }
     if (!account || !payment.customerId || account.mollie_customer_id !== payment.customerId) throw new BillingConflict("Customer mismatch");
+    const reversal = [payment.amountRefunded, payment.amountChargedBack].some(amount => {
+      if (!amount) return false;
+      if (amount.currency !== "EUR") throw new BillingConflict("Reversal currency mismatch");
+      return centsOf(amount.value) > 0;
+    });
     const result = this.store.recordVerifiedPayment({ accountId: account.id, attemptId: attempt?.id,
-      paymentId: payment.id, subscriptionId: payment.subscriptionId, status: payment.status,
-      cents: centsOf(payment.amount.value), currency: "EUR", paidAt: payment.paidAt, kind });
+      paymentId: payment.id, subscriptionId: payment.subscriptionId, status: reversal ? "refunded" : payment.status,
+      cents: centsOf(payment.amount.value), currency: "EUR", paidAt: payment.paidAt, createdAt: payment.createdAt, kind });
     if (result.setupPending) {
       try { await this.ensureSubscription(account.id); }
       catch (error) { this.store.subscriptionError(account.id, `Setup pending: ${(error as Error).name}`); }
@@ -172,13 +191,13 @@ export class BillingService {
     const sub = this.store.subscription(accountId);
     const account = this.store.accountById(accountId);
     if (!sub || !account || !account.mollie_customer_id || !sub.paid_until || sub.mollie_subscription_id) return;
-    if (sub.cancel_requested) { this.store.setCanceled(accountId); return; }
     const prior = await this.mollie.listSubscriptions(account.mollie_customer_id);
     const matched = prior.filter((s) => s.metadata?.application === "gtm-growth" && s.metadata?.accountId === accountId &&
       s.metadata?.createKey === sub.create_key);
     if (matched.length > 1) throw new BillingConflict("Duplicate remote subscriptions; manual intervention required");
     let remote = matched[0];
     if (!remote) {
+      if (this.store.subscription(accountId)?.cancel_requested) { this.store.setCanceled(accountId); return; }
       if (Date.now() - Date.parse(sub.created_at) > 50 * 60_000) {
         throw new BillingConflict("Unknown setup older than Mollie idempotency window; manual review required");
       }
@@ -194,7 +213,16 @@ export class BillingService {
     }
     if (remote.customerId !== account.mollie_customer_id || remote.mode !== this.config.mode ||
       remote.amount.currency !== "EUR" || centsOf(remote.amount.value) !== sub.amount_cents) throw new BillingConflict("Remote subscription mismatch");
+    if (!/^sub_[A-Za-z0-9]+$/.test(remote.id) || !["active", "pending", "canceled"].includes(remote.status)) throw new BillingConflict("Unexpected remote subscription status");
     this.store.setRemoteSubscription(accountId, remote.id, remote.nextPaymentDate ?? null);
+    // A concurrent cancellation may have arrived during remote creation.
+    if (this.store.subscription(accountId)?.cancel_requested || remote.status === "canceled") {
+      if (remote.status !== "canceled") {
+        const canceled = await this.mollie.cancelSubscription(account.mollie_customer_id, remote.id);
+        if (canceled.status !== "canceled") throw new BillingConflict("Cancellation not confirmed by Mollie");
+      }
+      this.store.setCanceled(accountId);
+    }
   }
 
   async cancel(context: TenantContext, user: TokenClaims, body: Record<string, unknown>) {
@@ -224,6 +252,7 @@ export class BillingService {
     if (plan === sub.plan_key && !sub.pending_plan_key) return this.status(context);
     if (sub.pending_plan_key && sub.pending_plan_key !== plan) throw new BillingRequestError(409, "Un changement de formule est déjà planifié.");
     const cents = planPrice(this.config, plan).cents;
+    if (body.acceptedRecurring !== true || body.termsVersion !== this.config.termsVersion || body.amountCents !== cents || body.limitsVersion !== this.config.limits?.version) throw new BillingRequestError(400, "Confirm the current price, terms and limits.");
     this.store.schedulePlan(account.id, plan, cents, user.sub ?? "unknown");
     await this.updatePendingPlan(account.id);
     return this.status(context);
@@ -238,7 +267,7 @@ export class BillingService {
       description: `${PILOT_PLANS[sub.pending_plan_key].name} — abonnement mensuel`,
       metadata: { application: "gtm-growth", accountId, tenantId: sub.tenant_id, planKey: sub.pending_plan_key, createKey: sub.create_key },
     }, secureKey([sub.create_key, sub.pending_plan_key, String(sub.pending_amount_cents)]));
-    if (centsOf(remote.amount.value) !== sub.pending_amount_cents || remote.customerId !== account.mollie_customer_id) {
+    if (remote.id !== sub.mollie_subscription_id || remote.mode !== this.config.mode || remote.amount.currency !== "EUR" || centsOf(remote.amount.value) !== sub.pending_amount_cents || remote.customerId !== account.mollie_customer_id) {
       throw new BillingConflict("Plan update not confirmed by Mollie");
     }
     this.store.event(accountId, "plan_change_scheduled", sub.pending_plan_key);
@@ -253,22 +282,23 @@ export class BillingService {
       result.accounts++;
       try {
         for (const attempt of this.store.recentAttempts(account.id)) {
-          if (attempt.mollie_payment_id && ["open", "pending", "authorized", "initializing"].includes(attempt.status)) {
+          if (attempt.mollie_payment_id) {
             await this.processPayment(attempt.mollie_payment_id); result.payments++;
           }
         }
         let sub = this.store.subscription(account.id);
-        if (sub && !sub.mollie_subscription_id && sub.status === "setup_pending") await this.ensureSubscription(account.id);
+        if (sub && !sub.mollie_subscription_id && (sub.status === "setup_pending" || sub.cancel_requested)) await this.ensureSubscription(account.id);
         sub = this.store.subscription(account.id);
         if (sub?.mollie_subscription_id && account.mollie_customer_id) {
           const remote = await this.mollie.getSubscription(account.mollie_customer_id, sub.mollie_subscription_id);
           if (remote.customerId !== account.mollie_customer_id || remote.mode !== this.config.mode) throw new BillingConflict("Remote subscription mismatch");
           if (sub.cancel_requested && remote.status !== "canceled") {
-            await this.mollie.cancelSubscription(account.mollie_customer_id, sub.mollie_subscription_id);
+            const canceled = await this.mollie.cancelSubscription(account.mollie_customer_id, sub.mollie_subscription_id);
+            if (canceled.status !== "canceled") throw new BillingConflict("Cancellation not confirmed by Mollie");
             this.store.setCanceled(account.id);
           } else if (remote.status === "canceled" && sub.status !== "canceled") this.store.setCanceled(account.id);
           if (!sub.cancel_requested && sub.pending_plan_key && remote.status !== "canceled") await this.updatePendingPlan(account.id);
-          for (const payment of await this.mollie.listSubscriptionPayments(account.mollie_customer_id, sub.mollie_subscription_id)) {
+          for (const payment of (await this.mollie.listSubscriptionPayments(account.mollie_customer_id, sub.mollie_subscription_id)).sort((a, b) => (a.createdAt ?? a.paidAt ?? "").localeCompare(b.createdAt ?? b.paidAt ?? ""))) {
             await this.processPayment(payment.id); result.payments++;
           }
         }

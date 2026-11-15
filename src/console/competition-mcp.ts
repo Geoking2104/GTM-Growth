@@ -37,7 +37,7 @@ export function buildCompetitionMcpRouter(options: ConsoleOptions = {}) {
       const parsed = definition.schema.safeParse(request.params.arguments ?? {}); if (!parsed.success) return fail("Invalid arguments");
       const route = [...aiVisibilityRoutes, ...competitionRoutes].find((r) => r.path === definition.path);
       if (!route || route.adminOnly) return fail("Tool unavailable");
-      try { return success(await route.handler({ url: "", body: parsed.data, tenancy, user })); } catch { return fail("Unable to access requested data"); }
+      try { options.cloud?.authorize(tenancy.tenant!.id, route.path); return success(await route.handler({ url: "", body: parsed.data, tenancy, user })); } catch { return fail("Unable to access requested data"); }
     });
     const transport = new StreamableHTTPServerTransport({ sessionIdGenerator: undefined });
     res.on("close", () => { void transport.close(); void server.close(); });
