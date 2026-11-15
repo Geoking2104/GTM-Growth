@@ -8,6 +8,7 @@ document.documentElement.lang = LANG;
 
 const DICT = {
   fr: {
+    s_agents: "Agents connectés",
     s_catalog: "Produits & pages",
     s_commerce: "Commerce",
     s_local_seo: "SEO global et local", s_social: "Réseaux sociaux", s_crm: "CRM et parcours réels",
@@ -32,6 +33,7 @@ const DICT = {
     t_status: "Statut des accès", t_tags: "Balises GA4 / GTM", t_settings: "Paramètres", ga4Property: "Propriété GA4 (ID)", bingSite: "Site Bing Webmaster",
   },
   en: {
+    s_agents: "Connected agents",
     s_catalog: "Products & pages",
     s_commerce: "Commerce",
     s_local_seo: "Global and local SEO", s_social: "Social networks", s_crm: "CRM and observed journeys",

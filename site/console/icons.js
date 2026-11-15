@@ -1,5 +1,6 @@
 /* Icônes de la console (mêmes tracés que la démo publique). */
 const P = {
+  agents: '<path d="M12 2l8 4v6c0 5-8 10-8 10S4 17 4 12V6z"/><circle cx="10" cy="10" r="2"/><path d="M12 10h5m-2 0v3"/>',
   crm: '<rect x="2" y="3" width="14" height="18" rx="2"/><circle cx="9" cy="8" r="2"/><path d="M5 15a4 4 0 0 1 8 0M19 5v14M17 7h4M17 12h4M17 17h4"/>',
   social: '<circle cx="6" cy="12" r="3"/><circle cx="18" cy="5" r="3"/><circle cx="18" cy="19" r="3"/><path d="M8.6 10.5l6.8-4M8.6 13.5l6.8 4"/>',
   local_seo: '<circle cx="10" cy="10" r="7"/><path d="M3 10h10M10 3a13 13 0 0 0 0 14M10 3a13 13 0 0 1 3 7"/><path d="M21 15c0 3-4 7-4 7s-4-4-4-7a4 4 0 0 1 8 0z"/><circle cx="17" cy="15" r="1"/>',

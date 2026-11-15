@@ -56,6 +56,23 @@ demand. Referrer/UTM attribution is not causal revenue proof. The
 [measurement guide](docs/marketing/MEASUREMENT.md) explains the current limitations,
 including commerce aggregation and unknown signals.
 
+## Personal agents: PAP 1.0 read pilot
+
+The repository now includes an opt-in, read-only Personal Agent Protocol facade for
+workspace configuration, Search Console, GA4, imported AI visibility and recorded
+operations. Each authorization binds one user, agent, workspace and selected sources;
+current Keycloak access and durable revocation are checked before returning data.
+**Act → Connected agents** provides consent and disconnect in English and French.
+
+The pilot is disabled by default. Production activation, deployed Keycloak qualification
+and real-agent compatibility remain gated on staging acceptance. No writes, general
+MCP access, CRM identity linking or paid model account is introduced.
+
+See the [customer and technical guide](docs/PAP.md),
+[authorization decision](docs/architecture/PAP-AUTHORIZATION.md),
+[operator runbook](docs/technical/PAP-RUNBOOK.md) and
+[functional/technical specification](docs/PAP-SPECIFICATION.md).
+
 ## Run locally
 
 Node.js **20 or newer**; package version **0.22.0**. Public audits work without Google credentials.

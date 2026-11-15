@@ -158,3 +158,26 @@ jobs:
         run: python integrations/social-zenml/smoke.py
       - name: Build isolated optional worker image
         run: docker build -t gtm-social-zenml-ci integrations/social-zenml
+
+  pap-browser:
+    name: PAP · Consent and revocation EN/FR
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+          cache: npm
+      - run: npm ci
+      - run: npx playwright-core install --with-deps chromium
+      - name: Exercise consent defaults and disconnect at mobile and desktop widths
+        run: node scripts/qa-poppy.mjs
+        env:
+          PAP_QA_OUTPUT_DIR: qa-poppy
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: pap-browser-evidence
+          path: qa-poppy
+          retention-days: 14
