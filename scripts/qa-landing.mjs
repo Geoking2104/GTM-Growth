@@ -97,7 +97,8 @@ async function visit(browserContext, locale, label, viewport) {
   await page.locator('#tab-search').click();
   await page.locator('#console').screenshot({ path: path.join(outputDir, `${label}-product.png`) });
   await page.goto(`${origin}/${locale === 'fr' ? 'fr/' : ''}#features`);
-  await page.getByRole('button', { name: locale === 'fr' ? 'Refuser' : 'Reject', exact: true }).click();
+  // A fragment-only navigation keeps the existing consent decision.
+  if (await page.locator('.privacy-banner').isVisible()) await page.getByRole('button', { name: locale === 'fr' ? 'Refuser' : 'Reject', exact: true }).click();
   assert.equal(await page.locator('#tool-explorer').evaluate(node => node.open), true, 'bookmarked catalogue opens its disclosure');
   await page.locator('#tool-explorer > summary').click();
   const plans = page.locator("#offres");
