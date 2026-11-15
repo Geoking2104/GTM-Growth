@@ -116,3 +116,6 @@
 .growth-home .plan { display:flex; flex-direction:column; }
 .growth-home .plan .btn { margin-top:auto; }
 @media(max-width:440px) { .growth-home .hero.vh-hero { padding-top:40px; }.growth-home .hero .lede { font-size:16px; } }
+
+.vh-mobile-console { display:none; }
+@media(max-width:760px) { .growth-home .site-header .btn-small { display:none; }.vh-mobile-console { display:inline-flex; align-items:center; padding:10px 12px; border-radius:7px; text-decoration:none; background:#6935dc; color:white; font-size:11px; font-weight:650; } }

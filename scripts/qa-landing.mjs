@@ -79,7 +79,10 @@ async function visit(browserContext, locale, label, viewport) {
     assert.equal(await page.locator(`#tab-${id}`).getAttribute('aria-selected'), 'true');
     assert.equal(await page.locator('#demo-motion').getAttribute('aria-pressed'), 'false', 'manual selection stops rotation');
     const href = await page.locator(`#demo-${id} .vh-action`).getAttribute('href');
-    assert.ok(href === '#url-form' || href.startsWith(`/console/?lang=${locale}#`));
+    const target = new URL(href, origin);
+    assert.equal(target.origin, origin);
+    if (id === 'search') assert.equal(target.hash, '#url-form');
+    else { assert.equal(target.pathname, '/console/'); assert.equal(target.searchParams.get('lang'), locale); assert.ok(target.hash); }
     assert.ok(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth + 2), `${label}: ${id} has no overflow`);
     if (viewport.width > 1000) await page.locator('#console').screenshot({ path: path.join(outputDir, `${label}-scene-${id}.png`) });
   }
