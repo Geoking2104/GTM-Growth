@@ -292,6 +292,7 @@ export class BillingService {
         if (sub?.mollie_subscription_id && account.mollie_customer_id) {
           const remote = await this.mollie.getSubscription(account.mollie_customer_id, sub.mollie_subscription_id);
           if (remote.customerId !== account.mollie_customer_id || remote.mode !== this.config.mode) throw new BillingConflict("Remote subscription mismatch");
+          this.store.setNextPaymentDate(account.id, ["active", "pending"].includes(remote.status) ? remote.nextPaymentDate ?? null : null);
           if (sub.cancel_requested && remote.status !== "canceled") {
             const canceled = await this.mollie.cancelSubscription(account.mollie_customer_id, sub.mollie_subscription_id);
             if (canceled.status !== "canceled") throw new BillingConflict("Cancellation not confirmed by Mollie");

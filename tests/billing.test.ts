@@ -209,6 +209,15 @@ describe("Cloud subscriptions / Mollie (no live charges)", () => {
     expect(store.payment(recurring.id)?.kind).toBe("renewal");
     expect(service.status(ctx()).paidUntil).toBe(plusCalendarMonth(firstUntil));
   });
+  it("clears stale due dates on renewal and refreshes them from Mollie reconciliation", async () => {
+    const { service, mollie } = harness(); await initial(service, mollie);
+    const sub = [...mollie.subscriptions.values()][0];
+    const renewal = mollie.renewal(sub); mollie.pay(renewal.id); await service.processPayment(renewal.id);
+    expect(service.status(ctx()).nextPaymentDate).toBeNull();
+    sub.nextPaymentDate = "2027-03-15";
+    expect((await service.reconcile()).errors).toBe(0);
+    expect(service.status(ctx()).nextPaymentDate).toBe("2027-03-15");
+  });
   it("reopens the operational ledger after a restart without reapplying a paid webhook", async () => {
     const { config, service, store, mollie } = harness();
     const { remote } = await initial(service, mollie);

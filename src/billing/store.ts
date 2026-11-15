@@ -198,7 +198,7 @@ export class BillingStore {
           } else {
             const changing = sub.pending_plan_key && input.cents === sub.pending_amount_cents;
             this.db.prepare(`UPDATE billing_subscriptions SET paid_until=?,status=CASE WHEN cancel_requested=1 THEN 'canceled' ELSE 'active' END,
-              plan_key=?,amount_cents=?,pending_plan_key=CASE WHEN ? THEN NULL ELSE pending_plan_key END,
+              next_payment_date=NULL,plan_key=?,amount_cents=?,pending_plan_key=CASE WHEN ? THEN NULL ELSE pending_plan_key END,
               pending_amount_cents=CASE WHEN ? THEN NULL ELSE pending_amount_cents END,updated_at=? WHERE account_id=?`)
               .run(end, changing ? sub.pending_plan_key : sub.plan_key, changing ? input.cents : sub.amount_cents,
                 changing ? 1 : 0, changing ? 1 : 0, now(), account.id);
@@ -230,6 +230,10 @@ export class BillingStore {
         .run(subscriptionId, nextPaymentDate, now(), accountId);
       this.event(accountId, "subscription_created", subscriptionId);
     }).immediate();
+  }
+  setNextPaymentDate(accountId: string, date: string | null) {
+    if (date !== null && !/^\d{4}-\d{2}-\d{2}$/.test(date)) throw new BillingConflict("Invalid next payment date");
+    this.db.prepare("UPDATE billing_subscriptions SET next_payment_date=CASE WHEN cancel_requested=1 THEN NULL ELSE ? END,updated_at=? WHERE account_id=?").run(date, now(), accountId);
   }
   subscriptionError(accountId: string, message: string) {
     this.db.prepare("UPDATE billing_subscriptions SET last_error=?,updated_at=? WHERE account_id=?").run(message.slice(0, 160), now(), accountId);
