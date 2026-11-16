@@ -19,6 +19,11 @@ if [[ ! -f "${APP_DIR}/.secrets/service-account.json" ]]; then
 fi
 
 cd "${APP_DIR}"
+# A bind-mounted theme edit is invisible to Compose. Include its content digest
+# in the service configuration so only theme changes recreate Keycloak and clear
+# its production theme cache. The database and other applications are preserved.
+GTM_THEME_REVISION="$(find deploy/kayroslab-vps/keycloak/themes -type f -print0 | LC_ALL=C sort -z | xargs -0 sha256sum | sha256sum | cut -d ' ' -f 1)"
+export GTM_THEME_REVISION
 docker compose --env-file "${ENV_FILE}" -f "${COMPOSE_FILE}" up -d --build --remove-orphans
 docker compose --env-file "${ENV_FILE}" -f "${COMPOSE_FILE}" ps
 

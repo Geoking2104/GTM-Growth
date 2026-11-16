@@ -1,34 +1,40 @@
-# Thème Keycloak « gtm-growth »
+# GTM Growth Keycloak theme
 
-Habillage des pages utilisateur Keycloak aux couleurs du site public GTM Growth
-(`site/styles.css` : tokens `--brand`, `--night`, boutons pill, Inter / system-ui).
+The login theme inherits `keycloak.v2` on Keycloak **26.4**. It keeps native login,
+registration, reset, OTP and organisation templates. Only branding changes:
+violet `#6935dc`, lavender surfaces, Inter, 52px controls and the public rocket logo.
+`darkMode=false` keeps these light surfaces consistent with the public website.
 
-Monté dans le conteneur sur `/opt/keycloak/themes/gtm-growth`
-(voir `docker-compose.prod.yml`).
+| Directory | Parent | Purpose |
+| --- | --- | --- |
+| `login/` | `keycloak.v2` | Native sign-in and authentication screens; current public identity |
+| `email/` | `base` | Existing transactional email templates, EN/FR |
+| `account/` | `keycloak.v3` | Existing account console theme |
 
-## Contenu
+`login/theme.properties` loads the versioned `css/gtm-growth-v2.css`. The rocket
+and Inter font are local copies from `site/fr/assets/`; there are no CDN requests.
+The realm's `loginTheme`, `emailTheme` and `accountTheme` remain `gtm-growth`.
 
-| Dossier | Parent | Rôle |
-|---------|--------|------|
-| `login/` | `keycloak.v2` | Connexion, inscription, reset mot de passe, OTP, choix d’organisation |
-| `email/` | `base` | E-mails reset / vérification / execute-actions (HTML + texte, FR & EN) |
-| `account/` | `keycloak.v3` | Console compte (branding léger PatternFly) |
+## Deployment and rollback
 
-Libellés FR + EN. Logo : `login/resources/img/logo.png` (copie de `site/assets/logo-128.png`).
+Use `deploy/kayroslab-vps/deploy.sh`, not an ad hoc Compose invocation. It hashes
+all theme files into `GTM_THEME_REVISION`, which becomes a Keycloak service label.
+A changed digest recreates that container, clearing its production theme cache;
+an unchanged digest does not restart it. Production theme caching stays enabled.
+Allow a brief interruption to new sign-ins during this recreation. Persistent
+Postgres data and the other applications on the VPS are not changed by the theme.
 
-## Realm
+Revert the theme commit and rerun the same deployment script to roll back. After
+deployment, open a fresh OIDC login flow in FR and EN and verify the rocket,
+violet submit button, visible focus, locale selector and password visibility toggle.
+Do not reuse an expired authentication URL or submit customer credentials for QA.
 
-Dans `realm-gtm-growth.json` :
+## Isolated browser verification
 
-- `loginTheme`: `gtm-growth`
-- `emailTheme`: `gtm-growth`
-- `accountTheme`: `gtm-growth`
+`node scripts/qa-brand.mjs` runs in CI with Docker and Playwright Chromium. It starts
+an ephemeral Keycloak 26.4 realm with no users or production configuration, mounts
+this theme read-only and checks login/reset in FR/EN at 390px and 1280px, including
+a dark OS preference. It also captures the real dashboard renderers using clearly
+labelled synthetic data. The container is removed in `finally`.
 
-Les **Organizations** (un tenant = une organisation Keycloak) restent inchangées :
-le sélecteur d’organisation hérite du même CSS.
-
-## Preview sans toucher la prod
-
-Déployer aussi ce dossier sous le nom `gtm-preview`, créer un realm temporaire
-`theme-preview` avec `loginTheme=gtm-preview`, et laisser le realm `gtm-growth`
-sur l’ancien CSS jusqu’à validation.
+See [Keycloak theme documentation](https://www.keycloak.org/ui-customization/themes).

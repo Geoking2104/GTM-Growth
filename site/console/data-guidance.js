@@ -1,5 +1,6 @@
 import { el } from "./render.js";
 import { LANG } from "./i18n.js";
+import { providerAsset, providerMark } from "./provider-marks.js";
 
 const L = (fr, en) => LANG === "fr" ? fr : en;
 const settings = ["#tracking/settings", "Configurer les sources", "Configure sources"];
@@ -84,6 +85,12 @@ export function guidanceKey(section = "") {
 export function renderDataGuide(section, { reason, error, retry, title } = {}) {
   const guide = guides[guidanceKey(section)];
   const box = el("section", "c-data-guide");
+  const key = guidanceKey(section);
+  if (providerAsset(key)) {
+    const visual = el('div', 'v-source-pending');
+    visual.append(providerMark({ gsc: 'Search Console', ga4: 'Google Analytics 4', bing: 'Bing Webmaster', gtm: 'Google Tag Manager' }[key] || key), el('span', '', L('En attente de données', 'Awaiting data')));
+    box.append(visual);
+  }
   box.append(el("h3", "", title || L(...guide.title)), el("p", "c-note", reason || L(...guide.reason)));
   if (error) { const detail = el("details", "c-error-detail"); detail.append(el("summary", "", L("Détail du problème", "Problem details")), el("p", "c-note", error.message || String(error))); box.append(detail); }
   const steps = el("ol", "c-list"); guide.steps.forEach(step => steps.append(el("li", "", L(...step)))); box.append(steps);

@@ -157,3 +157,21 @@ body.console-page { padding: 0; background: #f7f8fa; color: #273142; }
 .c-feature-guide-actions { display: flex; flex-wrap: wrap; gap: .75rem 1.5rem; margin-top: .9rem; font-size: .76rem; }
 .c-feature-guide-actions a { color: #713caf; }.c-feature-next { font-weight: 650; }
 @media (max-width: 550px) { .c-feature-guide dl { grid-template-columns: 1fr; gap: .3rem; }.c-feature-guide dd { margin-bottom: .65rem; } }
+.v-provider { display: inline-flex; align-items: center; gap: 9px; min-width: 0; vertical-align: middle; }
+.v-provider-logo { display: inline-grid; place-items: center; width: 30px; height: 30px; flex: 0 0 auto; background: #fff; border: 1px solid #e8e3f0; border-radius: 8px; color: #76678b; overflow: hidden; }
+.v-provider-logo > * { grid-area: 1 / 1; display: grid; place-items: center; }
+.v-provider-logo svg { width: 18px; height: 18px; }
+.v-provider-logo img { position: relative; width: 24px; height: 24px; object-fit: contain; background: white; padding: 2px; box-sizing: border-box; }
+.v-section-heading > .v-provider .v-provider-logo { width: 42px; height: 42px; border-radius: 11px; }
+.v-section-heading > .v-provider img { width: 32px; height: 32px; }
+.c-app .rank-list .v-engine-rank { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 7px 12px; padding: 10px 0; }
+.v-engine-rank .rank-score { font-variant-numeric: tabular-nums; font-weight: 650; align-self: center; }
+.v-score-track { grid-column: 1 / -1; display: block; height: 5px; background: #efedf5; border-radius: 8px; overflow: hidden; }
+.v-score-track i { display: block; height: 100%; background: #7854d7; border-radius: inherit; }
+.c-app .audience-card h4 { display: flex; align-items: center; justify-content: space-between; gap: 12px; flex-wrap: wrap; }
+.v-source-caption { color: #726982; font-size: 11px; font-weight: 500; }
+.v-source-pending { display: flex; align-items: center; gap: 16px; justify-content: space-between; flex-wrap: wrap; padding: 18px; margin: 0 0 20px; border: 1px dashed #d8cceb; border-radius: 10px; background: linear-gradient(120deg, #fff, #f4eefc); color: #665774; }
+.v-source-pending .v-provider { font-weight: 650; color: #332247; }
+.c-legend .v-provider { gap: 5px; }
+.c-legend .v-provider-logo { width: 22px; height: 22px; border: 0; }
+.c-legend .v-provider-logo img { width: 20px; height: 20px; }

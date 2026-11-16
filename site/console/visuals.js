@@ -1,6 +1,7 @@
 /* Shared visual vocabulary: real images, honest gauges and comparable trends. */
 import { LANG } from "./i18n.js";
 import { icon } from "./icons.js";
+import { providerAsset, providerMark } from "./provider-marks.js";
 const L = (fr, en) => LANG === "fr" ? fr : en;
 const node = (tag, cls, text) => { const el = document.createElement(tag); if (cls) el.className = cls; if (text !== undefined) el.textContent = String(text); return el; };
 const NS = "http://www.w3.org/2000/svg";
@@ -49,7 +50,7 @@ export function gauge(label, value, note = "") {
   card.append(chart, node("p", "c-note", note)); return card;
 }
 export function sectionHeading(title, description, name = "overview") {
-  const header = node("header", "v-section-heading"), copy = node("div"); copy.append(node("h1", "", title), node("p", "c-note", description)); header.append(metricIcon(name), copy); return header;
+  const header = node("header", "v-section-heading"), copy = node("div"); copy.append(node("h1", "", title), node("p", "c-note", description)); header.append(providerAsset(name) ? providerMark(name, { symbolOnly: true }) : metricIcon(name), copy); return header;
 }
 export function sourceBadge(label) { return node("span", "v-source", label); }
 
@@ -65,7 +66,7 @@ export function visibilityChart(responses, series, title) {
   const x = date => span ? 42 + 560 * (Date.parse(date) - start) / span : 322;
   const data = [];
   series.slice(0, 10).forEach((serie, index) => {
-    const color = colors[index % colors.length], item = node("span", "v-legend-item"), swatch = node("i"); swatch.style.backgroundColor = color; item.append(swatch, serie.label); legend.append(item);
+    const color = colors[index % colors.length], item = node("span", "v-legend-item"), swatch = node("i"); swatch.style.backgroundColor = color; item.append(swatch, providerAsset(serie.label) ? providerMark(serie.label) : document.createTextNode(serie.label)); legend.append(item);
     let segment = [];
     const flush = () => { if (segment.length > 1) chart.append(svg("polyline", { points: segment.join(" "), fill: "none", stroke: color, "stroke-width": 2.3, "stroke-linejoin": "round" })); segment = []; };
     for (const date of dates) {

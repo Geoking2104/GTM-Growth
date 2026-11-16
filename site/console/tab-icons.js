@@ -1,0 +1,24 @@
+/** Explicit, language-independent symbols for every horizontal destination. */
+export const TAB_ICONS = {
+  overview: { board: 'overview', plan: 'checklist' },
+  local_seo: { website: 'globe', network: 'store', planning: 'pin' },
+  catalog: { library: 'products' }, commerce: { connect: 'commerce' },
+  competition: { board: 'competition' }, ai_visibility: { board: 'eye' },
+  gsc: { performance: 'overview', 'query-pages': 'links', sitemaps: 'sitemap' },
+  ga4: { overview: 'audience', ecommerce: 'commerce', technology: 'devices', realtime: 'realtime' },
+  bing: { performance: 'bing' }, geo: { llms: 'filecode', robots: 'robot', schema: 'code' },
+  citability: { citability: 'citability' }, indexnow: { readiness: 'indexnow' },
+  sitemap: { map: 'sitemap', audit: 'audit', build: 'fileplus' },
+  performance: { psi: 'performance', crux: 'tracking', weight: 'weight' },
+  journey: { map: 'journey', prompts: 'message' }, crm: { timeline: 'timeline', connections: 'plug' },
+  social: { campaigns: 'megaphone', posts: 'pen', calendar: 'calendar', approvals: 'approved', analytics: 'ga4', creators: 'audience', connections: 'plug', runs: 'workflow' },
+  apply_mode: { preview: 'fixes' }, search: { queries: 'search', trends: 'overview', losing: 'downtrend', inspect: 'scan' },
+  keywords: { opps: 'keywords', tracked: 'target' },
+  tracking: { status: 'tracking', tags: 'tag', settings: 'settings', access: 'key' },
+  billing: { subscription: 'billing' }, agents: { connections: 'agents' }, gtm: { workspace: 'layers' },
+  audit: { tech: 'audit', serp: 'window' }, generators: { titles: 'heading', meta: 'text', outline: 'checklist' },
+  calculators: { ctr: 'percent', value: 'coins', roi: 'overview', budget: 'wallet' },
+  report: { pdf: 'report' }, ops: { prompts: 'message', rank: 'competition', articles: 'page', alerts: 'bell' },
+  platform: { clients: 'building', setup: 'operations' },
+};
+export const tabIcon = (section, tab) => TAB_ICONS[section]?.[tab] || 'page';

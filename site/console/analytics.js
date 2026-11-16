@@ -54,9 +54,20 @@ export function lineChart(rows, series, title) {
   for (let i = 0; i < 4; i += 1) grid.append(svg("line", { x1: 30, y1: 10 + (i * (H - 20)) / 3, x2: 610, y2: 10 + (i * (H - 20)) / 3 }));
   s.append(grid);
   for (const ser of series) {
-    const vals = rows.map((r) => Number(r[ser.key] ?? 0)); const max = Math.max(...vals); const min = ser.invert ? Math.min(...vals) : 0; const span = Math.max(1e-9, max - min);
+    const vals = rows.map(r => typeof r[ser.key] === 'number' && Number.isFinite(r[ser.key]) ? r[ser.key] : null);
+    const known = vals.filter(v => v !== null); if (!known.length) continue;
+    const max = Math.max(...known); const min = ser.invert ? Math.min(...known) : 0; const span = Math.max(1e-9, max - min);
     const y = (v) => (ser.invert ? 10 + ((v - min) / span) * (H - 20) : H - 10 - ((v - min) / span) * (H - 20));
-    s.append(svg("polyline", { points: vals.map((v, i) => `${x(i).toFixed(1)},${y(v).toFixed(1)}`).join(" "), fill: "none", stroke: ser.color, "stroke-width": "2", "stroke-linejoin": "round", "stroke-linecap": "round" }));
+    // Missing observations break the line; zero remains a real measurement.
+    let points = [];
+    const flush = () => { if (points.length > 1) s.append(svg('polyline', { points: points.join(' '), fill: 'none', stroke: ser.color, 'stroke-width': '2', 'stroke-linejoin': 'round', 'stroke-linecap': 'round' })); points = []; };
+    vals.forEach((v, i) => {
+      if (v === null) { flush(); return; }
+      points.push(`${x(i).toFixed(1)},${y(v).toFixed(1)}`);
+      const dot = svg('circle', { cx: x(i), cy: y(v), r: 2.5, fill: ser.color });
+      const tooltip = svg('title'); tooltip.textContent = `${rows[i].date} · ${ser.label}: ${v.toLocaleString(loc)}`; dot.append(tooltip); s.append(dot);
+    });
+    flush();
   }
   const labels = svg("g", { fill: "#9aa3b2", "font-size": "10" });
   const ticks = [0, Math.floor((rows.length - 1) / 2), rows.length - 1];
