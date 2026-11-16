@@ -102,7 +102,7 @@ contains the visual feedback loop and the handoff contract for each stage.
 The [capability register](docs/journey/CAPABILITIES.md) is the shared reference for
 implemented behavior, configuration requirements, incomplete work and release evidence.
 
-- **Public entry:** single-page GEO v1/SEO evidence and product-grounded question hypotheses; no Google or model credentials required.
+- **Public entry:** single-page GEO v1/SEO evidence, five-pillar 360° summary (SEO, GEO, AI, CRM and Social), source-linked corrective guides and bilingual A4 print/Save as PDF; no Google or model credentials required. AI citations, CRM conversions, inbound social links and before/after comparisons are **not** inferred. See the [free report contract and release gates](docs/product/FREE-REPORT-360.md).
 - **Connected workspace:** tenant-scoped analytics, AI-answer imports and optional API collection, local SEO, Shopify/PrestaShop, Social and native/client-plugin CRM. Each source has separate activation requirements.
 - **Reviewed action:** generators and Apply Mode previews; WordPress drafts, supervised GBP phone/website changes and Social publication have different approval contracts.
 - **Optional services:** Node-RED for local jobs, ZenML/Postiz for Social, Eve for approved Slack channels. Installing the core does not activate these services.

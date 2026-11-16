@@ -17,7 +17,7 @@ PORT=3111 LEADS_PATH=./data/leads.jsonl SITE_ORIGINS=https://example.com \
 
 | Route | Method | Purpose |
 | --- | --- | --- |
-| `/api/free-read` | `POST` | GEO score, SEO tables, GA4 / Search Console blocks |
+| `/api/free-read` | `POST` | GEO v1, SEO tables, GA4/GSC readiness and versioned five-pillar `report360` |
 | `/api/lead` | `POST` | Contact request, stored as JSONL, optionally forwarded |
 
 Both answer `OPTIONS` with the CORS headers the browser needs, so a static site on
@@ -46,9 +46,35 @@ another origin can call them directly.
     { "id": "ga4.traffic", "title": "GA4 — traffic report", "sample": true, "rows": [] },
     { "id": "gsc.traffic", "title": "Search Console — performance report", "sample": true, "rows": [] }
   ],
+  "report360": {
+    "schemaVersion": 1,
+    "method": "geo-v1-public-page",
+    "scope": "single_public_url",
+    "observedAt": "2026-11-16T12:25:00Z",
+    "sourceUrl": "https://example.com/",
+    "pillars": [
+      { "id": "seo", "coverage": "measured", "score": null, "observedChecks": 18, "needsAttention": 3 },
+      { "id": "geo", "coverage": "measured", "score": 71 },
+      { "id": "ai", "coverage": "partial", "score": null },
+      { "id": "crm", "coverage": "not_measured", "score": null },
+      { "id": "social", "coverage": "partial", "score": null, "observedCount": 1 }
+    ],
+    "actions": [
+      { "id": "seo.title", "kind": "observed_fix", "pillar": "seo", "code": "title", "proof": { "id": "seo.meta:Title", "sourceUrl": "https://example.com/", "observedAt": "2026-11-16T12:25:00Z" } },
+      { "id": "crm.connect_conversions", "kind": "next_step", "pillar": "crm", "proof": null, "points": null }
+    ],
+    "comparison": null,
+    "unmeasured": ["ai_citations", "crm_conversions", "social_inbound_backlinks"]
+  },
   "limitations": ["…"]
 }
 ```
+
+The `report360` block is an **illustrative abbreviated shape**, not a valid
+captured snapshot. Additional fields, including owner, priority, effort, risk,
+measurement gaps, `httpStatus` and the full source-proof value, are present in
+real responses. The [source contract](product/FREE-REPORT-360.md) defines each
+status. Browser printing is an A4 Save as PDF route; there is no new PDF API.
 
 **What is measured, what is sampled.** The SEO, GA4-readiness and GSC-readiness
 tables are measured on the HTML, `robots.txt` and `sitemap.xml` the server fetched.

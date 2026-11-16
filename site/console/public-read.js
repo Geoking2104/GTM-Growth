@@ -5,6 +5,7 @@ import { openLocalDashboard } from "./local-dashboard-entry.js";
 import { normalisePublicUrl, rankRecommendations, explainRecommendation } from "./public-read-model.js";
 import { translateLiveTables } from "../fr/server-tables.js";
 import { renderJourneyPreview } from "./customer-journey.js";
+import { renderFreeReport360 } from "./report360.js";
 
 const COPY = {
   fr: {
@@ -200,6 +201,8 @@ function renderResult(box, data, url, lang) {
     box.append(el("p", "public-panel c-error", copy.retry)); return;
   }
   if (metrics.children.length) box.append(metrics);
+  const report = renderFreeReport360(data.report360, lang);
+  if (report) box.append(report);
   box.append(renderPublicAgent(data, lang));
   box.append(el("p", "public-micro", `${copy.scoreNote} ${copy.gainsNote}`));
   box.append(renderPublicEvidence(data, lang));

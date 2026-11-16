@@ -20,7 +20,7 @@ in the reviewed source. It does not mean deployed, connected or accepted by a li
 
 | Stage / capability | Source status | Activation or scope | Evidence / reference |
 | --- | --- | --- | --- |
-| Diagnose: public read | Implemented | One public page, GEO v1/SEO evidence; no private analytics or measured AI mentions | [Free read](../../src/freeread/index.ts), [public API](../PUBLIC_API.md) |
+| Diagnose: public read / 360° report | Implemented in feature branch; **not yet merged/deployed** | One public page, GEO v1/SEO evidence, five distinct pillars, evidence-linked FR/EN actions and A4 browser print. Private metrics and before/after gains remain unknown | [Free report contract](../product/FREE-REPORT-360.md), [free read](../../src/freeread/index.ts), [public API](../PUBLIC_API.md) |
 | Diagnose: GEO, citability, sitemap, performance | Implemented | Authorised URLs; lab/field data and readiness remain distinct | [GEO](../GEO.md), [CLI](../CLI.md) |
 | Diagnose: GEO v2 | Foundation; 42-control integration deferred | Category budgets, calculator, ownership registry and offline rendering code exist on main. Live isolated browser execution is not a public service | [Rubric](../../src/geo/score/v2/rubric.ts), [offline worker](../../src/render/worker.ts), [pilot ADR](../architecture/GEO-V2-PLAYWRIGHT-PILOT.md); [PR #30](https://github.com/Geoking2104/GTM-Growth/pull/30) open at review |
 | Understand: buyer questions | Implemented | Actual Product/Service context and explicit confirmation; at most two selected comparable offers; unsupported stages stay empty | [Current contract](../product/CUSTOMER-JOURNEY-INTEGRATION.md), [model](../../site/console/customer-journey-model.js) |
