@@ -523,15 +523,18 @@ Meaning.</strong></div><div>LinkedIn <span>↗</span></div></div><div class="vh-
   <p class="lede">A website to improve, locations to organise, or customer journeys to connect? Tell us where you want to go.</p>
   <div class="lead-card">
     <form class="lead-form" id="lead-form" novalidate>
-      <div>
+      <div class="field">
+        <label for="lead-name">Your name</label>
         <input id="lead-name" aria-label="Your name" type="text" placeholder="Your name" autocomplete="name">
         <p class="req" id="err-name" hidden>Your name is required.</p>
       </div>
-      <div>
+      <div class="field">
+        <label for="lead-email">Your work email</label>
         <input id="lead-email" aria-label="Your work email" type="email" placeholder="Your work email" autocomplete="email">
         <p class="req" id="err-email" hidden>A valid email address is required.</p>
       </div>
-      <div>
+      <div class="field">
+        <label for="lead-url">URL to audit</label>
         <input id="lead-url" aria-label="URL to audit" type="text" placeholder="URL to audit (https://…)" inputmode="url">
         <p class="req" id="err-url" hidden>The URL to audit is required.</p>
       </div>
