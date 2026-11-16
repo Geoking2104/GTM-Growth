@@ -122,3 +122,33 @@
 
 /* Compact mobile navigation retains direct product, pricing and resource access. */
 @media(max-width:760px) { .growth-home .site-header .header-inner .nav { display:flex; order:3; flex:1 0 100%; justify-content:center; gap:18px; }.growth-home .site-header .header-inner .nav > a { display:inline-flex; font-size:11px; }.growth-home .site-header .header-inner .nav > a:last-child { display:none; }.growth-home .site-header .nav-menu summary { font-size:11px; }.growth-home .header-inner { padding-block:12px; } }
+
+/* Contact fields use the same type, shape and violet palette as the free audit. */
+.growth-home #contact .lead-form { gap: 18px; }
+.growth-home #contact .field { gap: 8px; min-width: 0; }
+.growth-home #contact .field label {
+  color: #eee6f7; font-size: 13px; font-weight: 600;
+  letter-spacing: 0; text-transform: none;
+}
+.growth-home #contact .field input {
+  width: 100%; min-width: 0; min-height: 52px; margin: 0;
+  padding: 14px 16px; border: 1px solid #d0c3ea;
+  border-radius: var(--radius-sm); background: #fff; color: var(--vh-ink);
+  font: inherit; font-size: 16px; line-height: 1.4;
+  caret-color: var(--vh-purple); box-shadow: none;
+}
+.growth-home #contact .field input::placeholder { color: var(--vh-muted); opacity: 1; }
+.growth-home #contact .field input:hover { border-color: #bc9af4; }
+.growth-home #contact .field input:focus {
+  border-color: var(--vh-purple); outline: 2px solid #bc9af4; outline-offset: 3px;
+  box-shadow: none;
+}
+.growth-home #contact .field input:autofill {
+  box-shadow: 0 0 0 1000px #fff inset; -webkit-text-fill-color: var(--vh-ink);
+}
+.growth-home #contact .lead-form .btn { min-height: 52px; border-radius: var(--radius-sm); padding: 14px 24px; }
+.growth-home #contact .lead-form .btn:disabled { opacity: .65; cursor: wait; }
+.growth-home #contact .req, .growth-home #contact .form-msg.err { color: #ffb4bd; }
+.growth-home #contact .form-msg.ok { color: #a3e6c1; }
+.growth-home #contact .form-msg { color: #eee6f7; }
+@media (max-width: 650px) { .growth-home #contact .lead-form .btn { width: 100%; } }

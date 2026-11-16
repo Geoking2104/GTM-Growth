@@ -523,15 +523,18 @@ Le sens.</strong></div><div>LinkedIn <span>↗</span></div></div><div class="vh-
   <p class="lede">Un site à améliorer, des établissements à organiser, des parcours clients à relier ? Dites-nous où vous voulez aller.</p>
   <div class="lead-card">
     <form class="lead-form" id="lead-form" novalidate>
-      <div>
+      <div class="field">
+        <label for="lead-name">Votre nom</label>
         <input id="lead-name" aria-label="Votre nom" type="text" placeholder="Votre nom" autocomplete="name">
         <p class="req" id="err-name" hidden>Votre nom est requis.</p>
       </div>
-      <div>
+      <div class="field">
+        <label for="lead-email">Votre e-mail professionnel</label>
         <input id="lead-email" aria-label="Votre e-mail professionnel" type="email" placeholder="Votre e-mail professionnel" autocomplete="email">
         <p class="req" id="err-email" hidden>Une adresse e-mail valide est requise.</p>
       </div>
-      <div>
+      <div class="field">
+        <label for="lead-url">URL à auditer</label>
         <input id="lead-url" aria-label="URL à auditer" type="text" placeholder="URL à auditer (https://…)" inputmode="url">
         <p class="req" id="err-url" hidden>L'URL à auditer est requise.</p>
       </div>

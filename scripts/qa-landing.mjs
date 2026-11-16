@@ -71,6 +71,7 @@ async function visit(browserContext, locale, label, viewport) {
   await privacy.getByRole("button", { name: locale === "fr" ? "Refuser" : "Reject" }).click();
   await privacy.waitFor({ state: "hidden" });
   await page.screenshot({ path: path.join(outputDir, `${label}.png`) });
+  await page.locator('#contact').screenshot({ path: path.join(outputDir, `${label}-contact.png`), style: '.site-header { visibility: hidden !important; }' });
   // Exercise the actual product reel, including its routes and accessibility contract.
   const sceneIds = ['search', 'ai', 'local', 'social', 'crm', 'decide'];
   for (const id of sceneIds) {
