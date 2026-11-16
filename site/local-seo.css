@@ -22,7 +22,7 @@
 .local-action-grid { display: grid; grid-template-columns: repeat(3,minmax(0,1fr)); gap: 16px; margin: 24px 0; }
 .local-action-card { border: 1px solid rgba(160,160,200,.24); border-radius: 14px; padding: 20px; background: rgba(120,100,210,.05); }
 .local-action-card > span { font-size: .75rem; letter-spacing: .08em; font-weight: 700; color: #bda6ff; }
-.local-action-card h3 { margin: 12px 0; font-size: 1.15rem; }
+.local-action-card h3 { margin: 12px 0; font-size: 1.15rem; color: inherit; }
 .local-action-card p { margin: 0; font-size: .9rem; }
 #local-seo-planner .local-outcome { border-left: 3px solid #a88eff; padding-left: 16px; }
 .gbp-dashboard { --gbp-green: #278564; --gbp-line: #e4e9eb; --gbp-muted: #616c73; background: #f6f9fa; color: #202c34; border: 1px solid var(--gbp-line); border-radius: 18px; padding: clamp(16px,2.8vw,30px); margin: 12px 0 28px; }

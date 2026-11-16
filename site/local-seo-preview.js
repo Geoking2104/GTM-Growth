@@ -1,5 +1,5 @@
 /** Public action guide. Google measurements require a linked, authorised workspace. */
-export function renderLocalSeoPreview(language = "en") {
+export function renderLocalSeoPreview(language = "en", { onOpenDashboard } = {}) {
   const L=(fr,en)=>language==="fr"?fr:en;
   const el=(tag,text)=>{const n=document.createElement(tag);if(text)n.textContent=text;return n;};
   const root=el("section");root.className="public-panel c-card";root.id="local-seo-planner";
@@ -22,6 +22,8 @@ export function renderLocalSeoPreview(language = "en") {
     for(const [step,title,description] of cards){const card=el("article");card.className="local-action-card";card.append(el("span",step),el("h3",title),el("p",description));grid.append(card);}result.append(grid);
     const outcome=el("p",web?L("GBP et Maps sont non applicables à une activité uniquement web. Conservez les audits et Search Console.","GBP and Maps are not applicable to a web-only business. Use website audits and Search Console."):kind.value==="service-area"?L("Gardez votre adresse privée hors des contenus et exports publics. Reliez chaque fiche à la bonne zone desservie.","Keep your private address out of public content and exports. Link each listing to the correct service area."):L("Chaque résultat appartient à une fiche précise. Sans données Google reçues, le dashboard affiche « indisponible », jamais un résultat inventé.","Every result belongs to an exact listing. Without data received from Google, the dashboard shows ‘unavailable’, never an invented result."));outcome.className="local-outcome";result.append(outcome);
   }kind.onchange=draw;draw();
-  const a=el("a",L("Ouvrir mon dashboard local","Open my local dashboard"));a.className="btn btn-primary";a.href="/console/?lang="+language+"#local_seo/network";root.append(a,el("p",L("Le socle open source reste gratuit. Un espace client est requis ; les données Google nécessitent une connexion configurée et autorisée. Les réponses aux avis et les campagnes de publications sont prévues dans la suite du parcours.","The open-source core stays free. A workspace is required; Google data requires a configured, authorised connection. Review replies and publishing campaigns are planned for the next stage.")));return root;
+  const a=el("a",L("Ouvrir mon dashboard local","Open my local dashboard"));a.className="btn btn-primary";a.href=onOpenDashboard?"#c-login-form":"/console/?lang="+language+"#local_seo/network";
+  if(onOpenDashboard)a.onclick=event=>{event.preventDefault();onOpenDashboard();};
+  root.append(a,el("p",L("Le socle open source reste gratuit. Un espace client est requis ; les données Google nécessitent une connexion configurée et autorisée. Les réponses aux avis et les campagnes de publications sont prévues dans la suite du parcours.","The open-source core stays free. A workspace is required; Google data requires a configured, authorised connection. Review replies and publishing campaigns are planned for the next stage.")));return root;
 }
 const mount=document.getElementById("local-seo-free");if(mount)mount.append(renderLocalSeoPreview(document.documentElement.lang==="fr"?"fr":"en"));

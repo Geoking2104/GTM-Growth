@@ -17,6 +17,7 @@ import { HtmlDoc } from "../geo/html.js";
 import { ga4Table, gscTable, trafficTable, type TrafficSample } from "./analytics.js";
 import { seoTables, type DataTable } from "./seo.js";
 import { buildSitemapMap, type SitemapMap } from "./sitemap-map.js";
+import { buildFreeReadEvidence, sitemapEvidence, type FreeReadEvidence } from "./evidence.js";
 
 export interface FreeReadOpportunity {
   checkId: string;
@@ -62,6 +63,7 @@ export interface FreeReadResult {
   /** Observed page facts for a clearly hypothetical customer journey. */
   journeyContext: JourneyContext;
   pageSignals: { title: string; description: string; htmlLang: string; h1: string[]; h2: string[] };
+  evidence: FreeReadEvidence;
   tables: DataTable[];
   /** Sitemap architecture and freshness data for the free visual map. */
   sitemapMap: SitemapMap | null;
@@ -132,7 +134,7 @@ async function tryFetch(
   if (!fetcher) return null;
   try {
     const result = await fetcher(url, { accept, timeoutMs });
-    return result.status >= 200 && result.status < 300 ? result : null;
+    return result;
   } catch {
     return null;
   }
@@ -148,16 +150,18 @@ export async function runFreeRead(options: FreeReadOptions): Promise<FreeReadRes
   const finalUrl = page.url || options.url;
   const origin = new URL(finalUrl).origin;
 
-  const robots = await tryFetch(fetcher, `${origin}/robots.txt`, "text/plain", timeoutMs);
+  const robotsResponse = await tryFetch(fetcher, `${origin}/robots.txt`, "text/plain", timeoutMs);
+  const robots = robotsResponse && robotsResponse.status >= 200 && robotsResponse.status < 300 ? robotsResponse : null;
+  const candidates = SITEMAP_CANDIDATES.map(path => `${origin}${path}`);
   const sitemapResults = await Promise.all(
-    SITEMAP_CANDIDATES.map((path) => tryFetch(fetcher, `${origin}${path}`, "application/xml,text/xml", timeoutMs))
+    candidates.map(url => tryFetch(fetcher, url, "application/xml,text/xml", timeoutMs))
   );
-  const sitemap = sitemapResults.find(Boolean) ?? null;
+  const sitemap = sitemapResults.find(result => result && result.status >= 200 && result.status < 300 && sitemapEvidence(result.body)) ?? null;
 
   const seeds = new Map<string, FetchResult>();
   seeds.set(keyOf(finalUrl), page);
   seeds.set(keyOf(options.url), page);
-  if (robots) seeds.set(keyOf(robots.url || `${origin}/robots.txt`), robots);
+  if (robotsResponse) seeds.set(keyOf(`${origin}/robots.txt`), robotsResponse);
 
   const audit = await runGeoAudit({
     url: options.url,
@@ -229,6 +233,7 @@ export async function runFreeRead(options: FreeReadOptions): Promise<FreeReadRes
       total: audit.checks.filter((check) => check.status !== "info").length,
     },
     socialProfiles: socialProfiles(doc, audit.details.schema.sameAsUrls),
+    evidence: buildFreeReadEvidence({ ...page, url: finalUrl }, doc, robotsResponse, sitemapResults, candidates),
     journeyContext: extractJourneyContext(doc, finalUrl),
     pageSignals: {
       title: (doc.title() ?? "").replace(/\s+/g, " ").trim().slice(0, 130),

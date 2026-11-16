@@ -280,7 +280,7 @@ body.console-page:has(.public-console:not([hidden])) { --pc-bg:#06060f; --pc-pan
 .public-read-metric strong { color:var(--pc-text); font-size:1.6rem; font-variant-numeric:tabular-nums; }
 .public-read-metric span { color:var(--pc-muted); font-size:.75rem; }
 .public-diagnostic h2 { margin-bottom:1.2rem; }
-.public-signal-grid { display:grid; grid-template-columns:repeat(4,minmax(0,1fr)); gap:.7rem; }
+.public-signal-grid { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:.7rem; }
 .public-signal { display:grid; gap:.3rem; padding:.9rem; border:1px solid var(--pc-border); border-radius:10px; min-width:0; }
 .public-signal strong { color:var(--pc-text); font-size:.81rem; }
 .public-signal span { color:var(--pc-muted); font-size:.74rem; overflow-wrap:anywhere; }
@@ -389,3 +389,17 @@ body.console-page:has(.public-console:not([hidden])) { --pc-bg:#06060f; --pc-pan
 .journey-source-context a, .journey-evidence a, .journey-competitor a { color: #b6a0ff; overflow-wrap: anywhere; }
 .journey-missing { color: #c8bfdc; line-height: 1.6; }
 .journey-stage > button { margin: .5rem .5rem 0 0; }
+
+/* Public audit proofs remain readable without exposing customer HTML as markup. */
+.public-signal { align-content:start; gap:.8rem; }
+.public-signal h3 { color:var(--pc-text); font-size:1rem; margin:0; }
+.public-signal .public-evidence-verdict { color:var(--pc-text); font-size:.86rem; }
+.public-evidence-fact { display:grid; gap:.3rem; min-width:0; }
+.public-evidence-fact code { display:block; white-space:pre-wrap; overflow-wrap:anywhere; font-size:.8rem; padding:.65rem; color:var(--pc-text); background:rgba(150,130,210,.09); border:1px solid var(--pc-border); border-radius:8px; }
+.public-evidence-resource { margin:0; font-size:.76rem; overflow-wrap:anywhere; }
+.public-signal a.public-evidence-source { color:var(--pc-accent); overflow-wrap:anywhere; font-size:.76rem; text-decoration:underline; text-underline-offset:3px; }
+.public-signal .public-micro { margin:0; }
+.public-evidence-details summary { color:var(--pc-text); font-size:.8rem; cursor:pointer; }
+.public-evidence-details a { display:block; margin-top:.4rem; }
+.public-login-destination { border-left:3px solid var(--pc-accent); padding:.7rem 1rem; color:var(--pc-text); }
+@media(max-width:650px) { .public-signal-grid { grid-template-columns:1fr; } }

@@ -1,4 +1,6 @@
 import { renderLocalSeoPreview } from "../local-seo-preview.js";
+import { renderPublicEvidence } from "./public-evidence.js";
+import { openLocalDashboard } from "./local-dashboard-entry.js";
 /** Unauthenticated, evidence-led free read shared by French and English shells. */
 import { normalisePublicUrl, rankRecommendations, explainRecommendation } from "./public-read-model.js";
 import { translateLiveTables } from "../fr/server-tables.js";
@@ -65,33 +67,7 @@ function image(src, label) {
   const wrap = el("span", "public-engine"); wrap.setAttribute("aria-label", label);
   wrap.append(img, el("span", "", label)); return wrap;
 }
-function detailText(value, lang) {
-  const s = String(value ?? "");
-  return lang === "fr" ? s.replace(/(\d+) chars?\b/g, "$1 caractères").replace(/\bmissing\b/gi, "absent") : s;
-}
 function safeNumber(value, max = 100) { return typeof value === "number" && Number.isFinite(value) ? Math.max(0, Math.min(max, Math.round(value))) : null; }
-
-function diagnostic(data, lang, copy) {
-  const panel = el("section", "public-panel public-diagnostic");
-  panel.append(el("p", "public-eyebrow", copy.evidence), el("h2", "", copy.observed));
-  const table = (id) => (data.tables || []).find((entry) => entry.id === id && !entry.sample);
-  const row = (id, label) => table(id)?.rows?.find((item) => item.label === label);
-  const items = [
-    [lang === "fr" ? "Titre" : "Title", row("seo.meta", "Title")],
-    ["Canonical", row("seo.meta", "Canonical")],
-    [lang === "fr" ? "Indexation" : "Indexing", row("gsc.readiness", "Indexability") || row("seo.meta", "Robots meta")],
-    ["Sitemap", row("gsc.readiness", "Sitemap")],
-  ].filter(([, value]) => value);
-  if (!items.length) panel.append(el("p", "public-description", copy.noMeasurements));
-  const grid = el("div", "public-signal-grid");
-  for (const [label, value] of items) {
-    const item = el("div", `public-signal public-status-${value.status === "pass" ? "pass" : value.status === "fail" ? "fail" : "warn"}`);
-    item.append(el("strong", "", label), el("span", "", detailText(value.value, lang)));
-    grid.append(item);
-  }
-  panel.append(grid);
-  return panel;
-}
 
 function socialPanel(data, copy) {
   const panel = el("section", "public-panel public-social");
@@ -226,8 +202,8 @@ function renderResult(box, data, url, lang) {
   if (metrics.children.length) box.append(metrics);
   box.append(renderPublicAgent(data, lang));
   box.append(el("p", "public-micro", `${copy.scoreNote} ${copy.gainsNote}`));
-  box.append(diagnostic(data, lang, copy));
-  box.append(renderLocalSeoPreview(lang));
+  box.append(renderPublicEvidence(data, lang));
+  box.append(renderLocalSeoPreview(lang, { onOpenDashboard: () => openLocalDashboard(lang) }));
   box.append(recommendations(data, lang, copy));
   box.append(renderJourneyPreview({
     language: lang,
