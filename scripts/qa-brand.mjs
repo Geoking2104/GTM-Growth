@@ -43,6 +43,9 @@ try {
     url.search = new URLSearchParams({ client_id: 'brand-qa', redirect_uri: `${origin}/callback`, response_type: 'code', scope: 'openid', ui_locales: lang });
     await page.goto(url.href); await page.locator('#username').waitFor(); await page.evaluate(() => document.fonts.ready);
     assert.equal(await page.locator('html').getAttribute('lang'), lang);
+    assert.equal((await page.locator('#kc-header-wrapper').innerText()).trim(), 'GTM Growth');
+    assert.equal(await page.locator('#kc-header-wrapper').evaluate(el => getComputedStyle(el).color), 'rgb(25, 20, 38)');
+    assert.equal(await page.locator('.pf-v5-c-login__main-header').evaluate(el => getComputedStyle(el).borderTopWidth), '0px');
     const metrics = await page.evaluate(() => {
       const input = document.querySelector('#username'), control = input.closest('.pf-v5-c-form-control');
       return { field: input.getBoundingClientRect().height, radius: getComputedStyle(control).borderRadius, button: getComputedStyle(document.querySelector('#kc-login')).backgroundColor, logo: getComputedStyle(document.querySelector('#kc-header'), '::before').backgroundImage, width: document.documentElement.scrollWidth, dark: document.documentElement.classList.contains('pf-v5-theme-dark') };
@@ -60,9 +63,9 @@ try {
     assert.equal(await page.locator('#username').evaluate(el => getComputedStyle(el.closest('.pf-v5-c-form-control')).borderRadius), '9px');
     await page.screenshot({ path: path.join(output, `reset-${lang}-${width}.png`), fullPage: true });
 
-    await page.route('**/brand-fixture*', route => route.fulfill({ contentType: 'text/html', body: `<!doctype html><html lang="${lang}"><head><meta name="viewport" content="width=device-width,initial-scale=1"><link rel="stylesheet" href="/styles.css"><link rel="stylesheet" href="/brand.css"><link rel="stylesheet" href="/console/shell.css"><link rel="stylesheet" href="/console/visual.css"></head><body class="console-page"><main class="c-app" style="padding:24px;max-width:1200px;margin:auto"><p>GTM Growth · ${lang === 'fr' ? 'Données de test' : 'Test data'}</p><div id="fixture"></div></main></body></html>` }));
+    await page.route('**/brand-fixture*', route => route.fulfill({ contentType: 'text/html', body: `<!doctype html><html lang="${lang}"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><link rel="stylesheet" href="/styles.css"><link rel="stylesheet" href="/brand.css"><link rel="stylesheet" href="/console/shell.css"><link rel="stylesheet" href="/console/visual.css"></head><body class="console-page"><main class="c-app" style="padding:24px;max-width:1200px;margin:auto"><p>GTM Growth · ${lang === 'fr' ? 'Données de test' : 'Test data'}</p><div id="fixture"></div></main></body></html>` }));
     await page.goto(`${origin}/brand-fixture?lang=${lang}`);
-    await page.evaluate(async () => {
+    await page.evaluate(async (lang) => {
       const { renderOverview } = await import('/console/overview.js');
       const { sectionHeading } = await import('/console/visuals.js');
       const { renderDataGuide } = await import('/console/data-guidance.js');
@@ -70,14 +73,16 @@ try {
       const { icon } = await import('/console/icons.js'); const { TAB_ICONS } = await import('/console/tab-icons.js');
       const host = document.getElementById('fixture');
       const nav = document.createElement('nav'); nav.className = 'app-tabs';
-      for (const [key, symbol] of Object.entries(TAB_ICONS.ga4)) { const b = document.createElement('button'); b.className = 'app-tab'; const span = document.createElement('span'); span.className = 'app-tab-icon'; span.innerHTML = icon(symbol); b.append(span, key); nav.append(b); }
-      host.append(nav, sectionHeading('ga4', 'Google Analytics 4', ''));
+      for (const [key, symbol] of Object.entries(TAB_ICONS.ga4)) { const b = document.createElement('button'); b.className = 'app-tab'; const span = document.createElement('span'); span.className = 'app-tab-icon'; span.innerHTML = icon(symbol); b.append(span, ({overview: lang === 'fr' ? 'Audience' : 'Audience', ecommerce: 'E-commerce', technology: lang === 'fr' ? 'Appareils' : 'Devices', realtime: lang === 'fr' ? 'Temps réel' : 'Realtime'})[key]); nav.append(b); }
+      host.append(nav, sectionHeading('Google Analytics 4', '', 'ga4'));
       host.append(...renderOverview({ geo: { score: 42, projectedScore: 100, recommendations: [{ points: 20 }, { points: 38 }], breakdown: { robots: 12, meta: 14 }, max: { robots: 18, meta: 14 } }, citability: { score: 42 }, indexnow: { score: 35 }, platforms: [{ label: 'Perplexity', score: 45 }, { label: 'Google AI Overviews', score: 25 }, { label: 'ChatGPT', score: 25 }, { label: 'Gemini', score: 25 }, { label: 'Microsoft Copilot', score: 0 }] }));
       host.append(lineChart([{ date: '2026-11-01', sessions: 0 }, { date: '2026-11-02', sessions: 40 }, { date: '2026-11-03', sessions: null }, { date: '2026-11-04', sessions: 20 }], [{ key: 'sessions', label: 'Sessions', color: '#6935dc' }], 'GA4 · Sessions'));
       host.append(renderDataGuide('ga4'));
-    });
+    }, lang);
     await page.waitForFunction(() => [...document.querySelectorAll('.v-provider img')].every(img => img.complete && img.naturalWidth > 0));
     assert.equal(await page.locator('.v-engine-rank').count(), 5);
+    assert.equal(await page.locator('.v-section-heading img').count(), 1);
+    assert.doesNotMatch(await page.locator('body').innerText(), /Ã|Â/);
     assert.equal(await page.locator('.v-source-pending').count(), 1);
     assert.ok(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth + 1));
     await page.screenshot({ path: path.join(output, `dashboard-${lang}-${width}.png`), fullPage: true });

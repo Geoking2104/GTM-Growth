@@ -1,5 +1,6 @@
 import { LANG } from "./i18n.js";
 import { el } from "./render.js";
+import { providerMark } from "./provider-marks.js";
 const L = (fr, en) => LANG === "fr" ? fr : en;
 const metrics = [
   ["BUSINESS_IMPRESSIONS_MOBILE_MAPS", "Vues Maps · mobile", "Maps views · mobile"],
@@ -26,7 +27,8 @@ const unavailable = code => code === "GBP_QUOTA" ? L("Quota Google atteint. Rée
 /** Reference layout: location, two KPIs, rating gauge and monthly chart. No demo data. */
 export function renderGbpDashboard({data, call, admin}) {
   const root = el("section", "gbp-dashboard"); root.setAttribute("aria-label", "Google Business Profile");
-  const heading = el("div", "gbp-heading"); heading.append(el("div", "gbp-eyebrow", L("VOTRE PRÉSENCE LOCALE", "YOUR LOCAL PRESENCE")), el("h3", "", "Google Business Profile"), el("p", "", L("Consultez vos avis, suivez les interactions et choisissez la prochaine correction.", "Read your reviews, track interactions and choose the next correction."))); root.append(heading);
+  const title = el('h3'); title.append(providerMark('Google Business Profile'));
+  const heading = el("div", "gbp-heading"); heading.append(el("div", "gbp-eyebrow", L("VOTRE PRÉSENCE LOCALE", "YOUR LOCAL PRESENCE")), title, el("p", "", L("Consultez vos avis, suivez les interactions et choisissez la prochaine correction.", "Read your reviews, track interactions and choose the next correction."))); root.append(heading);
   const filters = el("div", "gbp-filters"); root.append(filters);
   const sites = data.sites || [];
   const location = select(filters, L("Établissement", "Location"), sites.length ? sites.map(s => [s.id, s.name]) : [["", L("Ajoutez un établissement", "Add a location")]]);

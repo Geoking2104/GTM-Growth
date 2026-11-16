@@ -17,12 +17,12 @@ html, body { font-family: Inter, system-ui, sans-serif !important; color: var(--
   min-height: 100vh; color: var(--gtm-ink);
   background: radial-gradient(ellipse at 15% 10%, #eee4ff 0, transparent 50%), var(--gtm-soft) !important;
 }
-.pf-v5-c-login__container { width: min(100%, 520px) !important; max-width: 520px; padding: 32px 20px !important; margin: auto; }
+.pf-v5-c-login__container { width: min(100%, 560px) !important; max-width: 560px; grid-template-columns: minmax(0, 1fr) !important; padding: 32px 20px !important; margin: auto; }
 .pf-v5-c-login__header { display: flex !important; align-items: center; justify-content: center; gap: 12px; margin-bottom: 28px !important; }
 .pf-v5-c-login__header::before { content: ''; display: block; width: 44px; height: 44px; flex-shrink: 0; background: url('../img/logo-rocket.png') center / contain no-repeat; }
-#kc-header-wrapper { display: block !important; color: var(--gtm-ink); font-size: 22px; font-weight: 750; letter-spacing: -.04em; }
+#kc-header-wrapper { display: block !important; color: var(--gtm-ink) !important; font-size: 22px; font-weight: 750; letter-spacing: -.04em; text-transform: none; margin: 0 !important; }
 .pf-v5-c-login__main { background: #fff !important; color: var(--gtm-ink); border: 1px solid #e3dbee; border-top: 4px solid var(--gtm-purple); border-radius: 16px !important; box-shadow: 0 16px 48px -24px #42216a40 !important; overflow: hidden; }
-.pf-v5-c-login__main-header { padding: 28px 28px 12px !important; }
+.pf-v5-c-login__main-header { padding: 28px 28px 12px !important; border-top: 0 !important; }
 .pf-v5-c-login__main-header::before { content: 'GTM GROWTH · CONSOLE'; font-size: 11px; font-weight: 750; letter-spacing: .12em; color: var(--gtm-purple); align-self: center; }
 .pf-v5-c-login__main-header .pf-v5-c-title, #kc-page-title { font-size: 24px !important; line-height: 1.25 !important; letter-spacing: -.035em; font-weight: 750 !important; color: var(--gtm-ink) !important; }
 .pf-v5-c-login__main-body { padding: 12px 28px 28px !important; }
@@ -42,6 +42,7 @@ html, body { font-family: Inter, system-ui, sans-serif !important; color: var(--
 .pf-v5-c-button.pf-m-primary, #kc-login, #kc-register-button { min-height: 52px; background: var(--gtm-purple) !important; border: 1px solid transparent !important; color: #fff !important; padding: 13px 20px !important; font-size: 15px !important; font-weight: 650 !important; box-shadow: none !important; }
 .pf-v5-c-button.pf-m-primary:hover, #kc-login:hover { background: #5325b7 !important; }
 .pf-v5-c-button.pf-m-control, .pf-v5-c-button.pf-m-secondary, .pf-v5-c-input-group .pf-v5-c-button { min-height: 52px; color: var(--gtm-purple) !important; background: var(--gtm-soft) !important; border: 1px solid var(--gtm-line) !important; }
+.pf-v5-c-button.pf-m-control::after { border-color: transparent !important; }
 .pf-v5-c-button.pf-m-link, a { color: var(--gtm-purple) !important; }
 a:hover { text-decoration: underline; }
 :is(a, button, input[type=submit]):focus-visible { outline: 3px solid #a883ed !important; outline-offset: 3px; }
