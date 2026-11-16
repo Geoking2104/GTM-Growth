@@ -14,6 +14,7 @@
 
 import type { HtmlDoc } from "../geo/html.js";
 import type { DataTable, TableRow } from "./seo.js";
+import { hasNoindex } from "./evidence.js";
 
 const clamp = (text: string, max = 80): string => {
   const flat = text.replace(/\s+/g, " ").trim();
@@ -125,7 +126,7 @@ export function gscTable(input: AnalyticsInput): DataTable {
   const sitemap = sitemapFacts(input.sitemapXml);
   const robotsSitemaps = (input.robotsTxt ?? "").match(/^sitemap:\s*\S+/gim) ?? [];
   const robotsBlocksAll = /user-agent:\s*\*[\s\S]*?disallow:\s*\/\s*($|\n)/i.test(input.robotsTxt ?? "");
-  const noindex = (input.headers["x-robots-tag"] ?? "").toLowerCase().includes("noindex");
+  const noindex = hasNoindex(input.doc, input.headers);
   const canonical = input.doc.linkByRel("canonical")?.attrs.href ?? "";
 
   const rows: TableRow[] = [
@@ -160,8 +161,9 @@ export function gscTable(input: AnalyticsInput): DataTable {
     },
     {
       label: "Indexability",
-      value: noindex ? "noindex header" : "indexable",
+      value: noindex ? "noindex directive found" : "no noindex directive found",
       status: noindex ? "fail" : "pass",
+      note: "HTML robots/googlebot meta and X-Robots-Tag only. Google indexation and robots.txt crawl permission are not verified by this check.",
     },
     {
       label: "Canonical host",

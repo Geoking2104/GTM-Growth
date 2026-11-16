@@ -136,6 +136,17 @@ async function visitPublicConsole(browserInstance, locale, viewport, label) {
   const context = await browserInstance.newContext();
   const payload = {
     finalUrl: "https://example.com/", httpStatus: 200, score: 71, recoverablePoints: 29,
+    evidence: {
+      version: 1, observedAt: '2026-11-16T12:00:00Z', page: { url: 'https://example.com/', status: 200 },
+      title: { value: 'Example services for professionals', characters: 34, present: true, truncated: false },
+      canonicals: [{ value: 'https://example.com/', truncated: false }],
+      directives: [{ agent: 'robots', value: 'index, follow', truncated: false }], xRobotsTag: { value: '', truncated: false }, noindex: false,
+      robots: { requestedUrl: 'https://example.com/robots.txt', url: 'https://example.com/robots.txt', status: 200, declarations: ['https://example.com/sitemap.xml'] },
+      sitemaps: [
+        { requestedUrl: 'https://example.com/sitemap.xml', url: 'https://example.com/sitemap.xml', status: 200, document: { kind: 'urlset', count: 15, examples: ['https://example.com/'] } },
+        { requestedUrl: 'https://example.com/sitemap_index.xml', url: 'https://example.com/sitemap_index.xml', status: 404, document: null },
+      ],
+    },
     checksSummary: { passed: 22, toImprove: 13, total: 35 },
     pageSignals: { title: "Example services for professionals", description: "Independent services for companies", htmlLang: "en", h1: ["Example services"], h2: ["How our services work", "Compare services"] },
     journeyContext: { url: "https://example.com/", brand: "Example", brandSource: "schema:organization", products: [{ id: "bookkeeping", name: "Monthly bookkeeping", kind: "Service", category: "bookkeeping services", url: "https://example.com/bookkeeping", sourceUrl: "https://example.com/", source: "schema", description: "Monthly invoices and reporting", attributes: {} }], links: [] },
@@ -164,7 +175,7 @@ async function visitPublicConsole(browserInstance, locale, viewport, label) {
   const errors = [];
   page.on("pageerror", (error) => errors.push(error.message));
   await page.setViewportSize(viewport);
-  const response = await page.goto(`${origin}/console/?lang=${locale}#c-public-read`, { waitUntil: "networkidle" });
+  const response = await page.goto(`${origin}/console/?lang=${locale}#local_seo/network`, { waitUntil: "networkidle" });
   assert.equal(response?.status(), 200, `${label}: console loads`);
   await page.locator("#c-public-url").fill("https://example.com/");
   await page.locator("#c-public-url-form button").click();
@@ -172,6 +183,16 @@ async function visitPublicConsole(browserInstance, locale, viewport, label) {
   assert.equal(await page.locator(".public-domain").innerText(), "example.com");
   assert.equal(await page.locator(".public-signal").count(), 4);
   const screenshotPrefix = `${locale}-console-${label}`;
+  assert.match(await page.locator('[data-evidence="title"]').innerText(), /Example services for professionals/);
+  assert.match(await page.locator('[data-evidence="sitemap"]').innerText(), /HTTP 404/);
+  await page.locator('.public-diagnostic').screenshot({ path: path.join(outputDir, `${screenshotPrefix}-evidence.png`) });
+  // Reproduce the original no-op: the planner already shares the current hash.
+  await page.locator('#local-seo-planner a').click();
+  assert.equal(await page.locator('#c-login-email').evaluate(n => n === document.activeElement), true);
+  assert.ok(await page.locator('#c-local-dashboard-login').isVisible());
+  assert.equal(await page.evaluate(() => JSON.parse(sessionStorage.getItem('gtm-console-feature-handoff')).hash), '#local_seo/network');
+  assert.equal(new URL(page.url()).hash, '#local_seo/network');
+  await page.locator('#c-login-form').screenshot({ path: path.join(outputDir, `${screenshotPrefix}-gbp-signin.png`) });
   await page.screenshot({ path: path.join(outputDir, `${screenshotPrefix}-overview.png`), fullPage: true });
   const recommend = page.locator('.public-recommend-button[aria-controls="c-public-ranked"]');
   await recommend.click();

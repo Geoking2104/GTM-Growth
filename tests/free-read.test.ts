@@ -52,6 +52,37 @@ function fakeFetcher(): Fetcher {
 }
 
 describe("free read", () => {
+  it("records source values, fetch statuses and sitemap examples for the four public proofs", async () => {
+    const result = await runFreeRead({ url: "https://acme.com/", fetcher: fakeFetcher() });
+    expect(result.evidence.title).toMatchObject({ value: "Acme analytics for B2B teams", characters: 28, present: true });
+    expect(result.evidence.canonicals[0].value).toBe("https://acme.com/");
+    expect(result.evidence.directives).toContainEqual({ agent: "robots", value: "index, follow", truncated: false });
+    expect(result.evidence.robots.declarations).toEqual(["https://acme.com/sitemap.xml"]);
+    expect(result.evidence.sitemaps[0]).toMatchObject({ status: 200, document: { kind: "urlset", count: 2, examples: ["https://acme.com/", "https://acme.com/pricing"] } });
+    expect(result.evidence.sitemaps[1]).toMatchObject({ requestedUrl: "https://acme.com/sitemap_index.xml", status: 404, document: null });
+    expect(Number.isFinite(Date.parse(result.evidence.observedAt))).toBe(true);
+  });
+
+  it("distinguishes timeout from absence and rejects an HTML soft 404 as a sitemap", async () => {
+    const base = fakeFetcher();
+    const result = await runFreeRead({ url: "https://acme.com/", fetcher: async (url, init) => {
+      if (url.endsWith("/sitemap_index.xml")) throw new Error("timeout");
+      if (url.endsWith("/sitemap.xml")) return { url, status: 200, ok: true, headers: {}, body: "<html><h1>Not found</h1></html>" };
+      return base(url, init);
+    } });
+    expect(result.evidence.sitemaps.map(item => [item.status, item.document])).toEqual([[200, null], [null, null]]);
+    expect(result.sitemapMap).toBeNull();
+  });
+
+  it.each(['<meta name="robots" content="noindex, follow">', '<meta name="googlebot" content="none">'])("does not call a page indexable when HTML contains %s", async tag => {
+    const base = fakeFetcher();
+    const result = await runFreeRead({ url: "https://acme.com/", fetcher: async (url, init) => {
+      const response = await base(url, init);
+      return url === "https://acme.com/" ? { ...response, body: response.body.replace('<meta name="robots" content="index, follow">', tag) } : response;
+    } });
+    expect(result.tables.find(table => table.id === "gsc.readiness")?.rows.find(row => row.label === "Indexability")).toMatchObject({ status: "fail", value: "noindex directive found" });
+  });
+
   it("returns the GEO score and the fixes that move it", async () => {
     const result = await runFreeRead({ url: "https://acme.com/", fetcher: fakeFetcher() });
     expect(result.score).toBeGreaterThan(0);

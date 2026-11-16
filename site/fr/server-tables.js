@@ -40,6 +40,7 @@ const notes = {
   "Canonical is not a valid URL.": "L’URL canonique est invalide.",
   "The page asks not to be indexed.": "La page demande à ne pas être indexée.",
   "Indexable.": "Indexable.",
+  "HTML robots/googlebot meta and X-Robots-Tag only. Google indexation and robots.txt crawl permission are not verified by this check.": "Balises robots/googlebot et en-tête X-Robots-Tag uniquement. Ce contrôle ne vérifie ni l’indexation Google ni la permission d’exploration dans robots.txt.",
   "Declare the language: engines use it for language targeting.": "Déclarez la langue de la page pour les moteurs.",
   "og:image present": "Image Open Graph déclarée.",
   "No og:image: link previews render empty.": "Aucune image Open Graph : l’aperçu du lien peut rester vide.",
@@ -71,6 +72,7 @@ function localizeValue(value) {
   const exact = {
     missing: "absent", none: "aucun", yes: "oui", no: "non", "not found": "non trouvé",
     indexable: "indexable", declared: "déclaré", "n/a": "sans objet",
+    "noindex directive found": "directive noindex repérée", "no noindex directive found": "aucune directive noindex repérée",
     "index, follow (default)": "index, follow (par défaut)",
     "og:title present": "og:title présent", "google-site-verification present": "google-site-verification présent",
     "collect endpoint referenced": "point de collecte référencé",

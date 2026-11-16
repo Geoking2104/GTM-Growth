@@ -31,6 +31,20 @@ The browser QA checks the six scenes, keyboard controls, reduced motion, mobile
 layout and existing free-audit journey. Source changes require a separate verified
 OVH deployment; Cloud merchant activation remains a separate operation.
 
+## Inspect public evidence and continue to GBP
+
+The free read now displays the extracted title, declared canonical targets,
+robots/googlebot meta directives and X-Robots-Tag, plus each tested sitemap URL
+and its HTTP result. Source links and the observation time accompany the findings.
+A timeout is unavailable evidence, not proof of absence; a 200 HTML response is
+not counted as a sitemap. These checks do not confirm actual Google indexation.
+Older responses without detailed evidence request a new analysis.
+
+In the public console, **Open my local dashboard** brings the sign-in form into
+view, focuses the email field and preserves the GBP destination through sign-in.
+The same link on the homepage still opens the console. Workspace access and
+Google authorisation remain required. Both paths are available in EN and FR.
+
 ## Choose your reading track
 
 | Reader | Start here | Result |
