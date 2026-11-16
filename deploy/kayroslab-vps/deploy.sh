@@ -13,6 +13,14 @@ if [[ ! -f "${ENV_FILE}" ]]; then
   exit 1
 fi
 
+# Generate a stable, dedicated HMAC secret without exposing it in Actions logs.
+# Existing values are never overwritten; disabling the feature still works.
+if ! grep -q '^REPORT_ACCESS_SECRET=' "${ENV_FILE}"; then
+  umask 077
+  printf '\nREPORT_ACCESS_SECRET=%s\n' "$(openssl rand -hex 32)" >> "${ENV_FILE}"
+  echo "Created persisted report-code signing secret."
+fi
+
 if [[ ! -f "${APP_DIR}/.secrets/service-account.json" ]]; then
   echo "Missing optional Google service account at ${APP_DIR}/.secrets/service-account.json." >&2
   echo "GA4, GSC and GTM connectors will not be available until it is installed." >&2

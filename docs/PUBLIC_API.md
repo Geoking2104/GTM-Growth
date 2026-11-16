@@ -1,6 +1,6 @@
-# Public API — free read and lead capture
+# Public API — free read, lead capture and optional report delivery
 
-Two endpoints, served either by the Express app (Node, same process as the MCP
+The two original endpoints are served either by the Express app (Node, same process as the MCP
 transports) or by a Cloudflare Worker — same routes, same shared modules:
 
 - **Node server:** `npm run cli -- serve-http` (below)
@@ -19,6 +19,11 @@ PORT=3111 LEADS_PATH=./data/leads.jsonl SITE_ORIGINS=https://example.com \
 | --- | --- | --- |
 | `/api/free-read` | `POST` | GEO v1, SEO tables, GA4/GSC readiness and versioned five-pillar `report360` |
 | `/api/lead` | `POST` | Contact request, stored as JSONL, optionally forwarded |
+| `/api/report-access/status` | `GET` | `{ "enabled": false }` until Node SMTP, secret and opt-in are configured |
+| `/api/report-access/invite` | `POST` | Request email OTP and persist one public `report360` snapshot (Node only) |
+| `/api/report-access/verify` | `POST` | Validate recipient email + six-digit code and set report-scoped session cookie (Node only) |
+| `/api/report-access/report` | `GET` | Protected saved report JSON (Node only) |
+| `/api/report-access/download` | `GET` | Protected saved A4 `.pdf` or `.md` (Node only) |
 
 Both answer `OPTIONS` with the CORS headers the browser needs, so a static site on
 another origin can call them directly.
@@ -74,7 +79,49 @@ The `report360` block is an **illustrative abbreviated shape**, not a valid
 captured snapshot. Additional fields, including owner, priority, effort, risk,
 measurement gaps, `httpStatus` and the full source-proof value, are present in
 real responses. The [source contract](product/FREE-REPORT-360.md) defines each
-status. Browser printing is an A4 Save as PDF route; there is no new PDF API.
+status. Browser printing is an A4 Save as PDF route independent of SMTP;
+the optional report delivery routes below generate a direct server-side PDF.
+
+## Optional report delivery (Node server only)
+
+The static `/report/` page and the optional invitation form are same-origin
+clients of this API; the Cloudflare Worker does **not** implement these routes.
+Anonymous free-read results remain public. Email verification protects a **saved
+copy and its downloads**, not private tenant/CRM data or every public finding.
+
+1. `GET /api/report-access/status` returns `{ "enabled": true|false }`.
+2. `POST /api/report-access/invite` accepts:
+
+   ```json
+   { "url": "https://example.com/", "email": "owner@example.com", "language": "fr" }
+   ```
+
+   `201` returns `{ "ok": true, "id": "<UUID>", "expiresIn": 900 }`.
+   A TLS SMTP email separately contains a one-time six-digit code and the
+   return link `/report/?id=<UUID>&lang=fr`. No code or token appears in JSON or URL.
+3. `POST /api/report-access/verify` accepts:
+
+   ```json
+   { "id": "<UUID>", "email": "owner@example.com", "code": "123456" }
+   ```
+
+   On success, `200 { "ok": true, "expiresIn": 3600 }` plus an opaque
+   HttpOnly, Secure, SameSite=Strict cookie scoped to `/api/report-access`.
+4. With that same-origin cookie, `GET /api/report-access/report?id=<UUID>`
+   returns `{ "report360": {...}, "language": "fr" }`.
+   `GET /api/report-access/download?id=<UUID>&format=pdf|md` returns a
+   downloadable snapshot in the report's language. Any other report ID or
+   missing/expired session returns `401`.
+
+The code lasts 15 minutes, is single-use and permits at most five guesses;
+invites are limited to 4/email/day and 8/IP/hour. Email/IP and session
+tokens are HMAC digests in a dedicated persistent local SQLite database; raw
+source HTML, credentials and private account details are not saved. Records
+are lazily cleared after seven days. All report endpoints send no-store and
+no-referrer headers. SMTP failures return a generic `503`; disabled delivery
+returns `503 mail_not_configured`. Same-origin checks apply to POSTs.
+
+Configuration is in the [OVH runbook](../deploy/kayroslab-vps/README.md#optional-report-delivery).
 
 **What is measured, what is sampled.** The SEO, GA4-readiness and GSC-readiness
 tables are measured on the HTML, `robots.txt` and `sitemap.xml` the server fetched.
@@ -129,6 +176,12 @@ incoming webhooks, a CRM, your own worker).
 | `LEADS_PATH` | `data/leads.jsonl` | Where leads are appended |
 | `LEAD_WEBHOOK_URL` | unset | Optional forward of every lead |
 | `MCP_API_TOKEN` | unset | Bearer token for `/mcp`, `/sse`, `/messages` (not the public routes) |
+| `REPORT_ACCESS_ENABLED` | `false` | Enables Node report access when all required SMTP/secret fields also exist |
+| `REPORT_ACCESS_SECRET` | unset | HMAC secret at least 32 characters; OVH deploy script generates a stable value if absent |
+| `REPORT_ACCESS_DB_PATH` | `data/report-access.sqlite3` | Persistent SQLite for saved public snapshots, OTP digests and one-hour session digests |
+| `REPORT_PUBLIC_ORIGIN` | `https://gtm.kayroslab.com` | Secure, canonical origin for email links and write origin checks |
+| `REPORT_SMTP_HOST`, `REPORT_SMTP_PORT` | unset, `587` | DNS host and 587 STARTTLS or 465 TLS; no plaintext transport |
+| `REPORT_SMTP_USER`, `REPORT_SMTP_PASSWORD`, `REPORT_SMTP_FROM` | unset | SMTP account and sending identity; store only in protected OVH `.env.local` |
 
 ## Connecting the static site
 

@@ -19,6 +19,7 @@ import { fileURLToPath } from "url";
 import { dirname, join } from "path";
 import { logger } from "./utils/logger.js";
 import { mountPublicApi } from "./http/public-api.js";
+import { mountReportAccessApi } from "./report-access/router.js";
 import { buildCompetitionMcpRouter } from "./console/competition-mcp.js";
 import { mountConsoleApi } from "./console/api.js";
 import { ecommerceWebhookRouter } from "./console/ecommerce-webhooks.js";
@@ -135,6 +136,7 @@ export async function startServer(transportType: "stdio" | "http" = "stdio") {
 
   // Public website API â€” free read and lead capture (no MCP session needed).
   mountPublicApi(app);
+  mountReportAccessApi(app);
 
   // Console API â€” Keycloak-protected (OIDC bearer tokens validated via JWKS).
   mountConsoleApi(app, { cloud });

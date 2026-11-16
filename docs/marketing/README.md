@@ -24,8 +24,12 @@ Open [the public read](https://gtm.kayroslab.com/console/?lang=en#c-public-read)
 one public URL and inspect the source-backed recommendations. The proposed
 five-pillar report explains SEO, GEO, AI engines, CRM and Social separately;
 source-linked action cards include a non-technical tutorial, owner, effort,
-risk and the same FR/EN A4 print view. Its branch is **not live yet**:
-review the [acceptance plan](../product/FREE-REPORT-360.md). GEO v1 describes
+risk and the same FR/EN A4 print view. The report schema and presentation are
+merged into `main`; production visibility still requires a live smoke test.
+The optional email invitation sends a one-time six-digit code, then returns
+the visitor to `/report/` to enter email and code, read the saved HTML report
+and download PDF/Markdown. Email delivery is **not active** until the OVH SMTP
+runbook is completed. Review the [acceptance plan](../product/FREE-REPORT-360.md). GEO v1 describes
 technical readiness. Citability is a heuristic for editing. Neither proves that
 an AI engine cited the business. Any sample analytics in a public response are
 examples, not that website's private traffic.

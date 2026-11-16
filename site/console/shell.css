@@ -503,3 +503,14 @@ body.console-page:has(.public-console:not([hidden])) { --pc-bg:#06060f; --pc-pan
   .report360-footer { break-inside:avoid; }
   .report360-source { color:#4e279b; }
 }
+
+/* Email-code invitation below the free report; input matches console controls. */
+.report-invite { border-color:rgba(183,148,246,.5); background:radial-gradient(circle at 95% 5%,rgba(124,58,237,.18),transparent 48%),var(--pc-panel); }
+.report-invite .public-description { margin-bottom:1rem; }
+.report-invite-form { display:flex; align-items:flex-end; flex-wrap:wrap; gap:.75rem; }
+.report-invite-form label { display:grid; gap:.4rem; color:var(--pc-text); font-size:.82rem; font-weight:700; flex:1; min-width:min(100%,230px); }
+.report-invite-form input { width:100%; color:var(--pc-text); background:var(--pc-bg); border:1px solid var(--pc-border); padding:.85rem 1rem; border-radius:10px; font:inherit; }
+.report-invite-form button:disabled { opacity:.6; cursor:not-allowed; }
+.report-invite-feedback { margin:.75rem 0 0; color:var(--pc-muted); font-size:.78rem; line-height:1.55; }
+@media(max-width:650px) { .report-invite-form button { width:100%; } }
+@media print { .report-invite { display:none!important; } }

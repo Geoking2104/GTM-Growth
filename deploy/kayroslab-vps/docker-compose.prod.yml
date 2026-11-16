@@ -24,6 +24,12 @@ services:
       OIDC_EXTRA_ISSUERS: ${OIDC_EXTRA_ISSUERS:-}
       TENANTS_PATH: /data/tenants.json
       REPORTS_PATH: /data/reports
+      # Public report email-code gate. The persisted secret is generated once
+      # by deploy.sh; SMTP must be configured separately before enabling.
+      REPORT_ACCESS_ENABLED: ${REPORT_ACCESS_ENABLED:-false}
+      REPORT_ACCESS_SECRET: ${REPORT_ACCESS_SECRET:-}
+      REPORT_ACCESS_DB_PATH: /data/report-access.sqlite3
+      REPORT_PUBLIC_ORIGIN: ${REPORT_PUBLIC_ORIGIN:-https://gtm.kayroslab.com}
       PAP_ENABLED: ${PAP_ENABLED:-false}
       PAP_PUBLIC_ORIGIN: ${PAP_PUBLIC_ORIGIN:-https://gtm.kayroslab.com}
       PAP_ALLOWED_CLIENTS: ${PAP_ALLOWED_CLIENTS:-}
