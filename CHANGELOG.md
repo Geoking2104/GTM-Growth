@@ -2,7 +2,7 @@
 
 ## Unreleased
 
-### Free report 360° (feature branch, not deployed)
+### Free report 360° (base merged; production qualification pending)
 
 - Added a versioned, evidence-led public `report360` payload with five distinct
   SEO/GEO/AI/CRM/Social pillars, explicit `null` for unmeasured scores, dated
@@ -11,9 +11,15 @@
 - Added the bilingual executive view, filterable action plan, three-step guides,
   source excerpts (not screenshots) and A4 browser Print/Save as PDF layout.
   Preserved the current free-read diagnostics, local SEO, journey and sign-in.
-- Documented the scope and acceptance gates in
-  [the free-report plan](docs/product/FREE-REPORT-360.md); no server-side PDF
-  endpoint, historical comparison, real AI citations or private CRM signals.
+- Added an opt-in saved-snapshot workflow: request a one-time report access code
+  by TLS SMTP, return to `/report/`, enter email and code, then unlock the
+  bilingual HTML report and direct server-generated A4 PDF/Markdown exports.
+  Session cookies are HttpOnly, Secure and SameSite Strict; OTPs are HMAC-peppered,
+  single-use, short-lived and attempt/rate-limited. The database persists on the
+  app data volume; mail delivery remains disabled until SMTP is configured.
+- Documented scope and release gates in
+  [the free-report plan](docs/product/FREE-REPORT-360.md); historical comparison,
+  real AI citations and private CRM signals are still out of scope.
 
 ### Documentation and journey integration
 

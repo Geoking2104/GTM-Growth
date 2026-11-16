@@ -1,0 +1,58 @@
+<!doctype html>
+<html lang="fr">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="robots" content="noindex, nofollow, noarchive">
+  <meta name="referrer" content="no-referrer">
+  <meta http-equiv="Content-Security-Policy" content="default-src 'self'; connect-src 'self'; script-src 'self'; style-src 'self'; img-src 'self' data:; object-src 'none'; base-uri 'none'; form-action 'self'">
+  <title>GTM Growth - Rapport 360°</title>
+  <link rel="icon" href="../fr/assets/logo-rocket.png" type="image/png">
+  <link rel="stylesheet" href="../styles.css">
+  <link rel="stylesheet" href="../brand.css">
+  <link rel="stylesheet" href="../console/shell.css">
+  <link rel="stylesheet" href="access.css">
+</head>
+<body class="console-page report-page">
+  <div class="public-console">
+    <header class="public-header">
+      <a class="public-brand" href="/fr/"><img src="../fr/assets/logo-rocket.png" width="40" height="40" alt=""><span>GTM Growth</span></a>
+      <span class="public-header-label" id="report-brand-label">Votre rapport confidentiel</span>
+      <nav class="report-languages" aria-label="Language / Langue">
+        <a href="?lang=fr" data-lang="fr" lang="fr">FR</a>
+        <a href="?lang=en" data-lang="en" lang="en">EN</a>
+      </nav>
+      <a class="public-back" id="report-back" href="/fr/">Retour au site</a>
+    </header>
+    <main class="report-main">
+      <div class="report-heading">
+        <p class="public-eyebrow" id="report-eyebrow">RAPPORT GTM GROWTH</p>
+        <h1 id="report-title">Accédez à votre rapport 360°</h1>
+        <p id="report-subtitle">Un code à usage unique protège votre rapport. Retrouvez-le dans l'e-mail reçu après votre demande.</p>
+      </div>
+      <section class="report-gate public-panel" id="report-gate" aria-labelledby="report-gate-title">
+        <div class="report-gate-symbol" aria-hidden="true">✉</div>
+        <h2 id="report-gate-title">Vérifiez votre adresse e-mail</h2>
+        <form id="report-code-form" class="report-code-form">
+          <label><span id="report-email-label">Adresse e-mail</span><input name="email" id="report-email" type="email" autocomplete="email" maxlength="254" required></label>
+          <label><span id="report-code-label">Code à six chiffres</span><input name="code" id="report-code" type="text" inputmode="numeric" autocomplete="one-time-code" pattern="[0-9]{6}" minlength="6" maxlength="6" required placeholder="000000"></label>
+          <button class="public-url-button" type="submit" id="report-verify">Vérifier et ouvrir le rapport</button>
+        </form>
+        <p id="report-feedback" class="report-feedback" role="status" aria-live="polite"></p>
+        <p id="report-code-hint" class="public-micro">Le code expire après 15 minutes. Il n'est pas inclus dans le lien e-mail.</p>
+      </section>
+      <section id="report-ready" hidden>
+        <div class="report-downloads">
+          <div><p class="public-eyebrow" id="report-ready-label">RAPPORT DÉBLOQUÉ</p><h2 id="report-ready-title">Votre rapport est prêt</h2><p id="report-ready-desc">Consultez-le ici ou conservez les fichiers.</p></div>
+          <div class="report-download-buttons">
+            <a id="report-download-pdf" class="public-url-button" href="#">Télécharger le PDF</a>
+            <a id="report-download-md" class="report-md-button" href="#">Télécharger le Markdown</a>
+          </div>
+        </div>
+        <div class="c-public-read" id="c-public-read"></div>
+      </section>
+    </main>
+  </div>
+  <script type="module" src="access.js"></script>
+</body>
+</html>

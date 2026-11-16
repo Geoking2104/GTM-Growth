@@ -69,6 +69,55 @@ Ne jamais versionner `.env.local`, le jeton MCP ou le fichier JSON du service
 account. Le site est déjà configuré pour appeler l’API publique via
 `https://gtm.kayroslab.com`.
 
+## Optional report delivery
+
+The five-pillar public report and Print/Save as PDF continue without a mail
+account. The optional `/report/` HTML page, A4 PDF and Markdown downloads use a
+separate Node API, persistent SQLite and SMTP invitation. They do **not** grant
+tenant access or reveal connected CRM/AI data. The feature is **off by default**.
+
+1. Obtain an authorised transactional sending identity for
+   `gtm.kayroslab.com`, with valid SPF/DKIM/DMARC and TLS/STARTTLS support.
+   Keycloak's realm SMTP setup does **not** automatically configure the Node
+   process. Use the same approved provider if the account permits it, but do
+   not copy secrets into Git or public CI logs.
+2. On the VPS, edit the existing protected
+   `/opt/gtm-growth/deploy/kayroslab-vps/.env.local` with:
+
+   ```dotenv
+   REPORT_ACCESS_ENABLED=true
+   REPORT_PUBLIC_ORIGIN=https://gtm.kayroslab.com
+   REPORT_SMTP_HOST=smtp.provider.example
+   REPORT_SMTP_PORT=587
+   REPORT_SMTP_USER=your-approved-user
+   REPORT_SMTP_PASSWORD=your-private-password
+   REPORT_SMTP_FROM=reports@your-verified-domain.example
+   ```
+
+   Replace **all** example values with real, authorised provider settings.
+   SMTP port 465 is supported with implicit TLS; 587 requires STARTTLS.
+   Set file mode `600` and limit access to the deployment administrator.
+3. Run the normal `bash deploy/kayroslab-vps/deploy.sh`. It creates a random
+   stable `REPORT_ACCESS_SECRET` once if the file has no key, and mounts the
+   SQLite file on the existing `gtm_growth_data` volume. Do not rotate the
+   secret without intentionally invalidating unexpired codes/sessions.
+4. Check `curl -fsS https://gtm.kayroslab.com/api/report-access/status`;
+   **do not accept `enabled:false` as proof of a working email integration**.
+   On a permitted public test URL in the EN and FR console, request a report
+   using a test inbox, follow the received `/report/` link, enter email + code
+   and verify HTML/PDF/Markdown data and layouts. Confirm 401 without the
+   cookie, wrong/expired/replayed codes, throttling and mobile navigation.
+   Never put a code in a URL, screenshot, public log or customer support ticket.
+5. Monitor mail delivery failures, public 4xx/5xx errors and abuse; arrange
+   a backup/erasure procedure for `report-access.sqlite3` and its SQLite journal.
+   Lazy cleanup removes snapshots after seven days when the service is used,
+   not on a guaranteed timer. Set `REPORT_ACCESS_ENABLED=false`, redeploy and
+   keep the public free report available if delivery fails.
+
+The repository/CI cannot activate mail without real provider credentials and
+a successful inbox test. A successful Docker deployment is not proof of email
+delivery or export correctness.
+
 ## Keycloak (SSO de la console)
 
 Services ajoutés au compose : `keycloak` (Keycloak 26, `start --import-realm`, mode
