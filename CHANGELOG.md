@@ -2,6 +2,19 @@
 
 ## Unreleased
 
+### Free report 360° (feature branch, not deployed)
+
+- Added a versioned, evidence-led public `report360` payload with five distinct
+  SEO/GEO/AI/CRM/Social pillars, explicit `null` for unmeasured scores, dated
+  source proofs, suggested owners/effort/change risk and conditional connection
+  steps. No new target fetch or customer credentials.
+- Added the bilingual executive view, filterable action plan, three-step guides,
+  source excerpts (not screenshots) and A4 browser Print/Save as PDF layout.
+  Preserved the current free-read diagnostics, local SEO, journey and sign-in.
+- Documented the scope and acceptance gates in
+  [the free-report plan](docs/product/FREE-REPORT-360.md); no server-side PDF
+  endpoint, historical comparison, real AI citations or private CRM signals.
+
 ### Documentation and journey integration
 
 - Reorganised the README into a short entry point, a documentation hub, equally detailed marketing/technical tracks and a shared five-stage customer journey. Added six Mermaid diagrams, an evidence/KPI guide, integration map, operations guide and prioritised repository audit.

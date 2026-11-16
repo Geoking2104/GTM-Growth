@@ -21,7 +21,11 @@ These are usage profiles, not access roles or subscription tiers.
 ## 1. Diagnose — earn the next step with evidence
 
 Open [the public read](https://gtm.kayroslab.com/console/?lang=en#c-public-read), enter
-one public URL and inspect the source-backed recommendations. GEO v1 describes
+one public URL and inspect the source-backed recommendations. The proposed
+five-pillar report explains SEO, GEO, AI engines, CRM and Social separately;
+source-linked action cards include a non-technical tutorial, owner, effort,
+risk and the same FR/EN A4 print view. Its branch is **not live yet**:
+review the [acceptance plan](../product/FREE-REPORT-360.md). GEO v1 describes
 technical readiness. Citability is a heuristic for editing. Neither proves that
 an AI engine cited the business. Any sample analytics in a public response are
 examples, not that website's private traffic.

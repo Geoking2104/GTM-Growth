@@ -18,6 +18,7 @@ import { ga4Table, gscTable, trafficTable, type TrafficSample } from "./analytic
 import { seoTables, type DataTable } from "./seo.js";
 import { buildSitemapMap, type SitemapMap } from "./sitemap-map.js";
 import { buildFreeReadEvidence, sitemapEvidence, type FreeReadEvidence } from "./evidence.js";
+import { buildFreeReport360, type FreeReport360 } from "./report360.js";
 
 export interface FreeReadOpportunity {
   checkId: string;
@@ -68,6 +69,8 @@ export interface FreeReadResult {
   /** Sitemap architecture and freshness data for the free visual map. */
   sitemapMap: SitemapMap | null;
   limitations: string[];
+  /** Versioned five-pillar public report; unknown private metrics remain null. */
+  report360: FreeReport360;
 }
 
 const SITEMAP_CANDIDATES = ["/sitemap.xml", "/sitemap_index.xml"];
@@ -206,7 +209,7 @@ export async function runFreeRead(options: FreeReadOptions): Promise<FreeReadRes
     evidence: byId.get(rec.checkId)?.evidence ?? "No evidence available",
   }));
 
-  return {
+  const result = {
     url: options.url,
     finalUrl,
     httpStatus: page.status,
@@ -248,6 +251,8 @@ export async function runFreeRead(options: FreeReadOptions): Promise<FreeReadRes
       "The GEO score covers the audited page only, not the whole site.",
       "GA4 and Search Console traffic rows are sample data unless a property is connected.",
       "No AI engine is queried: readiness is measured, citations are not claimed.",
+      "CRM conversions and inbound social links are not measured by this public read.",
     ],
   };
+  return { ...result, report360: buildFreeReport360(result) };
 }

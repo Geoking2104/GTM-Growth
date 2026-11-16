@@ -52,6 +52,17 @@ function fakeFetcher(): Fetcher {
 }
 
 describe("free read", () => {
+  it("includes the 360° contract in the actual free-read response without private data claims", async () => {
+    const result = await runFreeRead({ url: "https://acme.com/", fetcher: fakeFetcher() });
+    expect(result.report360).toMatchObject({ schemaVersion: 1, method: "geo-v1-public-page", scope: "single_public_url", comparison: null });
+    expect(result.report360.sourceUrl).toBe("https://acme.com/");
+    expect(result.report360.pillars.map(p => p.id)).toEqual(["seo", "geo", "ai", "crm", "social"]);
+    expect(result.report360.pillars.find(p => p.id === "ai")?.score).toBeNull();
+    expect(result.report360.pillars.find(p => p.id === "crm")?.score).toBeNull();
+    expect(result.report360.actions.some(a => a.kind === "next_step" && a.proof !== null)).toBe(false);
+    expect(result.report360.actions.some(a => a.kind === "observed_fix" && a.proof?.observedAt === result.evidence.observedAt)).toBe(true);
+  });
+
   it("records source values, fetch statuses and sitemap examples for the four public proofs", async () => {
     const result = await runFreeRead({ url: "https://acme.com/", fetcher: fakeFetcher() });
     expect(result.evidence.title).toMatchObject({ value: "Acme analytics for B2B teams", characters: 28, present: true });
