@@ -2,6 +2,9 @@ import { describe, expect, it, vi, afterEach } from "vitest";
 import { parseHTML } from "linkedom";
 import { readFileSync } from "node:fs";
 import { renderFreeReport360 } from "../site/console/report360.js";
+import { approvedV2Grid } from "../src/geo/score/v2/approved-grid.js";
+import { calculateV2Coverage } from "../src/geo/score/v2/coverage.js";
+import { publicV2Coverage } from "../src/geo/score/v2/public.js";
 
 const baseReport = {
   schemaVersion: 1, method: "geo-v1-public-page", scope: "single_public_url",
@@ -22,10 +25,10 @@ const baseReport = {
 };
 
 afterEach(() => vi.unstubAllGlobals());
-function render(lang: "fr" | "en") {
+function render(lang: "fr" | "en", report: any = baseReport) {
   const { document, window } = parseHTML("<html><body></body></html>");
   vi.stubGlobal("document", document); vi.stubGlobal("window", window);
-  const tree = renderFreeReport360(baseReport, lang);
+  const tree = renderFreeReport360(report, lang);
   document.body.append(tree);
   return { document, window, tree };
 }
@@ -41,7 +44,7 @@ describe("bilingual free 360 report", () => {
     expect(tree.textContent).toContain(lang === "fr" ? "Non mesuré" : "Not measured");
     expect(tree.textContent).not.toContain("0/100");
     expect(tree.querySelector(".report360-source")?.getAttribute("href")).toBe("https://example.com/products");
-    expect(tree.querySelector(".report360-workspace")?.getAttribute("href")).toBe("#c-login-form");
+    expect(tree.querySelector(".report360-footer .report360-workspace")?.getAttribute("href")).toBe("#c-login-form");
     expect(tree.querySelectorAll(".report360-copy")).toHaveLength(4);
     expect(document.querySelector("script")).toBeNull(); // untrusted text cannot run
     expect(tree.querySelector(".report360-proof code")?.textContent).toContain("<script>");
@@ -78,5 +81,36 @@ describe("bilingual free 360 report", () => {
     const css = readFileSync("site/console/shell.css", "utf8");
     expect(css).toContain("@page { size:A4 portrait");
     expect(css).toContain("#c-public-read > :not(.free-report360)");
+  });
+
+  it.each(["fr", "en"] as const)("shows a source-linked 42-control v2 ledger, safe visual preview and connected-module actions in %s", async (lang) => {
+    const v2 = publicV2Coverage(await calculateV2Coverage(approvedV2Grid(), { url: "https://example.com/products" }, [
+      { controlId: "M01", status: "measured", earned: 0, proof: { type: "extract", value: "No <title> found", url: "https://example.com/products" } },
+    ]));
+    const report = {
+      ...baseReport,
+      method: "geo-v2-public-evidence",
+      pillars: baseReport.pillars.map(p => p.id === "geo" ? { ...p, score: null, coverage: "partial", observedChecks: 1 } : p),
+      geoV2: v2,
+      sourcePreview: {
+        kind: "observed_html_reconstruction", title: "<script>unsafe</script> Products", description: "A real page description",
+        heading: "A shop heading", subheadings: ["Popular products", "Contact"], screenshotUrl: null,
+      },
+      actions: [...baseReport.actions, { id: "geo.v2.M01", code: "geo_v2_check", checkId: "M01", title: "Descriptive title", pillar: "geo", kind: "observed_fix", priority: "high", effort: "low", risk: "low", owner: "technical", points: null, proof: { label: "M01", value: "No HTML title", sourceUrl: "https://example.com/products", observedAt: baseReport.observedAt } }],
+    };
+    const { document, tree } = render(lang, report);
+    expect(tree.querySelectorAll(".report360-v2-row")).toHaveLength(42);
+    expect(tree.querySelectorAll(".report360-v2-category")).toHaveLength(8);
+    expect(tree.querySelectorAll(".report360-v2-unknown")).toHaveLength(41);
+    expect(tree.querySelectorAll(".report360-v2-measured")).toHaveLength(1);
+    expect(tree.querySelector(".report360-visual")?.textContent).toContain("<script>unsafe</script>");
+    expect(tree.querySelector(".report360-visual")?.textContent).toContain(lang === "fr" ? "PAS UNE CAPTURE" : "NOT A SCREENSHOT");
+    expect(document.querySelector("script")).toBeNull();
+    expect(tree.querySelectorAll(".report360-connection")).toHaveLength(3);
+    expect(tree.querySelector(".report360-connection-ai a")?.getAttribute("href")).toBe(`/console/?lang=${lang}#ai_visibility`);
+    expect(tree.querySelector(".report360-connection-crm a")?.getAttribute("href")).toBe(`/console/?lang=${lang}#crm/connections`);
+    expect(tree.querySelector(".report360-connection-social a")?.getAttribute("href")).toBe(`/console/?lang=${lang}#social/connections`);
+    expect(tree.textContent).not.toContain("56/100");
+    expect(tree.textContent).not.toContain("No HTML title: 0/100");
   });
 });

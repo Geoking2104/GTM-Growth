@@ -5,23 +5,32 @@ import { ReportAccessService, ReportAccessError, normaliseReportEmail, type Repo
 import { renderReportMarkdown, renderReportPdf } from "../src/report-access/export.js";
 import { smtpSettings } from "../src/report-access/mailer.js";
 import type { FreeReport360 } from "../src/freeread/report360.js";
+import { approvedV2Grid } from "../src/geo/score/v2/approved-grid.js";
+import { calculateV2Coverage } from "../src/geo/score/v2/coverage.js";
+import { publicV2Coverage } from "../src/geo/score/v2/public.js";
+
+const geoV2 = publicV2Coverage(await calculateV2Coverage(approvedV2Grid(), { url: "https://example.com/" }, [
+  { controlId: "M01", status: "measured", earned: 0, proof: { type: "extract", value: "No HTML title observed", url: "https://example.com/" } },
+]));
 
 const report: FreeReport360 = {
-  schemaVersion: 1, method: "geo-v1-public-page", scope: "single_public_url", sourceUrl: "https://example.com/", httpStatus: 200,
+  schemaVersion: 1, method: "geo-v2-public-evidence", scope: "single_public_url", sourceUrl: "https://example.com/", httpStatus: 200,
   observedAt: "2026-11-16T12:15:00Z", comparison: null,
   unmeasured: ["ai_citations", "crm_conversions", "social_inbound_backlinks"],
   pillars: [
     { id: "seo", coverage: "measured", score: null, observedChecks: 10, needsAttention: 2, observedCount: null, measurement: "html_seo_checks", missing: [] },
-    { id: "geo", coverage: "measured", score: 53, observedChecks: 20, needsAttention: 8, observedCount: null, measurement: "geo_v1_readiness", missing: [] },
+    { id: "geo", coverage: "partial", score: null, observedChecks: 1, needsAttention: 1, observedCount: null, measurement: "geo_v2_evidence", missing: geoV2.unmeasuredControls },
     { id: "ai", coverage: "partial", score: null, observedChecks: null, needsAttention: null, observedCount: null, measurement: "page_readiness_only", missing: ["actual_ai_citations"] },
     { id: "crm", coverage: "not_measured", score: null, observedChecks: null, needsAttention: null, observedCount: null, measurement: "requires_authorised_property", missing: ["actual_conversions"] },
     { id: "social", coverage: "partial", score: null, observedChecks: null, needsAttention: null, observedCount: 1, measurement: "outbound_profile_links_on_page", missing: ["inbound_links"] },
   ],
   actions: [
     { id: "seo.title", code: "title", kind: "observed_fix", pillar: "seo", priority: "high", effort: "low", risk: "low", owner: "content", points: null, proof: { id: "seo.meta:Title", label: "Title", value: "missing <script>", note: "No title found", sourceUrl: "https://example.com/", observedAt: "2026-11-16T12:15:00Z", format: "html_observation" } },
-    { id: "geo.schema.organization", code: "geo_check", checkId: "schema.organization", kind: "observed_fix", pillar: "geo", priority: "high", effort: "medium", risk: "medium", owner: "technical", points: 4, proof: { id: "geo:schema.organization", label: "schema.organization", value: "No Organisation schema", note: "Review entities", sourceUrl: "https://example.com/", observedAt: "2026-11-16T12:15:00Z", format: "geo_check" } },
+    { id: "geo.v2.M01", code: "geo_v2_check", checkId: "M01", title: "Descriptive title", kind: "observed_fix", pillar: "geo", priority: "high", effort: "medium", risk: "medium", owner: "technical", points: null, proof: { id: "geo-v2:M01", label: "M01", value: "No HTML title observed", note: "GEO v2", sourceUrl: "https://example.com/", observedAt: "2026-11-16T12:15:00Z", format: "geo_v2_control" } },
     { id: "ai.connect_measurement", code: "ai_measurement", kind: "next_step", pillar: "ai", priority: "medium", effort: "medium", risk: "high", owner: "marketing", points: null, proof: null },
   ],
+  geoV2,
+  sourcePreview: { kind: "observed_html_reconstruction", title: "Example products", description: "Sample description", heading: "Products", subheadings: ["Shoes", "Accessories"], observedAt: "2026-11-16T12:15:00Z", screenshotUrl: null },
 };
 
 const opts = { dbPath: ":memory:", secret: "long-private-test-secret-32-characters-xxxxxxxx" };
@@ -93,7 +102,11 @@ describe("report downloads", () => {
   it.each(["fr", "en"] as const)("generates a bilingual Markdown report with all five pillars and dated facts (%s)", (language) => {
     const md = renderReportMarkdown(report, language);
     expect(md).toContain(language === "fr" ? "Réseaux sociaux" : "Social");
-    expect(md).toContain("53/100");
+    expect(md).toContain("GEO v2");
+    expect(md).toContain("1/42");
+    expect(md).toContain("M01");
+    expect(md).toContain(language === "fr" ? "APERÇU RECONSTITUÉ" : "RECONSTRUCTED FROM HTML");
+    expect(md).not.toContain("53/100");
     expect(md).toContain(language === "fr" ? "non mesuré" : "not measured");
     expect(md).toContain("https://example.com/");
     expect(md).toContain("\\<script\\>"); // untrusted evidence is Markdown-escaped

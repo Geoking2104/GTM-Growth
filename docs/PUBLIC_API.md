@@ -17,7 +17,7 @@ PORT=3111 LEADS_PATH=./data/leads.jsonl SITE_ORIGINS=https://example.com \
 
 | Route | Method | Purpose |
 | --- | --- | --- |
-| `/api/free-read` | `POST` | GEO v1, SEO tables, GA4/GSC readiness and versioned five-pillar `report360` |
+| `/api/free-read` | `POST` | GEO v2 42-control evidence ledger + source preview, SEO tables, GA4/GSC readiness and five-pillar `report360` (deprecated GEO v1 root fields remain for old clients) |
 | `/api/lead` | `POST` | Contact request, stored as JSONL, optionally forwarded |
 | `/api/report-access/status` | `GET` | `{ "enabled": false }` until Node SMTP, secret and opt-in are configured |
 | `/api/report-access/invite` | `POST` | Request email OTP and persist one public `report360` snapshot (Node only) |
@@ -40,7 +40,7 @@ another origin can call them directly.
   "band": "good",
   "projectedScore": 100,
   "recoverablePoints": 29,
-  "headline": [{ "label": "GEO score", "value": "71/100" }],
+  "headline": [{ "label": "GEO v1 legacy (deprecated)", "value": "71/100" }],
   "topFixes": [{ "checkId": "robots.citation_bots", "points": 3, "action": "…" }],
   "tables": [
     { "id": "seo.meta", "title": "SEO — metadata", "rows": [{ "label": "Title", "value": "48 chars", "status": "pass" }] },
@@ -53,13 +53,13 @@ another origin can call them directly.
   ],
   "report360": {
     "schemaVersion": 1,
-    "method": "geo-v1-public-page",
+    "method": "geo-v2-public-evidence",
     "scope": "single_public_url",
     "observedAt": "2026-11-16T12:25:00Z",
     "sourceUrl": "https://example.com/",
     "pillars": [
       { "id": "seo", "coverage": "measured", "score": null, "observedChecks": 18, "needsAttention": 3 },
-      { "id": "geo", "coverage": "measured", "score": 71 },
+      { "id": "geo", "coverage": "partial", "score": null, "observedChecks": 19 },
       { "id": "ai", "coverage": "partial", "score": null },
       { "id": "crm", "coverage": "not_measured", "score": null },
       { "id": "social", "coverage": "partial", "score": null, "observedCount": 1 }
@@ -68,9 +68,20 @@ another origin can call them directly.
       { "id": "seo.title", "kind": "observed_fix", "pillar": "seo", "code": "title", "proof": { "id": "seo.meta:Title", "sourceUrl": "https://example.com/", "observedAt": "2026-11-16T12:25:00Z" } },
       { "id": "crm.connect_conversions", "kind": "next_step", "pillar": "crm", "proof": null, "points": null }
     ],
+    "geoV2": {
+      "gridVersion": "2.0.0",
+      "status": "incomplete",
+      "score": null,
+      "controls": [
+        { "controlId": "M01", "title": "Descriptive title", "category": "meta", "status": "measured", "outcome": "pass", "proof": { "type": "extract", "value": "HTML title: …", "url": "https://example.com/" }, "reason": null },
+        { "controlId": "P02", "title": "…", "category": "rendering", "status": "unknown", "outcome": "unknown", "proof": null, "reason": "Requires verified render" }
+      ]
+    },
+    "sourcePreview": { "kind": "observed_html_reconstruction", "title": "Example page", "description": "…", "heading": "Example", "subheadings": [], "screenshotUrl": null },
     "comparison": null,
     "unmeasured": ["ai_citations", "crm_conversions", "social_inbound_backlinks"]
   },
+  "geoV2": { "gridVersion": "2.0.0", "status": "incomplete", "score": null, "controls": ["42 redacted public control records"], "unmeasuredControls": ["P02"] },
   "limitations": ["…"]
 }
 ```
@@ -78,7 +89,12 @@ another origin can call them directly.
 The `report360` block is an **illustrative abbreviated shape**, not a valid
 captured snapshot. Additional fields, including owner, priority, effort, risk,
 measurement gaps, `httpStatus` and the full source-proof value, are present in
-real responses. The [source contract](product/FREE-REPORT-360.md) defines each
+real responses. `geoV2.controls` always includes all 42 unique approved IDs;
+the example shows just two. Public and emailed snapshots omit per-control
+points, earned totals, score ranges and any publishable score until owner
+consent. The *deprecated* top-level `score`, `band`, `projectedScore`,
+`recoverablePoints`, `topFixes`, and `opportunities` are **GEO v1 only** and must
+not be used for a v2 score or action plan. The [source contract](product/FREE-REPORT-360.md) defines each
 status. Browser printing is an A4 Save as PDF route independent of SMTP;
 the optional report delivery routes below generate a direct server-side PDF.
 

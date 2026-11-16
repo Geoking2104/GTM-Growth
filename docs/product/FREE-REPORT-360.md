@@ -1,6 +1,6 @@
 # Free report 360° — source contract, customer experience and release plan
 
-**Date:** 16 November 2026 · **Status:** five-pillar public report merged in PR #56 on `main`; optional email-gated exports implemented in a follow-up change, **production SMTP activation and end-to-end delivery are not yet verified**.
+**Date:** 16 November 2026 · **Status:** five-pillar report and optional email-gated exports are on `main`. This follow-up integrates the approved 42-control GEO v2 ledger into the public report and exports. **The domain-verified Playwright screenshot path, authenticated AI/CRM/inbound-social collection, and production SMTP end-to-end delivery remain separate verification/activation gates.**
 
 This plan implements the accepted free-report redesign against the existing public
 read, inspired by the competitor's short executive report and multi-page action
@@ -28,14 +28,14 @@ A non-technical owner should be able to answer, in one session:
 | --- | --- | --- | --- |
 | Public read | `runFreeRead`, `POST /api/free-read`, Worker and Node routes | Adds `report360` in the same JSON response | Public URL only; no additional requests or accounts |
 | SEO | Actual `seo.*` HTML table rows | Counts eligible checks and identifies relevant observed fixes | No fabricated overall SEO score; heuristics are review prompts |
-| GEO | GEO v1 controls and opportunities | Readiness score, top observed fixes, raw control proof | GEO v2 and actual AI citations are not substituted |
+| GEO | Approved 42-control GEO v2 rubric and HTTP evidence collectors from PR #30; legacy v1 API fields | 42-control categorized evidence ledger, applicability/unknown states, measured-failure actions | Numeric v2 score and control points withheld in public snapshots until complete proof and owner consent; the deprecated v1 score is never substituted |
 | AI engines | Existing readiness/disclaimer and separate connected collectors | Conditional collection guidance with `null` observed metrics | No model is queried by the free read |
 | CRM | Existing authenticated CRM and Google connectors | Conditional, approval-led connection guide | No conversion/lead/customer data from public HTML |
 | Social | `socialProfiles` from visible links and `sameAs` | Observed outbound-link count and manual follow-up | No inbound backlinks, engagement or referral claims |
-| Web | Public FR/EN console, existing login and explanations | M1 5-card executive view, M2 filterable plan, M3 source-vs-proposal tutorials | Reconstructed textual excerpts, never synthetic screenshots |
+| Web | Public FR/EN console, existing login and explanations | M1 5-card executive view, M2 filterable plan, M3 source-vs-proposal tutorials, M4 visual search snippet and heading outline reconstructed only from observed HTML | **Not a screenshot**; verified domain and consent are required for a real Playwright visual proof |
 | Existing export | Browser print pipeline | A4 CSS; all action cards and instructions included when printing | Browser Save as PDF works without email setup |
 | Optional invitation | New `src/report-access/service.ts`, `mailer.ts`, `router.ts`, `site/console/report-invite.js` | TLS SMTP sends a six-digit code, then email + code unlock a saved report at `/report/` | New Node-only feature, disabled until a sender is configured; no cloud tenant permission is granted |
-| Optional downloads | New `src/report-access/export.ts`, `site/report/` | Same saved `report360` snapshot rendered as HTML, vector A4 PDF and `.md` | No new facts or private connected measurements are inferred |
+| Optional downloads | `src/report-access/export.ts`, `site/report/` | Same saved `report360` snapshot rendered as HTML, illustrated vector A4 PDF and `.md`; complete 42-control ledger and explicit unknowns | No new facts or private connected measurements inferred; score points are redacted from the public contract |
 
 The existing full technical panels, customer journey, diagnostic proofs and
 recommendation assistant remain available below the new 360° summary. This
@@ -66,13 +66,23 @@ but cannot establish identity beyond control of the receiving email inbox.
 ## Versioned `report360` contract
 
 `FreeReadResult.report360` has schema version `1`, method
-`geo-v1-public-page`, scope `single_public_url`, `sourceUrl`, `observedAt`,
-`httpStatus`, `pillars`, `actions`, `comparison: null` and `unmeasured`.
+`geo-v2-public-evidence`, scope `single_public_url`, `sourceUrl`, `observedAt`,
+`httpStatus`, `pillars`, `actions`, `comparison: null`, `unmeasured`,
+`geoV2` and `sourcePreview`. The root `geoV2` is the same consent-safe ledger.
 
 For every pillar:
 
 - `coverage` is `measured`, `partial` or `not_measured`.
-- `score` is a number **only** for GEO v1; other pillars return `null`.
+- All five public pillar `score` fields return **`null`**. The v2 collector may
+  calculate a score internally, but the public `geoV2` ledger redacts earned
+  points, score ranges and numeric totals. It exposes the control ID, category,
+  title, `status` (measured/unknown/N/A), `outcome` (pass/review/unknown/N/A),
+  observed proof/reason and version, so readers can act without inferring a
+  fabricated score. Owner consent is required before any future score release.
+- The **deprecated** top-level `score`, `projectedScore`, `recoverablePoints`,
+  `topFixes` and `opportunities` fields belong only to the legacy GEO v1 API
+  contract for older clients. The landing, console report and new exports use
+  v2 evidence instead; the response headline labels historical values `v1`.
 - SEO provides the number of observed eligible HTML checks and issues needing
   review, not an unvalidated synthetic percentage or rank.
 - Social exposes the observed number of outgoing/declared profile links; zero
@@ -81,7 +91,7 @@ For every pillar:
 
 Every observed action includes a stable action ID, channel, priority, effort,
 change risk, owner and a proof object with control ID, source URL, observation
-timestamp, measured value/note and `html_observation`/`geo_check` format.
+timestamp, measured value/note and `html_observation`/`geo_v2_control` format.
 Conditional next steps have `kind: next_step`, `proof: null`, `points: null`.
 These are **not** marked as failed checks.
 
@@ -94,12 +104,12 @@ anonymous report.
 
 | Phase | Acceptance criterion | Source state |
 | --- | --- | --- |
-| A · Truth contract | Five pillar objects; unknown metrics `null`; observable proofs are dated and source-linked; illustrative GA4/GSC rows excluded | **Implemented / tests added** |
-| B · Bilingual experience | FR and EN feature parity, distinct pillar symbols, source excerpts inserted as text, 3-step guidance, filters, CTA to existing login, mobile CSS | **Implemented / automated UI tests**; human design QA pending |
-| C · PDF | Functional browser print/Save as PDF, A4 layout, all actions visible, no fake screenshot or improvement claim | **Implemented in CSS/JS**; print-output browser QA pending; server-side vector PDF implemented/tested separately |
+| A · Truth contract | 42 approved v2 controls; incomplete vs failed vs N/A; owner-consent score redaction; five pillar objects; unknown metrics `null`; dated source proofs | **Implemented in this change; automated tests** |
+| B · Bilingual experience | FR and EN parity, distinct pillar symbols, observed-HTML visual reconstruction, categorized 42-check ledger, filterable actions and direct connections to existing AI/CRM/Social modules | **Implemented in this change; automated UI tests**; human visual QA pending |
+| C · PDF | Browser A4 print and server-side illustrated vector PDF plus Markdown with evidence ledger; no fake screenshot/improvement claim | **Implemented in this change**; actual cross-browser print-output visual QA pending |
 | C2 · Email-code downloads | Optional SMTP invite, no code in URL, single-use/expiry/attempt limits, protected HTML/PDF/Markdown, FR/EN parity | **Implemented and unit/API-tested**; **SMTP credentials, live mail delivery and production browser QA pending** |
 | D · Enriched evidence | First-party screenshot after DNS TXT or HTTPS file verification, isolated Playwright resources, redaction and retention limits | **Not implemented in public free flow** |
-| E · Measured integrations | Consent-based GSC/GA4, AI-answer collection, CRM and Social imported from exact authorised tenant sources | **Not implemented in anonymous free report**; underlying private connectors require separate activation |
+| E · Measured integrations | Consent-based GSC/GA4, AI-answer collection, CRM and Social imported from exact authorised tenant sources | **Links to existing private modules provided**; no provider data fetched anonymously, connectors and data provenance still require activation/verification |
 | F · Follow-up | Persist plan and real before/after snapshot comparisons with matching method and URL | **Not implemented**; current comparison intentionally `null` |
 | G · Release | CI, staging, security, responsive, FR/EN, accessibility and real Save as PDF validation | **Pending approval and deployment** |
 
@@ -109,6 +119,8 @@ anonymous report.
   response limits, rate limiter and response cache; no new target fetch.
 - [x] No HTML from customer pages is executed; text is escaped by DOM
   `textContent`, and source links accept HTTP(S) only.
+- [x] Public/email snapshots redact GEO v2 earned points, numeric ranges and
+  scores; review/pass outcomes are kept separate from unknown controls.
 - [x] No API tokens, personal contacts or private telemetry added to JSON/export.
 - [x] No automatic mutations; all sample data remain outside action extraction.
 - [x] A separate SQLite-backed report-code boundary: one-time HMAC-peppered
@@ -166,6 +178,23 @@ target site. A verified-domain screenshot
 pipeline, report history, real AI citations, CRM events, social inbound signals,
 multi-page crawling and advanced competitive analysis are separate planned
 features subject to authorization and evidence coverage.
+
+### Verifying the three customer-reported gaps
+
+1. **GEO v1 shown as v2:** submit a public test URL. The landing must show
+   `GEO v2 · X/42 controls observed` and no legacy percentage. Open the report,
+   confirm all 42 unique control IDs and the source-linked measured findings.
+   Direct root API `score` must be documented/labeled as **deprecated v1**, not
+   reused by the report. Assert no public `earned` or `scoreRange` fields.
+2. **Technical snippets without illustration:** verify the visual search
+   snippet/title/description and H1/H2 map from the *observed* HTML in FR/EN,
+   HTML/PDF/Markdown. The reconstruction must always say **not a screenshot**.
+   Real screenshots remain gated on DNS TXT / HTTPS verification and explicit
+   owner permission for resource-limited Playwright.
+3. **Missing AI/CRM/inbound social data:** verify the three action cards open
+   the respective authenticated workspace modules; no artificial ranking,
+   conversion, backlink count or absent=zero is shown. Confirm the connector
+   scopes and tenant identity before any actual collection.
 
 For this version, a good free report is one that **proves what it claims and
 teaches the next action**. It must not reproduce an attractive but unsupported

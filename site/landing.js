@@ -4,7 +4,6 @@ import { dictFor } from "./i18n.js";
 import { renderTables, sampleTables } from "./tables.js";
 import { renderSitemapMap } from "./sitemap-map.js";
 import { translateLiveTables } from "./fr/server-tables.js";
-import { rankRecommendations, explainRecommendation } from "./console/public-read-model.js";
 
 const language = document.documentElement.lang === "fr" ? "fr" : "en";
 const dict = dictFor(language);
@@ -72,20 +71,24 @@ async function loadLiveRead(url, host, view, requestId) {
     const payload = await response.json();
     if (requestId !== generation) return;
 
-    if (typeof payload.score === "number" && payload.score >= 0 && payload.score <= 100) {
-      view.score.textContent = `${L("Score GEO mesuré", "Measured GEO score")} : ${payload.score}/100`;
-      const projected = typeof payload.projectedScore === "number" ? ` · ${L("Potentiel après correctifs", "Potential after fixes")} : ${payload.projectedScore}/100` : "";
-      view.verdictText.textContent = `${L("Audit de la page", "Page audit for")} ${host}${projected}. ${L("Ce score ne concerne pas tout le domaine.", "This score does not cover the whole domain.")}`;
+    if (Array.isArray(payload.geoV2?.controls)) {
+      const observed = payload.geoV2.controls.filter(c => c.status === "measured").length;
+      const unknown = payload.geoV2.controls.filter(c => c.status === "unknown").length;
+      view.score.textContent = `GEO v2 · ${observed}/42 ${L("contrôles observés", "controls observed")}`;
+      view.verdictText.textContent = `${L("Audit de la page", "Page audit for")} ${host} · ${unknown} ${L("contrôles restent inconnus. Aucun score v2 publié sans preuve complète et consentement.", "controls remain unknown. No v2 score is published without complete evidence and consent.")}`;
+    } else {
+      view.score.textContent = L("GEO v2 : lecture indisponible", "GEO v2: read unavailable");
+      view.verdictText.textContent = L("Les mesures historiques v1 ne constituent pas un score GEO v2.", "Historical v1 measurements are not a GEO v2 score.");
     }
     renderTables(view.tables, language === "fr" ? translateLiveTables(payload.tables ?? []) : (payload.tables ?? []), dict);
-    const fixes = rankRecommendations(payload.opportunities, "quick", 3);
+    const fixes = (payload.report360?.actions ?? []).filter(a => a.kind === "observed_fix" && a.pillar === "geo").slice(0, 3);
     view.actions.replaceChildren(element("h3", "", L("Votre prochaine action, fondée sur les constats", "Your next action, grounded in evidence")));
     if (!fixes.length) view.actions.append(element("p", "", L("Cette lecture ne fournit pas de correctif étayé. Explorez les questions clients ou vérifiez les mesures techniques ci-dessous.", "This read provides no evidence-backed fix. Explore customer questions or review the technical measurements below.")));
     const list = element("ol");
     for (const fix of fixes) {
-      const explanation = explainRecommendation(fix, language), item = element("li"), evidence = element("details");
-      item.append(element("strong", "", explanation.title), element("p", "", explanation.steps), element("p", "", `${L("Bénéfice attendu", "Intended benefit")}: ${explanation.effect}`));
-      evidence.append(element("summary", "", L("Voir le constat", "View the finding")), element("p", "", fix.evidence || fix.checkId));
+      const item = element("li"), evidence = element("details");
+      item.append(element("strong", "", `GEO v2 ${fix.checkId}: ${fix.title || fix.checkId}`), element("p", "", L("Consultez le rapport 360° pour les étapes et la source du constat.", "Open the 360° report for the steps and the finding's source.")));
+      evidence.append(element("summary", "", L("Voir le constat", "View the finding")), element("p", "", fix.proof?.value || L("Preuve indisponible", "Evidence unavailable")));
       item.append(evidence); list.append(item);
     }
     view.actions.append(list); view.actions.hidden = false;

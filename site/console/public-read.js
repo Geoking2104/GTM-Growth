@@ -13,9 +13,10 @@ const COPY = {
     loading: "Analyse de la page publique en cours…", invalid: "Saisissez une URL de site public valide (ex. https://exemple.fr).",
     unavailable: "La lecture est momentanément indisponible. Réessayez dans un instant ; aucune donnée fictive n’est affichée.",
     analyzed: "PAGE ANALYSÉE", intro: "Préparation technique d’une seule page, pas visibilité réelle dans les réponses IA.",
-    score: "SCORE GEO · V1", scoreNote: "Mesure de préparation sur cette URL, pas de tout le domaine.",
+    score: "GEO V2 · 42 CONTRÔLES", scoreNote: "Grille GEO v2 sur une page ; score non publié sans preuves complètes et accord du propriétaire.",
+    scoreMissing: "Score non publié", v2Observed: "contrôles GEO v2 observés", v2Unknown: "contrôles à documenter", v2Needs: "constats vérifiés à corriger",
     pass: "contrôles validés", attention: "points à améliorer", scoreGain: "points théoriquement récupérables",
-    gainsNote: "Somme indicative des contrôles non satisfaits, sans promesse de positionnement ni de trafic.",
+    gainsNote: "Les contrôles inconnus ne sont pas des échecs. Aucun gain de points ou de trafic n'est promis.",
     observed: "Ce que nous avons réellement observé", evidence: "PREUVES", noMeasurements: "Aucun contrôle détaillé disponible pour cette page.",
     technical: "Voir les mesures techniques", social: "Profils sociaux repérés", socialEmpty: "Aucun lien vers un profil social repéré sur cette page.",
     socialNote: "Liens sortants et identités déclarées uniquement · les backlinks entrants ne sont pas vérifiés.",
@@ -32,9 +33,10 @@ const COPY = {
     loading: "Analysing the public page…", invalid: "Enter a valid public website URL (e.g. https://example.com).",
     unavailable: "The read is temporarily unavailable. Please try again; no invented results are displayed.",
     analyzed: "ANALYSED PAGE", intro: "Technical readiness of one page, not actual visibility in AI answers.",
-    score: "GEO SCORE · V1", scoreNote: "Readiness measured for this URL, not the whole domain.",
+    score: "GEO V2 · 42 CONTROLS", scoreNote: "GEO v2 evidence for one page; no score published without complete proof and owner approval.",
+    scoreMissing: "Score unpublished", v2Observed: "GEO v2 checks observed", v2Unknown: "checks needing evidence", v2Needs: "measured findings to review",
     pass: "checks passed", attention: "areas to improve", scoreGain: "theoretically recoverable points",
-    gainsNote: "Indicative sum of missing checks; not a ranking or traffic guarantee.",
+    gainsNote: "Unknown controls are not failed checks. No points or traffic gain is promised.",
     observed: "What we actually observed", evidence: "EVIDENCE", noMeasurements: "No detailed checks available for this page.",
     technical: "See technical measurements", social: "Social profiles found", socialEmpty: "No social profile link found on this page.",
     socialNote: "Outbound links and declared identities only · inbound backlinks are not checked.",
@@ -188,11 +190,15 @@ function renderResult(box, data, url, lang) {
   const summary = el("section", "public-summary");
   const identity = el("div"); identity.append(el("p", "public-eyebrow", copy.analyzed), el("h2", "public-domain", hostname), el("p", "public-description", copy.intro));
   const scoring = el("div", "public-score"); scoring.append(el("span", "", copy.score));
-  scoring.append(el("strong", "", safeNumber(data.score) ?? "—"), el("small", "", "/ 100"));
+  // Never re-label the legacy v1 score as v2, even when the v2 ledger is incomplete.
+  scoring.append(el("strong", "", "—"), el("small", "", copy.scoreMissing));
   summary.append(identity, scoring);
   const metrics = el("div", "public-read-metrics");
+  const v2 = data.report360?.geoV2;
   for (const [num, caption] of [
-    [data.checksSummary?.passed, copy.pass], [data.checksSummary?.toImprove, copy.attention], [data.recoverablePoints, copy.scoreGain],
+    [v2?.controls?.filter(c => c.status === "measured").length, copy.v2Observed],
+    [v2?.unmeasuredControls?.length, copy.v2Unknown],
+    [data.report360?.pillars?.find(p => p.id === "geo")?.needsAttention, copy.v2Needs],
   ]) {
     if (safeNumber(num, 200) === null) continue;
     const metric = el("div", "public-read-metric"); metric.append(el("strong", "", safeNumber(num, 200)), el("span", "", caption)); metrics.append(metric);
@@ -210,7 +216,9 @@ function renderResult(box, data, url, lang) {
   box.append(el("p", "public-micro", `${copy.scoreNote} ${copy.gainsNote}`));
   box.append(renderPublicEvidence(data, lang));
   box.append(renderLocalSeoPreview(lang, { onOpenDashboard: () => openLocalDashboard(lang) }));
-  box.append(recommendations(data, lang, copy));
+  // The legacy GEO v1 recommendation list stays available only for older
+  // responses; the v2 report already contains its own evidence-ranked plan.
+  if (!data.report360?.geoV2) box.append(recommendations(data, lang, copy));
   box.append(renderJourneyPreview({
     language: lang,
     mode: "public",

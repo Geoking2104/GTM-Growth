@@ -54,13 +54,36 @@ function fakeFetcher(): Fetcher {
 describe("free read", () => {
   it("includes the 360° contract in the actual free-read response without private data claims", async () => {
     const result = await runFreeRead({ url: "https://acme.com/", fetcher: fakeFetcher() });
-    expect(result.report360).toMatchObject({ schemaVersion: 1, method: "geo-v1-public-page", scope: "single_public_url", comparison: null });
+    expect(result.report360).toMatchObject({ schemaVersion: 1, method: "geo-v2-public-evidence", scope: "single_public_url", comparison: null });
     expect(result.report360.sourceUrl).toBe("https://acme.com/");
     expect(result.report360.pillars.map(p => p.id)).toEqual(["seo", "geo", "ai", "crm", "social"]);
     expect(result.report360.pillars.find(p => p.id === "ai")?.score).toBeNull();
     expect(result.report360.pillars.find(p => p.id === "crm")?.score).toBeNull();
     expect(result.report360.actions.some(a => a.kind === "next_step" && a.proof !== null)).toBe(false);
     expect(result.report360.actions.some(a => a.kind === "observed_fix" && a.proof?.observedAt === result.evidence.observedAt)).toBe(true);
+  });
+
+  it("delivers 42 distinct GEO v2 controls, safe visual metadata and zero publishable score points", async () => {
+    const requests: string[] = [];
+    const base = fakeFetcher();
+    const result = await runFreeRead({ url: "https://acme.com/", fetcher: (url, options) => {
+      requests.push(url);
+      return base(url, options);
+    } });
+    expect(result.geoV2.controls).toHaveLength(42);
+    expect(new Set(result.geoV2.controls.map(control => control.controlId)).size).toBe(42);
+    expect(result.geoV2.score).toBeNull();
+    expect(result.geoV2.controls.find(control => control.controlId === "M01")).toMatchObject({ status: "measured", outcome: "pass" });
+    expect(result.geoV2.controls.find(control => control.controlId === "P02")).toMatchObject({ status: "unknown", outcome: "unknown", proof: null });
+    expect(result.report360.geoV2).toEqual(result.geoV2);
+    expect(JSON.stringify(result.geoV2)).not.toMatch(/"earned"|"scoreRange"|"measuredPoints"|"maxPoints"/);
+    expect(result.report360.pillars.find(p => p.id === "geo")?.score).toBeNull();
+    expect(result.report360.actions.filter(a => a.pillar === "geo" && a.kind === "observed_fix")
+      .every(a => a.checkId && a.proof?.sourceUrl.startsWith("https://"))).toBe(true);
+    expect(result.report360.sourcePreview).toMatchObject({ title: "Acme analytics for B2B teams", heading: "Acme", screenshotUrl: null });
+    expect(requests.filter(url => url === "https://acme.com/")).toHaveLength(1);
+    expect(requests.filter(url => url === "https://acme.com/robots.txt")).toHaveLength(1);
+    expect(requests.filter(url => url === "https://acme.com/sitemap.xml")).toHaveLength(1);
   });
 
   it("records source values, fetch statuses and sitemap examples for the four public proofs", async () => {
@@ -99,7 +122,7 @@ describe("free read", () => {
     expect(result.score).toBeGreaterThan(0);
     expect(result.score).toBeLessThanOrEqual(100);
     expect(result.topFixes.length).toBeLessThanOrEqual(3);
-    expect(result.headline.find((row) => row.label === "GEO score")?.value).toMatch(/^\d+\/100$/);
+    expect(result.headline.find((row) => row.label === "GEO v1 legacy (deprecated)")?.value).toMatch(/^\d+\/100$/);
     expect(result.opportunities.length).toBeGreaterThan(result.topFixes.length);
     expect(result.opportunities.length).toBeLessThanOrEqual(12);
     expect(result.opportunities.every((entry) => entry.checkId && entry.action && entry.evidence)).toBe(true);
