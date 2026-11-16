@@ -6,6 +6,8 @@
 import type { DataTable } from "./seo.js";
 import type { FreeReadEvidence } from "./evidence.js";
 import type { FreeReadOpportunity, FreeReadSocialProfile } from "./index.js";
+import type { V2CoverageScore } from "../geo/score/v2/coverage.js";
+import { publicV2Coverage, type PublicV2Coverage } from "../geo/score/v2/public.js";
 
 export type ReportPillarId = "seo" | "geo" | "ai" | "crm" | "social";
 export type ReportCoverage = "measured" | "partial" | "not_measured";
@@ -19,7 +21,7 @@ export interface ReportProof {
   value: string;
   note: string;
   /** A textual observation, not a screenshot of the target site. */
-  format: "html_observation" | "geo_check";
+  format: "html_observation" | "geo_check" | "geo_v2_control";
 }
 
 export interface ReportAction {
@@ -29,6 +31,8 @@ export interface ReportAction {
   kind: "observed_fix" | "next_step";
   code: string;
   checkId?: string;
+  /** Approved v2 rubric title in its original language. */
+  title?: string;
   priority: ReportPriority;
   effort: "low" | "medium" | "high";
   /** Operational change risk, not a computed SEO penalty. */
@@ -41,7 +45,7 @@ export interface ReportAction {
 export interface ReportPillar {
   id: ReportPillarId;
   coverage: ReportCoverage;
-  /** Only GEO v1 has a published scoring method in the public read. */
+  /** Null means no publishable score, not zero. */
   score: number | null;
   observedChecks: number | null;
   needsAttention: number | null;
@@ -52,7 +56,7 @@ export interface ReportPillar {
 
 export interface FreeReport360 {
   schemaVersion: 1;
-  method: "geo-v1-public-page";
+  method: "geo-v1-public-page" | "geo-v2-public-evidence";
   scope: "single_public_url";
   observedAt: string;
   sourceUrl: string;
@@ -62,6 +66,14 @@ export interface FreeReport360 {
   comparison: null;
   /** Distinguishes uncollected private metrics from observed public facts. */
   unmeasured: string[];
+  /** The complete, proof-bound 42-control GEO v2 ledger (never a v1 mapping). */
+  geoV2?: PublicV2Coverage;
+  /** Visual reconstruction of observed page metadata, NEVER a fabricated screenshot. */
+  sourcePreview?: {
+    kind: "observed_html_reconstruction";
+    title: string; description: string; heading: string; subheadings: string[];
+    observedAt: string; screenshotUrl: null;
+  };
 }
 
 interface ReportInput {
@@ -73,6 +85,8 @@ interface ReportInput {
   socialProfiles: FreeReadSocialProfile[];
   evidence: FreeReadEvidence;
   tables: DataTable[];
+  geoV2?: V2CoverageScore;
+  pageSignals?: { title: string; description: string; h1: string[]; h2: string[] };
 }
 
 const SEO_ACTIONS: Record<string, {
@@ -119,20 +133,25 @@ export function buildFreeReport360(input: ReportInput): FreeReport360 {
     }];
   }).sort((a, b) => PRIORITY_ORDER[a.priority] - PRIORITY_ORDER[b.priority]).slice(0, 8);
 
-  const geoActions: ReportAction[] = input.opportunities
-    .filter(item => item.status === "fail" || item.status === "partial")
-    .slice(0, 6)
-    .map(item => ({
-      id: `geo.${item.checkId}`, pillar: "geo", kind: "observed_fix", code: "geo_check",
-      checkId: item.checkId, priority: item.priority, effort: "medium", owner: "technical",
-      risk: item.priority === "critical" ? "high" : "medium",
-      points: Number.isFinite(item.points) ? item.points : null,
-      proof: {
-        id: `geo:${item.checkId}`, sourceUrl, observedAt, label: item.checkId,
-        value: item.evidence.slice(0, 512), note: item.action.slice(0, 512),
-        format: "geo_check",
-      },
-    }));
+  const v2 = input.geoV2;
+  // Only failed *measured* v2 checks become observed corrections. Unknown is
+  // never a defect, and no legacy v1 score/point is borrowed for this report.
+  const failingV2 = (v2?.controls ?? []).filter(control =>
+    control.status === "measured" && control.earned !== null && control.earned < control.maxPoints
+  ).sort((a, b) => (b.maxPoints - (b.earned ?? 0)) - (a.maxPoints - (a.earned ?? 0)));
+  const geoActions: ReportAction[] = failingV2.slice(0, 8).map(control => ({
+    id: `geo.v2.${control.controlId}`, pillar: "geo", kind: "observed_fix", code: "geo_v2_check",
+    checkId: control.controlId, title: control.title,
+    priority: control.category === "robots" || control.category === "rendering" ? "high" : "medium",
+    effort: "medium", owner: "technical", risk: "medium",
+    points: null, // Publishing projected v2 points requires a resolved audit and owner consent.
+    proof: {
+      id: `geo-v2:${control.controlId}`, sourceUrl: control.proof!.url,
+      observedAt, label: `${control.controlId} · ${control.title}`,
+      value: control.proof!.value.slice(0, 512), note: `GEO v2.0.0 · ${control.category}`,
+      format: "geo_v2_control",
+    },
+  }));
 
   const nextSteps: ReportAction[] = [
     { id: "ai.connect_measurement", pillar: "ai", kind: "next_step", code: "ai_measurement", priority: "medium", effort: "medium", risk: "high", owner: "marketing", points: null, proof: null },
@@ -142,18 +161,30 @@ export function buildFreeReport360(input: ReportInput): FreeReport360 {
 
   return {
     schemaVersion: 1,
-    method: "geo-v1-public-page",
+    method: "geo-v2-public-evidence",
     scope: "single_public_url",
     sourceUrl, observedAt, httpStatus: input.httpStatus,
     pillars: [
       { id: "seo", coverage: "measured", score: null, observedChecks: seoRows.length, needsAttention: seoFindings.length, observedCount: null, measurement: "html_seo_checks", missing: ["site_wide_audit", "competitor_keywords", "search_positions"] },
-      { id: "geo", coverage: "measured", score: input.score, observedChecks: input.checksSummary.total, needsAttention: input.checksSummary.toImprove, observedCount: null, measurement: "geo_v1_readiness", missing: ["geo_v2_not_substituted", "ai_citations"] },
+      { id: "geo", coverage: v2?.status === "complete" ? "measured" : v2?.controls.some(c => c.status === "measured") ? "partial" : "not_measured",
+        score: null, observedChecks: v2?.controls.filter(c => c.status === "measured").length ?? 0,
+        needsAttention: failingV2.length, observedCount: null, measurement: "geo_v2_evidence",
+        missing: [...(v2?.unmeasuredControls ?? []), "owner_score_publication_consent", "ai_citations"] },
       { id: "ai", coverage: "partial", score: null, observedChecks: null, needsAttention: null, observedCount: null, measurement: "page_readiness_only", missing: ["actual_ai_citations", "engine_queries", "ai_referrals"] },
       { id: "crm", coverage: "not_measured", score: null, observedChecks: null, needsAttention: null, observedCount: null, measurement: "requires_authorised_property", missing: ["actual_conversions", "lead_attribution", "customer_journey"] },
       { id: "social", coverage: "partial", score: null, observedChecks: null, needsAttention: null, observedCount: input.socialProfiles.length, measurement: "outbound_profile_links_on_page", missing: ["inbound_links", "engagement", "social_referrals"] },
     ],
     actions: [...seoActions, ...geoActions, ...nextSteps],
     comparison: null,
-    unmeasured: ["ai_citations", "ai_rankings", "crm_conversions", "social_inbound_backlinks", "historical_comparison"],
+    unmeasured: ["ai_citations", "ai_rankings", "crm_conversions", "social_inbound_backlinks", "historical_comparison", "unverified_domain_rendering"],
+    geoV2: v2 ? publicV2Coverage(v2) : undefined,
+    sourcePreview: {
+      kind: "observed_html_reconstruction",
+      title: (input.pageSignals?.title ?? "").slice(0, 130),
+      description: (input.pageSignals?.description ?? "").slice(0, 180),
+      heading: (input.pageSignals?.h1?.[0] ?? "").slice(0, 130),
+      subheadings: (input.pageSignals?.h2 ?? []).slice(0, 4).map(heading => heading.slice(0, 130)),
+      observedAt, screenshotUrl: null,
+    },
   };
 }

@@ -27,6 +27,16 @@ const ACTION_TITLES: Record<string, [string, string]> = {
 };
 const PRIORITIES: Record<string, [string, string]> = { critical: ["critique", "critical"], high: ["haute", "high"], medium: ["moyenne", "medium"], low: ["basse", "low"] };
 const OWNERS: Record<string, [string, string]> = { content: ["équipe éditoriale", "content team"], technical: ["équipe technique", "technical team"], marketing: ["marketing", "marketing"], analytics: ["data / CRM", "data / CRM"] };
+const V2_STEPS: Record<string, [[string, string, string], [string, string, string]]> = {
+  R: [["Vérifiez les règles robots.txt applicables à cette URL et aux robots IA.", "Préparez le changement d'accès requis, après validation du propriétaire.", "Recontrôlez les statuts HTTP et les directives par robot."], ["Inspect the robots.txt rules for this URL and AI crawlers.", "Prepare any access changes with the owner's approval.", "Recheck HTTP status codes and agent-specific rules."]],
+  L: [["Consultez llms.txt et les pages de documentation accessibles.", "Ajoutez des titres, résumés et liens fidèles au contenu approuvé.", "Vérifiez les fichiers et leur structure après mise à jour."], ["Inspect llms.txt and reachable documentation pages.", "Add headings, summaries and links based on approved facts.", "Recheck the files and document structure after the update."]],
+  J: [["Comparez les entités Schema.org aux faits visibles sur la page.", "Corrigez les champs et identifiants uniquement s'ils sont vérifiés.", "Testez la syntaxe JSON-LD et la cohérence du contenu publié."], ["Compare Schema.org entities with visible page facts.", "Update only verified properties and stable identifiers.", "Validate JSON-LD syntax and visible content consistency."]],
+  M: [["Repérez la balise meta concernée dans la réponse HTML.", "Rédigez une valeur fidèle au contenu et faites-la approuver.", "Relancez la lecture et comparez la balise après publication."], ["Find the affected metadata in the HTML response.", "Draft an accurate replacement and have it approved.", "Read the page again and compare metadata after publication."]],
+  C: [["Lisez le passage comme un client, en vérifiant la question traitée.", "Ajoutez des réponses et références sourcées sans inventer de faits.", "Revérifiez la hiérarchie des titres et la lisibilité."], ["Read the passage from a customer's point of view.", "Add supported answers and references without invented claims.", "Check the heading hierarchy and readability again."]],
+  B: [["Confirmez la marque, les coordonnées et les profils officiels.", "Alignez la page et les déclarations structurées approuvées.", "Vérifiez les liens officiels et les preuves indépendantes."], ["Confirm the brand, contact details and official profiles.", "Align the page and approved structured declarations.", "Check official links and independent evidence."]],
+  D: [["Repérez les ressources de découverte accessibles depuis la page.", "Reliez le sitemap et les points d'entrée autorisés.", "Vérifiez les URL et les réponses HTTP correspondantes."], ["Locate discovery resources reachable from the page.", "Connect approved sitemaps and entry points.", "Verify URLs and corresponding HTTP responses."]],
+  P: [["Vérifiez la propriété du domaine (DNS TXT ou fichier HTTPS).", "Autorisez un rendu Playwright isolé et limité en ressources.", "Comparez le HTML, le DOM rendu et les journaux vérifiés."], ["Verify ownership through DNS TXT or an HTTPS file.", "Authorise an isolated, resource-limited Playwright render.", "Compare the original HTML, rendered DOM and verified logs."]],
+};
 
 const at = (entry: [string, string], language: ReportLanguage): string => entry[language === "fr" ? 0 : 1];
 const clean = (value: unknown, limit = 500): string => String(value ?? "").replace(/[\u0000-\u001f\u007f]/g, " ").replace(/\s+/g, " ").trim().slice(0, limit);
@@ -41,9 +51,56 @@ const date = (value: string, language: ReportLanguage): string => {
   return Number.isFinite(parsed.getTime()) ? parsed.toLocaleString(language === "fr" ? "fr-FR" : "en-GB", { dateStyle: "medium", timeStyle: "short", timeZone: "UTC" }) + " UTC" : "-";
 };
 
+function v2Summary(report: FreeReport360, language: ReportLanguage): string {
+  const fr = language === "fr";
+  const controls = report.geoV2?.controls ?? [];
+  if (!controls.length) return fr ? "GEO v2 : collecte indisponible" : "GEO v2: evidence collection unavailable";
+  const measured = controls.filter(control => control.status === "measured").length;
+  const unknown = controls.filter(control => control.status === "unknown").length;
+  const excluded = controls.filter(control => control.status === "not_applicable").length;
+  return `GEO v2 · ${measured}/${controls.length} ${fr ? "observés" : "observed"} · ${unknown} ${fr ? "inconnus" : "unknown"} · ${excluded} ${fr ? "non applicables" : "not applicable"}`;
+}
+
+const V2_CATEGORY_NAMES: Record<string, [string, string]> = {
+  robots: ["Accès des robots", "Crawler access"], llms: ["Documentation IA", "AI documentation"],
+  jsonld: ["Données structurées", "Structured data"], meta: ["Métadonnées", "Metadata"],
+  content: ["Contenu", "Content"], brand: ["Identité de marque", "Brand identity"],
+  discovery: ["Découverte IA", "AI discovery"], rendering: ["Rendu du navigateur", "Browser rendering"],
+};
+const V2_TITLES_FR: Record<string, string> = {
+  R01: "Accès au fichier robots.txt", R02: "Autorisation des robots des moteurs IA", R03: "Absence de blocage contradictoire", R04: "Sitemap déclaré et accessible", R05: "Cohérence des règles par robot",
+  L01: "Accès au fichier llms.txt", L02: "Identification de l'activité", L03: "Résumé clair pour les IA", L04: "Structure et liens de documentation", L05: "Documentation de plus de 1 000 mots", L06: "Documentation approfondie et structurée",
+  J01: "JSON-LD lisible", J02: "Entité entreprise déclarée", J03: "Identifiants des entités cohérents", J04: "Liens entre site et pages", J05: "Données adaptées au contenu", J06: "Cohérence entre texte et données structurées",
+  M01: "Titre descriptif", M02: "Description utile", M03: "Adresse canonique cohérente", M04: "Aperçu Open Graph", M05: "Directives d'indexation cohérentes",
+  C01: "Proposition de valeur identifiable", C02: "Réponses directes aux questions", C03: "Titres de page structurés", C04: "Faits vérifiables", C05: "Sources pertinentes", C06: "Passages faciles à extraire", C07: "Dates de mise à jour vérifiables", C08: "Liens internes contextualisés",
+  B01: "Identité de marque cohérente", B02: "Entreprise et coordonnées identifiables", B03: "Profils sociaux déclarés cohérents", B04: "Références externes vérifiées", B05: "Expertise et autorité documentées",
+  D01: "Ressources de découverte IA accessibles", D02: "Pages importantes présentes dans le sitemap", D03: "Documentation facilement accessible",
+  P01: "Contenu essentiel présent dans le HTML", P02: "Cohérence entre HTML et rendu", P03: "Accès au contenu pour un crawler", P04: "Rendu stable sans blocage",
+};
+const v2Title = (id: string, original: string, language: ReportLanguage): string => language === "fr" ? V2_TITLES_FR[id] || original : original;
+
+function v2Status(status: string, language: ReportLanguage): string {
+  const fr = language === "fr";
+  return status === "measured" ? (fr ? "Observé" : "Observed") :
+    status === "not_applicable" ? (fr ? "Non applicable" : "Not applicable") :
+    (fr ? "Inconnu · preuve requise" : "Unknown · evidence needed");
+}
+
 export function actionGuide(action: ReportAction, lang: ReportLanguage): { title: string; why: string; steps: [string, string, string]; verify: string } {
   const fr = lang === "fr";
-  const title = ACTION_TITLES[action.code] ? at(ACTION_TITLES[action.code], lang) : (fr ? `Examiner le contrôle ${clean(action.checkId, 80)}` : `Review control ${clean(action.checkId, 80)}`);
+  const title = action.code === "geo_v2_check" && action.checkId
+    ? `GEO v2 ${clean(action.checkId, 8)} · ${clean(v2Title(action.checkId, action.title || action.checkId, lang), 130)}`
+    : ACTION_TITLES[action.code] ? at(ACTION_TITLES[action.code], lang)
+      : (fr ? `Examiner le contrôle ${clean(action.checkId, 80)}` : `Review control ${clean(action.checkId, 80)}`);
+  if (action.code === "geo_v2_check" && action.checkId) {
+    const steps = V2_STEPS[action.checkId[0]]?.[fr ? 0 : 1];
+    if (steps) return {
+      title,
+      why: action.proof ? `${fr ? "Constat vérifié" : "Observed finding"}: ${clean(action.proof.value, 200)}` : (fr ? "Preuve à compléter." : "Further evidence required."),
+      steps,
+      verify: fr ? "Relancez le même contrôle v2 sur cette URL et comparez les preuves datées." : "Run the same v2 check on this URL again and compare dated evidence.",
+    };
+  }
   if (action.kind === "next_step") {
     const specific: Record<string, [string, string, string, string][]> = {
       ai_measurement: [["Sélectionnez des questions clients représentatives.", "Choisissez et autorisez les moteurs IA utiles.", "Enregistrez chaque réponse datée et sa provenance.", "Comparez les réponses réellement collectées, jamais un score de préparation.",], ["Select representative customer questions.", "Choose and authorise the relevant AI engines.", "Record each dated answer and its source.", "Compare actual collected answers, never a readiness score."]],
@@ -82,8 +139,33 @@ export function renderReportMarkdown(report: FreeReport360, language: ReportLang
     "| --- | --- | --- |",
   ];
   for (const p of report.pillars) {
-    const measurement = p.score !== null ? `${p.score}/100 (GEO v1)` : p.id === "seo" ? `${p.observedChecks ?? "-"} ${fr ? "contrôles" : "checks"}; ${p.needsAttention ?? "-"} ${fr ? "à revoir" : "to review"}` : p.id === "social" ? `${p.observedCount ?? "-"} ${fr ? "liens de profils sortants" : "outbound profile links"}` : (fr ? "non mesuré" : "not measured");
+    const measurement = p.id === "geo" ? v2Summary(report, language) : p.id === "seo" ? `${p.observedChecks ?? "-"} ${fr ? "contrôles" : "checks"}; ${p.needsAttention ?? "-"} ${fr ? "à revoir" : "to review"}` : p.id === "social" ? `${p.observedCount ?? "-"} ${fr ? "liens de profils sortants" : "outbound profile links"}` : (fr ? "non mesuré" : "not measured");
     out.push(`| ${at(NAMES[p.id], language)} | ${p.coverage} | ${measurement} |`);
+  }
+  out.push("", `## ${fr ? "Aperçu visuel de la page" : "Visual page evidence"}`, "");
+  const preview = report.sourcePreview;
+  if (preview?.kind === "observed_html_reconstruction") {
+    out.push(`> ${fr ? "APERÇU RECONSTITUÉ À PARTIR DU HTML — PAS UNE CAPTURE D'ÉCRAN" : "RECONSTRUCTED FROM HTML — NOT A SCREENSHOT"}`, "");
+    out.push(`- ${fr ? "Titre d'extrait" : "Snippet title"}: ${markdownClean(preview.title || (fr ? "Absent" : "Missing"))}`);
+    out.push(`- ${fr ? "Description d'extrait" : "Snippet description"}: ${markdownClean(preview.description || (fr ? "Absente" : "Missing"))}`);
+    out.push(`- H1: ${markdownClean(preview.heading || (fr ? "Absent" : "Missing"))}`);
+    for (const h2 of preview.subheadings) out.push(`  - H2: ${markdownClean(h2)}`);
+    out.push(`- ${fr ? "Source originale" : "Original source"}: ${markdownUrl(report.sourceUrl)}`, "");
+  } else out.push(fr ? "Aucune reconstruction HTML disponible." : "No HTML reconstruction available.", "");
+  out.push(`## ${fr ? "Grille GEO v2 — 42 contrôles" : "GEO v2 — 42-control evidence ledger"}`, "");
+  out.push(`**${markdownClean(v2Summary(report, language))}**`, "");
+  out.push(fr ? "Aucun score v2 n'est publié sans preuves complètes et consentement du propriétaire. Un contrôle inconnu n'est pas un échec." : "No v2 score is published without complete evidence and owner consent. Unknown is not a failure.", "");
+  for (const [category, labels] of Object.entries(V2_CATEGORY_NAMES)) {
+    const controls = report.geoV2?.controls.filter(control => control.category === category) ?? [];
+    if (!controls.length) continue;
+    out.push(`### ${at(labels, language)}`, "");
+    for (const c of controls) {
+      out.push(`- **${markdownClean(c.controlId)} — ${markdownClean(v2Title(c.controlId, c.title, language), 160)}**: ${v2Status(c.status, language)}.`);
+      if (c.status === "measured" && c.proof) {
+        out.push(`  - ${fr ? "Constat" : "Observation"}: ${markdownClean(c.proof.value, 260)} · ${fr ? "source" : "source"}: ${markdownUrl(c.proof.url)}`);
+      } else if (c.reason) out.push(`  - ${fr ? "Motif" : "Reason"}: ${markdownClean(c.reason, 260)}`);
+    }
+    out.push("");
   }
   out.push("", `## ${fr ? "Plan d'action" : "Action plan"}`, "");
   let i = 0;
@@ -101,7 +183,7 @@ export function renderReportMarkdown(report: FreeReport360, language: ReportLang
     out.push("", `**${fr ? "Vérifier" : "Verify"}:** ${markdownClean(guide.verify)}`, "");
   }
   out.push(`## ${fr ? "Limites" : "Limitations"}`, "");
-  out.push(fr ? "Aucun moteur IA ou compte CRM n'a été interrogé. Les liens entrants, positions et conversions ne sont pas mesurés. Une seconde lecture n'a pas été effectuée : aucun avant/après réel n'est affirmé." : "No AI engine or CRM account was queried. Inbound links, rankings and conversions are not measured. No second observation was made: no real before/after improvement is claimed.");
+  out.push(fr ? "L'aperçu est une reconstruction de titres/description/H1/H2, pas une capture de la page. Une capture Playwright exige la vérification du domaine. Aucun moteur IA ou compte CRM n'a été interrogé. Les liens entrants, positions et conversions ne sont pas mesurés. Une seconde lecture n'a pas été effectuée : aucun avant/après réel n'est affirmé." : "The preview reconstructs title/description/H1/H2, not an actual screenshot. Playwright capture requires domain verification. No AI engine or CRM account was queried. Inbound links, rankings and conversions are not measured. No second observation was made: no real before/after improvement is claimed.");
   return out.join("\n") + "\n";
 }
 
@@ -132,7 +214,7 @@ export async function renderReportPdf(report: FreeReport360, language: ReportLan
     pdf.roundedRect(x, y, w, 80, 9).fill(PALETTE.soft);
     pdf.rect(x, y + 5, 4, 68).fill(PILLAR_COLORS[p.id]);
     pdf.fillColor(PALETTE.ink).font("Helvetica-Bold").fontSize(11).text(at(NAMES[p.id], language), x + 13, y + 10, { width: w - 24 });
-    const value = p.score !== null ? `${p.score}/100 - GEO v1` : p.id === "seo" ? `${p.observedChecks ?? "-"} ${fr ? "contrôles" : "checks"}` : p.id === "social" ? `${p.observedCount ?? "-"} ${fr ? "liens sortants" : "outbound links"}` : (fr ? "Non mesuré" : "Not measured");
+    const value = p.id === "geo" ? `${p.observedChecks ?? 0}/42 ${fr ? "observés" : "observed"}` : p.id === "seo" ? `${p.observedChecks ?? "-"} ${fr ? "contrôles" : "checks"}` : p.id === "social" ? `${p.observedCount ?? "-"} ${fr ? "liens sortants" : "outbound links"}` : (fr ? "Non mesuré" : "Not measured");
     pdf.fillColor(PALETTE.accent).font("Helvetica-Bold").fontSize(11).text(value, x + 13, y + 34, { width: w - 24 });
     pdf.fillColor(PALETTE.muted).font("Helvetica").fontSize(8).text(p.coverage, x + 13, y + 57, { width: w - 24 });
   }
@@ -145,6 +227,78 @@ export async function renderReportPdf(report: FreeReport360, language: ReportLan
     y += 26;
   }
   pdf.fillColor(PALETTE.muted).font("Helvetica").fontSize(8).text(fr ? "Les inconnues ne sont pas des scores à zéro. Les corrections restent des propositions à valider." : "Unknown metrics are not zero scores. Every change requires review.", left, 721, { width: usable });
+
+  // Source-linked editorial reconstruction: deliberately NO fabricated screenshot.
+  pdf.addPage();
+  pdf.fillColor(PALETTE.ink).font("Helvetica-Bold").fontSize(17)
+    .text(fr ? "La page, illustrée par les faits" : "Your page, illustrated from evidence", left, 58, { width: usable });
+  pdf.fillColor(PALETTE.muted).font("Helvetica").fontSize(9)
+    .text(fr ? "Aperçu reconstitué du HTML observé — pas une capture d'écran du navigateur." : "Preview reconstructed from observed HTML — not a browser screenshot.", left, 88, { width: usable });
+  const preview = report.sourcePreview;
+  pdf.roundedRect(left, 126, usable, 208, 12).fill(PALETTE.soft);
+  pdf.roundedRect(left + 17, 144, usable - 34, 29, 7).fill("#E8E1F8");
+  for (const [i, color] of ["#E9738C", "#ECC06C", "#77C7AD"].entries()) {
+    pdf.circle(left + 31 + i * 14, 159, 3.7).fill(color);
+  }
+  pdf.fillColor(PALETTE.ink).fontSize(8)
+    .text(text(report.sourceUrl, 105), left + 103, 153, { width: usable - 133, ellipsis: true });
+  pdf.fillColor(PALETTE.muted).font("Helvetica").fontSize(8)
+    .text(fr ? "Aperçu du résultat de recherche" : "Search-result snippet preview", left + 27, 188);
+  pdf.fillColor(PALETTE.accent).font("Helvetica-Bold").fontSize(14)
+    .text(text(preview?.title || (fr ? "Titre non détecté" : "No title found"), 115), left + 27, 211, { width: usable - 58, ellipsis: true, height: 34 });
+  pdf.fillColor(PALETTE.ink).font("Helvetica").fontSize(10)
+    .text(text(preview?.description || (fr ? "Description non détectée" : "No description found"), 200), left + 27, 254, { width: usable - 58, height: 53, ellipsis: true });
+  pdf.fillColor(PALETTE.ink).font("Helvetica-Bold").fontSize(13)
+    .text(fr ? "Structure des titres observée" : "Observed heading outline", left, 366, { width: usable });
+  const observedHeadings = [
+    ["H1", preview?.heading || (fr ? "Aucun H1 trouvé" : "No H1 found")],
+    ...(preview?.subheadings ?? []).slice(0, 4).map(value => ["H2", value]),
+  ];
+  for (const [index, [tag, value]] of observedHeadings.entries()) {
+    const rowY = 407 + index * 50;
+    pdf.roundedRect(left, rowY, usable, 42, 7).fill(index === 0 ? "#EBE3FC" : "#F6F2FF");
+    pdf.fillColor(PALETTE.accent).font("Helvetica-Bold").fontSize(10)
+      .text(tag, left + 13, rowY + 14, { width: 31 });
+    pdf.fillColor(PALETTE.ink).font(index === 0 ? "Helvetica-Bold" : "Helvetica").fontSize(10)
+      .text(text(value, 180), left + 55, rowY + 12, { width: usable - 70, height: 24, ellipsis: true });
+  }
+  pdf.fillColor(PALETTE.muted).font("Helvetica").fontSize(9)
+    .text(fr ? "Capture Playwright authentique : domaine vérifié et autorisation du propriétaire requis." : "Authentic Playwright screenshot requires verified domain ownership and approval.", left, 689, { width: usable });
+
+  // All 42 GEO v2 checks: visible coverage, explicit unknowns, no private points.
+  pdf.addPage();
+  let ledgerY = 56;
+  pdf.fillColor(PALETTE.ink).font("Helvetica-Bold").fontSize(16)
+    .text(fr ? "GEO v2 — 42 contrôles et preuves" : "GEO v2 — 42 checks and evidence", left, ledgerY, { width: usable });
+  pdf.fillColor(PALETTE.accent).font("Helvetica-Bold").fontSize(10)
+    .text(v2Summary(report, language), left, ledgerY + 30, { width: usable });
+  pdf.fillColor(PALETTE.muted).font("Helvetica").fontSize(8.5)
+    .text(fr ? "Score non publié. Inconnu ne signifie pas échec. Vérifier chaque preuve avant toute décision." : "Score unpublished. Unknown does not mean failure. Review each proof before acting.", left, ledgerY + 48, { width: usable });
+  ledgerY += 82;
+  for (const [category, names] of Object.entries(V2_CATEGORY_NAMES)) {
+    const controls = report.geoV2?.controls.filter(control => control.category === category) ?? [];
+    if (!controls.length) continue;
+    if (ledgerY + 61 > 743) { pdf.addPage(); ledgerY = 56; }
+    pdf.fillColor(PALETTE.ink).font("Helvetica-Bold").fontSize(11)
+      .text(at(names, language), left, ledgerY, { width: usable });
+    ledgerY += 19;
+    for (const control of controls) {
+      if (ledgerY + 34 > 743) { pdf.addPage(); ledgerY = 56; }
+      const observed = control.status === "measured";
+      pdf.roundedRect(left, ledgerY, usable, 33, 5).fill(observed ? "#F3F0FB" : "#FAF8FE");
+      pdf.fillColor(PALETTE.accent).font("Helvetica-Bold").fontSize(9)
+        .text(control.controlId, left + 8, ledgerY + 5, { width: 31 });
+      pdf.fillColor(PALETTE.ink).font("Helvetica-Bold").fontSize(8.5)
+        .text(text(v2Title(control.controlId, control.title, language), 70), left + 43, ledgerY + 5, { width: usable - 170, height: 11, ellipsis: true });
+      pdf.fillColor(observed ? "#176450" : PALETTE.muted).font("Helvetica").fontSize(8)
+        .text(v2Status(control.status, language), left + usable - 120, ledgerY + 5, { width: 112, align: "right", ellipsis: true });
+      pdf.fillColor(PALETTE.muted).font("Helvetica").fontSize(7.5)
+        .text(text(observed ? control.proof?.value : control.reason || (fr ? "Preuve requise" : "Evidence required"), 150), left + 43, ledgerY + 19,
+          { width: usable - 55, height: 11, ellipsis: true });
+      ledgerY += 37;
+    }
+    ledgerY += 6;
+  }
 
   // Each action receives a readable proof/steps card. New page, no clipped rows.
   pdf.addPage(); y = 55;
@@ -175,8 +329,8 @@ export async function renderReportPdf(report: FreeReport360, language: ReportLan
   if (y > 688) { pdf.addPage(); y = 65; }
   pdf.fillColor(PALETTE.ink).font("Helvetica-Bold").fontSize(13).text(fr ? "Méthode et limites" : "Method and limitations", left, y + 12);
   pdf.fillColor(PALETTE.muted).font("Helvetica").fontSize(9).text(fr
-    ? "Source : lecture HTTP d'une seule page. GEO v1 mesure une préparation. Aucune citation réelle des moteurs IA, conversion CRM, backlink entrant ni mesure avant/après n'est déduite. Toute publication exige l'accord du propriétaire."
-    : "Source: a single public HTTP page read. GEO v1 measures readiness. Real AI citations, CRM conversions, inbound backlinks and before/after results are not inferred. Publishing requires owner approval.", left, y + 40, { width: usable, lineGap: 3 });
+    ? "Source : lecture HTTP d'une page et grille GEO v2 de 42 contrôles avec inconnues distinctes. L'aperçu est reconstitué, sans capture d'écran réelle. Aucune citation IA, conversion CRM, backlink entrant ni amélioration avant/après n'est déduite. La publication d'un score exige l'accord du propriétaire."
+    : "Source: one HTTP page read and the 42-control GEO v2 grid with explicit unknowns. The preview is reconstructed, not an actual screenshot. No AI citation, CRM conversion, inbound backlink or before/after improvement is inferred. Publishing a score requires owner consent.", left, y + 40, { width: usable, lineGap: 3 });
 
   const pages = pdf.bufferedPageRange();
   for (let i = 0; i < pages.count; i++) {

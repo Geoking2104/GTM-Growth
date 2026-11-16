@@ -52,6 +52,12 @@ export interface LlmsAudit {
   warnings: string[];
   /** First ~400 chars of the file, so an agent can sanity-check the content. */
   excerpt: string;
+  /** Bounded structured excerpts, extracted from the already fetched document. */
+  siteHeading: string;
+  summary: string;
+  validLinkCount: number;
+  invalidLinkCount: number;
+  linkSamples: Array<{ label: string; href: string; valid: boolean }>;
 }
 
 export interface SchemaAudit {
@@ -127,6 +133,8 @@ export interface BrandAudit {
 }
 
 export interface AiDiscoveryAudit {
+  /** Zero means a transport failure, not HTTP absence. */
+  endpointStatus: { wellKnownAi: number; summary: number; faq: number; service: number };
   hasWellKnownAi: boolean;
   hasSummary: boolean;
   summaryValid: boolean;

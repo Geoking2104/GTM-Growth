@@ -5,7 +5,7 @@
  * GEO audit, so a free read costs the target one request per resource — the
  * same shape as a normal visitor, not a crawler storm.
  *
- * Returns the GEO score, the fixes that move it most, the SEO tables and the
+ * Returns legacy v1 values (for API compatibility), the v2 evidence ledger, SEO tables and the
  * GA4 / Search Console blocks. Traffic rows are real only when a credential is
  * supplied; otherwise they carry `sample: true`.
  */
@@ -19,6 +19,8 @@ import { seoTables, type DataTable } from "./seo.js";
 import { buildSitemapMap, type SitemapMap } from "./sitemap-map.js";
 import { buildFreeReadEvidence, sitemapEvidence, type FreeReadEvidence } from "./evidence.js";
 import { buildFreeReport360, type FreeReport360 } from "./report360.js";
+import { collectAutomaticV2 } from "../geo/score/v2/automatic.js";
+import type { PublicV2Coverage } from "../geo/score/v2/public.js";
 
 export interface FreeReadOpportunity {
   checkId: string;
@@ -50,9 +52,12 @@ export interface FreeReadResult {
   finalUrl: string;
   httpStatus: number;
   durationMs: number;
+  /** Deprecated legacy GEO v1 metric; never use as a GEO v2 score. */
   score: number;
   band: string;
+  /** Deprecated GEO v1 projection; never render as a v2 forecast. */
   projectedScore: number;
+  /** Deprecated GEO v1 points, NOT approved v2 rubric points. */
   recoverablePoints: number;
   headline: { label: string; value: string }[];
   topFixes: { checkId: string; points: number; action: string }[];
@@ -71,6 +76,8 @@ export interface FreeReadResult {
   limitations: string[];
   /** Versioned five-pillar public report; unknown private metrics remain null. */
   report360: FreeReport360;
+  /** Full 42-control v2 evidence ledger; incomplete controls never earn zero points. */
+  geoV2: PublicV2Coverage;
 }
 
 const SITEMAP_CANDIDATES = ["/sitemap.xml", "/sitemap_index.xml"];
@@ -209,6 +216,18 @@ export async function runFreeRead(options: FreeReadOptions): Promise<FreeReadRes
     evidence: byId.get(rec.checkId)?.evidence ?? "No evidence available",
   }));
 
+  // The v2 collectors reuse the exact fetched page and sitemap; there is no
+  // unverified Playwright crawl, paid model request or private-data access.
+  const geoV2 = await collectAutomaticV2(audit, [], {
+    pageHtml: page.body,
+    sitemap: sitemap ? {
+      url: sitemap.url,
+      valid: sitemap.status >= 200 && sitemap.status < 300 &&
+        new URL(sitemap.url).origin === origin && Boolean(sitemapEvidence(sitemap.body)),
+      xml: sitemap.body,
+    } : undefined,
+  });
+
   const result = {
     url: options.url,
     finalUrl,
@@ -219,9 +238,9 @@ export async function runFreeRead(options: FreeReadOptions): Promise<FreeReadRes
     projectedScore: audit.projectedScore,
     recoverablePoints: audit.recoverablePoints,
     headline: [
-      { label: "GEO score", value: `${audit.score}/100` },
-      { label: "Projected", value: `${audit.projectedScore}/100` },
-      { label: "Recoverable", value: `${audit.recoverablePoints} pts` },
+      { label: "GEO v1 legacy (deprecated)", value: `${audit.score}/100` },
+      { label: "GEO v1 projected (deprecated)", value: `${audit.projectedScore}/100` },
+      { label: "GEO v1 recoverable (deprecated)", value: `${audit.recoverablePoints} pts` },
       { label: "Host", value: host },
     ],
     topFixes: audit.recommendations.slice(0, 3).map((rec) => ({
@@ -247,12 +266,16 @@ export async function runFreeRead(options: FreeReadOptions): Promise<FreeReadRes
     },
     tables,
     sitemapMap: buildSitemapMap(sitemap?.body ?? null, sitemap?.url ?? null, host),
+    geoV2,
     limitations: [
-      "The GEO score covers the audited page only, not the whole site.",
+      "The 42-control GEO v2 score remains unpublished until every applicable control has evidence and the owner consents.",
+      "Legacy GEO v1 values are retained only for compatibility with older clients, not used as GEO v2 points.",
       "GA4 and Search Console traffic rows are sample data unless a property is connected.",
       "No AI engine is queried: readiness is measured, citations are not claimed.",
       "CRM conversions and inbound social links are not measured by this public read.",
     ],
   };
-  return { ...result, report360: buildFreeReport360(result) };
+  const report360 = buildFreeReport360(result);
+  // Do not ship numeric point ledgers in anonymous JSON or saved email reports.
+  return { ...result, geoV2: report360.geoV2!, report360 };
 }

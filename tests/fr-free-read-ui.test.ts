@@ -78,15 +78,20 @@ describe("French free read user flow", () => {
     expect(fetchMock).toHaveBeenCalledWith("/api/free-read", expect.objectContaining({ method: "POST" }));
   });
 
-  it("displays measured GEO score and French labels from the real payload", async () => {
+  it("displays measured GEO v2 coverage without substituting a legacy v1 score", async () => {
     vi.stubGlobal("fetch", vi.fn(async () => ({
       ok: true,
-      json: async () => ({ score: 71, projectedScore: 100, durationMs: 125, tables: [
+      json: async () => ({ score: 71, projectedScore: 100, durationMs: 125,
+        geoV2: { controls: Array.from({ length: 42 }, (_, index) => ({ controlId: `M${index}`, status: index < 19 ? "measured" : "unknown" })) },
+        report360: { actions: [{ kind: "observed_fix", pillar: "geo", checkId: "M01", title: "Descriptive title", proof: { value: "Titre absent" } }] },
+        tables: [
         { id: "seo.meta", title: "SEO — metadata", rows: [{ label: "Title", value: "48 chars", status: "pass" }] },
       ] }),
     })));
     submit("example.com");
-    await vi.waitFor(() => expect(nodes["read-result"].textContent).toContain("Score GEO mesuré : 71/100"));
+    await vi.waitFor(() => expect(nodes["read-result"].textContent).toContain("GEO v2 · 19/42 contrôles observés"));
+    expect(nodes["read-result"].textContent).toContain("23 contrôles restent inconnus");
+    expect(nodes["read-result"].textContent).not.toContain("71/100");
     expect(nodes["read-result"].textContent).toContain("SEO — métadonnées");
     expect(nodes["read-result"].textContent).toContain("48 caractères");
     expect(nodes["read-result"].textContent).not.toContain("SEO — metadata");

@@ -8,9 +8,9 @@ const UI = {
     url: "Page source", date: "Relevé le", scope: "Périmètre : cette URL, pas l'ensemble du site",
     coverage: "Couverture", measured: "Contrôles effectués", partial: "Partiellement observé", unknown: "Non mesuré",
     checks: "contrôles vérifiés", attention: "à examiner", profiles: "liens de profils repérés",
-    score: "Score de préparation GEO v1", scoreMissing: "Pas de score public fiable",
+    score: "Grille GEO v2 · 42 contrôles", scoreMissing: "Score v2 non publié · preuves incomplètes",
     seoNote: "Contrôles HTML de cette page ; aucun score SEO global calculé.",
-    geoNote: "Préparation GEO v1 seulement ; ni GEO v2 ni citation réelle.",
+    geoNote: "42 contrôles GEO v2 ; seuls les constats sourcés sont évalués. Aucun score public sans couverture complète et accord du propriétaire.",
     aiNote: "Préparation de la page seulement ; aucun moteur IA interrogé.",
     crmNote: "Conversions et revenus non observables sans connexion autorisée.",
     socialNote: "Liens sortants/identités déclarées seulement ; pas de liens entrants mesurés.",
@@ -29,6 +29,18 @@ const UI = {
     critical: "Critique", high: "Haute", medium: "Moyenne", low: "Basse",
     generalVerify: "Relancez le même diagnostic sur la même URL et comparez le contrôle ; conservez la date et la méthode.",
     generalApprove: "Faites relire le changement par le responsable du site avant publication.",
+    v2Checks: "contrôles observés / 42", v2Grid: "Grille GEO v2 · preuves et applicabilité",
+    v2Intro: "Chaque contrôle est soit observé, soit inconnu, soit non applicable avec justification. Un inconnu ne vaut jamais zéro.",
+    v2Measured: "Observé", v2Unknown: "Inconnu", v2Excluded: "Non applicable", v2Status: "Statut",
+    v2Summary: "Contrôles GEO v2", v2NoScore: "Aucun score v2 publiable à ce stade",
+    visualTitle: "La page, illustrée à partir des éléments lus", visualLabel: "APERÇU RECONSTITUÉ · PAS UNE CAPTURE D’ÉCRAN",
+    visualNote: "Titre, description et titres de section proviennent de la réponse HTML. La mise en page d'origine n'a pas été capturée. Pour une capture authentique, vérifiez la propriété du domaine et autorisez un rendu isolé.",
+    visualSnippet: "Aperçu du résultat de recherche", visualOutline: "Titres observés sur la page", visualMissing: "Non trouvé dans le HTML",
+    connectionsTitle: "Compléter les mesures dans votre espace sécurisé", connectionsIntro: "Ces données ne sont pas déductibles d'une lecture publique. Activez uniquement les sources qui vous appartiennent.",
+    connectionOpen: "Ouvrir le module", connectionAi: "Réponses réelles des moteurs IA", connectionCrm: "Conversions et parcours CRM", connectionSocial: "Réseaux sociaux et liens entrants",
+    connectionAiNote: "Compte API autorisé ou import de réponses horodatées. Une requête moteur peut être facturée ; validation requise.",
+    connectionCrmNote: "Événements GA4/CRM et identités explicites, avec accès cloisonné par client et consentement.",
+    connectionSocialNote: "Profils déclarés, analytics autorisées et sources de liens entrants indépendantes à fournir ou connecter.",
   },
   en: {
     eyebrow: "FREE 360° DIAGNOSTIC", title: "Your visibility, made understandable",
@@ -36,9 +48,9 @@ const UI = {
     url: "Source page", date: "Observed on", scope: "Scope: this URL, not the entire website",
     coverage: "Coverage", measured: "Checks performed", partial: "Partially observed", unknown: "Not measured",
     checks: "checks reviewed", attention: "to review", profiles: "profile links found",
-    score: "GEO v1 readiness score", scoreMissing: "No defensible public score",
+    score: "GEO v2 · 42-control grid", scoreMissing: "V2 score unpublished · incomplete evidence",
     seoNote: "HTML checks on this page; no overall SEO score is calculated.",
-    geoNote: "GEO v1 readiness only, not GEO v2 or observed citations.",
+    geoNote: "42 GEO v2 controls; only source-backed findings are evaluated. No public score without full coverage and owner consent.",
     aiNote: "Page readiness only; no AI engine was queried.",
     crmNote: "Conversions and revenue require an authorised connection.",
     socialNote: "Outbound/declared profile links only; inbound links not measured.",
@@ -57,6 +69,18 @@ const UI = {
     critical: "Critical", high: "High", medium: "Medium", low: "Low",
     generalVerify: "Run the same diagnostic on the same URL again and compare the check, keeping the date and method.",
     generalApprove: "Have the website owner review the change before it is published.",
+    v2Checks: "observed / 42 controls", v2Grid: "GEO v2 grid · proof and applicability",
+    v2Intro: "Every check is observed, unknown or not applicable with evidence. Unknown never means zero.",
+    v2Measured: "Observed", v2Unknown: "Unknown", v2Excluded: "Not applicable", v2Status: "Status",
+    v2Summary: "GEO v2 controls", v2NoScore: "No publishable v2 score yet",
+    visualTitle: "Your page, illustrated using observed HTML", visualLabel: "RECONSTRUCTED PREVIEW · NOT A SCREENSHOT",
+    visualNote: "The title, description and headings come from the HTML response. The original visual layout was not captured. Verify domain ownership and authorise isolated rendering for an authentic screenshot.",
+    visualSnippet: "Search-result preview", visualOutline: "Headings observed on the page", visualMissing: "Not found in HTML",
+    connectionsTitle: "Complete measurement in your secure workspace", connectionsIntro: "These sources cannot be inferred from a public page. Activate only sources you own or are authorised to access.",
+    connectionOpen: "Open module", connectionAi: "Real AI-engine answers", connectionCrm: "CRM conversions and journeys", connectionSocial: "Social networks and inbound links",
+    connectionAiNote: "Authorised API account or dated answer import. A model request may incur costs and requires confirmation.",
+    connectionCrmNote: "GA4/CRM events and explicitly linked identities, with tenant isolation and consent.",
+    connectionSocialNote: "Declared profiles, authorised analytics and independent inbound-link sources to supply or connect.",
   },
 };
 
@@ -67,6 +91,35 @@ const PILLARS = [
   { id: "crm", symbol: "◎", fr: "CRM", en: "CRM" },
   { id: "social", symbol: "↗", fr: "Réseaux sociaux", en: "Social" },
 ];
+
+const V2_CATEGORY = {
+  robots: ["Accès des robots", "Crawler access"], llms: ["Documentation IA", "AI documentation"],
+  jsonld: ["Données structurées", "Structured data"], meta: ["Métadonnées", "Metadata"],
+  content: ["Contenu", "Content"], brand: ["Identité de marque", "Brand identity"],
+  discovery: ["Découverte IA", "AI discovery"], rendering: ["Rendu du navigateur", "Browser rendering"],
+};
+const V2_TITLES_FR = {
+  R01: "Accès au fichier robots.txt", R02: "Autorisation des robots des moteurs IA", R03: "Absence de blocage contradictoire", R04: "Sitemap déclaré et accessible", R05: "Cohérence des règles par robot",
+  L01: "Accès au fichier llms.txt", L02: "Identification de l'activité", L03: "Résumé clair pour les IA", L04: "Structure et liens de documentation", L05: "Documentation de plus de 1 000 mots", L06: "Documentation approfondie et structurée",
+  J01: "JSON-LD lisible", J02: "Entité entreprise déclarée", J03: "Identifiants des entités cohérents", J04: "Liens entre site et pages", J05: "Données adaptées au contenu", J06: "Cohérence entre texte et données structurées",
+  M01: "Titre descriptif", M02: "Description utile", M03: "Adresse canonique cohérente", M04: "Aperçu Open Graph", M05: "Directives d'indexation cohérentes",
+  C01: "Proposition de valeur identifiable", C02: "Réponses directes aux questions", C03: "Titres de page structurés", C04: "Faits vérifiables", C05: "Sources pertinentes", C06: "Passages faciles à extraire", C07: "Dates de mise à jour vérifiables", C08: "Liens internes contextualisés",
+  B01: "Identité de marque cohérente", B02: "Entreprise et coordonnées identifiables", B03: "Profils sociaux déclarés cohérents", B04: "Références externes vérifiées", B05: "Expertise et autorité documentées",
+  D01: "Ressources de découverte IA accessibles", D02: "Pages importantes présentes dans le sitemap", D03: "Documentation facilement accessible",
+  P01: "Contenu essentiel présent dans le HTML", P02: "Cohérence entre HTML et rendu", P03: "Accès au contenu pour un crawler", P04: "Rendu stable sans blocage",
+};
+const V2_GUIDES = {
+  R: { fr: ["Contrôlez la règle de crawl pour cette URL et chaque robot concerné.", "Corrigez le fichier robots.txt ou la directive uniquement après accord du propriétaire.", "Relancez la lecture des mêmes ressources et vérifiez les statuts HTTP."], en: ["Inspect crawler rules for this exact URL and the relevant agents.", "Change robots.txt or page directives only with owner approval.", "Fetch the same resources again and verify HTTP statuses."] },
+  L: { fr: ["Relisez llms.txt et les pages de documentation réellement accessibles.", "Ajoutez des titres, descriptions et liens fidèles au contenu existant.", "Vérifiez les réponses HTTP et les extraits du nouveau fichier."], en: ["Review llms.txt and the documentation pages actually available.", "Add headings, summaries and links that match existing content.", "Verify HTTP responses and excerpts from the updated file."] },
+  J: { fr: ["Comparez les propriétés Schema.org aux informations visibles de la page.", "Corrigez uniquement les données vérifiées, en conservant des identifiants cohérents.", "Testez le JSON-LD et relisez les valeurs dans le HTML publié."], en: ["Compare Schema.org properties with visible page facts.", "Update only verified values with coherent identifiers.", "Validate JSON-LD and recheck the published HTML."] },
+  M: { fr: ["Identifiez l'élément meta concerné dans le code source.", "Préparez une valeur concise et exacte, puis faites-la valider.", "Récupérez la page et comparez la nouvelle balise au constat."], en: ["Find the relevant metadata in the source.", "Prepare a concise, accurate value and request approval.", "Fetch the page again and compare the tag with this observation."] },
+  C: { fr: ["Relisez le passage concerné tel qu'un visiteur le voit.", "Ajoutez des réponses et références utiles sans inventer de faits.", "Vérifiez la structure, les liens et la lisibilité après publication."], en: ["Read the passage as a visitor would.", "Add useful answers and cited sources without fabricating facts.", "Check structure, links and readability after publishing."] },
+  B: { fr: ["Confirmez la dénomination et les profils officiels auprès de l'entreprise.", "Alignez les mentions sur la page et les déclarations structurées.", "Contrôlez les liens officiels et les preuves indépendantes après mise à jour."], en: ["Confirm the business identity and official profiles with the owner.", "Align visible information with structured declarations.", "Verify official links and independent proof after the update."] },
+  D: { fr: ["Identifiez les ressources d'entrée réellement disponibles.", "Reliez les pages utiles depuis le sitemap et la documentation approuvée.", "Contrôlez les URL, leur contenu et les codes HTTP."], en: ["Identify the entry resources that are actually accessible.", "Link useful pages from the approved sitemap and documentation.", "Validate URLs, content and HTTP statuses."] },
+  P: { fr: ["Vérifiez d'abord la propriété du domaine (DNS TXT ou fichier HTTPS).", "Autorisez un rendu Playwright isolé avec limites de ressources.", "Comparez le HTML, le DOM et les journaux du même instantané."], en: ["First verify domain ownership (DNS TXT or HTTPS file).", "Authorise resource-limited isolated Playwright rendering.", "Compare HTML, DOM and logs from the same snapshot."] },
+};
+
+const v2Title = (id, fallback, lang) => lang === "fr" ? V2_TITLES_FR[id] || fallback || id : fallback || id;
 
 /* Editorial instructions are reviewed suggestions, never mutations. */
 const GUIDES = {
@@ -127,8 +180,8 @@ const GUIDES = {
     en: ["Declare verifiable entities", "No schema type was detected within this page's scope.", "Identify organisations, products or articles actually described.", "Verify official identities and reference URLs.", "Add only supported, approved entities.", "Validate markup and source links."],
   },
   ai_measurement: {
-    fr: ["Mesurer les réponses des moteurs IA", "Le score GEO v1 indique une préparation, pas des citations observées dans ChatGPT, Claude ou Gemini.", "Choisissez des questions clients représentatives.", "Connectez ou autorisez explicitement les moteurs et les comptes utiles.", "Enregistrez dates, requêtes, réponses et preuves sans extrapoler.", "Comparez les résultats à périmètre identique, avec attribution claire."],
-    en: ["Measure actual AI engine answers", "GEO v1 readiness is not observed citations in ChatGPT, Claude or Gemini.", "Choose representative customer questions.", "Explicitly authorise the relevant engines and accounts.", "Record queries, answers, dates and evidence without extrapolating.", "Compare like-for-like observations with clear attribution."],
+    fr: ["Mesurer les réponses des moteurs IA", "La grille GEO v2 mesure une préparation, pas des citations réellement observées dans ChatGPT, Claude, Gemini, Mistral ou Grok.", "Choisissez des questions clients représentatives.", "Connectez ou autorisez explicitement les moteurs et les comptes utiles.", "Enregistrez dates, requêtes, réponses et preuves sans extrapoler.", "Comparez les résultats à périmètre identique, avec attribution claire."],
+    en: ["Measure actual AI engine answers", "GEO v2 readiness is not a record of actual citations in ChatGPT, Claude, Gemini, Mistral or Grok.", "Choose representative customer questions.", "Explicitly authorise the relevant engines and accounts.", "Record queries, answers, dates and evidence without extrapolating.", "Compare like-for-like observations with clear attribution."],
   },
   crm_measurement: {
     fr: ["Relier les actions aux conversions", "Une lecture HTML publique ne donne ni prospects, ni ventes, ni revenus fiables.", "Définissez ce qu'est une conversion ou un contact utile.", "Connectez une propriété GA4/CRM avec consentement et droits adaptés.", "Vérifiez les événements et leur provenance sans exposer de données personnelles.", "Contrôlez le rapprochement dans un rapport tenant isolé."],
@@ -158,6 +211,16 @@ function safeLink(url, label, cls = "") {
   return link;
 }
 function guide(action, lang) {
+  if (action.pillar === "geo" && action.code === "geo_v2_check" && action.checkId) {
+    const copy = UI[lang];
+    const title = v2Title(action.checkId, action.title, lang);
+    const steps = V2_GUIDES[action.checkId[0]]?.[lang] || [copy.generalVerify, copy.generalApprove, copy.generalVerify];
+    return {
+      title: `GEO v2 ${action.checkId} · ${title}`,
+      why: action.proof ? `${copy.proof} : ${action.proof.value}` : copy.noProof,
+      steps, verify: copy.generalVerify,
+    };
+  }
   if (action.pillar === "geo" && action.checkId) {
     const info = explainRecommendation({ checkId: action.checkId, status: "fail", priority: action.priority, points: action.points || 0 }, lang);
     return { title: info.title, why: info.effect, steps: [info.steps, UI[lang].generalApprove, UI[lang].generalVerify], verify: UI[lang].generalVerify };
@@ -167,7 +230,7 @@ function guide(action, lang) {
   return { title: values[0], why: values[1], steps: values.slice(2, 5), verify: values[5] };
 }
 function pillLabel(pillar, lang, copy) {
-  if (pillar.id === "geo" && typeof pillar.score === "number") return `${pillar.score}/100`;
+  if (pillar.id === "geo") return `${pillar.observedChecks ?? 0} ${copy.v2Checks}`;
   if (pillar.id === "seo") return `${pillar.observedChecks ?? "—"} ${copy.checks}`;
   if (pillar.id === "social") return `${pillar.observedCount ?? "—"} ${copy.profiles}`;
   return copy.notMeasured;
@@ -185,9 +248,6 @@ function pillarCard(pillar, lang, copy) {
     const bar = el("div", "report360-bar"); bar.setAttribute("role", "progressbar"); bar.setAttribute("aria-valuemin", "0"); bar.setAttribute("aria-valuemax", "100"); bar.setAttribute("aria-valuenow", String(Math.round(value)));
     bar.setAttribute("aria-label", `${pillar.observedChecks - pillar.needsAttention} / ${pillar.observedChecks} ${copy.measured.toLowerCase()}`);
     const fill = el("span"); fill.style.width = `${value}%`; bar.append(fill); card.append(bar);
-  } else if (pillar.id === "geo" && typeof pillar.score === "number") {
-    const bar = el("div", "report360-bar"); bar.setAttribute("role", "progressbar"); bar.setAttribute("aria-valuemin", "0"); bar.setAttribute("aria-valuemax", "100"); bar.setAttribute("aria-valuenow", String(pillar.score)); bar.setAttribute("aria-label", copy.score);
-    const fill = el("span"); fill.style.width = `${Math.max(0, Math.min(100, pillar.score))}%`; bar.append(fill); card.append(bar);
   } else card.append(el("div", "report360-bar report360-bar-unknown", "··········"));
   const coverage = pillar.coverage === "measured" ? copy.measured : pillar.coverage === "partial" ? copy.partial : copy.unknown;
   const note = copy[`${pillar.id}Note`];
@@ -247,6 +307,101 @@ function formatDate(value, lang) {
   return Number.isNaN(date.getTime()) ? "—" : date.toLocaleString(lang === "fr" ? "fr-FR" : "en-GB", { dateStyle: "medium", timeStyle: "short" });
 }
 
+/** A styled illustration made only from observed HTML text, never a screenshot. */
+function renderSourcePreview(report, lang, copy) {
+  const model = report.sourcePreview;
+  if (model?.kind !== "observed_html_reconstruction") return null;
+  const section = el("section", "report360-visual"); section.id = "c-report360-visual";
+  section.append(el("p", "report360-eyebrow", copy.visualLabel), el("h2", "", copy.visualTitle));
+  const grid = el("div", "report360-visual-grid");
+  const search = el("article", "report360-search-preview");
+  search.append(el("h3", "", copy.visualSnippet));
+  const browserFrame = el("div", "report360-browser-frame");
+  const chrome = el("div", "report360-browser-bar");
+  chrome.append(span("report360-browser-dots", "● ● ●"), span("report360-browser-url", report.sourceUrl));
+  browserFrame.append(chrome);
+  const snippet = el("div", "report360-search-result");
+  snippet.append(el("small", "", report.sourceUrl));
+  snippet.append(el("strong", "report360-search-title", model.title || copy.visualMissing));
+  snippet.append(el("p", "", model.description || copy.visualMissing));
+  browserFrame.append(snippet); search.append(browserFrame);
+  const outline = el("article", "report360-page-outline");
+  outline.append(el("h3", "", copy.visualOutline));
+  const h1 = el("div", "report360-outline-h1");
+  h1.append(span("report360-outline-tag", "H1"), el("strong", "", model.heading || copy.visualMissing)); outline.append(h1);
+  for (const heading of (Array.isArray(model.subheadings) ? model.subheadings : []).slice(0, 4)) {
+    const row = el("div", "report360-outline-h2");
+    row.append(span("report360-outline-tag", "H2"), span("", heading)); outline.append(row);
+  }
+  grid.append(search, outline); section.append(grid);
+  section.append(el("p", "report360-visual-disclaimer", copy.visualNote));
+  section.append(safeLink(report.sourceUrl, copy.source, "report360-source"));
+  return section;
+}
+
+function renderV2Grid(report, lang, copy) {
+  const v2 = report.geoV2;
+  if (!v2 || !Array.isArray(v2.controls)) return null;
+  const section = el("section", "report360-v2-grid"); section.id = "c-report360-v2-grid";
+  section.append(el("p", "report360-eyebrow", `GEO ${v2.gridVersion || "v2"}`), el("h2", "", copy.v2Grid), el("p", "report360-subtitle", copy.v2Intro));
+  const measured = v2.controls.filter(c => c.status === "measured").length;
+  const unknown = v2.controls.filter(c => c.status === "unknown").length;
+  const excluded = v2.controls.filter(c => c.status === "not_applicable").length;
+  const summary = el("div", "report360-v2-summary");
+  for (const [value, label] of [[measured, copy.v2Measured], [unknown, copy.v2Unknown], [excluded, copy.v2Excluded]]) {
+    const tile = el("div", "report360-v2-stat"); tile.append(el("strong", "", value), el("span", "", label)); summary.append(tile);
+  }
+  section.append(summary, el("p", "report360-v2-no-score", copy.v2NoScore));
+  const buckets = el("div", "report360-v2-buckets");
+  for (const [category, labels] of Object.entries(V2_CATEGORY)) {
+    const group = v2.controls.filter(c => c.category === category);
+    const detail = el("details", "report360-v2-category");
+    const summaryLine = el("summary");
+    summaryLine.append(span("report360-v2-category-name", labels[lang === "fr" ? 0 : 1]));
+    summaryLine.append(span("report360-v2-category-count", `${group.filter(c => c.status === "measured").length}/${group.length} ${copy.v2Measured.toLowerCase()}`));
+    detail.append(summaryLine);
+    const list = el("ol", "report360-v2-list");
+    for (const control of group) {
+      const item = el("li", `report360-v2-row report360-v2-${control.status}`);
+      const top = el("div", "report360-v2-row-head");
+      top.append(span("report360-v2-code", control.controlId), el("strong", "", v2Title(control.controlId, control.title, lang)));
+      const status = control.status === "measured"
+        ? control.outcome === "review" ? (lang === "fr" ? "À examiner · observé" : "Review · observed")
+          : (lang === "fr" ? "Satisfait · observé" : "Pass · observed")
+        : control.status === "not_applicable" ? copy.v2Excluded : copy.v2Unknown;
+      top.append(span("report360-v2-tag", status)); item.append(top);
+      if (control.status === "measured" && control.proof) {
+        item.append(el("p", "report360-v2-extract", control.proof.value));
+        item.append(safeLink(control.proof.url, copy.source, "report360-source"));
+      } else if (control.status === "unknown") {
+        item.append(el("p", "report360-v2-extract", lang === "fr" ? "Preuve complémentaire requise ; aucune conclusion sur la conformité." : "Additional evidence required; compliance cannot yet be determined."));
+      } else if (control.reason) item.append(el("p", "report360-v2-extract", control.reason));
+      list.append(item);
+    }
+    detail.append(list); buckets.append(detail);
+  }
+  section.append(buckets); return section;
+}
+
+function renderConnections(lang, copy) {
+  const section = el("section", "report360-connections");
+  section.append(el("p", "report360-eyebrow", copy.next), el("h2", "", copy.connectionsTitle), el("p", "report360-subtitle", copy.connectionsIntro));
+  const items = [
+    ["ai", copy.connectionAi, copy.connectionAiNote, "ai_visibility"],
+    ["crm", copy.connectionCrm, copy.connectionCrmNote, "crm/connections"],
+    ["social", copy.connectionSocial, copy.connectionSocialNote, "social/connections"],
+  ];
+  const grid = el("div", "report360-connection-grid");
+  for (const [id, label, note, fragment] of items) {
+    const card = el("article", `report360-connection report360-connection-${id}`);
+    const pillar = PILLARS.find(p => p.id === id);
+    card.append(span("report360-glyph", pillar?.symbol || "↗"), el("h3", "", label), el("p", "", note));
+    const link = el("a", "report360-workspace", `${copy.connectionOpen} ↗`);
+    link.href = `/console/?lang=${lang}#${fragment}`; card.append(link); grid.append(card);
+  }
+  section.append(grid); return section;
+}
+
 /** Renders the approved overview, action list and proof-backed tutorial. */
 export function renderFreeReport360(report, language = "fr") {
   if (report?.schemaVersion !== 1 || !Array.isArray(report.pillars) || !Array.isArray(report.actions)) return null;
@@ -261,6 +416,10 @@ export function renderFreeReport360(report, language = "fr") {
   const pillars = el("div", "report360-pillars");
   for (const p of PILLARS) { const model = report.pillars.find(item => item.id === p.id); if (model) { const card = pillarCard(model, lang, copy); if (card) pillars.append(card); } }
   section.append(pillars);
+  const preview = renderSourcePreview(report, lang, copy);
+  if (preview) section.append(preview);
+  const v2Grid = renderV2Grid(report, lang, copy);
+  if (v2Grid) section.append(v2Grid);
   const observed = report.actions.filter(a => a.kind === "observed_fix").sort((a, b) => (PRIO[a.priority] ?? 5) - (PRIO[b.priority] ?? 5));
   const highlights = observed.length ? observed.slice(0, 3) : report.actions.slice(0, 3);
   const highlightBox = el("div", "report360-highlights");
@@ -284,7 +443,7 @@ export function renderFreeReport360(report, language = "fr") {
     button.type = "button"; button.dataset.pillar = id;
     button.onclick = () => filterBy(id); controls.append(button);
   }
-  filterBy("all"); plan.append(controls, cards); section.append(plan);
+  filterBy("all"); plan.append(controls, cards); section.append(plan, renderConnections(lang, copy));
 
   const footer = el("footer", "report360-footer");
   let printState = null;

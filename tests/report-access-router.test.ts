@@ -6,7 +6,7 @@ import { ReportAccessService, type ReportInvitation } from "../src/report-access
 import type { FreeReport360 } from "../src/freeread/report360.js";
 
 const report: FreeReport360 = {
-  schemaVersion: 1, method: "geo-v1-public-page", scope: "single_public_url", sourceUrl: "https://example.org/", observedAt: "2026-11-16T13:00:00Z", httpStatus: 200,
+  schemaVersion: 1, method: "geo-v2-public-evidence", scope: "single_public_url", sourceUrl: "https://example.org/", observedAt: "2026-11-16T13:00:00Z", httpStatus: 200,
   comparison: null, unmeasured: ["ai_citations"],
   pillars: [
     { id: "seo", coverage: "measured", score: null, observedChecks: 1, needsAttention: 0, observedCount: null, measurement: "html_seo_checks", missing: [] },

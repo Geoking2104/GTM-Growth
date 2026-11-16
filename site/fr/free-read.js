@@ -64,10 +64,14 @@ async function loadLiveRead(url, host, view, requestId) {
     const payload = await response.json();
     if (requestId !== generation) return;
 
-    if (typeof payload.score === "number" && payload.score >= 0 && payload.score <= 100) {
-      view.score.textContent = `Score GEO mesuré : ${payload.score}/100`;
-      const projected = typeof payload.projectedScore === "number" ? ` · Potentiel après correctifs : ${payload.projectedScore}/100` : "";
-      view.verdictText.textContent = `Audit de la page ${host}${projected}. Ce score ne concerne pas tout le domaine.`;
+    if (Array.isArray(payload.geoV2?.controls)) {
+      const observed = payload.geoV2.controls.filter(c => c.status === "measured").length;
+      const unknown = payload.geoV2.controls.filter(c => c.status === "unknown").length;
+      view.score.textContent = `GEO v2 · ${observed}/42 contrôles observés`;
+      view.verdictText.textContent = `Audit de la page ${host} · ${unknown} contrôles encore inconnus. Score non publié sans preuve complète et consentement.`;
+    } else {
+      view.score.textContent = "GEO v2 : lecture indisponible";
+      view.verdictText.textContent = "Les mesures historiques v1 ne constituent pas un score GEO v2.";
     }
     renderTables(view.tables, translateLiveTables(payload.tables ?? []), dict);
     view.note.textContent = dict.tables.serverNote({

@@ -132,8 +132,45 @@ async function visit(browserContext, locale, label, viewport) {
 }
 
 /** Public console smoke: response fixture means no external domain is crawled. */
+function v2ReportFixture() {
+  const categories = { robots: ["R", 5], llms: ["L", 6], jsonld: ["J", 6], meta: ["M", 5], content: ["C", 8], brand: ["B", 5], discovery: ["D", 3], rendering: ["P", 4] };
+  const controls = Object.entries(categories).flatMap(([category, [prefix, count]]) =>
+    Array.from({ length: count }, (_, index) => {
+      const controlId = `${prefix}${String(index + 1).padStart(2, "0")}`;
+      const measured = ["R01", "M01"].includes(controlId);
+      return {
+        controlId, title: controlId === "M01" ? "Descriptive title" : `Reviewed control ${controlId}`, category,
+        status: measured ? "measured" : "unknown",
+        outcome: controlId === "R01" ? "pass" : measured ? "review" : "unknown",
+        proof: measured ? { type: "extract", value: controlId === "M01" ? "No descriptive title observed" : "robots.txt HTTP 200", url: "https://example.com/" } : null,
+        reason: measured ? null : "Requires additional independent evidence",
+      };
+    }));
+  const observedAt = "2026-11-16T12:00:00Z", sourceUrl = "https://example.com/";
+  return {
+    schemaVersion: 1, method: "geo-v2-public-evidence", scope: "single_public_url", sourceUrl, observedAt, httpStatus: 200,
+    geoV2: { gridVersion: "2.0.0", status: "incomplete", score: null, controls, unmeasuredControls: controls.filter(c => c.status === "unknown").map(c => c.controlId) },
+    sourcePreview: { kind: "observed_html_reconstruction", title: "Example services for professionals", description: "Independent services for companies", heading: "Example services", subheadings: ["How our services work", "Compare services"], observedAt, screenshotUrl: null },
+    pillars: [
+      { id: "seo", coverage: "measured", score: null, observedChecks: 12, needsAttention: 2 },
+      { id: "geo", coverage: "partial", score: null, observedChecks: 2, needsAttention: 1 },
+      { id: "ai", coverage: "partial", score: null },
+      { id: "crm", coverage: "not_measured", score: null },
+      { id: "social", coverage: "partial", score: null, observedCount: 1 },
+    ],
+    actions: [
+      { id: "geo.v2.M01", code: "geo_v2_check", pillar: "geo", kind: "observed_fix", checkId: "M01", title: "Descriptive title", priority: "high", effort: "low", risk: "low", owner: "technical", points: null,
+        proof: { id: "geo-v2:M01", label: "M01", value: "No descriptive title observed", sourceUrl, observedAt, format: "geo_v2_control" } },
+      ...[["ai", "ai_measurement"], ["crm", "crm_measurement"], ["social", "social_presence"]].map(([pillar, code]) =>
+        ({ id: `${pillar}.connect`, pillar, code, kind: "next_step", priority: "medium", effort: "medium", risk: "medium", owner: "marketing", points: null, proof: null })),
+    ],
+    comparison: null, unmeasured: ["ai_citations", "crm_conversions", "social_inbound_backlinks"],
+  };
+}
+
 async function visitPublicConsole(browserInstance, locale, viewport, label) {
   const context = await browserInstance.newContext();
+  const report360 = v2ReportFixture();
   const payload = {
     finalUrl: "https://example.com/", httpStatus: 200, score: 71, recoverablePoints: 29,
     evidence: {
@@ -169,6 +206,8 @@ async function visitPublicConsole(browserInstance, locale, viewport, label) {
         { label: "Indexability", value: "indexable", status: "pass" },
       ] },
     ],
+    geoV2: report360.geoV2,
+    report360,
   };
   await context.route("**/api/free-read", (route) => route.fulfill({ status: 200, contentType: "application/json", body: JSON.stringify(payload) }));
   const page = await context.newPage();
@@ -194,11 +233,16 @@ async function visitPublicConsole(browserInstance, locale, viewport, label) {
   assert.equal(new URL(page.url()).hash, '#local_seo/network');
   await page.locator('#c-login-form').screenshot({ path: path.join(outputDir, `${screenshotPrefix}-gbp-signin.png`) });
   await page.screenshot({ path: path.join(outputDir, `${screenshotPrefix}-overview.png`), fullPage: true });
-  const recommend = page.locator('.public-recommend-button[aria-controls="c-public-ranked"]');
-  await recommend.click();
-  assert.equal(await recommend.getAttribute("aria-expanded"), "true");
-  assert.equal(await page.locator(".public-top-fixes .public-action-card").count(), 3);
-  assert.equal(await page.locator(".public-action-card").count(), 8);
+  assert.equal(await page.locator(".report360-v2-row").count(), 42, "all approved v2 control statuses are visible");
+  assert.equal(await page.locator(".report360-v2-category").count(), 8);
+  assert.equal(await page.locator(".report360-v2-unknown").count(), 40);
+  assert.equal(await page.locator(".report360-connection").count(), 3);
+  assert.match(await page.locator(".report360-visual").innerText(), locale === "fr" ? /PAS UNE CAPTURE/ : /NOT A SCREENSHOT/);
+  assert.doesNotMatch(await page.locator(".public-score").innerText(), /71\/100/);
+  await page.locator('.report360-filter[data-pillar="geo"]').click();
+  assert.equal(await page.locator(".report360-action:visible").count(), 1);
+  await page.locator(".report360-action-geo summary").click();
+  assert.equal(await page.locator(".report360-action-geo .report360-steps li").count(), 3);
   assert.equal(await page.locator(".journey-stage").count(), 5);
   const intro = await page.locator(".journey-panel").innerText();
   assert.match(intro, locale === "fr" ? /hypothèses modifiables/ : /editable hypotheses/);
@@ -216,11 +260,8 @@ async function visitPublicConsole(browserInstance, locale, viewport, label) {
   assert.equal(await page.locator(".journey-question-label textarea").count(), 0, "context edit invalidates old questions");
   await page.locator('.journey-context button[type="submit"]').click();
   await page.screenshot({ path: path.join(outputDir, `${screenshotPrefix}-journey.png`), fullPage: true });
-  await page.locator('.public-rank-mode[data-mode="impact"]').click();
-  await page.locator(".public-action-details summary").first().click();
-  const copy = await page.locator(".public-recommendations").innerText();
-  assert.match(copy, locale === "fr" ? /L’IA recommande|points|effet/i : /AI recommends|points|effect/i);
-  if (locale === "fr") assert.doesNotMatch(copy, /Add explicit crawler rules|Add Article schema/);
+  const copy = await page.locator(".report360-action-geo").innerText();
+  assert.match(copy, /GEO v2 M01/);
   const engines = page.locator(".public-engine img");
   assert.equal(await engines.count(), 6);
   // Lazy images below the longer mobile journey load when brought into view.
@@ -402,12 +443,17 @@ try {
 
   // The FR server rows remain translated when a real response arrives.
   const measured = await browser.newContext();
-  await measured.route("**/api/free-read", (route) => route.fulfill({ status: 200, contentType: "application/json", body: JSON.stringify({ score: 71, projectedScore: 100, durationMs: 117, opportunities: [{ checkId: "llms.found", category: "llms", priority: "high", status: "fail", points: 3, evidence: "No llms.txt (HTTP 404)" }], tables: [{ id: "seo.meta", title: "SEO — metadata", rows: [{ label: "Title", value: "48 chars", status: "pass", note: "Indexable." }] }] }) }));
+  const measuredReport = v2ReportFixture();
+  await measured.route("**/api/free-read", (route) => route.fulfill({ status: 200, contentType: "application/json", body: JSON.stringify({
+    score: 71, projectedScore: 100, durationMs: 117, geoV2: measuredReport.geoV2, report360: measuredReport,
+    tables: [{ id: "seo.meta", title: "SEO — metadata", rows: [{ label: "Title", value: "48 chars", status: "pass", note: "Indexable." }] }],
+  }) }));
   const frMeasured = await measured.newPage();
   await frMeasured.goto(`${origin}/fr/`);
   await frMeasured.locator("#url-input").fill("example.com");
   await frMeasured.locator("#url-form button").click();
-  await frMeasured.getByText("Score GEO mesuré : 71/100").waitFor();
+  await frMeasured.getByText("GEO v2 · 2/42 contrôles observés").waitFor();
+  assert.doesNotMatch(await frMeasured.locator("#read-result").innerText(), /71\/100/);
   assert.match(await frMeasured.locator("#read-result").innerText(), /SEO — métadonnées/);
   assert.match(await frMeasured.locator("#read-result").innerText(), /48 caractères/);
   assert.equal(await frMeasured.locator(".landing-next-actions li").count(), 1);
