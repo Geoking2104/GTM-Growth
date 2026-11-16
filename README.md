@@ -31,6 +31,27 @@ The browser QA checks the six scenes, keyboard controls, reduced motion, mobile
 layout and existing free-audit journey. Source changes require a separate verified
 OVH deployment; Cloud merchant activation remains a separate operation.
 
+## Consistent forms, sign-in and dashboard visuals
+
+The public contact form uses labelled, 52px controls, Inter, rounded borders and
+violet focus states in both languages. Keycloak's native sign-in and password
+reset screens share the public website's rocket logo and violet/lavender identity;
+authentication, password visibility controls and organisation flows remain native.
+
+Every console horizontal navigation destination has a distinct semantic icon
+within its section. Dashboards identify known providers with locally served logos,
+show engine readiness as labelled progress bars, and retain the existing gauges
+and analytics charts. Missing measurements leave gaps in charts; zero stays zero.
+Disconnected sources show an explicit waiting state rather than fabricated data.
+Provider marks identify sources, not connection status or endorsement.
+
+CI checks all 30 console sections in FR/EN and exercises the actual Keycloak 26.4
+theme, password toggle and reset form at desktop/mobile widths. Screenshot artifacts
+are available in **Brand · Keycloak 26.4 and dashboard FR/EN**. Deployment uses a
+theme content digest to recreate Keycloak only when its theme changes, refreshing
+the production theme cache. This can briefly interrupt new sign-ins; the database
+is preserved. See the [theme runbook](deploy/kayroslab-vps/keycloak/themes/gtm-growth/README.md).
+
 ## Inspect public evidence and continue to GBP
 
 The free read now displays the extracted title, declared canonical targets,

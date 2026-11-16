@@ -12,6 +12,7 @@ import { TABS } from "./tools.js";
 import { el } from "./render.js";
 import { t, tr, actionLabel, LANG } from "./i18n.js";
 import { icon } from "./icons.js";
+import { tabIcon } from "./tab-icons.js";
 import { renderCompetition } from "./competition.js";
 import { renderAiVisibility } from "./ai-visibility.js";
 import { renderAudienceOverview } from "./audience-overview.js";
@@ -286,7 +287,7 @@ async function show(sectionId, tabId) {
   const tabs = $("#c-tabs"); tabs.replaceChildren();
   for (const x of def.tabs) {
     const b = el("button", `app-tab${x.id === tab.id ? " is-active" : ""}`); b.type = "button"; b.setAttribute("role", "tab"); b.setAttribute("aria-selected", String(x.id === tab.id));
-    const ic = el("span", "app-tab-icon"); ic.innerHTML = icon(section.icon); b.append(ic, x.label);
+    const ic = el("span", "app-tab-icon"); ic.innerHTML = icon(tabIcon(section.id, x.id)); b.dataset.icon = tabIcon(section.id, x.id); b.append(ic, x.label);
     b.onclick = () => show(section.id, x.id); tabs.append(b);
   }
   const panel = el("section", "app-panel c-panel"); panel.setAttribute("role", "tabpanel");

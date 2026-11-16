@@ -4,6 +4,7 @@ import { el } from "./render.js";
 import { t, CATEGORY, LANG } from "./i18n.js";
 import { makeKey, keyFile, normalizeHost } from "../indexnow.js";
 import { gauge, metricIcon } from "./visuals.js";
+import { providerMark } from "./provider-marks.js";
 
 const NS = "http://www.w3.org/2000/svg";
 const svg = (tag, attrs = {}) => { const n = document.createElementNS(NS, tag); for (const [k, v] of Object.entries(attrs)) n.setAttribute(k, v); return n; };
@@ -38,12 +39,20 @@ function trajectory(score, projected, recs) {
 }
 
 function rank(platforms) {
-  const a = el("aside", "app-rank"); const sorted = [...platforms].sort((p, q) => q.score - p.score);
+  const a = el("aside", "app-rank"); const sorted = [...platforms].sort((p, q) => (q.score ?? -1) - (p.score ?? -1));
+  const measured = sorted.filter(p => typeof p.score === 'number' && Number.isFinite(p.score));
   const head = el("div", "app-rank-head", t("engines")); head.append(el("span", "", t("outOf"))); a.append(head);
-  if (sorted.length) { const lead = el("p", "app-rank-lead", `${t("best")} : `); lead.append(el("strong", "", `${sorted[0].label} ${sorted[0].score}`), ` · ${t("weakest")} : `, el("strong", "", `${sorted.at(-1).label} ${sorted.at(-1).score}`)); a.append(lead); }
+  if (measured.length) { const lead = el("p", "app-rank-lead", `${t("best")} : `); lead.append(el("strong", "", `${measured[0].label} ${measured[0].score}`), ` · ${t("weakest")} : `, el("strong", "", `${measured.at(-1).label} ${measured.at(-1).score}`)); a.append(lead); }
   const ul = el("ul", "rank-list");
-  for (const p of sorted) { const li = el("li"); li.title = p.mainGap ?? ""; li.append(el("span", "rank-dot"), el("span", "rank-name", p.label), el("span", "rank-score", String(p.score)), el("span", `rank-delta ${p.score >= 100 ? "up" : "down"}`, fmtDelta(p.score - 100))); ul.append(li); }
-  a.append(ul, el("p", "rank-foot", t("gapFoot"))); return a;
+  for (const p of sorted) {
+    const li = el("li", "v-engine-rank"); li.title = p.mainGap ?? "";
+    const score = typeof p.score === 'number' && Number.isFinite(p.score) ? p.score : null;
+    const track = el('span', 'v-score-track'); track.setAttribute('aria-hidden', 'true');
+    if (score !== null) track.append(width(el('i'), score));
+    li.append(providerMark(p.label), el("span", "rank-score", score === null ? '—' : String(score)), track);
+    ul.append(li);
+  }
+  a.append(ul, el("p", "rank-foot", LANG === 'fr' ? 'Préparation technique sur 100 · pas un classement réel dans les moteurs.' : 'Technical readiness out of 100 · not an actual search ranking.')); return a;
 }
 
 function strip(breakdown, max) {

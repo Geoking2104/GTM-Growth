@@ -3,6 +3,7 @@ import { el } from "./render.js";
 import { lineChart, toolbar } from "./analytics.js";
 import { LANG } from "./i18n.js";
 import { metricIcon, visibilityChart } from "./visuals.js";
+import { providerMark } from "./provider-marks.js";
 const L = (fr, en) => LANG === "fr" ? fr : en;
 const fmt = (value) => Number(value).toLocaleString(L("fr-FR", "en-GB"));
 export function renderAudienceOverview({ search, ga4, status, state, rerender, ai: aiData }) {
@@ -13,7 +14,7 @@ export function renderAudienceOverview({ search, ga4, status, state, rerender, a
     { data: search, label: L("Clics Google Search", "Google Search clicks"), key: "clicks", color: "#4f5bd5", link: "#gsc", name: "Search Console" },
     { data: ga4, label: L("Sessions GA4", "GA4 sessions"), key: "sessions", color: "#008373", link: "#ga4", name: "GA4" },
   ]) {
-    const card = el("section", "audience-card"); card.append(el("h4", "", item.label));
+    const card = el("section", "audience-card"), heading = el("h4"); heading.append(providerMark(item.name), el('span', 'v-source-caption', item.label)); card.append(heading);
     if (item.data?.trend?.length && !item.data.problem) {
       const rows = item.data.trend.filter((row) => row.date && row[item.key] !== null && row[item.key] !== undefined && Number.isFinite(Number(row[item.key]))).sort((a, b) => a.date.localeCompare(b.date));
       if (rows.length) {

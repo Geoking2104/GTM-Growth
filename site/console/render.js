@@ -1,6 +1,7 @@
 /* Rendu générique des résultats : métriques, tableaux, blocs de code. */
 import { tr, LANG } from "./i18n.js";
 import { entityCell, metricIcon } from "./visuals.js";
+import { providerAsset, providerMark } from "./provider-marks.js";
 const el = (tag, cls, text) => { const n = document.createElement(tag); if (cls) n.className = cls; if (text !== undefined) n.textContent = tag === "h4" || tag === "p" ? tr(text) : text; return n; };
 export { el };
 
@@ -22,6 +23,7 @@ export function table(rows, columns) {
       const key = Array.isArray(c) ? c[0] : c, v = typeof key === "function" ? key(row) : row[key], cell = el("td");
       const visual = typeof v === "string" && v.trim() && (typeof key === "string" && /^(page|url|siteUrl|itemName|product|brand)$/.test(key) || /^https:\/\//.test(v));
       if (v instanceof Node) cell.append(v);
+      else if (typeof key === 'string' && /^(source|engine|provider|platform)$/.test(key) && providerAsset(v)) cell.append(providerMark(v));
       else if (visual) cell.append(entityCell(v, { ...(row.imageUrl ? { imageUrl: row.imageUrl } : {}), kind: key === "itemName" || key === "product" ? "product" : key === "brand" ? "brand" : "page" }));
       else cell.textContent = v === null || v === undefined || v === "" ? "—" : typeof v === "number" ? (Number.isInteger(v) ? v.toLocaleString(LANG) : v.toLocaleString(LANG, { maximumFractionDigits: 2 })) : String(v);
       tr.append(cell);

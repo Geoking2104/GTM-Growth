@@ -55,6 +55,11 @@ it.each(["fr", "en"])("opens every navigation entry with content or recovery ste
       const panel = document.querySelector("[role=tabpanel]");
       expect(panel?.textContent?.length, link.getAttribute("href") || "").toBeGreaterThan(25);
       expect(panel?.querySelector(".c-loading")).toBeNull();
+      const tabs = [...document.querySelectorAll<HTMLButtonElement>('#c-tabs [role=tab]')];
+      expect(tabs.length).toBeGreaterThan(0);
+      const symbols = tabs.map(tab => tab.querySelector('svg')?.innerHTML);
+      expect(symbols.every(Boolean), `${link.hash}: every horizontal tab has a symbol`).toBe(true);
+      expect(new Set(symbols).size, `${link.hash}: horizontal symbols are distinct`).toBe(tabs.length);
       if (link.getAttribute('href') !== '#platform') {
         expect(panel?.querySelector('.c-feature-guide')).toBeTruthy();
         expect(panel?.querySelector('.c-feature-next')?.getAttribute('href')).toMatch(/^#[a-z_]+/);

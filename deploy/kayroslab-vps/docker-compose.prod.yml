@@ -69,6 +69,8 @@ services:
   # ── Keycloak (SSO de la console) — mode production, base Postgres ──
   keycloak:
     image: quay.io/keycloak/keycloak:26.4
+    labels:
+      com.kayroslab.gtm.theme-revision: ${GTM_THEME_REVISION:-manual}
     command: ["start", "--import-realm"]
     environment:
       KC_DB: postgres
