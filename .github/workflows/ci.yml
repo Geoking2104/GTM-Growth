@@ -141,6 +141,7 @@ jobs:
       - run: npx playwright-core install --with-deps chromium
       - run: node scripts/qa-brand.mjs
       - run: node scripts/qa-decision-console.mjs
+      - run: node scripts/qa-decision-workflows.mjs
       - uses: actions/upload-artifact@v4
         if: always()
         with:

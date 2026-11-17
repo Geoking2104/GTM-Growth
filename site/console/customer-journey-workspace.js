@@ -18,7 +18,7 @@ function ownedUrl(tenant, url) {
     });
   } catch { return false; }
 }
-export function renderCustomerJourneyWorkspace({ state, api }) {
+export function renderCustomerJourneyWorkspace({ state, api, onJourneyChange, onStageSelect }) {
   const panel = el("section", "app-strip journey-workspace");
   panel.append(el("h3", "", L("Mon parcours client", "My customer journey")),
     el("p", "c-note", L(
@@ -30,7 +30,7 @@ export function renderCustomerJourneyWorkspace({ state, api }) {
   const button = el("button", "btn btn-small", L("Lire la page et afficher le parcours", "Read the page and map the journey"));
   button.type = "button";
   const render = (url, data = {}) => renderJourneyPreview({
-    language: LANG, mode: "workspace",
+    onJourneyChange, onStageSelect, language: LANG, mode: "workspace",
     data: { ...data, url: data.finalUrl || url, finalUrl: data.finalUrl || url },
     readPage: (pageUrl, competitor = false) => api("/journey/read", { pageUrl, competitor }),
     savePrompt: (prompt) => {

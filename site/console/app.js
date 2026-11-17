@@ -1,3 +1,4 @@
+import { renderMeasurementBanner, renderPortfolio } from './decision-flows.js';
 import { renderBilling } from "./billing.js";
 import { renderConnectedAgents } from "./connected-agents.js";
 import { renderCrm } from './crm.js';
@@ -90,6 +91,14 @@ export async function api(route, body, options = {}) {
   const result = await fetchApi(route, body, options);
   if (["/ai-visibility/import", "/ai-visibility/review", "/ai-visibility/openai-run", "/ai-visibility/gemini-run", "/ai-visibility/claude-run", "/ai-visibility/mistral-run", "/ai-visibility/grok-run", "/competition/panel", "/competition/revise-panel", "/competition/group", "/competition/alert-config", "/competition/priority", "/competition/action", "/gtm/write", "/gtm/publish"].includes(route)) startBackground();
   return result;
+}
+/** A Portfolio read carries its own explicit member tenant; it never mutates the active picker. */
+async function portfolioRequest(tenant, route, body) {
+  if (route !== '/decision/portfolio/card' || !state.me?.memberships?.some(m => m.id === tenant)) throw new Error('Workspace access denied');
+  const token = await accessToken(); if (!token) throw new Error('Session expired');
+  const res = await fetch(`${API_BASE}${route}`, { method: 'POST', headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}`, 'X-Tenant': tenant }, body: JSON.stringify(body), cache: 'no-store', signal: AbortSignal.timeout(60000) });
+  if (!res.ok) throw new Error(`HTTP ${res.status}`);
+  return res.json();
 }
 function renderBackground(jobs) {
   const box = $("#c-background"), summary = $("#c-background-summary"), list = $("#c-background-jobs");
@@ -249,6 +258,7 @@ const SECTIONS = {
   ],
 };
 const ALL = [...SECTIONS.track, ...SECTIONS.act];
+ALL.push({ id: 'portfolio', icon: 'building', decision: true, build: () => custom('portfolio', [{ id: 'workspaces', label: 'Portfolio', icon: 'building', decision: true, needsDomain: false, async: async () => renderPortfolio({ me: state.me, request: portfolioRequest }) }]) });
 const decisionTab = (area, view) => ({ id: view.id, label: LANG === 'fr' ? view.fr : view.en, icon: view.icon, needsDomain: false, decision: true, async: async () => renderDecisionHub(area, view.id, { state, api, scope }) });
 for (const area of ['diagnose', 'impact', 'settings']) ALL.push({ id: area, icon: DECISION_AREAS.find(a => a.id === area).icon, decision: true, build: () => custom(area, DECISION_VIEWS[area].map(view => decisionTab(area, view))) });
 for (const area of ['overview', 'ops']) {
@@ -319,7 +329,7 @@ async function show(sectionId, tabId) {
   const feature = consoleFeature(section.id, tab.id, LANG);
   const area = DECISION_AREAS.find(a => a.id === decision.area);
   const isHub = tab.decision || section.id === 'overview';
-  panel.append(sectionHeading(isHub ? (section.id === 'overview' && tab.id === 'board' ? decisionLabel('overview', LANG) : tab.label) : screenTitle, isHub ? area.description[LANG === 'fr' ? 0 : 1] : feature?.benefit || def.intro || (LANG === 'fr' ? 'Comprendre les résultats, leurs sources et la prochaine action.' : 'Understand results, their sources and the next action.'), isHub ? (tab.icon || section.icon) : section.icon));
+  panel.append(sectionHeading(isHub ? (section.id === 'overview' && tab.id === 'board' ? decisionLabel('overview', LANG) : tab.label) : screenTitle, isHub ? (area?.description[LANG === 'fr' ? 0 : 1] || (LANG === 'fr' ? 'Coordonnez vos espaces clients.' : 'Coordinate customer workspaces.')) : feature?.benefit || def.intro || (LANG === 'fr' ? 'Comprendre les résultats, leurs sources et la prochaine action.' : 'Understand results, their sources and the next action.'), isHub ? (tab.icon || section.icon) : section.icon));
   if (!isHub) {
     const back = el('p', 'decision-tool-heading'); const link = el('a', '', `${decisionLabel(decision.area, LANG)} →`);
     link.href = `#${decision.area}/${decision.view}`; back.append(link, el('span', '', LANG === 'fr' ? 'Outil spécialisé · même espace client' : 'Specialist tool · same workspace')); panel.prepend(back);
@@ -327,10 +337,11 @@ async function show(sectionId, tabId) {
   if (section.id === 'apply_mode') panel.append(el('span', 'decision-badge', LANG === 'fr' ? 'Aperçu · Sans écriture directe' : 'Preview · No direct write'));
   const guide = isHub ? null : renderFeatureGuide(section.id, tab.id, LANG);
   if (guide) panel.append(guide);
-  if (!state.me?.tenant && section.id !== "platform" && !(section.id === 'settings' && tab.id === 'access' && state.me?.platformAdmin)) {
+  if (!state.me?.tenant && !["platform","portfolio"].includes(section.id) && !(section.id === 'settings' && tab.id === 'access' && state.me?.platformAdmin)) {
     panel.append(renderDataGuide("tenant", { error: state.contextError })); return;
   }
 
+  if (state.me?.tenant && ['ga4','crm'].includes(section.id)) panel.append(renderMeasurementBanner({ api, state }));
   if (tab.action) { panel.append(renderAction(tab.action, { state, api, automaticRoutes })); return; }
   if (!state.url && tab.needsDomain !== false) { panel.append(renderDataGuide("domain")); return; }
   const loading = el("p", "c-loading", t("loadingOverview")); panel.append(loading);
@@ -342,10 +353,10 @@ function mountNav() {
   $('#c-nav-track').replaceChildren(); $('#c-nav-act').replaceChildren();
   $('#c-journey-label').textContent = LANG === 'fr' ? 'Votre parcours' : 'Your journey';
   $('#c-workspace-label').textContent = LANG === 'fr' ? 'Votre espace' : 'Your workspace';
-  for (const area of DECISION_AREAS) {
+  for (const area of [...DECISION_AREAS, ...((state.me?.memberships?.length || 0) > 1 ? [{ id: 'portfolio', icon: 'building' }] : [])]) {
     const li = el('li'), a = el('a'); a.href = `#${area.id}`; a.dataset.section = area.id; a.innerHTML = icon(area.icon);
     a.append(el('span', '', decisionLabel(area.id, LANG))); a.onclick = e => { e.preventDefault(); show(area.id); }; li.append(a);
-    $(area.id === 'settings' ? '#c-nav-act' : '#c-nav-track').append(li);
+    $(['settings','portfolio'].includes(area.id) ? '#c-nav-act' : '#c-nav-track').append(li);
   }
   const search = $('#c-search'), results = $('#c-tool-search');
   results.setAttribute('aria-label', LANG === 'fr' ? 'Résultats de recherche d’outils' : 'Tool search results');
@@ -520,7 +531,7 @@ async function start() {
   if (!state.url || !state.me?.tenant) { picker.hidden = false; sw.setAttribute("aria-expanded", "true"); }
   startBackground();
   started = true;
-  show(s || "overview", tb);
+  show(s || (state.me?.tenant?.usageType === "agency" && state.me?.memberships?.length > 1 ? "portfolio" : "overview"), tb);
   if (state.me?.tenant && !state.requestedDomainUnavailable && (state.openRequestedWizard || !localStorage.getItem(`gtm-console-wizard-v1:${state.me.tenant.id}:${state.me.email || state.me.username || "user"}`))) launchWizard();
 }
 window.addEventListener("hashchange", () => { const [a, b] = location.hash.slice(1).split("/"); if (a && ALL.some((x) => x.id === a)) show(a, b); });

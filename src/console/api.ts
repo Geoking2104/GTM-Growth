@@ -1,3 +1,4 @@
+import { ZodError } from "zod";
 import { CloudAccessError, type CloudAccess } from "../billing/access.js";
 import { crmRoutes } from "./crm.js";
 /**
@@ -58,6 +59,11 @@ import { visualCatalogRoutes } from "./visual-catalog.js";
 import { dataAgentRoutes } from "./data-agent.js";
 import { journeyRoutes } from "./journey.js";
 import { commerceRoutes } from "./commerce.js";
+import { decisionInboxRoutes } from './decision-inbox.js';
+import { decisionIntentRoutes } from './decision-intent.js';
+import { decisionPortfolioRoutes } from './decision-portfolio.js';
+import { measurementRoutes } from './measurement-audit.js';
+import { changeDecision } from './decision-store.js';
 
 import { str, num, type Body, type ConsoleRoute } from "./util.js";
 export type { ConsoleRoute, Handler } from "./util.js";
@@ -220,19 +226,19 @@ async function scopeRequest(route: ConsoleRoute, body: Body, tenancy: TenantCont
   const property = str(body.property);
   if (property) {
     if (tenant && !platformAdmin && !tenantOwnsProperty(tenant, property)) return { status: 403, error: `La propriÃ©tÃ© ${property} n'appartient pas au tenant ${tenant.id}.` };
-  } else if (tenant?.gscProperties.length && !["/data-agent/", "/journey/", "/local-seo/", "/social/", "/crm/"].some(prefix => route.path.startsWith(prefix))) {
+  } else if (tenant?.gscProperties.length && !["/decision/", "/data-agent/", "/journey/", "/local-seo/", "/social/", "/crm/"].some(prefix => route.path.startsWith(prefix))) {
     body.property = tenant.gscProperties[0];
   }
   const ga4 = str(body.ga4Property);
   if (ga4) {
     if (tenant && !platformAdmin && !tenantOwnsGa4(tenant, ga4)) return { status: 403, error: `La propriÃ©tÃ© GA4 ${ga4} n'appartient pas au tenant ${tenant.id}.` };
-  } else if (tenant?.ga4Properties?.length && !["/data-agent/", "/journey/", "/local-seo/", "/social/", "/crm/"].some(prefix => route.path.startsWith(prefix))) {
+  } else if (tenant?.ga4Properties?.length && !["/decision/", "/data-agent/", "/journey/", "/local-seo/", "/social/", "/crm/"].some(prefix => route.path.startsWith(prefix))) {
     body.ga4Property = tenant.ga4Properties[0];
   }
   const bingSite = str(body.bingSite);
   if (bingSite) {
     if (tenant && !platformAdmin && !tenantOwnsBingSite(tenant, bingSite)) return { status: 403, error: `Le site Bing ${bingSite} n'appartient pas au tenant ${tenant.id}.` };
-  } else if (tenant?.bingSites?.length && !["/data-agent/", "/journey/", "/local-seo/", "/social/", "/crm/"].some(prefix => route.path.startsWith(prefix))) {
+  } else if (tenant?.bingSites?.length && !["/decision/", "/data-agent/", "/journey/", "/local-seo/", "/social/", "/crm/"].some(prefix => route.path.startsWith(prefix))) {
     body.bingSite = tenant.bingSites[0];
   }
   for (const key of ["container", "workspace", "path"] as const) {
@@ -347,7 +353,7 @@ export function buildConsoleRouter(routes: ConsoleRoute[], options: ConsoleOptio
 
   for (const route of routes) {
     router.post(route.path, async (req: Request, res: Response) => {
-      if (["/ai-visibility/accounts", "/local-seo/", "/social/", "/crm/", "/data-agent/", "/journey/"].some(prefix => route.path.startsWith(prefix))) res.setHeader("Cache-Control", "no-store");
+      if (["/decision/", "/ai-visibility/accounts", "/local-seo/", "/social/", "/crm/", "/data-agent/", "/journey/"].some(prefix => route.path.startsWith(prefix))) res.setHeader("Cache-Control", "no-store");
       const body = { ...((req.body ?? {}) as Body) };
       const { user, tenancy } = res.locals as Locals;
       const scoped = await scopeRequest(route, body, tenancy!);
@@ -355,11 +361,17 @@ export function buildConsoleRouter(routes: ConsoleRoute[], options: ConsoleOptio
       try {
         if (tenancy?.tenant) options.cloud?.authorize(tenancy.tenant.id, route.path, { domainCount: tenancy.tenant.domains.length });
         const data = await withCredential(tenancy?.tenant?.googleCredential, () => route.handler({ url: scoped.url, body, user, tenancy }));
+        if (route.path === '/overview' && tenancy?.tenant && data && typeof data === 'object') {
+          const report = data as { url?: string; generatedAt?: string; geo?: { score?: number } };
+          if (report.url && tenantOwnsUrl(tenancy.tenant, report.url)) try { changeDecision(tenancy.tenant.id, s => {
+            s.overviews = [...(s.overviews || []), { url: report.url!, at: report.generatedAt || new Date().toISOString(), score: Number.isFinite(report.geo?.score) ? report.geo!.score! : null }].slice(-20);
+          }); } catch { logger.warn('[console] Portfolio snapshot was not saved; returning the live overview.'); }
+        }
         if (Buffer.isBuffer(data)) return res.type("application/pdf").setHeader("Content-Disposition", "attachment; filename=rapport-geo.pdf").send(data);
         return res.json(data);
       } catch (error) {
         logger.info(`[console] ${route.path} failed: ${(error as Error).message}`);
-        return fail(res, error instanceof TenantAccessError || error instanceof CloudAccessError ? error.status : 502, (error as Error).message);
+        return fail(res, error instanceof TenantAccessError || error instanceof CloudAccessError ? error.status : error instanceof ZodError ? 400 : /^(DECISION_CHANGED|DECISION_EVIDENCE_EXPIRED|MEASUREMENT_ALREADY_RUNNING)$/.test((error as Error).message) ? 409 : 502, (error as Error).message);
       }
     });
   }
@@ -408,7 +420,7 @@ export function discoverTenant(store: TenantStore, query: { email?: string; host
 }
 
 export function allConsoleRoutes(): ConsoleRoute[] {
-  return [...phase1Routes, ...phase2Routes, ...phase3Routes, ...analyticsRoutes, ...gtmRoutes, ...aiVisibilityRoutes, ...aiProviderRoutes, ...aiConnectionRoutes, ...competitionRoutes, ...operationsRoutes, ...applyPreviewRoutes, ...localSeoRoutes, ...socialRoutes, ...crmRoutes, ...visualCatalogRoutes, ...dataAgentRoutes, ...journeyRoutes, ...commerceRoutes];
+  return [...phase1Routes, ...phase2Routes, ...phase3Routes, ...analyticsRoutes, ...gtmRoutes, ...aiVisibilityRoutes, ...aiProviderRoutes, ...aiConnectionRoutes, ...competitionRoutes, ...operationsRoutes, ...applyPreviewRoutes, ...localSeoRoutes, ...socialRoutes, ...crmRoutes, ...visualCatalogRoutes, ...dataAgentRoutes, ...journeyRoutes, ...commerceRoutes, ...decisionInboxRoutes, ...decisionIntentRoutes, ...decisionPortfolioRoutes, ...measurementRoutes];
 }
 
 export function mountConsoleApi(app: Express, options: ConsoleOptions = {}): void {

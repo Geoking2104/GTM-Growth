@@ -38,3 +38,52 @@
 .decision-tool-search svg { width: 17px; height: 17px; flex-shrink: 0; }
 @media (max-width: 900px) { .decision-priority-grid { grid-template-columns: 1fr; } }
 @media (max-width: 650px) { .decision-grid { grid-template-columns: 1fr; } .decision-card { padding: 18px; } .decision-priorities { padding: 18px; } }
+.decision-flow { display:grid; gap:20px; min-width:0; color:#241631; }
+.decision-form,.decision-field { display:grid; gap:8px; }
+.decision-form { grid-template-columns:repeat(2,minmax(0,1fr)); gap:16px; padding:22px; background:#faf7ff; border:1px solid #e5ddef; border-radius:14px; }
+.decision-field { font-size:13px; color:#574366; min-width:0; }
+.decision-flow input:not([type=checkbox]),.decision-flow select,.decision-flow textarea { box-sizing:border-box; width:100%; min-height:42px; border:1px solid #d6cbe4; border-radius:8px; padding:10px 12px; background:#fff; color:#241631; font:inherit; }
+.decision-flow input[type=checkbox] { width:18px; height:18px; accent-color:#6935dc; }
+.decision-flow :is(input,select,textarea,button,a):focus-visible { outline:3px solid #b79aea; outline-offset:3px; }
+.decision-flow button { white-space:normal; }
+.decision-actions { display:flex; flex-wrap:wrap; align-items:center; gap:12px; margin:12px 0; }
+.decision-actions .decision-field { flex:1; min-width:160px; }
+.decision-actions .decision-field:has(input[type=checkbox]) { flex:auto; }
+.decision-secondary { background:#f2ebfc!important; color:#6331b7!important; border:1px solid #dccded!important; }
+.decision-link { color:#6533c2; font-weight:600; font-size:13px; }
+.decision-metrics { display:flex; flex-wrap:wrap; gap:12px; align-items:center; }
+.decision-metric { padding:16px; background:#f8f4fd; border-radius:12px; flex:1; min-width:100px; }
+.decision-metric strong { font-size:28px; letter-spacing:-.03em; color:#6331b7; }
+.decision-metric p { margin:5px 0 0; }
+.decision-review,.decision-result,.decision-portfolio-card { padding:22px; background:#fff; border:1px solid #e5ddef; border-radius:14px; min-width:0; overflow-wrap:anywhere; }
+.decision-review { display:grid; gap:8px; }
+.decision-inbox-list { display:grid; gap:18px; }
+.decision-review h3,.decision-result h3 { margin:6px 0; font-size:18px; }
+.decision-details { padding:10px 0; border-top:1px solid #eee7f6; }
+.decision-details summary { cursor:pointer; color:#6331b7; font-weight:600; font-size:13px; }
+.decision-details pre { max-height:420px; overflow:auto; padding:14px; border-radius:8px; background:#f8f6fb; color:#3d304c; font-size:12px; white-space:pre-wrap; overflow-wrap:anywhere; }
+.decision-measurement { margin-bottom:20px; }
+.decision-measurement .provider-mark { margin-right:10px; }
+[data-health=critical] { border-left:4px solid #c94764; }
+[data-health=warning] { border-left:4px solid #be8616; }
+[data-health=unknown] { border-left:4px solid #93849e; }
+[data-health=intact],[data-health=pass] { border-left:4px solid #278467; }
+.decision-intent-grid { display:grid; grid-template-columns:minmax(0,1fr) minmax(0,1fr); gap:24px; align-items:start; }
+.decision-intent-grid .journey-stages,.decision-intent-grid .journey-context-fields { grid-template-columns:1fr; }
+.decision-intent-grid .app-strip { padding:16px; }
+.decision-intent-grid .journey-stage.is-selected { outline:2px solid #7952cf; background:#faf6ff; }
+.decision-evidence { display:grid; gap:14px; padding:22px; background:#faf8fd; border-radius:14px; min-width:0; }
+.decision-observation { margin:12px 0; padding:16px; background:white; border:1px solid #e5ddef; border-radius:10px; overflow-wrap:anywhere; }
+.decision-observation h4 { font-size:15px; margin:12px 0; }
+.decision-observation button { margin:6px 6px 0 0; }
+.decision-demand-bar { height:7px; border-radius:9px; background:linear-gradient(to right,#8150d5 var(--value),#eee7f6 var(--value)); }
+.decision-workspace-logo { width:40px; height:40px; object-fit:contain; }
+@media(max-width:1100px){.decision-intent-grid{grid-template-columns:1fr;}}
+@media(max-width:650px){.decision-form{grid-template-columns:1fr;padding:16px}.decision-review,.decision-result,.decision-portfolio-card,.decision-evidence{padding:16px}.decision-metric{padding:12px;min-width:75px}.decision-metric strong{font-size:24px}}
+/* Public journey controls also render inside the light authenticated console. */
+.decision-flow .journey-panel .public-recommend-button { background:#6935dc; color:#fff; border:1px solid #6935dc; box-shadow:none; }
+.decision-flow .journey-panel .public-rank-mode { background:#f2ebfc; color:#6331b7; border:1px solid #dccded; border-radius:8px; padding:9px 12px; }
+.decision-flow .journey-panel a { color:#6331b7; }
+.decision-flow .journey-panel .journey-missing { color:#74627e; }
+.decision-measurement .v-provider { margin-right:10px; }
+@media(min-width:1101px){.decision-evidence{position:sticky;top:20px;max-height:calc(100vh - 40px);overflow:auto;}}

@@ -35,6 +35,7 @@ export function featureHandoff(location, storage, now = Date.now()) {
   const key = 'gtm-console-feature-handoff';
   const { features } = journeyContent('en');
   const routes = new Set(features.flatMap(f => [f.route, f.next]).filter(route => route !== '#c-public-read'));
+  routes.add('#portfolio');
   for (const area of DECISION_AREAS) {
     routes.add(`#${area.id}`);
     for (const view of DECISION_VIEWS[area.id] || []) routes.add(`#${area.id}/${view.id}`);

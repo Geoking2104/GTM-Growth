@@ -684,14 +684,14 @@ export async function renderCrm({ api, me, tab = "timeline" }) {
         let choice, proof;
         const fields = form(
           link,
-          L("Enregistrer la liaison", "Save link"),
+          L("Proposer la liaison dans l’inbox", "Propose link in inbox"),
           run,
           async () => {
-            await write("event/link", {
+            await api("/decision/propose", { kind: "crm-event", origin: "CRM timeline", payload: {
               profileId: choice.value,
               eventId: e.id,
               proof: proof.read(),
-            });
+            } });
             await reload();
           },
         );
@@ -872,10 +872,10 @@ export async function renderCrm({ api, me, tab = "timeline" }) {
       let kind, scope, value, proof;
       const f = form(
         add,
-        L("Relier l’identifiant", "Link identifier"),
+        L("Proposer l’identifiant dans l’inbox", "Propose identity in inbox"),
         run,
         async () => {
-          await write("identity/link", {
+          await api("/decision/propose", { kind: "crm-identity", origin: "CRM identity", payload: {
             profileId: c.id,
             identity: {
               kind: kind.value,
@@ -883,7 +883,7 @@ export async function renderCrm({ api, me, tab = "timeline" }) {
               value: value.value,
             },
             proof: proof.read(),
-          });
+          } });
           await reload();
         },
       );

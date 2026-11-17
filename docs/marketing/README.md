@@ -3,7 +3,10 @@
 The console now uses five business areas: Cockpit & Priorities, Diagnosis &
 Opportunities, Studio & Approvals, Impact & Revenue, and Sources & Workspace.
 The [refit scope](../journey/CONSOLE-DECISION-REFIT.md) separates the delivered
-navigation foundation from the future shared inbox, impact timeline and portfolio.
+shared inbox, synchronized product intent, dated GTM audit and member Portfolio
+from the still-planned impact timeline and reminders. Open Studio to review
+proposals, Diagnosis → Demand & Intent to connect evidence to a stage, and
+Diagnosis → Tracking reliability to assess measurement coverage.
 
 [Documentation hub](../README.md) · [Shared journey](../journey/README.md) · [Technical counterpart](../technical/README.md)
 

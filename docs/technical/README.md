@@ -9,10 +9,13 @@ the source baseline for this review is `353e658`.
 
 ## Runtime and responsibility map
 
-The [console decision refit](../journey/CONSOLE-DECISION-REFIT.md) documents the five
-business areas, preserved legacy routes and the contracts needed before the next
-approval, measurement and portfolio lots. The first lot changes only front-end
-organisation; existing backend engines and authorisation remain unchanged.
+The [console decision refit](../journey/CONSOLE-DECISION-REFIT.md) includes five
+business areas plus a member Portfolio, a durable cross-module inbox, synchronized
+intent evidence and a four-check GTM audit. `src/console/decision-*.ts` and
+`measurement-audit.ts` reuse existing provider adapters, scoped credentials and
+native approval rules. SQLite state belongs on the existing persistent data volume.
+Approval and execution remain distinct; deployment receipts and impact reminders
+are not implemented by this release.
 
 | Layer | Implementation | Role |
 | --- | --- | --- |

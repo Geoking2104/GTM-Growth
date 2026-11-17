@@ -4,6 +4,7 @@
  * Écritures réservées aux administrateurs du tenant ; la publication exige de retaper
  * l'identifiant public du conteneur (GTM-XXXX) en confirmation.
  */
+import { createHash } from "node:crypto";
 import { google } from "googleapis";
 import { getAuthClient } from "../auth/service-account.js";
 import type { Tenant } from "../tenants/store.js";
@@ -58,14 +59,15 @@ export async function gtmInventory(body: Body, tenant?: Tenant) {
     const info = (await c.get({ path: container })).data;
     const workspaces = (await c.workspaces.list({ parent: container })).data.workspace ?? [];
     const ws = str(body.workspace) && WS_RE.test(String(body.workspace)) ? String(body.workspace) : workspaces[0]?.path;
+    const coverage = { versions: true, live: true, clients: true, status: true };
     const [tags, triggers, variables, versions, live, clients, status] = await Promise.all([
       c.workspaces.tags.list({ parent: ws! }).then((r) => r.data.tag ?? []),
       c.workspaces.triggers.list({ parent: ws! }).then((r) => r.data.trigger ?? []),
       c.workspaces.variables.list({ parent: ws! }).then((r) => r.data.variable ?? []),
-      c.version_headers.list({ parent: container }).then((r) => r.data.containerVersionHeader ?? []).catch(() => []),
-      c.versions.live({ parent: container }).then((r) => ({ id: r.data.containerVersionId, name: r.data.name })).catch(() => null),
-      (info.usageContext ?? []).includes("server") ? c.workspaces.clients.list({ parent: ws! }).then((r) => r.data.client ?? []).catch(() => []) : Promise.resolve([]),
-      c.workspaces.getStatus({ path: ws! }).then((r) => r.data.workspaceChange ?? []).catch(() => []),
+      c.version_headers.list({ parent: container }).then((r) => r.data.containerVersionHeader ?? []).catch(() => { coverage.versions = false; return []; }),
+      c.versions.live({ parent: container }).then((r) => ({ id: r.data.containerVersionId, name: r.data.name, fingerprint: r.data.fingerprint })).catch(() => { coverage.live = false; return null; }),
+      (info.usageContext ?? []).includes("server") ? c.workspaces.clients.list({ parent: ws! }).then((r) => r.data.client ?? []).catch(() => { coverage.clients = false; return []; }) : Promise.resolve([]),
+      c.workspaces.getStatus({ path: ws! }).then((r) => r.data.workspaceChange ?? []).catch(() => { coverage.status = false; return []; }),
     ]);
     return {
       container: { path: container, publicId: info.publicId, name: info.name, usageContext: info.usageContext },
@@ -75,7 +77,8 @@ export async function gtmInventory(body: Body, tenant?: Tenant) {
       variables: variables.map((v) => ({ path: v.path, variableId: v.variableId, name: v.name, type: v.type })),
       clients: (clients as any[]).map((x) => ({ path: x.path, name: x.name, type: x.type, priority: x.priority })),
       versions: (versions as any[]).map((v) => ({ id: v.containerVersionId, name: v.name, deleted: Boolean(v.deleted), tags: v.numTags, triggers: v.numTriggers, variables: v.numVariables })).reverse(),
-      live, pendingChanges: (status as any[]).length,
+      revision: createHash("sha256").update(JSON.stringify([tags,triggers,variables,versions,live,clients,status,workspaces])).digest("hex"),
+      coverage, live, pendingChanges: (status as any[]).length,
     };
   } catch (error) { return { problem: gtmProblem(error) }; }
 }

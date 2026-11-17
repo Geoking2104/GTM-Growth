@@ -57,11 +57,11 @@ export function buildDraftSkeleton(brief: ArticleBrief): { title: string; slug: 
 }
 /** Deterministic quality gates (T-9's differentiator): a draft must pass
  * before publishing. Scored against the repo's own GEO principles. */
-export function qualityGates(draft: { title: string; metaDescription: string; outline: Array<{ h2: string; bullets: string[] }>; body: string }): QualityGate[] {
+export function qualityGates(draft: { title: string; metaDescription: string; outline: Array<{ h2: string; bullets: string[] }>; body: string; entities?: string[] }): QualityGate[] {
   const words = draft.body ? draft.body.trim().split(/\s+/).filter(Boolean) : [];
   const wordCount = words.length;
   const firstBlock = draft.outline[0];
-  const answerFirst = Boolean(firstBlock && /^(Qu'est-ce|DÃ©finition|Comprendre|Introduction|Le guide)/i.test(firstBlock.h2));
+  const answerFirst = Boolean(firstBlock && /^(Qu'est-ce|DÃ©finition|Comprendre|Introduction|Le guide|Understand|What is|Definition|Answer)/i.test(firstBlock.h2));
   const faqSection = draft.outline.some((s) => /faq|questions/i.test(s.h2));
   const listsUsed = draft.outline.some((s) => s.bullets.length >= 3);
   const titleLen = draft.title.length;
@@ -73,7 +73,7 @@ export function qualityGates(draft: { title: string; metaDescription: string; ou
     { check: "faq-section", passed: faqSection, detail: faqSection ? "Section FAQ prÃ©sente" : "Ajouter une section FAQ (FAQPage schema)" },
     { check: "word-count", passed: wordCount >= 800, detail: `${wordCount} mots (minimum 800 pour un guide)` },
     { check: "lists", passed: listsUsed, detail: listsUsed ? "Listes Ã  puces prÃ©sentes" : "Structurer au moins une section en liste (citabilitÃ© IA)" },
-    { check: "entities", passed: /GTM|GA4|Search Console/i.test(draft.body) || draft.outline.some((s) => /GTM|GA4|Search Console/i.test(s.h2)), detail: "EntitÃ©s mÃ©tier prÃ©sentes dans le corps" },
+    { check: "entities", passed: (draft.entities?.length ? draft.entities : draft.title.split(/\s+/).filter(w => w.length > 4)).some(entity => draft.body.toLocaleLowerCase().includes(entity.toLocaleLowerCase())), detail: "Product or subject terms appear in the body" },
   ].filter((g) => Boolean(g && g.check)) as QualityGate[];
 }
 

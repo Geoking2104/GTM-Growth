@@ -23,8 +23,8 @@ it('keeps unavailable sources in a closed evidence drawer and does not call prov
   await vi.waitFor(() => expect(node.querySelector('.decision-enrich')?.textContent).toContain('Check permissions'));
   expect(node.querySelector(':scope > .decision-grid')?.children.length).toBe(0);
   expect(node.querySelector('details')?.hasAttribute('open')).toBe(false);
-  expect(api.mock.calls).toHaveLength(1);
-  expect(api.mock.calls[0][0]).toBe('/tracking/status');
+  expect(api.mock.calls.map(c => c[0]).sort()).toEqual(["/decision/measurement/latest", "/tracking/status"]);
+
   expect(sourceAvailability('ga4', { ga4: { error: 'denied' } })).toBe('unavailable');
   expect(sourceAvailability('ga4', { ga4: { hasAccess: true } })).toBe('connected');
   expect(sourceAvailability('gbp', { capabilities: { gbp: 'configured' }, bindings: [] })).toBe('not-configured');
@@ -32,7 +32,7 @@ it('keeps unavailable sources in a closed evidence drawer and does not call prov
   expect(sourceAvailability('social', { capabilities: { postiz: true, accounts: [] } })).toBe('not-configured');
   expect(sourceAvailability('social', { capabilities: { postiz: true, accounts: [{ id: 'allowed' }] } })).toBe('connected');
   expect(sourceAvailability('ai', { datasets: [] })).toBe('not-configured');
-  expect(node.textContent).toContain('not assessed globally');
+  expect(node.textContent).toContain('Not assessed / incomplete');
 });
 it('renders cached connection results that resolve before the view is mounted', async () => {
   const { document, window } = parseHTML('<html lang="en"><body></body></html>');

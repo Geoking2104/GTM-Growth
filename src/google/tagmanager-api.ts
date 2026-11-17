@@ -10,17 +10,12 @@ import {
   tagsUsingVariable,
 } from "../utils/gtm-helpers.js";
 
-let tagmanagerClient: ReturnType<typeof google.tagmanager> | null = null;
-
 async function getTagManagerClient() {
-  if (tagmanagerClient) return tagmanagerClient;
-
   const auth = await getAuthClient();
-  tagmanagerClient = google.tagmanager({
+  return google.tagmanager({
     version: "v2",
     auth: auth as any,
   });
-  return tagmanagerClient;
 }
 
 function workspacePath(accountId: string, containerId: string, workspaceId: string) {

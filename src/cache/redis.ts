@@ -1,5 +1,9 @@
 import { Redis } from "ioredis";
 import { logger } from "../utils/logger.js";
+import { AsyncLocalStorage } from "node:async_hooks";
+const freshScope = new AsyncLocalStorage<boolean>();
+/** An explicit audit must read the selected credential's current provider state. */
+export const withFreshCache = <T>(fn: () => T): T => freshScope.run(true, fn);
 
 let redis: Redis | null = null;
 let isConnected = false;
@@ -73,7 +77,7 @@ export function cacheKey(prefix: string, data: Record<string, any>): string {
  * Get a value from cache.
  */
 export async function cacheGet<T = any>(key: string): Promise<T | null> {
-  if (!isCacheEnabled() || !redis) return null;
+  if (freshScope.getStore() || !isCacheEnabled() || !redis) return null;
 
   try {
     const raw = await redis.get(key);
@@ -93,7 +97,7 @@ export async function cacheSet(
   value: any,
   ttlSeconds: number
 ): Promise<void> {
-  if (!isCacheEnabled() || !redis) return;
+  if (freshScope.getStore() || !isCacheEnabled() || !redis) return;
 
   try {
     await redis.set(key, JSON.stringify(value), "EX", ttlSeconds);
