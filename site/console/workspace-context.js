@@ -27,6 +27,7 @@ export function workspaceHandoff(location, storage, now = Date.now()) {
   storage.removeItem(key); return null;
 }
 import { journeyContent } from '../journey-content.js';
+import { DECISION_AREAS, DECISION_VIEWS } from './decision-navigation.js';
 
 /** A website feature choice survives sign-in without selecting a tenant or
  * granting access. Only known product destinations may be restored. */
@@ -34,6 +35,10 @@ export function featureHandoff(location, storage, now = Date.now()) {
   const key = 'gtm-console-feature-handoff';
   const { features } = journeyContent('en');
   const routes = new Set(features.flatMap(f => [f.route, f.next]).filter(route => route !== '#c-public-read'));
+  for (const area of DECISION_AREAS) {
+    routes.add(`#${area.id}`);
+    for (const view of DECISION_VIEWS[area.id] || []) routes.add(`#${area.id}/${view.id}`);
+  }
   try {
     if (location.hash === '#c-public-read') { storage.removeItem(key); return null; }
     if (routes.has(location.hash) && !new URLSearchParams(location.search).has('code')) {

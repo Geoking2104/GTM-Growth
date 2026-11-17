@@ -13,6 +13,8 @@ import { el } from "./render.js";
 import { t, tr, actionLabel, LANG } from "./i18n.js";
 import { icon } from "./icons.js";
 import { tabIcon } from "./tab-icons.js";
+import { DECISION_AREAS, DECISION_VIEWS, decisionLocation, decisionLabel } from './decision-navigation.js';
+import { renderDecisionHub, renderDecisionPriorities } from './decision-workspace.js';
 import { renderCompetition } from "./competition.js";
 import { renderAiVisibility } from "./ai-visibility.js";
 import { renderAudienceOverview } from "./audience-overview.js";
@@ -131,7 +133,9 @@ function startBackground() {
     const skip = action.route.startsWith("/search/") || action.route.startsWith("/keywords/") ? !state.property : !state.url;
     tasks.push({ label: tr(action.label), route: action.route, body, skip: skip ? missing : "" });
   }
-  void background.start(selectedTenant() || state.me.tenant.id, tasks);
+  // Initial value first. Connector analyses load when their view is opened,
+  // rather than running 27 unrelated analyses at every workspace entry.
+  void background.start(selectedTenant() || state.me.tenant.id, tasks.filter(task => ['/overview', '/tracking/status'].includes(task.route)));
 }
 
 let visualGeneration = 0;
@@ -187,7 +191,7 @@ const SECTIONS = {
           status?.gsc?.hasAccess === true ? api("/search/performance", scope()).catch(() => ({ problem: true })) : null,
           status?.ga4?.hasAccess === true ? api("/ga4/overview", scope()).catch(() => ({ problem: true })) : null,
         ]);
-        return [renderAudienceOverview({ search, ga4, status, state, rerender, ai }), ...(ov?.loadError ? [renderDataGuide("geo", { error: ov.loadError, retry: rerender })] : ov ? renderOverview(ov) : []), renderOnboarding({ status, tenant: state.me?.tenant, overview: ov?.loadError ? null : ov, reports }), wizardButton(), renderAgentHelp()];
+        return [renderDecisionPriorities(ov?.loadError ? null : ov), renderAudienceOverview({ search, ga4, status, state, rerender, ai }), ...(ov?.loadError ? [renderDataGuide("geo", { error: ov.loadError, retry: rerender })] : ov ? renderOverview(ov) : []), renderOnboarding({ status, tenant: state.me?.tenant, overview: ov?.loadError ? null : ov, reports }), wizardButton(), renderAgentHelp()];
       } },
       { id: "plan", label: t("t_plan"), async: async () => renderPlan(await overview()) }]) },
     { id: "local_seo", icon: "local_seo", build: () => custom("local_seo", [{ id: "website", label: LANG === "fr" ? "SEO du site" : "Website SEO", needsDomain: false, async: async () => renderGlobalSeo({ state, api, scope }) }, { id: "network", label: "Google Business Profile", needsDomain: false, async: async () => renderLocalSeo({ api, me: state.me }) }, { id: "planning", label: LANG === "fr" ? "Préparer mon établissement" : "Plan my business", needsDomain: false, async: async () => renderLocalSeoWorkspace({ state }) }]) },
@@ -243,6 +247,20 @@ const SECTIONS = {
   ],
 };
 const ALL = [...SECTIONS.track, ...SECTIONS.act];
+const decisionTab = (area, view) => ({ id: view.id, label: LANG === 'fr' ? view.fr : view.en, icon: view.icon, needsDomain: false, decision: true, async: async () => renderDecisionHub(area, view.id, { state, api, scope }) });
+for (const area of ['diagnose', 'impact', 'settings']) ALL.push({ id: area, icon: DECISION_AREAS.find(a => a.id === area).icon, decision: true, build: () => custom(area, DECISION_VIEWS[area].map(view => decisionTab(area, view))) });
+for (const area of ['overview', 'ops']) {
+  const section = ALL.find(s => s.id === area), original = section.build;
+  section.build = () => {
+    const legacy = original();
+    if (area === 'overview') {
+      legacy.tabs.find(t => t.id === 'plan').hiddenInNav = true;
+      legacy.tabs[0].label = LANG === 'fr' ? 'Priorités' : 'Priorities';
+      return { ...legacy, tabs: [...legacy.tabs, ...DECISION_VIEWS.overview.filter(v => v.id !== 'board').map(v => decisionTab(area, v))] };
+    }
+    return { ...legacy, tabs: [...DECISION_VIEWS.ops.map(v => decisionTab(area, v)), ...legacy.tabs.map(t => ({ ...t, hiddenInNav: true }))] };
+  };
+}
 
 
 function wizardButton() {
@@ -275,28 +293,39 @@ async function show(sectionId, tabId) {
   if (!started) return;
   const section = ALL.find((s) => s.id === sectionId) ?? ALL[0];
   const def = section.build();
-  const tab = def.tabs.find((x) => x.id === tabId) ?? def.tabs[0];
+  const requestedTab = !state.me?.tenant && state.me?.platformAdmin && section.id === 'settings' && !tabId ? 'access' : tabId;
+  const tab = def.tabs.find((x) => x.id === requestedTab) ?? def.tabs[0];
   current = { section: section.id, tab: tab.id };
+  const decision = decisionLocation(section.id, tab.id);
   if (state.me?.tenant) {
     if (!dataAgent) { dataAgent = createDataAgent({ api, language: LANG, workspaceName: state.me.tenant.name }); $("#c-data-agent").replaceChildren(dataAgent.element); }
     dataAgent.setSection(section.id);
   }
   history.replaceState(null, "", `#${section.id}${tab.id !== def.tabs[0].id ? `/${tab.id}` : ""}`);
-  document.querySelectorAll(".app-nav a").forEach((a) => { const on = a.dataset.section === section.id; a.classList.toggle("is-active", on); if (on) a.setAttribute("aria-current", "true"); else a.removeAttribute("aria-current"); });
-  $("#c-crumb").textContent = (section.id === "platform" ? (LANG === "fr" ? "Administration plateforme" : "Platform administration") : section.id === "competition" ? (LANG === "fr" ? "Concurrence" : "Competition") : section.id === "ai_visibility" ? (LANG === "fr" ? "Visibilité IA" : "AI visibility") : t(`s_${section.id}`));
+  document.querySelectorAll(".app-nav a").forEach((a) => { const on = a.dataset.section === decision.area; a.classList.toggle("is-active", on); if (on) a.setAttribute("aria-current", "true"); else a.removeAttribute("aria-current"); });
+  const screenTitle = (section.id === "platform" ? (LANG === "fr" ? "Administration plateforme" : "Platform administration") : section.id === "competition" ? (LANG === "fr" ? "Concurrence" : "Competition") : section.id === "ai_visibility" ? (LANG === "fr" ? "Visibilité IA" : "AI visibility") : t(`s_${section.id}`));
+  $("#c-crumb").textContent = decisionLabel(decision.area, LANG);
   const tabs = $("#c-tabs"); tabs.replaceChildren();
-  for (const x of def.tabs) {
-    const b = el("button", `app-tab${x.id === tab.id ? " is-active" : ""}`); b.type = "button"; b.setAttribute("role", "tab"); b.setAttribute("aria-selected", String(x.id === tab.id));
-    const ic = el("span", "app-tab-icon"); ic.innerHTML = icon(tabIcon(section.id, x.id)); b.dataset.icon = tabIcon(section.id, x.id); b.append(ic, x.label);
+  for (const x of def.tabs.filter(x => !x.hiddenInNav)) {
+    const active = x.id === tab.id || (tab.hiddenInNav && x.id === decision.view);
+    const b = el("button", `app-tab${active ? " is-active" : ""}`); b.type = "button"; b.setAttribute("role", "tab"); b.setAttribute("aria-selected", String(active));
+    const ic = el("span", "app-tab-icon"); ic.innerHTML = icon(x.icon || tabIcon(section.id, x.id)); b.dataset.icon = x.icon || tabIcon(section.id, x.id); b.append(ic, x.label);
     b.onclick = () => show(section.id, x.id); tabs.append(b);
   }
   const panel = el("section", "app-panel c-panel"); panel.setAttribute("role", "tabpanel");
   $("#c-panels").replaceChildren(panel);
   const feature = consoleFeature(section.id, tab.id, LANG);
-  panel.append(sectionHeading($("#c-crumb").textContent, feature?.benefit || def.intro || (LANG === "fr" ? "Comprendre les résultats, leurs sources et la prochaine action." : "Understand results, their sources and the next action."), section.icon));
+  const area = DECISION_AREAS.find(a => a.id === decision.area);
+  const isHub = tab.decision || section.id === 'overview';
+  panel.append(sectionHeading(isHub ? (section.id === 'overview' && tab.id === 'board' ? decisionLabel('overview', LANG) : tab.label) : screenTitle, isHub ? area.description[LANG === 'fr' ? 0 : 1] : feature?.benefit || def.intro || (LANG === 'fr' ? 'Comprendre les résultats, leurs sources et la prochaine action.' : 'Understand results, their sources and the next action.'), section.icon));
+  if (!isHub) {
+    const back = el('p', 'decision-tool-heading'); const link = el('a', '', `${decisionLabel(decision.area, LANG)} →`);
+    link.href = `#${decision.area}/${decision.view}`; back.append(link, el('span', '', LANG === 'fr' ? 'Outil spécialisé · même espace client' : 'Specialist tool · same workspace')); panel.prepend(back);
+  }
+  if (section.id === 'apply_mode') panel.append(el('span', 'decision-badge', LANG === 'fr' ? 'Aperçu · Sans écriture directe' : 'Preview · No direct write'));
   const guide = renderFeatureGuide(section.id, tab.id, LANG);
   if (guide) panel.append(guide);
-  if (!state.me?.tenant && section.id !== "platform") {
+  if (!state.me?.tenant && section.id !== "platform" && !(section.id === 'settings' && tab.id === 'access' && state.me?.platformAdmin)) {
     panel.append(renderDataGuide("tenant", { error: state.contextError })); return;
   }
 
@@ -308,14 +337,31 @@ async function show(sectionId, tabId) {
 }
 
 function mountNav() {
-  for (const [group, list] of Object.entries(SECTIONS)) {
-    const ul = $(`#c-nav-${group}`);
-    for (const s of list) { const li = el("li"); const a = el("a"); a.href = `#${s.id}`; a.dataset.section = s.id; a.innerHTML = icon(s.icon); a.append(el("span", "", (s.id === "platform" ? (LANG === "fr" ? "Administration plateforme" : "Platform administration") : s.id === "competition" ? (LANG === "fr" ? "Concurrence" : "Competition") : s.id === "ai_visibility" ? (LANG === "fr" ? "Visibilité IA" : "AI visibility") : s.id === "journey" ? (LANG === "fr" ? "Parcours client" : "Customer journey") : t(`s_${s.id}`)))); a.onclick = (e) => { e.preventDefault(); show(s.id); }; li.append(a); ul.append(li); }
+  $('#c-nav-track').replaceChildren(); $('#c-nav-act').replaceChildren();
+  $('#c-journey-label').textContent = LANG === 'fr' ? 'Votre parcours' : 'Your journey';
+  $('#c-workspace-label').textContent = LANG === 'fr' ? 'Votre espace' : 'Your workspace';
+  for (const area of DECISION_AREAS) {
+    const li = el('li'), a = el('a'); a.href = `#${area.id}`; a.dataset.section = area.id; a.innerHTML = icon(area.icon);
+    a.append(el('span', '', decisionLabel(area.id, LANG))); a.onclick = e => { e.preventDefault(); show(area.id); }; li.append(a);
+    $(area.id === 'settings' ? '#c-nav-act' : '#c-nav-track').append(li);
   }
-  const search = $("#c-search");
-  search.oninput = () => { const q = search.value.trim().toLowerCase(); document.querySelectorAll(".app-nav li").forEach((li) => { li.hidden = q && !li.textContent.toLowerCase().includes(q); }); };
-  search.onkeydown = (e) => { if (e.key === "Enter") { const first = [...document.querySelectorAll(".app-nav li:not([hidden]) a")][0]; first?.click(); } };
-  document.addEventListener("keydown", (e) => { if ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === "k") { e.preventDefault(); search.focus(); } });
+  const search = $('#c-search'), results = $('#c-tool-search');
+  results.setAttribute('aria-label', LANG === 'fr' ? 'Résultats de recherche d’outils' : 'Tool search results');
+  search.oninput = () => {
+    const q = search.value.trim().toLocaleLowerCase(LANG); results.replaceChildren();
+    if (!q) return;
+    for (const section of ALL.filter(s => !s.decision)) {
+      for (const tab of section.build().tabs.filter(t => !t.decision)) {
+        const label = `${section.id === 'platform' ? (LANG === 'fr' ? 'Administration' : 'Administration') : t(`s_${section.id}`)} · ${tab.label}`;
+        if (!`${label} ${section.id} ${tab.id}`.toLocaleLowerCase(LANG).includes(q)) continue;
+        const li = el('li'), a = el('a'); a.href = `#${section.id}/${tab.id}`; a.innerHTML = icon(tab.icon || tabIcon(section.id, tab.id)); a.append(el('span', '', label));
+        a.onclick = e => { e.preventDefault(); search.value = ''; results.replaceChildren(); show(section.id, tab.id); }; li.append(a); results.append(li);
+      }
+    }
+    if (!results.children.length) results.append(el('li', 'c-note', LANG === 'fr' ? 'Aucun outil trouvé.' : 'No matching tool.'));
+  };
+  search.onkeydown = e => { if (e.key === 'Enter') results.querySelector('a')?.click(); if (e.key === 'Escape') { search.value = ''; results.replaceChildren(); } };
+  document.addEventListener('keydown', e => { if ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === 'k') { e.preventDefault(); search.focus(); } });
 }
 
 function i18nStatic() {

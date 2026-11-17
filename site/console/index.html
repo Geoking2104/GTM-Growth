@@ -15,6 +15,7 @@
 <link rel="stylesheet" href="social.css">
 <link rel="stylesheet" href="crm.css">
 <link rel="stylesheet" href="visual.css">
+<link rel="stylesheet" href="decision.css">
 <link rel="stylesheet" href="connected-agents.css">
 </head>
 <body class="console-page">
@@ -75,9 +76,10 @@
         <button class="btn btn-small" type="submit" data-i18n="apply">Appliquer</button>
       </form>
       <label class="app-search"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="11" cy="11" r="6.5"/><path d="M16 16l4.5 4.5"/></svg><input id="c-search" type="search" data-i18n-ph="search" placeholder="Rechercher" aria-label="Rechercher"><kbd>⌘K</kbd></label>
-      <p class="app-group" data-i18n="track">Track</p>
+      <ul id="c-tool-search" class="decision-tool-search" aria-label="Outils"></ul>
+      <p class="app-group" id="c-journey-label">Votre parcours</p>
       <ul class="app-nav" id="c-nav-track"></ul>
-      <p class="app-group" data-i18n="act">Act</p>
+      <p class="app-group" id="c-workspace-label">Votre espace</p>
       <ul class="app-nav" id="c-nav-act"></ul>
       <a class="app-side-foot" id="c-account" target="_blank" rel="noopener"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="3"/><path d="M12 3v3M12 18v3M3 12h3M18 12h3M5.6 5.6l2 2M16.4 16.4l2 2M18.4 5.6l-2 2M7.6 16.4l-2 2"/></svg><span data-i18n="settings">Mon compte</span></a>
     </aside>

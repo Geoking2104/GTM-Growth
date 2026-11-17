@@ -44,11 +44,11 @@ it.each(["fr", "en"])("opens every navigation entry with content or recovery ste
   await vi.waitFor(() => expect(document.querySelector(".c-out .c-raw")).toBeTruthy());
   expect(memory.get("gtm-console-selected")).toBe("acme");
   const nav = [...document.querySelectorAll<HTMLAnchorElement>(".app-nav a")];
-  expect(nav.length).toBe(30);
+  expect(nav.map(a => a.getAttribute("href"))).toEqual(["#overview", "#diagnose", "#ops", "#impact", "#settings"]);
   const navIcons = [...nav, document.querySelector<HTMLAnchorElement>("#c-account")!].map(a => a.querySelector("svg")?.innerHTML);
   expect(navIcons.every(Boolean)).toBe(true);
   expect(new Set(navIcons).size).toBe(navIcons.length);
-  expect(document.querySelector("#c-nav-act a")?.getAttribute("href")).toBe("#journey");
+  expect(document.querySelector("#c-nav-act a")?.getAttribute("href")).toBe("#settings");
   for (const link of nav) {
     link.click();
     await vi.waitFor(() => {
@@ -60,12 +60,29 @@ it.each(["fr", "en"])("opens every navigation entry with content or recovery ste
       const symbols = tabs.map(tab => tab.querySelector('svg')?.innerHTML);
       expect(symbols.every(Boolean), `${link.hash}: every horizontal tab has a symbol`).toBe(true);
       expect(new Set(symbols).size, `${link.hash}: horizontal symbols are distinct`).toBe(tabs.length);
-      if (link.getAttribute('href') !== '#platform') {
-        expect(panel?.querySelector('.c-feature-guide')).toBeTruthy();
-        expect(panel?.querySelector('.c-feature-next')?.getAttribute('href')).toMatch(/^#[a-z_]+/);
-      }
+      expect(document.querySelectorAll('.app-nav [aria-current="true"]')).toHaveLength(1);
+      expect(document.querySelectorAll('#c-tabs [aria-selected="true"]')).toHaveLength(1);
     });
   }
+  // Existing bookmarks, website links and assistant links still open all 30 tools.
+  const legacy = ['overview/plan','local_seo/network','catalog','commerce','competition','ai_visibility','gsc','ga4','bing','geo','citability','indexnow','sitemap','performance','journey','crm','social','apply_mode','search','keywords','tracking','billing','agents','gtm','audit','generators','calculators','report','ops/articles','platform'];
+  for (const route of legacy) {
+    location.hash = '#' + route; window.dispatchEvent(new window.Event('hashchange'));
+    await vi.waitFor(() => {
+      const panel = document.querySelector('[role=tabpanel]');
+      expect(panel?.textContent?.length, route).toBeGreaterThan(25);
+      expect(panel?.querySelector('.c-loading')).toBeNull();
+      expect(document.querySelectorAll('.app-nav [aria-current="true"]'), route).toHaveLength(1);
+    });
+  }
+  const search = document.querySelector<HTMLInputElement>('#c-search')!;
+  search.value = 'ga4'; search.dispatchEvent(new window.Event('input'));
+  expect(document.querySelector('#c-tool-search a')?.getAttribute('href')).toMatch(/^#ga4/);
+  document.querySelector<HTMLAnchorElement>('#c-tool-search a')!.click();
+  await vi.waitFor(() => {
+    expect(document.querySelector('[role=tabpanel]')?.textContent).toContain('Google Analytics 4');
+    expect(document.querySelector('[role=tabpanel] .c-loading')).toBeNull();
+  });
   const calls = fetcher.mock.calls.filter(([url]) => url.startsWith("/api/console/") && !url.endsWith("/me"));
   expect(calls.every(([, options]) => options?.headers?.["X-Tenant"] === "acme")).toBe(true);
   expect(calls.some(([url]) => /\/(run|publish|import|add|remove)$/.test(url))).toBe(false);
@@ -74,6 +91,6 @@ it.each(["fr", "en"])("opens every navigation entry with content or recovery ste
   const languageUrl = new URL(String(location.replace.mock.calls[0][0]));
   expect(languageUrl.searchParams.get("lang")).toBe(lang === "fr" ? "en" : "fr");
   expect(languageUrl.hash).toBe("#catalog");
-// This is a complete 30-screen journey, with an assertion for every entry.
+// This covers the five business areas, all 30 preserved tools and search.
 // Keep individual readiness waits bounded while allowing slower shared CI CPUs.
-}, 20000);
+}, 30000);
