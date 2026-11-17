@@ -1,10 +1,56 @@
-/* Account console (keycloak.v3) — light GTM Growth branding */
+/* GTM Growth account console, Keycloak 26.4 / keycloak.v3.
+ * Keep the native React forms, security controls and mobile navigation. */
+@font-face { font-family:Inter; src:url('../fonts/InterVariable.woff2') format('woff2'); font-weight:100 900; font-display:swap; }
 :root {
-  --pf-v5-global--primary-color--100: #2563eb;
-  --pf-v5-global--primary-color--200: #1d4fd8;
-  --pf-v5-global--link--Color: #2563eb;
-  --pf-v5-global--FontFamily--text: "Inter", "Segoe UI", system-ui, -apple-system, "Helvetica Neue", Arial, sans-serif;
-  --pf-v5-global--FontFamily--heading: "Inter", "Segoe UI", system-ui, -apple-system, "Helvetica Neue", Arial, sans-serif;
+  color-scheme:light;
+  --gtm-ink:#191426; --gtm-muted:#665f75; --gtm-purple:#6935dc;
+  --gtm-line:#d9cfea; --gtm-soft:#faf7ff; --gtm-radius:9px;
+  --pf-v5-global--primary-color--100:var(--gtm-purple);
+  --pf-v5-global--primary-color--200:#5325b7;
+  --pf-v5-global--link--Color:var(--gtm-purple);
+  --pf-v5-global--link--Color--hover:#5325b7;
+  --pf-v5-global--FontFamily--text:Inter,system-ui,sans-serif;
+  --pf-v5-global--FontFamily--heading:Inter,system-ui,sans-serif;
+  --pf-v5-global--Color--100:var(--gtm-ink);
+  --pf-v5-global--Color--200:var(--gtm-muted);
+  --pf-v5-global--BackgroundColor--100:#fff;
+  --pf-v5-global--BackgroundColor--200:#f8f7fc;
 }
-body { font-family: "Inter", "Segoe UI", system-ui, -apple-system, "Helvetica Neue", Arial, sans-serif; }
-.pf-v5-c-button.pf-m-primary { background-color: #2563eb !important; border-radius: 999px !important; }
+html,body { font-family:Inter,system-ui,sans-serif!important; color:var(--gtm-ink); background:#f8f7fc; -webkit-font-smoothing:antialiased; }
+.pf-v5-c-page { background:#f8f7fc; }
+.pf-v5-c-masthead,.pf-v5-c-page__header { background:#fff!important; color:var(--gtm-ink)!important; border-bottom:1px solid #e5ddef; box-shadow:none; }
+.pf-v5-c-masthead__brand { min-width:0; }
+.pf-v5-c-masthead__brand img { height:42px; width:auto; max-width:244px; }
+.pf-v5-c-masthead .pf-v5-c-toolbar { background:transparent; color:var(--gtm-ink); }
+.pf-v5-c-masthead :is(.pf-v5-c-menu-toggle,.pf-v5-c-button) { color:var(--gtm-ink); }
+.pf-v5-c-page__sidebar { background:#f7f7fb!important; color:var(--gtm-ink)!important; border-right:1px solid #e5ddef; }
+.pf-v5-c-nav { --pf-v5-c-nav__link--Color:var(--gtm-ink); --pf-v5-c-nav__link--hover--Color:var(--gtm-purple); --pf-v5-c-nav__link--m-current--Color:var(--gtm-purple); }
+.pf-v5-c-nav__link,.pf-v5-c-nav__section-title { color:var(--gtm-ink)!important; }
+.pf-v5-c-nav__link { border-radius:9px; margin:4px 10px; padding:13px 14px; font-size:14px; }
+.pf-v5-c-nav__link:hover,.pf-v5-c-nav__link.pf-m-current { background:#eee8fa!important; color:var(--gtm-purple)!important; }
+.pf-v5-c-nav__link::before,.pf-v5-c-nav__link::after { border-color:var(--gtm-purple)!important; }
+.pf-v5-c-page__main-section { background:#f8f7fc!important; color:var(--gtm-ink); }
+.pf-v5-c-title { color:var(--gtm-ink); font-weight:750; letter-spacing:-.035em; }
+.pf-v5-c-card { border:1px solid #e5ddef; border-radius:14px; box-shadow:0 8px 24px -20px #42216a40; overflow:hidden; }
+.pf-v5-c-card__title,.pf-v5-c-card__body { color:var(--gtm-ink); }
+.pf-v5-c-form__label-text { color:var(--gtm-ink); font-weight:600; }
+.pf-v5-c-form-control { min-height:48px; background:#fff!important; color:var(--gtm-ink)!important; border:1px solid var(--gtm-line)!important; border-radius:var(--gtm-radius)!important; box-shadow:none!important; }
+.pf-v5-c-form-control::before,.pf-v5-c-form-control::after { border:0!important; }
+.pf-v5-c-form-control > :is(input,select,textarea) { min-height:46px; font:16px Inter,system-ui,sans-serif; color:var(--gtm-ink); background:transparent; padding-inline:14px; border-radius:inherit; }
+.pf-v5-c-form-control:focus-within { border-color:var(--gtm-purple)!important; box-shadow:0 0 0 3px #6935dc25!important; }
+.pf-v5-c-form-control > :is(input,select,textarea):focus { outline:none; }
+.pf-v5-c-form-control:has([aria-invalid=true]) { border-color:#b42318!important; }
+.pf-v5-c-button { font-family:Inter,system-ui,sans-serif; border-radius:var(--gtm-radius)!important; }
+.pf-v5-c-button::after { border-radius:inherit; }
+.pf-v5-c-button.pf-m-primary { min-height:44px; padding:11px 20px; background:var(--gtm-purple)!important; color:#fff!important; font-weight:650; }
+.pf-v5-c-button.pf-m-primary:hover { background:#5325b7!important; }
+.pf-v5-c-button.pf-m-secondary { color:var(--gtm-purple); --pf-v5-c-button--after--BorderColor:var(--gtm-line); }
+.pf-v5-c-button.pf-m-link,a { color:var(--gtm-purple); }
+:is(a,button,input[type=submit]):focus-visible { outline:3px solid #a883ed!important; outline-offset:3px; }
+input[type=checkbox] { accent-color:var(--gtm-purple); }
+.pf-v5-c-alert,.pf-v5-c-modal-box,.pf-v5-c-menu { border-radius:var(--gtm-radius); }
+.pf-v5-c-menu-toggle { border-radius:var(--gtm-radius); }
+@media(max-width:600px) {
+  .pf-v5-c-masthead__brand img { height:35px; max-width:190px; }
+  .pf-v5-c-page__main-section { padding:20px 16px; }
+}

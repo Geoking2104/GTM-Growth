@@ -27,7 +27,7 @@ await new Promise(resolve => server.listen(0, '127.0.0.1', resolve));
 const origin = `http://127.0.0.1:${server.address().port}`;
 let browser;
 try {
-  await writeFile(path.join(temp, 'realm.json'), JSON.stringify({ realm: 'brand-qa', enabled: true, loginTheme: 'gtm-growth', displayName: 'GTM Growth', internationalizationEnabled: true, supportedLocales: ['fr', 'en'], defaultLocale: 'fr', resetPasswordAllowed: true, registrationAllowed: true, clients: [{ clientId: 'brand-qa', enabled: true, publicClient: true, standardFlowEnabled: true, redirectUris: [`${origin}/*`] }] }));
+  await writeFile(path.join(temp, 'realm.json'), JSON.stringify({ realm: 'brand-qa', enabled: true, loginTheme: 'gtm-growth', accountTheme: 'gtm-growth', users: [{ username: 'brand-reviewer', enabled: true, emailVerified: true, email: 'brand-reviewer@example.test', firstName: 'Brand', lastName: 'Reviewer', credentials: [{ type: 'password', value: 'brand-qa-local-only', temporary: false }] }], displayName: 'GTM Growth', internationalizationEnabled: true, supportedLocales: ['fr', 'en'], defaultLocale: 'fr', resetPasswordAllowed: true, registrationAllowed: true, clients: [{ clientId: 'brand-qa', enabled: true, publicClient: true, standardFlowEnabled: true, redirectUris: [`${origin}/*`] }] }));
   execFileSync('docker', ['run', '--detach', '--rm', '--name', container, '-p', '127.0.0.1:8119:8080', '-v', `${path.resolve('deploy/kayroslab-vps/keycloak/themes')}:/opt/keycloak/themes:ro`, '-v', `${temp}:/opt/keycloak/data/import:ro`, 'quay.io/keycloak/keycloak:26.4', 'start-dev', '--import-realm'], { stdio: 'inherit' });
   let ready = false;
   for (let attempt = 0; attempt < 120; attempt++) {
@@ -43,6 +43,7 @@ try {
     url.search = new URLSearchParams({ client_id: 'brand-qa', redirect_uri: `${origin}/callback`, response_type: 'code', scope: 'openid', ui_locales: lang });
     await page.goto(url.href); await page.locator('#username').waitFor(); await page.evaluate(() => document.fonts.ready);
     assert.equal(await page.locator('html').getAttribute('lang'), lang);
+    assert.match(await page.locator('link[rel=icon]').getAttribute('href'), /logo-rocket.png$/);
     assert.equal((await page.locator('#kc-header-wrapper').innerText()).trim(), 'GTM Growth');
     assert.equal(await page.locator('#kc-header-wrapper').evaluate(el => getComputedStyle(el).color), 'rgb(25, 20, 38)');
     assert.equal(await page.locator('.pf-v5-c-login__main-header').evaluate(el => getComputedStyle(el).borderTopWidth), '0px');
@@ -62,6 +63,33 @@ try {
     await page.locator('a[href*="reset-credentials"]').click(); await page.locator('#username').waitFor();
     assert.equal(await page.locator('#username').evaluate(el => getComputedStyle(el.closest('.pf-v5-c-form-control')).borderRadius), '9px');
     await page.screenshot({ path: path.join(output, `reset-${lang}-${width}.png`), fullPage: true });
+    const back = page.locator('.gtm-auth-footer a');
+    assert.equal(await back.getAttribute('href'), `https://gtm.kayroslab.com/console/?lang=${lang}`);
+
+    // Exercise the real account React application with a disposable fixture user.
+    // Native login is used; no production account, token injection or mocked DOM.
+    const account = `http://127.0.0.1:8119/realms/brand-qa/account/?kc_locale=${lang}`;
+    await page.goto(account);
+    await page.locator('#username').fill('brand-reviewer');
+    await page.locator('#password').fill('brand-qa-local-only');
+    await page.locator('#kc-login').click();
+    const brand = page.locator('[data-testid="page-header"] img[alt="GTM Growth"]');
+    await brand.waitFor();
+    await page.evaluate(() => document.fonts.ready);
+    assert.equal(await page.title(), 'GTM Growth');
+    assert.match(await brand.getAttribute('src'), /gtm-growth\/img\/brand.svg$/);
+    assert.equal(await brand.evaluate(el => el.complete && el.naturalWidth > 0), true);
+    assert.equal(await brand.locator('..').getAttribute('href'), 'https://gtm.kayroslab.com/console/');
+    assert.equal(await page.locator('[data-testid="page-header"]').evaluate(el => getComputedStyle(el).backgroundColor), 'rgb(255, 255, 255)');
+    assert.equal(await page.locator('html').evaluate(el => el.classList.contains('pf-v5-theme-dark')), false);
+    assert.match(await page.locator('body').evaluate(el => getComputedStyle(el).fontFamily), /Inter/);
+    const save = page.locator('.pf-v5-c-button.pf-m-primary').first();
+    await save.waitFor();
+    assert.equal(await save.evaluate(el => getComputedStyle(el).backgroundColor), 'rgb(105, 53, 220)');
+    const accountInput = page.locator('.pf-v5-c-form-control input').first();
+    assert.equal(await accountInput.evaluate(el => getComputedStyle(el.closest('.pf-v5-c-form-control')).borderRadius), '9px');
+    assert.ok(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth + 1));
+    await page.screenshot({ path: path.join(output, `account-${lang}-${width}.png`), fullPage: true });
 
     await page.route('**/brand-fixture*', route => route.fulfill({ contentType: 'text/html', body: `<!doctype html><html lang="${lang}"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><link rel="stylesheet" href="/styles.css"><link rel="stylesheet" href="/brand.css"><link rel="stylesheet" href="/console/shell.css"><link rel="stylesheet" href="/console/visual.css"></head><body class="console-page"><main class="c-app" style="padding:24px;max-width:1200px;margin:auto"><p>GTM Growth · ${lang === 'fr' ? 'Données de test' : 'Test data'}</p><div id="fixture"></div></main></body></html>` }));
     await page.goto(`${origin}/brand-fixture?lang=${lang}`);
@@ -88,7 +116,7 @@ try {
     await page.screenshot({ path: path.join(output, `dashboard-${lang}-${width}.png`), fullPage: true });
     await page.close();
   }
-  console.log('Brand QA passed: native Keycloak login/reset/toggle, FR/EN, desktop/mobile, dark preference, provider marks and data charts.');
+  console.log('Brand QA passed: native Keycloak login/reset/toggle and account console, FR/EN, desktop/mobile, dark preference, provider marks and data charts.');
 } finally {
   await browser?.close(); await new Promise(resolve => server.close(resolve));
   try { execFileSync('docker', ['rm', '--force', container], { stdio: 'ignore' }); } catch {}

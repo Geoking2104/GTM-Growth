@@ -79,6 +79,10 @@ The public contact form uses labelled, 52px controls, Inter, rounded borders and
 violet focus states in both languages. Keycloak's native sign-in and password
 reset screens share the public website's rocket logo and violet/lavender identity;
 authentication, password visibility controls and organisation flows remain native.
+The Keycloak **My account** console now shares the same local rocket wordmark,
+violet controls, Inter and light navigation. Console/referrer links preserve the
+selected language and provide a return to GTM Growth. The release smoke verifies
+actual public CSS, logo, favicon and font delivery after a theme update.
 
 Every console horizontal navigation destination has a distinct semantic icon
 within its section. Dashboards identify known providers with locally served logos,

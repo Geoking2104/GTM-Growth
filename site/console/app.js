@@ -477,7 +477,7 @@ async function start() {
     sessionStorage.removeItem('gtm-console-feature-handoff');
     state.me = me;
     $("#c-user").textContent = `${me.username ?? ""}${me.tenant ? ` · ${me.tenant.name}` : ""}${me.platformAdmin ? ` · ${t("superAdmin")}` : ""}`;
-    if (me.accountConsole) $("#c-account").href = me.accountConsole;
+    if (me.accountConsole) $("#c-account").href = accountConsoleUrl(me.accountConsole);
     applyBranding(me.tenant?.branding);
     const select = $("#c-tenant");
     if ((me.memberships?.length ?? 0) > 1 || me.platformAdmin) {

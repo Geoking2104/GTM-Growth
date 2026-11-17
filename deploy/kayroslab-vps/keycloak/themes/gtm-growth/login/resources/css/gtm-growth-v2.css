@@ -59,3 +59,6 @@ input[type=checkbox] { accent-color: var(--gtm-purple); }
   #kc-page-title { font-size: 22px !important; }
   .pf-v5-c-login__main-header::before { font-size: 9px; letter-spacing: .06em; }
 }
+
+.gtm-auth-footer { display:flex; flex-direction:column; align-items:center; gap:10px; padding-top:16px; border-top:1px solid var(--gtm-line); font-size:13px; color:var(--gtm-muted); text-align:center; }
+.gtm-auth-footer a { font-weight:650; }
