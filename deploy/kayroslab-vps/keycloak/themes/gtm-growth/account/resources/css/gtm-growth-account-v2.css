@@ -39,7 +39,7 @@ html,body { font-family:Inter,system-ui,sans-serif!important; color:var(--gtm-in
 .pf-v5-c-form-control > :is(input,select,textarea) { min-height:46px; font:16px Inter,system-ui,sans-serif; color:var(--gtm-ink); background:transparent; padding-inline:14px; border-radius:inherit; }
 .pf-v5-c-form-control:focus-within { border-color:var(--gtm-purple)!important; box-shadow:0 0 0 3px #6935dc25!important; }
 .pf-v5-c-form-control > :is(input,select,textarea):focus { outline:none; }
-.pf-v5-c-form-control:has([aria-invalid=true]) { border-color:#b42318!important; }
+.pf-v5-c-form-control.pf-m-error,.pf-v5-c-form-control[aria-invalid=true],.pf-v5-c-form-control:has([aria-invalid=true]) { border-color:#b42318!important; }
 .pf-v5-c-button { font-family:Inter,system-ui,sans-serif; border-radius:var(--gtm-radius)!important; }
 .pf-v5-c-button::after { border-radius:inherit; }
 .pf-v5-c-button.pf-m-primary { min-height:44px; padding:11px 20px; background:var(--gtm-purple)!important; color:#fff!important; font-weight:650; }

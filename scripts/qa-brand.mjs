@@ -27,7 +27,7 @@ await new Promise(resolve => server.listen(0, '127.0.0.1', resolve));
 const origin = `http://127.0.0.1:${server.address().port}`;
 let browser, activePage;
 try {
-  await writeFile(path.join(temp, 'realm.json'), JSON.stringify({ realm: 'brand-qa', enabled: true, loginTheme: 'gtm-growth', accountTheme: 'gtm-growth', users: [{ username: 'brand-reviewer', enabled: true, emailVerified: true, email: 'brand-reviewer@example.test', firstName: 'Brand', lastName: 'Reviewer', credentials: [{ type: 'password', value: 'brand-qa-local-only', temporary: false }] }], displayName: 'GTM Growth', internationalizationEnabled: true, supportedLocales: ['fr', 'en'], defaultLocale: 'fr', resetPasswordAllowed: true, registrationAllowed: true, clients: [{ clientId: 'brand-qa', name: 'GTM Growth console', rootUrl: origin, baseUrl: `${origin}/callback`, enabled: true, publicClient: true, standardFlowEnabled: true, redirectUris: [`${origin}/*`] }] }));
+  await writeFile(path.join(temp, 'realm.json'), JSON.stringify({ realm: 'brand-qa', enabled: true, loginTheme: 'gtm-growth', accountTheme: 'gtm-growth', users: [{ username: 'brand-reviewer', enabled: true, clientRoles: { account: ['manage-account', 'view-profile'] }, emailVerified: true, email: 'brand-reviewer@example.test', firstName: 'Brand', lastName: 'Reviewer', credentials: [{ type: 'password', value: 'brand-qa-local-only', temporary: false }] }], displayName: 'GTM Growth', internationalizationEnabled: true, supportedLocales: ['fr', 'en'], defaultLocale: 'fr', resetPasswordAllowed: true, registrationAllowed: true, clients: [{ clientId: 'brand-qa', name: 'GTM Growth console', rootUrl: origin, baseUrl: `${origin}/callback`, enabled: true, publicClient: true, standardFlowEnabled: true, redirectUris: [`${origin}/*`] }] }));
   execFileSync('docker', ['run', '--detach', '--rm', '--name', container, '-p', '127.0.0.1:8119:8080', '-v', `${path.resolve('deploy/kayroslab-vps/keycloak/themes')}:/opt/keycloak/themes:ro`, '-v', `${temp}:/opt/keycloak/data/import:ro`, 'quay.io/keycloak/keycloak:26.4', 'start-dev', '--import-realm'], { stdio: 'inherit' });
   let ready = false;
   for (let attempt = 0; attempt < 120; attempt++) {
@@ -39,6 +39,9 @@ try {
   browser = await chromium.launch({ headless: true, args: ['--no-sandbox'] });
   for (const lang of ['fr', 'en']) for (const width of [1280, 390]) {
     const page = activePage = await browser.newPage({ viewport: { width, height: 960 }, colorScheme: 'dark' });
+    page.on('pageerror', error => console.error('Keycloak fixture browser error:', error.message));
+    page.on('response', response => { if (response.status() >= 400 && new URL(response.url()).origin === 'http://127.0.0.1:8119') console.error('Keycloak fixture HTTP:', response.status(), new URL(response.url()).pathname); });
+    page.on('console', message => { if (message.type() === 'error') console.error('Keycloak fixture console:', message.text()); });
     const url = new URL('http://127.0.0.1:8119/realms/brand-qa/protocol/openid-connect/auth');
     url.search = new URLSearchParams({ client_id: 'brand-qa', redirect_uri: `${origin}/callback`, response_type: 'code', scope: 'openid', ui_locales: lang });
     await page.goto(url.href); await page.locator('#username').waitFor(); await page.evaluate(() => document.fonts.ready);
