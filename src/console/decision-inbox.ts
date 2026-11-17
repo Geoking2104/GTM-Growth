@@ -44,6 +44,15 @@ export async function proposeReview(ctx: HandlerContext, raw: unknown, io = depe
     payload = input.kind === 'gtm' ? gtmSchema.parse(input.payload) : z.object({ container: z.string(), version: z.string().regex(/^\d+$/) }).strict().parse(input.payload);
     ownedMeasurement(ctx, payload.container, undefined, payload.workspace);
     if (payload.path && (!payload.path.startsWith(payload.container + '/workspaces/') || !/^accounts\/\d+\/containers\/\d+\/workspaces\/\d+(\/(tags|triggers|variables)\/\d+)?$/.test(payload.path))) throw new TenantAccessError('DECISION_CONTAINER_SCOPE');
+    if (payload.path && ['update','delete'].includes(payload.op)) {
+      const resourceWorkspace = payload.path.split('/').slice(0,6).join('/');
+      if (payload.workspace && payload.workspace !== resourceWorkspace) throw new TenantAccessError('DECISION_WORKSPACE_SCOPE');
+      payload.workspace = resourceWorkspace;
+    }
+    if (payload.resource) {
+      const resource = typeof payload.resource === 'string' ? JSON.parse(payload.resource) : payload.resource;
+      if (resource.path && resource.path !== payload.path) throw new TenantAccessError('DECISION_CONTAINER_SCOPE');
+    }
     const inventory: any = await io.inventory(payload, who.tenant); if (inventory.problem || !inventory.coverage?.versions || !inventory.coverage?.status || !inventory.coverage?.live || !inventory.coverage?.clients) throw new Error('GTM_INVENTORY_UNAVAILABLE');
     if (input.kind === 'gtm') {
       const preview: any = await io.write({ ...payload, dryRun: true }, who.tenant); if (!preview.dryRun) throw new Error('GTM_PREVIEW_INVALID');

@@ -69,7 +69,7 @@ export function latestMeasurement(ctx: HandlerContext, raw: unknown) {
   const who = decisionPrincipal(ctx);
   const input = z.object({ container: z.string().optional(), ga4Property: z.string().optional(), url: z.string().url().optional() }).strict().parse(raw);
   if (input.container) ownedMeasurement(ctx, input.container, input.ga4Property);
-  if (input.url) ownedPage(ctx, input.url);
+  if (input.url) input.url = ownedPage(ctx, input.url);
   const run: MeasurementRun | undefined = [...readDecision(who.tenant.id).audits].reverse().find(r =>
     (!input.container || r.scope.container === input.container) && (!input.ga4Property || r.scope.ga4Property === input.ga4Property) && (!input.url || r.scope.pages.includes(input.url)) &&
     who.tenant.gtmContainers?.includes(r.scope.container) && (!r.scope.ga4Property || who.tenant.ga4Properties?.includes(r.scope.ga4Property)) && r.scope.pages.every((u: string) => { try { ownedPage(ctx, u); return true; } catch { return false; } }));

@@ -41,6 +41,7 @@ it('deduplicates proposals, keeps approvals separate, rejects changed versions a
 });
 it('blocks cross-container targets before a provider read and requires typed publication confirmation',async()=>{
  const dep=io();await expect(proposeReview(ctx(),{kind:'gtm',payload:{container,workspace:'accounts/9/containers/8/workspaces/3',op:'delete-workspace'}},dep)).rejects.toThrow('DECISION_WORKSPACE_SCOPE');expect(dep.inventory).not.toHaveBeenCalled();
+ await expect(proposeReview(ctx(),{kind:'gtm',payload:{container,workspace,op:'update',kind:'tags',path:container+'/workspaces/9/tags/5'}},dep)).rejects.toThrow('DECISION_WORKSPACE_SCOPE');
  const r=await proposeReview(ctx(),{kind:'gtm-publish',payload:{container,version:'5'}},dep);await approve(r,dep);await expect(executeReview(ctx(),command(r),dep)).rejects.toThrow('GTM_CONFIRM_PUBLIC_ID');expect(dep.publish).not.toHaveBeenCalled();expect((await executeReview(ctx(),{...command(r),confirm:'GTM-ABC'},dep)).status).toBe('completed');
 });
 it('does not retry an ambiguous external write and never executes a technical diff',async()=>{
@@ -61,7 +62,7 @@ it('retains hashed CRM identities and blocks a revoked web scope before binding'
 const engines=()=>({inventory:vi.fn(async()=>inventory()),installation:vi.fn(async({url}:any)=>({url,containerIds:['GTM-ABC'],checks:[{id:'gtm.container',status:'pass',required:true},{id:'gtm.consent_default',status:'pass'}]})),setup:vi.fn(async()=>({coverage:{complete:true},issues:[]})),duplicates:vi.fn(async()=>({hasDuplicates:false}))} as any);
 const auditInput={container,ga4Property:'123',pages:['https://example.com/']};
 it('orchestrates all four engines and keeps missing, changed and stale measurement unknown',async()=>{
- const e=engines();const r=await runMeasurement(ctx(),auditInput,e);expect(r.state).toBe('intact');expect(r.checks).toHaveLength(4);expect(latestMeasurement(ctx(),{}).run?.id).toBe(r.id);expect(latestMeasurement(ctx('other'),{}).run).toBeNull();
+ const e=engines();const r=await runMeasurement(ctx(),auditInput,e);expect(r.state).toBe('intact');expect(r.checks).toHaveLength(4);expect(latestMeasurement(ctx(),{url:'https://example.com'}).run?.id).toBe(r.id);expect(latestMeasurement(ctx('other'),{}).run).toBeNull();
  e.setup.mockRejectedValueOnce(new Error('access revoked'));expect((await runMeasurement(ctx(),auditInput,e)).state).toBe('unknown');e.inventory.mockResolvedValueOnce({...inventory(),coverage:{status:false,live:true}});expect((await runMeasurement(ctx(),auditInput,e)).state).toBe('unknown');
  e.inventory.mockResolvedValueOnce({...inventory(),pendingChanges:1});expect((await runMeasurement(ctx(),auditInput,e)).state).toBe('unknown');
  changeDecision('acme',s=>{for(const r of s.audits)r.at='2000-01-01T00:00:00Z';});expect(latestMeasurement(ctx(),{}).stale).toBe(true);

@@ -363,9 +363,9 @@ export function buildConsoleRouter(routes: ConsoleRoute[], options: ConsoleOptio
         const data = await withCredential(tenancy?.tenant?.googleCredential, () => route.handler({ url: scoped.url, body, user, tenancy }));
         if (route.path === '/overview' && tenancy?.tenant && data && typeof data === 'object') {
           const report = data as { url?: string; generatedAt?: string; geo?: { score?: number } };
-          if (report.url && tenantOwnsUrl(tenancy.tenant, report.url)) changeDecision(tenancy.tenant.id, s => {
+          if (report.url && tenantOwnsUrl(tenancy.tenant, report.url)) try { changeDecision(tenancy.tenant.id, s => {
             s.overviews = [...(s.overviews || []), { url: report.url!, at: report.generatedAt || new Date().toISOString(), score: Number.isFinite(report.geo?.score) ? report.geo!.score! : null }].slice(-20);
-          });
+          }); } catch { logger.warn('[console] Portfolio snapshot was not saved; returning the live overview.'); }
         }
         if (Buffer.isBuffer(data)) return res.type("application/pdf").setHeader("Content-Disposition", "attachment; filename=rapport-geo.pdf").send(data);
         return res.json(data);
