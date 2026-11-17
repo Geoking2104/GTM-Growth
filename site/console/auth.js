@@ -13,7 +13,13 @@ const issuer = () => currentTenant()?.issuer || OIDC.issuer;
 const b64url = (bytes) => btoa(String.fromCharCode(...new Uint8Array(bytes))).replace(/\+/g, "-").replace(/\//g, "_").replace(/=+$/, "");
 const random = (n = 32) => b64url(crypto.getRandomValues(new Uint8Array(n)));
 const endpoint = (path) => `${issuer()}/protocol/openid-connect/${path}`;
-export const accountConsoleUrl = () => `${issuer()}/account/`;
+export const accountConsoleUrl = (base) => {
+  const url = new URL(base || `${issuer()}/account/`);
+  url.searchParams.set('referrer', OIDC.clientId);
+  url.searchParams.set('referrer_uri', `${location.origin}${location.pathname}?lang=${LANG}`);
+  url.searchParams.set('kc_locale', LANG);
+  return url.href;
+};
 const redirectUri = () => `${location.origin}${location.pathname}`;
 
 function save(tokens) {
