@@ -8,7 +8,7 @@ it('provides a self-contained account wordmark, font and light theme under nativ
  const logo=properties.match(/^logo=(.+)$/m)![1];expect(existsSync(`${root}/account/resources/${logo}`)).toBe(true);
  expect(readFileSync(`${root}/account/resources/${logo}`,'utf8')).toContain('GTM Growth');
  expect(existsSync(`${root}/account/resources/fonts/InterVariable.woff2`)).toBe(true);
- expect(readFileSync(`${root}/account/resources/css/gtm-growth-account.css`,'utf8')).toContain('--gtm-purple:#6935dc');
+ expect(readFileSync(`${root}/account/resources/css/gtm-growth-account-v2.css`,'utf8')).toContain('--gtm-purple:#6935dc');
 });
 it.each(['fr','en'])('preserves the console return destination and locale for account management in %s',async lang=>{
  vi.stubGlobal('location',{origin:'https://gtm.kayroslab.com',pathname:'/console/',search:`?lang=${lang}`});

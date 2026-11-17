@@ -13,7 +13,8 @@ violet `#6935dc`, lavender surfaces, Inter, 52px controls and the public rocket 
 
 `login/theme.properties` loads the versioned `css/gtm-growth-v2.css`. The rocket
 and Inter font are local copies from `site/fr/assets/`; there are no CDN requests.
-The account theme sets the native `logo` and `logoUrl` properties, supplies a
+The account HTML loads the versioned `gtm-growth-account-v2.css` so previously
+cached blue CSS cannot override a fresh account page. The account theme sets the native `logo` and `logoUrl` properties, supplies a
 self-contained rocket/wordmark SVG and favicon, and bundles Inter locally. It sets
 `darkMode=false` so an OS dark preference cannot restore Keycloak's default shell.
 Account links from the console carry the referrer and selected locale; the native

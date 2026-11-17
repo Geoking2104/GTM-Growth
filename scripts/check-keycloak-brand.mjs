@@ -16,7 +16,7 @@ assert.equal(environment.logoUrl,'https://gtm.kayroslab.com/console/');
 assert.match(page,/<title>GTM Growth<\/title>/);
 const base = environment.resourceUrl;
 assert.match(base,/^\/resources\/[a-zA-Z0-9_-]+\/account\/gtm-growth$/);
-const css = await (await read(`${base}/css/gtm-growth-account.css`)).text();
+const css = await (await read(`${base}/css/gtm-growth-account-v2.css`)).text();
 assert.match(css,/--gtm-purple:#6935dc/);
 assert.match(css,/@font-face/);
 const logo=await (await read(`${base}/img/brand.svg`)).text();

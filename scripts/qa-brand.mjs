@@ -25,7 +25,7 @@ const server = createServer(async (req, res) => {
 });
 await new Promise(resolve => server.listen(0, '127.0.0.1', resolve));
 const origin = `http://127.0.0.1:${server.address().port}`;
-let browser;
+let browser, activePage;
 try {
   await writeFile(path.join(temp, 'realm.json'), JSON.stringify({ realm: 'brand-qa', enabled: true, loginTheme: 'gtm-growth', accountTheme: 'gtm-growth', users: [{ username: 'brand-reviewer', enabled: true, emailVerified: true, email: 'brand-reviewer@example.test', firstName: 'Brand', lastName: 'Reviewer', credentials: [{ type: 'password', value: 'brand-qa-local-only', temporary: false }] }], displayName: 'GTM Growth', internationalizationEnabled: true, supportedLocales: ['fr', 'en'], defaultLocale: 'fr', resetPasswordAllowed: true, registrationAllowed: true, clients: [{ clientId: 'brand-qa', name: 'GTM Growth console', rootUrl: origin, baseUrl: `${origin}/callback`, enabled: true, publicClient: true, standardFlowEnabled: true, redirectUris: [`${origin}/*`] }] }));
   execFileSync('docker', ['run', '--detach', '--rm', '--name', container, '-p', '127.0.0.1:8119:8080', '-v', `${path.resolve('deploy/kayroslab-vps/keycloak/themes')}:/opt/keycloak/themes:ro`, '-v', `${temp}:/opt/keycloak/data/import:ro`, 'quay.io/keycloak/keycloak:26.4', 'start-dev', '--import-realm'], { stdio: 'inherit' });
@@ -38,7 +38,7 @@ try {
   assert.ok(ready, 'Disposable Keycloak must start');
   browser = await chromium.launch({ headless: true, args: ['--no-sandbox'] });
   for (const lang of ['fr', 'en']) for (const width of [1280, 390]) {
-    const page = await browser.newPage({ viewport: { width, height: 960 }, colorScheme: 'dark' });
+    const page = activePage = await browser.newPage({ viewport: { width, height: 960 }, colorScheme: 'dark' });
     const url = new URL('http://127.0.0.1:8119/realms/brand-qa/protocol/openid-connect/auth');
     url.search = new URLSearchParams({ client_id: 'brand-qa', redirect_uri: `${origin}/callback`, response_type: 'code', scope: 'openid', ui_locales: lang });
     await page.goto(url.href); await page.locator('#username').waitFor(); await page.evaluate(() => document.fonts.ready);
@@ -80,14 +80,14 @@ try {
     assert.equal(await page.locator('[data-testid=referrer-link]').getAttribute('href'), `${origin}/callback?lang=${lang}`);
     assert.match(await brand.getAttribute('src'), /gtm-growth\/img\/brand.svg$/);
     assert.equal(await brand.evaluate(el => el.complete && el.naturalWidth > 0), true);
-    assert.equal(await brand.locator('..').getAttribute('href'), 'https://gtm.kayroslab.com/console/');
+    assert.equal(await brand.evaluate(el => el.closest('a')?.href), 'https://gtm.kayroslab.com/console/');
     assert.equal(await page.locator('[data-testid="page-header"]').evaluate(el => getComputedStyle(el).backgroundColor), 'rgb(255, 255, 255)');
     assert.equal(await page.locator('html').evaluate(el => el.classList.contains('pf-v5-theme-dark')), false);
     assert.match(await page.locator('body').evaluate(el => getComputedStyle(el).fontFamily), /Inter/);
     const save = page.locator('.pf-v5-c-button.pf-m-primary').first();
     await save.waitFor();
     assert.equal(await save.evaluate(el => getComputedStyle(el).backgroundColor), 'rgb(105, 53, 220)');
-    const accountInput = page.locator('.pf-v5-c-form-control input').first();
+    const accountInput = page.locator('input.pf-v5-c-form-control, .pf-v5-c-form-control input').first();
     assert.equal(await accountInput.evaluate(el => getComputedStyle(el.closest('.pf-v5-c-form-control')).borderRadius), '9px');
     assert.ok(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth + 1));
     await page.screenshot({ path: path.join(output, `account-${lang}-${width}.png`), fullPage: true });
@@ -118,6 +118,9 @@ try {
     await page.close();
   }
   console.log('Brand QA passed: native Keycloak login/reset/toggle and account console, FR/EN, desktop/mobile, dark preference, provider marks and data charts.');
+} catch (error) {
+  if (activePage && !activePage.isClosed()) await activePage.screenshot({ path: path.join(output, 'failure.png'), fullPage: true }).catch(() => {});
+  throw error;
 } finally {
   await browser?.close(); await new Promise(resolve => server.close(resolve));
   try { execFileSync('docker', ['rm', '--force', container], { stdio: 'ignore' }); } catch {}
