@@ -319,7 +319,7 @@ async function show(sectionId, tabId) {
   const feature = consoleFeature(section.id, tab.id, LANG);
   const area = DECISION_AREAS.find(a => a.id === decision.area);
   const isHub = tab.decision || section.id === 'overview';
-  panel.append(sectionHeading(isHub ? (section.id === 'overview' && tab.id === 'board' ? decisionLabel('overview', LANG) : tab.label) : screenTitle, isHub ? area.description[LANG === 'fr' ? 0 : 1] : feature?.benefit || def.intro || (LANG === 'fr' ? 'Comprendre les résultats, leurs sources et la prochaine action.' : 'Understand results, their sources and the next action.'), section.icon));
+  panel.append(sectionHeading(isHub ? (section.id === 'overview' && tab.id === 'board' ? decisionLabel('overview', LANG) : tab.label) : screenTitle, isHub ? area.description[LANG === 'fr' ? 0 : 1] : feature?.benefit || def.intro || (LANG === 'fr' ? 'Comprendre les résultats, leurs sources et la prochaine action.' : 'Understand results, their sources and the next action.'), isHub ? (tab.icon || section.icon) : section.icon));
   if (!isHub) {
     const back = el('p', 'decision-tool-heading'); const link = el('a', '', `${decisionLabel(decision.area, LANG)} →`);
     link.href = `#${decision.area}/${decision.view}`; back.append(link, el('span', '', LANG === 'fr' ? 'Outil spécialisé · même espace client' : 'Specialist tool · same workspace')); panel.prepend(back);
