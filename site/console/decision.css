@@ -12,6 +12,10 @@
 .decision-enrich { border-top: 1px solid #e5ddef; padding-top: 18px; }
 .decision-enrich > summary { cursor: pointer; padding: 10px 0; font-weight: 600; color: #6935dc; }
 .decision-enrich[open] > .c-note { margin: 8px 0 18px; }
+.decision-setup { padding: 20px; border: 1px solid #e5ddef; border-radius: 12px; }
+.decision-setup > summary { cursor: pointer; color: #6935dc; font-weight: 600; padding: 6px 0; }
+.decision-setup[open] > summary { margin-bottom: 18px; }
+.decision-setup > .btn { margin: 14px 0; }
 .decision-context { margin: 0; padding: 16px 18px; border-radius: 10px; background: #f7f2fd; color: #635372; font-size: 13px; line-height: 1.7; }
 .decision-measurement { padding: 16px 18px; border: 1px solid #dfd9e7; border-radius: 10px; color: #4f455c; background: #f8f6fa; font-size: 13px; }
 .decision-measurement p { margin: 7px 0; line-height: 1.6; }

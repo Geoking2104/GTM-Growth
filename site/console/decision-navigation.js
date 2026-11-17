@@ -79,8 +79,8 @@ export const DECISION_VIEWS = {
     { id: 'visibility', icon: 'eye', fr: 'Trafic & Visibilité', en: 'Traffic & Visibility', items: [
       item('#gsc','google','Mesurer la visibilité Google','Measure Google visibility','Comparez les clics, impressions et requêtes de recherche.','Compare search clicks, impressions and queries.','gsc'),
       item('#bing','bing','Mesurer la visibilité Bing','Measure Bing visibility','Comparez les résultats de la période sélectionnée.','Compare results for the selected period.','bing'),
-      item('#ai_visibility','eye','Examiner les réponses IA','Inspect AI answers','Consultez les réponses collectées ou importées et leurs limites.','Read collected or imported answers and their limitations.'),
-      item('#social/analytics','social','Lire les résultats sociaux','Read social results','Utilisez les observations importées et connectées.','Use imported and connected observations.'),
+      item('#ai_visibility','eye','Examiner les réponses IA','Inspect AI answers','Consultez les réponses collectées ou importées et leurs limites.','Read collected or imported answers and their limitations.','ai'),
+      item('#social/analytics','social','Lire les résultats sociaux','Read social results','Connectez Postiz ou ouvrez les observations importées manuellement.','Connect Postiz or open manually imported observations.','social'),
     ] },
     { id: 'analytics', icon: 'ga4', fr: 'Conversions & Analytics', en: 'Conversions & Analytics', items: [
       item('#ga4','ga4','Comprendre les visites et conversions','Understand visits and conversions','Consultez l’acquisition, les appareils et les événements clés.','Read acquisition, devices and key events.','ga4'),

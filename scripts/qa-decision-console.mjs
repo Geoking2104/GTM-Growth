@@ -58,12 +58,14 @@ try {
     assert.equal(await page.locator('.app-nav [aria-current="true"]').getAttribute('href'), '#impact');
     connected = true;
     await page.goto(`${origin}/console/?lang=${lang}#impact/analytics`);
+    await page.reload(); // A changed fixture represents a new connection/session.
     await page.locator('.decision-hub > .decision-grid > a[href="#ga4"]').waitFor();
     assert.equal(await page.locator('.decision-hub > .decision-grid > a').count(), 2);
     assert.ok(calls.filter(c => !c.path.endsWith('/me')).every(c => c.tenant === 'acme'));
     assert.ok(!calls.some(c => /\/(publish|write|approve|decide|execute|grant|add|save)$/.test(c.path)), 'Navigation never mutates provider state');
     platformOnly = true;
     await page.goto(`${origin}/console/?lang=${lang}#settings`);
+    await page.reload();
     await page.locator('.decision-card[href="#platform"]').waitFor();
     assert.deepEqual(errors, []);
     await page.close();

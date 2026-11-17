@@ -38,6 +38,10 @@ restricted, unknown and failed connection states remain distinct in a closed
 available. Missing observations never become zeros. Configured GBP additionally
 requires an associated listing; CRM collection must be enabled. These states do
 not claim successful data collection, complete history or valid measurement.
+The social results card checks configured Postiz accounts; manual observation
+imports remain accessible from the drawer without a connector. AI evidence cards
+check for an existing dataset. The cockpit also collapses missing data panels and
+workspace setup instead of putting empty charts ahead of its priorities.
 
 Initial background preload is limited to overview and tracking status, plus the
 existing visual context. Other analyses load when requested by their view. This

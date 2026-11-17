@@ -17,6 +17,8 @@ export function sourceAvailability(source, value) {
   if (source === 'gtm') return value.container?.path ? 'connected' : 'not-configured';
   if (source === 'gbp') return value.capabilities?.gbp === 'configured' && value.bindings?.length ? 'connected' : 'not-configured';
   if (source === 'crm') return value.settings?.enabled === true ? 'connected' : 'not-configured';
+  if (source === 'social') return value.capabilities?.postiz === true && value.capabilities.accounts?.length ? 'connected' : 'not-configured';
+  if (source === 'ai') return value.datasets?.length ? 'connected' : 'not-configured';
   return 'unavailable';
 }
 
@@ -33,7 +35,7 @@ export function decisionCard(item, status) {
   else mark.innerHTML = icon(item.icon);
   const copy = el('div'); copy.append(el('h3', '', L(item.fr, item.en)), el('p', '', L(item.frBenefit, item.enBenefit)));
   if (item.badge === 'preview') copy.append(el('span', 'decision-badge', L('Aperçu · Sans écriture directe', 'Preview · No direct write')));
-  if (status && status !== 'connected') copy.append(el('span', 'decision-badge', L(...(labels[status] || labels.unavailable))));
+  if (status && status !== 'connected') copy.append(el('span', 'decision-badge', status === 'not-configured' && ['social', 'ai'].includes(item.source) ? L('Collecter ou importer des preuves', 'Collect or import evidence') : L(...(labels[status] || labels.unavailable))));
   const arrow = el('span', 'decision-arrow', '↗'); arrow.setAttribute('aria-hidden', 'true');
   link.append(mark, copy, arrow); return link;
 }
@@ -67,8 +69,10 @@ export function renderDecisionHub(area, viewId, { state, api, scope }) {
   const requests = new Map();
   const request = (route, body) => { if (!requests.has(route)) requests.set(route, api(route, body).catch(() => null)); return requests.get(route); };
   for (const source of Object.keys(status)) {
-    const [route, body] = ['gsc','ga4','bing'].includes(source) ? ['/tracking/status', scope()] : source === 'gtm' ? ['/gtm/inventory', scope({ container: state.gtmContainer || undefined })] : source === 'gbp' ? ['/local-seo/state', {}] : ['/crm/overview', {}];
-    void request(route, body).then(value => { status[source] = sourceAvailability(source, value); if (root.isConnected) draw(); });
+    const [route, body] = ['gsc','ga4','bing'].includes(source) ? ['/tracking/status', scope()] : source === 'gtm' ? ['/gtm/inventory', scope({ container: state.gtmContainer || undefined })] : source === 'gbp' ? ['/local-seo/state', {}] : source === 'social' ? ['/social/state', {}] : source === 'ai' ? ['/ai-visibility/datasets', {}] : ['/crm/overview', {}];
+    // A cached response can resolve before the caller mounts this root. Drawing
+    // remains local to this node, so late results cannot replace another view.
+    void request(route, body).then(value => { status[source] = sourceAvailability(source, value); draw(); });
   }
   return root;
 }

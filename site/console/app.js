@@ -191,7 +191,9 @@ const SECTIONS = {
           status?.gsc?.hasAccess === true ? api("/search/performance", scope()).catch(() => ({ problem: true })) : null,
           status?.ga4?.hasAccess === true ? api("/ga4/overview", scope()).catch(() => ({ problem: true })) : null,
         ]);
-        return [renderDecisionPriorities(ov?.loadError ? null : ov), renderAudienceOverview({ search, ga4, status, state, rerender, ai }), ...(ov?.loadError ? [renderDataGuide("geo", { error: ov.loadError, retry: rerender })] : ov ? renderOverview(ov) : []), renderOnboarding({ status, tenant: state.me?.tenant, overview: ov?.loadError ? null : ov, reports }), wizardButton(), renderAgentHelp()];
+        const setup = el('details', 'decision-setup');
+        setup.append(el('summary', '', LANG === 'fr' ? 'Configurer mon espace et mes sources' : 'Set up my workspace and sources'), renderOnboarding({ status, tenant: state.me?.tenant, overview: ov?.loadError ? null : ov, reports }), wizardButton(), renderAgentHelp());
+        return [renderDecisionPriorities(ov?.loadError ? null : ov), renderAudienceOverview({ search, ga4, status, state, rerender, ai, progressive: true }), ...(ov?.loadError ? [renderDataGuide("geo", { error: ov.loadError, retry: rerender })] : ov ? renderOverview(ov) : []), setup];
       } },
       { id: "plan", label: t("t_plan"), async: async () => renderPlan(await overview()) }]) },
     { id: "local_seo", icon: "local_seo", build: () => custom("local_seo", [{ id: "website", label: LANG === "fr" ? "SEO du site" : "Website SEO", needsDomain: false, async: async () => renderGlobalSeo({ state, api, scope }) }, { id: "network", label: "Google Business Profile", needsDomain: false, async: async () => renderLocalSeo({ api, me: state.me }) }, { id: "planning", label: LANG === "fr" ? "Préparer mon établissement" : "Plan my business", needsDomain: false, async: async () => renderLocalSeoWorkspace({ state }) }]) },
@@ -323,7 +325,7 @@ async function show(sectionId, tabId) {
     link.href = `#${decision.area}/${decision.view}`; back.append(link, el('span', '', LANG === 'fr' ? 'Outil spécialisé · même espace client' : 'Specialist tool · same workspace')); panel.prepend(back);
   }
   if (section.id === 'apply_mode') panel.append(el('span', 'decision-badge', LANG === 'fr' ? 'Aperçu · Sans écriture directe' : 'Preview · No direct write'));
-  const guide = renderFeatureGuide(section.id, tab.id, LANG);
+  const guide = isHub ? null : renderFeatureGuide(section.id, tab.id, LANG);
   if (guide) panel.append(guide);
   if (!state.me?.tenant && section.id !== "platform" && !(section.id === 'settings' && tab.id === 'access' && state.me?.platformAdmin)) {
     panel.append(renderDataGuide("tenant", { error: state.contextError })); return;
