@@ -27,7 +27,7 @@ await new Promise(resolve => server.listen(0, '127.0.0.1', resolve));
 const origin = `http://127.0.0.1:${server.address().port}`;
 let browser;
 try {
-  await writeFile(path.join(temp, 'realm.json'), JSON.stringify({ realm: 'brand-qa', enabled: true, loginTheme: 'gtm-growth', accountTheme: 'gtm-growth', users: [{ username: 'brand-reviewer', enabled: true, emailVerified: true, email: 'brand-reviewer@example.test', firstName: 'Brand', lastName: 'Reviewer', credentials: [{ type: 'password', value: 'brand-qa-local-only', temporary: false }] }], displayName: 'GTM Growth', internationalizationEnabled: true, supportedLocales: ['fr', 'en'], defaultLocale: 'fr', resetPasswordAllowed: true, registrationAllowed: true, clients: [{ clientId: 'brand-qa', enabled: true, publicClient: true, standardFlowEnabled: true, redirectUris: [`${origin}/*`] }] }));
+  await writeFile(path.join(temp, 'realm.json'), JSON.stringify({ realm: 'brand-qa', enabled: true, loginTheme: 'gtm-growth', accountTheme: 'gtm-growth', users: [{ username: 'brand-reviewer', enabled: true, emailVerified: true, email: 'brand-reviewer@example.test', firstName: 'Brand', lastName: 'Reviewer', credentials: [{ type: 'password', value: 'brand-qa-local-only', temporary: false }] }], displayName: 'GTM Growth', internationalizationEnabled: true, supportedLocales: ['fr', 'en'], defaultLocale: 'fr', resetPasswordAllowed: true, registrationAllowed: true, clients: [{ clientId: 'brand-qa', name: 'GTM Growth console', rootUrl: origin, baseUrl: `${origin}/callback`, enabled: true, publicClient: true, standardFlowEnabled: true, redirectUris: [`${origin}/*`] }] }));
   execFileSync('docker', ['run', '--detach', '--rm', '--name', container, '-p', '127.0.0.1:8119:8080', '-v', `${path.resolve('deploy/kayroslab-vps/keycloak/themes')}:/opt/keycloak/themes:ro`, '-v', `${temp}:/opt/keycloak/data/import:ro`, 'quay.io/keycloak/keycloak:26.4', 'start-dev', '--import-realm'], { stdio: 'inherit' });
   let ready = false;
   for (let attempt = 0; attempt < 120; attempt++) {
@@ -68,7 +68,7 @@ try {
 
     // Exercise the real account React application with a disposable fixture user.
     // Native login is used; no production account, token injection or mocked DOM.
-    const account = `http://127.0.0.1:8119/realms/brand-qa/account/?kc_locale=${lang}`;
+    const account = `http://127.0.0.1:8119/realms/brand-qa/account/?${new URLSearchParams({kc_locale:lang,referrer:"brand-qa",referrer_uri:`${origin}/callback?lang=${lang}`})}`;
     await page.goto(account);
     await page.locator('#username').fill('brand-reviewer');
     await page.locator('#password').fill('brand-qa-local-only');
@@ -77,6 +77,7 @@ try {
     await brand.waitFor();
     await page.evaluate(() => document.fonts.ready);
     assert.equal(await page.title(), 'GTM Growth');
+    assert.equal(await page.locator('[data-testid=referrer-link]').getAttribute('href'), `${origin}/callback?lang=${lang}`);
     assert.match(await brand.getAttribute('src'), /gtm-growth\/img\/brand.svg$/);
     assert.equal(await brand.evaluate(el => el.complete && el.naturalWidth > 0), true);
     assert.equal(await brand.locator('..').getAttribute('href'), 'https://gtm.kayroslab.com/console/');
