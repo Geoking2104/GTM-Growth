@@ -22,6 +22,8 @@ export async function renderBilling({ me, request, fr = true }) {
   const money = cents => (cents / 100).toLocaleString(fr ? "fr-FR" : "en-GB", { style: "currency", currency: "EUR" });
   const amount = plan => plan.testChargeCents ?? plan.chargeCents ?? plan.pilotPriceCents;
   const consentBody = plan => ({ planKey: plan.key, amountCents: amount(plan), termsVersion: status.termsVersion, limitsVersion: status.limitsVersion, acceptedRecurring: true });
+  if (status.mode === 'disabled' || status.checkoutEnabled === false) root.append(el('span', 'decision-badge', fr ? 'Indisponible · Souscription désactivée' : 'Unavailable · Subscription disabled'));
+  else if (status.mode === 'test') root.append(el('span', 'decision-badge', fr ? 'Pilote · Paiement de test' : 'Pilot · Test payment'));
   if (status.mode === "test") root.append(el("p", "c-billing-banner", fr ? "MODE TEST — aucun paiement réel. Les accès de test sont séparés des abonnements réels." : "TEST MODE — no real payment. Test access is separate from live subscriptions."));
   const refresh = el("button", "btn btn-small", fr ? "Actualiser le statut" : "Refresh status"); refresh.type = "button";
   refresh.onclick = async () => { refresh.disabled = true; root.replaceWith(await renderBilling({ me, request, fr })); }; root.append(refresh);

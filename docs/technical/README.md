@@ -9,6 +9,11 @@ the source baseline for this review is `353e658`.
 
 ## Runtime and responsibility map
 
+The [console decision refit](../journey/CONSOLE-DECISION-REFIT.md) documents the five
+business areas, preserved legacy routes and the contracts needed before the next
+approval, measurement and portfolio lots. The first lot changes only front-end
+organisation; existing backend engines and authorisation remain unchanged.
+
 | Layer | Implementation | Role |
 | --- | --- | --- |
 | Core | Node ≥20, TypeScript, Express, Zod | Public API, authenticated console API, MCP and CLI |

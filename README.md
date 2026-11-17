@@ -31,6 +31,22 @@ The browser QA checks the six scenes, keyboard controls, reduced motion, mobile
 layout and existing free-audit journey. Source changes require a separate verified
 OVH deployment; Cloud merchant activation remains a separate operation.
 
+## Console organised around customer decisions
+
+The console now groups the existing tools into **Cockpit & Priorities**,
+**Diagnosis & Opportunities**, **Studio & Approvals**, **Impact & Revenue** and
+**Sources & Workspace**. All 30 specialist screens and existing deep links remain
+available, including through tool search. The cockpit highlights the top three
+recommendations from the existing audit; these are readiness opportunities, not
+promised revenue. Unconfirmed data sources move to a closed **Enrich my evidence**
+drawer with their benefit and actual connection state.
+
+This is the navigation foundation of the requested four-lot refit. Approval
+workflows are grouped but retain their own lists and native confirmations; a
+cross-module approval inbox, complete measurement-integrity assessment, deployment
+milestones and agency portfolio are not claimed as delivered. See the
+[implementation scope and contract review](docs/journey/CONSOLE-DECISION-REFIT.md).
+
 ## Consistent forms, sign-in and dashboard visuals
 
 The public contact form uses labelled, 52px controls, Inter, rounded borders and
@@ -45,7 +61,7 @@ and analytics charts. Missing measurements leave gaps in charts; zero stays zero
 Disconnected sources show an explicit waiting state rather than fabricated data.
 Provider marks identify sources, not connection status or endorsement.
 
-CI checks all 30 console sections in FR/EN and exercises the actual Keycloak 26.4
+CI checks all 30 specialist screens and the five business areas in FR/EN, and exercises the actual Keycloak 26.4
 theme, password toggle and reset form at desktop/mobile widths. Screenshot artifacts
 are available in **Brand · Keycloak 26.4 and dashboard FR/EN**. Deployment uses a
 theme content digest to recreate Keycloak only when its theme changes, refreshing

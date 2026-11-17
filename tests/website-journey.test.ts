@@ -52,6 +52,11 @@ it('restores a selected function through sign-in without tenant selection or arb
   const value = featureHandoff({ hash: '#local_seo/network', search: '?lang=fr' }, storage, 1000);
   expect(value).toEqual({ hash: '#local_seo/network', expires: 601000 });
   expect(featureHandoff({ hash: '', search: '?code=callback' }, storage, 2000)).toEqual(value);
+  for (const hash of ['#overview/scenarios', '#diagnose/intent', '#ops/inbox', '#impact/analytics', '#settings/agents']) {
+    const selected = featureHandoff({ hash, search: '?lang=fr' }, storage, 2000);
+    expect(featureHandoff({ hash: '', search: '?code=callback' }, storage, 2500)).toEqual(selected);
+    expect(selected?.hash).toBe(hash);
+  }
   expect([...memory.keys()]).toEqual(['gtm-console-feature-handoff']);
   expect(featureHandoff({ hash: '#c-public-read', search: '' }, storage, 3000)).toBeNull();
   featureHandoff({ hash: '#local_seo/network', search: '' }, storage, 1000);

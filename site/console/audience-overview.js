@@ -6,13 +6,16 @@ import { metricIcon, visibilityChart } from "./visuals.js";
 import { providerMark } from "./provider-marks.js";
 const L = (fr, en) => LANG === "fr" ? fr : en;
 const fmt = (value) => Number(value).toLocaleString(L("fr-FR", "en-GB"));
-export function renderAudienceOverview({ search, ga4, status, state, rerender, ai: aiData }) {
+export function renderAudienceOverview({ search, ga4, status, state, rerender, ai: aiData, progressive = false }) {
   const section = el("section", "audience-overview");
-  section.append(el("h3", "", L("Votre audience dans le temps", "Your audience over time")), el("p", "c-note", L("Données observées sur les propriétés connectées. Chaque graphique utilise sa propre échelle et les dates fournies par la source.", "Observed data from connected properties. Each chart uses its own scale and source dates.")), toolbar(state, rerender));
+  const drawer = el('details', 'decision-enrich'); drawer.append(el('summary', '', L('+ Enrichir mes preuves', '+ Enrich my evidence')));
+  const missing = el('div', 'audience-grid'); drawer.append(missing);
+  const hasSources = status?.gsc?.hasAccess === true || status?.ga4?.hasAccess === true;
+  if (!progressive || hasSources) section.append(el("h3", "", L("Votre audience dans le temps", "Your audience over time")), el("p", "c-note", L("Données observées sur les propriétés connectées. Chaque graphique utilise sa propre échelle et les dates fournies par la source.", "Observed data from connected properties. Each chart uses its own scale and source dates.")), toolbar(state, rerender));
   const grid = el("div", "audience-grid");
   for (const item of [
-    { data: search, label: L("Clics Google Search", "Google Search clicks"), key: "clicks", color: "#4f5bd5", link: "#gsc", name: "Search Console" },
-    { data: ga4, label: L("Sessions GA4", "GA4 sessions"), key: "sessions", color: "#008373", link: "#ga4", name: "GA4" },
+    { data: search, label: L("Clics Google Search", "Google Search clicks"), key: "clicks", color: "#4f5bd5", link: "#gsc", name: "Search Console", source: 'gsc' },
+    { data: ga4, label: L("Sessions GA4", "GA4 sessions"), key: "sessions", color: "#008373", link: "#ga4", name: "GA4", source: 'ga4' },
   ]) {
     const card = el("section", "audience-card"), heading = el("h4"); heading.append(providerMark(item.name), el('span', 'v-source-caption', item.label)); card.append(heading);
     if (item.data?.trend?.length && !item.data.problem) {
@@ -23,7 +26,7 @@ export function renderAudienceOverview({ search, ga4, status, state, rerender, a
         const details = el("details", "audience-table"); details.append(el("summary", "", L("Voir les données", "View data"))); const table = el("table", "app-table"); const head = el("tr"); for (const title of ["Date", item.label]) { const th = el("th", "", title); th.scope = "col"; head.append(th); } const thead = el("thead"); thead.append(head); table.append(thead); const body = el("tbody"); for (const row of rows) { const tr = el("tr"); tr.append(el("td", "", row.date), el("td", "", fmt(row[item.key]))); body.append(tr); } table.append(body); details.append(table); card.append(details);
       } else card.append(el("p", "c-note", L("Aucune donnée sur cette période.", "No data for this period.")));
     } else { card.append(el("p", "c-note", item.data?.problem ? L("Données indisponibles : vérifiez la connexion.", "Data unavailable: check the connection.") : item.data ? L("Aucune donnée sur cette période.", "No data for this period.") : !status ? L("Statut des accès indisponible.", "Connection status unavailable.") : L("Connectez cette source pour afficher son historique.", "Connect this source to see its history."))); }
-    const link = el("a", "", L(`Ouvrir ${item.name} →`, `Open ${item.name} →`)); link.href = item.link; card.append(link); grid.append(card);
+    const link = el("a", "", L(`Ouvrir ${item.name} →`, `Open ${item.name} →`)); link.href = item.link; card.append(link); (progressive && status?.[item.source]?.hasAccess !== true ? missing : grid).append(card);
   }
   section.append(grid);
   const ai = el("div", "audience-ai"); ai.append(el("h3", "", L("Présence dans les réponses IA", "Presence in AI answers")), el("p", "c-note", L("Ces indicateurs demandent des réponses d’IA collectées et analysées. L’audit GEO ci-dessous mesure la préparation du site, pas les mentions effectives.", "These metrics require collected and analyzed AI answers. The GEO audit below measures site readiness, not actual mentions.")));
@@ -36,10 +39,11 @@ export function renderAudienceOverview({ search, ga4, status, state, rerender, a
     [L("Réponses analysées", "Answers analyzed"), available ? String(aiData.total) : "—", L("Dernier jeu importé · mentions à vérifier", "Latest imported dataset · mentions need review"), "report"],
   ]) { const cell = el("div"); cell.append(metricIcon(symbol), el("strong", "", name), el("p", "audience-missing", value), el("p", "c-note", desc)); if (!available) cell.append(el("p", "c-note", aiData?.unavailable ? L("Source indisponible", "Source unavailable") : L("Non mesuré", "Not measured"))); metrics.append(cell); }
   ai.append(metrics);
-  const link = el("a", "v-context-link", available ? L(`Consulter les preuves pour ${aiData.brand} →`, `Inspect evidence for ${aiData.brand} →`) : L("Importer des réponses pour afficher ces indicateurs →", "Import answers to show these metrics →")); link.href = "#ai_visibility"; ai.append(link); section.append(ai);
+  const link = el("a", "v-context-link", available ? L(`Consulter les preuves pour ${aiData.brand} →`, `Inspect evidence for ${aiData.brand} →`) : L("Importer des réponses pour afficher ces indicateurs →", "Import answers to show these metrics →")); link.href = "#ai_visibility"; ai.append(link); (progressive && !available ? drawer : section).append(ai);
   if (available && aiData.responses?.length) {
     const trends = el("div", "v-trend-grid"), present = (r, name) => r.mentions.some(m => m.brand === name && m.status !== "rejected");
     trends.append(visibilityChart(aiData.responses, aiData.brands.map(b => ({ label: b.name, matches: r => present(r, b.name) })), L("Comparaison des marques", "Brand comparison")), visibilityChart(aiData.responses, aiData.sources.map(source => ({ label: source, filter: r => r.source === source, matches: r => present(r, aiData.brand) })), L(`Présence de ${aiData.brand} par source`, `${aiData.brand} presence by source`))); section.append(trends);
   }
+  if (progressive && (missing.children.length || !available)) section.append(drawer);
   return section;
 }

@@ -1,5 +1,10 @@
 # Track 1 — Marketing
 
+The console now uses five business areas: Cockpit & Priorities, Diagnosis &
+Opportunities, Studio & Approvals, Impact & Revenue, and Sources & Workspace.
+The [refit scope](../journey/CONSOLE-DECISION-REFIT.md) separates the delivered
+navigation foundation from the future shared inbox, impact timeline and portfolio.
+
 [Documentation hub](../README.md) · [Shared journey](../journey/README.md) · [Technical counterpart](../technical/README.md)
 
 GTM Growth helps a team move from a finding to a reviewed action and a sourced
