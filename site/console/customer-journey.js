@@ -13,7 +13,7 @@ export function makeJourneyPlanMarkdown(journey, states, _opportunities, languag
   }
   return lines.join("\n") + "\n";
 }
-export function renderJourneyPreview({ data = {}, language = "fr", mode = "public", savePrompt, readPage } = {}) {
+export function renderJourneyPreview({ data = {}, language = "fr", mode = "public", savePrompt, readPage, onJourneyChange, onStageSelect } = {}) {
   const fr = language === "fr", t = (a, b) => fr ? a : b;
   const panel = el("section", (mode === "workspace" ? "app-strip" : "public-panel") + " journey-panel");
   panel.id = mode === "workspace" ? "journey-workspace" : "public-journey-preview";
@@ -35,6 +35,7 @@ export function renderJourneyPreview({ data = {}, language = "fr", mode = "publi
   const copy = el("button", "public-recommend-button", t("Copier les questions retenues", "Copy selected questions")); copy.type = "button";
   function draw(confirmed = false) {
     journey = buildJourneyPreview({ ...selections(), contextConfirmed: confirmed });
+    onJourneyChange?.(journey);
     states = new Map(journey.stages.map(s => [s.id, { index: 0, custom: null, enabled: true }]));
     list.replaceChildren(); sourceInfo.replaceChildren();
     if (current.journeyContext) sourceInfo.append(el("p", "c-note", t("Source de la marque : ", "Brand source: ") + current.journeyContext.brandSource), safeLink(current.journeyContext.url, t("Ouvrir la page lue", "Open the page read")));
@@ -42,6 +43,8 @@ export function renderJourneyPreview({ data = {}, language = "fr", mode = "publi
     copy.disabled = !journey.stages.some(s => s.prompts.length);
     for (const [index, stage] of journey.stages.entries()) {
       const state = states.get(stage.id), card = el("li", "journey-stage"), head = el("div", "journey-stage-head");
+      card.dataset.stage = stage.id;
+      if (onStageSelect) { const choose = el('button', 'public-rank-mode', t('Voir les preuves de cette étape', 'See evidence for this stage')); choose.type = 'button'; choose.onclick = () => onStageSelect(stage.id); card.append(choose); }
       head.append(el("strong", "journey-stage-number", String(index + 1)), el("h3", "", stage.title)); card.append(head, el("p", "journey-mindset", stage.mindset));
       if (!stage.prompts.length) { card.append(el("p", "journey-missing", stage.missing)); list.append(card); continue; }
       const badge = el("p", "public-pill", t("Hypothèse sourcée · à relire · non mesurée", "Sourced hypothesis · review required · not measured")); card.append(badge);

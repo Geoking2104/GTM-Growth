@@ -1,3 +1,4 @@
+import { renderInbox, renderIntent, renderMeasurement, renderMeasurementBanner } from './decision-flows.js';
 import { el } from './render.js';
 import { LANG } from './i18n.js';
 import { icon } from './icons.js';
@@ -42,17 +43,16 @@ export function decisionCard(item, status) {
 
 /** Only connection reads are automatic. A hub never generates, approves or publishes. */
 export function renderDecisionHub(area, viewId, { state, api, scope }) {
+  if (area === 'ops' && viewId === 'inbox') return renderInbox({ api });
+  if (area === 'diagnose' && viewId === 'tracking') return renderMeasurement({ api, state });
+  if (area === 'diagnose' && viewId === 'intent') return renderIntent({ api, state });
   const view = DECISION_VIEWS[area]?.find(v => v.id === viewId);
   const root = el('section', 'decision-hub');
   if (!view) return root;
   const items = [...view.items];
   if (area === 'settings' && viewId === 'access' && state.me?.platformAdmin) items.push({ route: '#platform', icon: 'platform', fr: 'Administrer la plateforme', en: 'Administer the platform', frBenefit: 'Gérez les espaces autorisés et leur provisionnement.', enBenefit: 'Manage authorised workspaces and provisioning.' });
   if (area === 'ops' && viewId === 'inbox') root.append(el('p', 'decision-context', L('Retrouvez chaque circuit de validation ci-dessous. Les listes restent propres à chaque module ; aucune approbation ni publication n’est déclenchée par cette page.', 'Find each review workflow below. Lists remain specific to each module; this page does not approve or publish anything.')));
-  if ((area === 'diagnose' && viewId === 'tracking') || (area === 'impact' && ['analytics', 'crm'].includes(viewId))) {
-    const notice = el('div', 'decision-measurement');
-    notice.append(el('strong', '', L('Fiabilité de la mesure : non évaluée globalement', 'Measurement reliability: not assessed globally')), el('p', '', L('La présence d’une balise ou l’accès à GA4 ne prouvent pas l’absence de doublons ni la validité du consentement.', 'A detected tag or GA4 access does not establish the absence of duplicates or valid consent.')));
-    const a = el('a', '', L('Examiner le tracking →', 'Inspect tracking →')); a.href = '#tracking/tags'; notice.append(a); root.append(notice);
-  }
+  if (area === 'impact' && ['analytics','crm'].includes(viewId)) root.append(renderMeasurementBanner({ api, state }));
   const grid = el('div', 'decision-grid'); root.append(grid);
   const empty = el('p', 'c-note', L('Aucune source de cette vue n’est actuellement confirmée accessible. Ajoutez des preuves ci-dessous ou commencez par le diagnostic de votre site.', 'No source in this view is currently confirmed accessible. Add evidence below or start with your website diagnosis.'));
   const diagnose = el('a', '', L('Ouvrir le diagnostic du site →', 'Open website diagnosis →')); diagnose.href = '#diagnose'; empty.append(' ', diagnose); root.append(empty);

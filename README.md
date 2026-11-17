@@ -41,11 +41,37 @@ recommendations from the existing audit; these are readiness opportunities, not
 promised revenue. Unconfirmed data sources move to a closed **Enrich my evidence**
 drawer with their benefit and actual connection state.
 
-This is the navigation foundation of the requested four-lot refit. Approval
-workflows are grouped but retain their own lists and native confirmations; a
-cross-module approval inbox, complete measurement-integrity assessment, deployment
-milestones and agency portfolio are not claimed as delivered. See the
-[implementation scope and contract review](docs/journey/CONSOLE-DECISION-REFIT.md).
+Four connected decision workflows now extend this foundation:
+
+- **Unified inbox** (`#ops`): Social and GBP approvals plus durable WordPress,
+  GTM, technical-preview and CRM-link proposals. Review the exact version, then
+  explicitly approve and execute. Native independent-review rules remain intact.
+  WordPress creates drafts; technical diffs remain manual previews.
+- **Synchronized intent** (`#diagnose/intent`): a product-grounded planner beside
+  GSC/Bing query observations and collected AI answers. Pin a retrieved proof to
+  a stage/page, then open an editable brief with the confirmed client context.
+  An editorial association is not an observed individual customer journey.
+- **Complete GTM audit workflow** (`#diagnose/tracking`): page installation,
+  GTM/GA4 setup, duplicate tags and static consent-default checks in one dated
+  record. Unknown, warning, critical and passed states are separate; unavailable
+  permissions and unpublished workspace changes cannot produce a passed audit.
+  The latest scoped status also appears above GA4 and CRM views.
+- **Member Portfolio** (`#portfolio`): bounded reads of each explicitly authorised
+  workspace, its latest stored GEO audit, GTM status, pending reviews, alerts and
+  report links. Client metrics/currencies are not summed. The navigation entry
+  appears for multi-workspace accounts; an agency workspace defaults to it.
+
+State is persisted in `data/decision.sqlite3` by default (`DECISION_PATH` override).
+The deployment must preserve the existing `data` volume. No new service, paid
+provider or frontend framework is required. Provider writes require an active
+member administrator, fresh approval and a separate execution confirmation.
+An ambiguous write is retained for manual destination verification, never retried
+automatically. See [contracts, limits and acceptance](docs/journey/CONSOLE-DECISION-REFIT.md).
+
+Deployment milestones, chart overlays and J+14/J+28 reminders remain outside this
+release. A static GTM audit is not proof of runtime consent or causal revenue
+attribution. Browser regression uses synthetic fixtures; live integrations still
+require each client's configured credentials and permissions.
 
 ## Consistent forms, sign-in and dashboard visuals
 

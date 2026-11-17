@@ -38,7 +38,7 @@ try {
     await page.screenshot({ path: `${output}/${lang}-${width}-cockpit.png`, fullPage: true });
     for (const area of ['diagnose', 'ops', 'impact', 'settings']) {
       await page.locator(`.app-nav a[href="#${area}"]`).click();
-      await page.locator('.decision-hub').waitFor();
+      await page.locator('.decision-hub, .decision-flow').first().waitFor();
       assert.equal(await page.locator('.app-nav [aria-current="true"]').count(), 1);
       const icons = await page.locator('#c-tabs .app-tab-icon').evaluateAll(nodes => nodes.map(n => n.innerHTML));
       assert.equal(new Set(icons).size, icons.length);
@@ -51,7 +51,7 @@ try {
     assert.equal(await page.locator('.decision-hub > .decision-grid > a').count(), 0);
     await page.locator('.decision-enrich > summary').click();
     assert.equal(await page.locator('.decision-enrich a[href="#ga4"]').count(), 1);
-    assert.match(await page.locator('.decision-measurement').innerText(), lang === 'fr' ? /non évaluée/ : /not assessed/);
+    assert.match(await page.locator('.decision-measurement').innerText(), lang === 'fr' ? /Non évalué/ : /Not assessed/);
     await page.locator('#c-search').fill('ga4');
     await page.locator('#c-tool-search a').first().click();
     await page.locator('.v-section-heading h1').getByText('Google Analytics 4').waitFor();

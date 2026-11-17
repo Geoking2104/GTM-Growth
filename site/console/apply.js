@@ -77,6 +77,7 @@ export function renderApplyMode({ api, me, url }) {
     try {
       const result = await api("/apply/preview", { url: input.value, fix: "robots-ai", mode: "dry-run" });
       output.replaceChildren(renderPreview(result));
+      if (me?.role === 'tenant-admin') { const propose=el('button','btn btn-small',L('Envoyer le diff à l’inbox','Send diff to inbox'));propose.type='button';propose.onclick=async()=>{propose.disabled=true;try{await api('/decision/propose',{kind:'diff',origin:'Apply mode',payload:{url:input.value}});status.textContent=L('Nouvel aperçu enregistré. Relisez-le dans Studio → Approbations.','Fresh preview saved. Review it in Studio → Approvals.');}catch(e){status.textContent=e.message;}finally{propose.disabled=false;}};output.append(propose); }
       status.textContent = L("Prévisualisation prête. Aucune écriture effectuée.", "Preview ready. No writes performed.");
     } catch (error) {
       status.textContent = "";

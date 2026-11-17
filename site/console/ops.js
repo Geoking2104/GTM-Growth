@@ -1,3 +1,4 @@
+import { briefKey } from './decision-flows.js';
 /* Operations console (T-1/T-2/T-4/T-9/T-10/T-11): live AI-visibility runs,
  * keyword rank tracking, article pipeline with quality gates, alerts. */
 import { renderDataGuide } from "./data-guidance.js";
@@ -100,12 +101,19 @@ export function renderOpsArticles({ api, me }) {
   const content = el("div"); const message = el("p", "c-note"); message.setAttribute("role", "status");
   box.append(el("h3", "", L("Pipeline article avec quality gates", "Article pipeline with quality gates")), el("p", "c-note", L("Brief déterministe, brouillon structuré et contrôles GEO avant création d'un brouillon WordPress. Aucune publication ni annonce IndexNow.", "Deterministic brief, structured draft, and GEO checks before creating a WordPress draft. No publication or IndexNow announcement.")), content, message);
   const keywordInput = el("input"); keywordInput.placeholder = L("Mot-clé cible", "Target keyword"); keywordInput.size = 40;
-  let draft = null;
+  let draft = null, context = null;
+  try { const value = JSON.parse(sessionStorage.getItem(briefKey(me?.tenant?.id)) || 'null'); if (value && Date.now() - value.at < 3600000 && value.brand && value.product && value.audience && value.goal) context = value; } catch {}
+  if (context) {
+    keywordInput.value = context.query;
+    const sections = [{ h2: L('Comprendre le besoin', 'Understand the need'), bullets: [context.goal, context.audience, context.product] }, { h2: L('Preuves produit à vérifier', 'Product evidence to verify'), bullets: [context.targetUrl] }, { h2: 'FAQ', bullets: [context.query] }];
+    draft = { title: context.query.slice(0,200), slug: context.query.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g,'').replace(/[^a-z0-9]+/g,'-').slice(0,80), metaDescription: '', outline: sections, body: `# ${context.query}\n\n${L('Brief à rédiger et vérifier', 'Brief to write and verify')}\n\n${context.brand} · ${context.product}\n${context.audience} · ${context.goal}\n\n${context.targetUrl}\n`, gates: [], wordCount: 0, entities: [context.brand, context.product] };
+    box.prepend(el('p','decision-context',`${context.brand} · ${context.product} · ${context.stage} · ${context.source.source} · ${context.source.period}`));
+  }
   const draw = () => {
     const wrap = el("div");
     if (!admin) { wrap.append(el("p", "c-note", L("Seuls les administrateurs peuvent générer et publier.", "Only administrators can generate and publish."))); content.replaceChildren(wrap); return; }
     const row = el("p");
-    row.append(keywordInput,
+    if (!context) row.append(keywordInput,
       button(L("Générer un brouillon", "Generate draft"), async () => {
         message.textContent = L("Génération…", "Generating…");
         try { const r = await api("/content/draft", { keyword: keywordInput.value, mode: "deterministic", brand: me?.tenant?.name }); draft = r.draft; message.textContent = L("Brouillon généré. Vérifiez les gates ci-dessous.", "Draft generated. Check the gates below."); draw(); }
@@ -117,17 +125,19 @@ export function renderOpsArticles({ api, me }) {
       for (const g of draft.gates ?? []) { const li = el("li"); li.append(el("span", "", `${g.passed ? "✓" : "✗"} ${g.check} — ${g.detail}`)); gates.append(li); }
       const failed = (draft.gates ?? []).filter((g) => !g.passed);
       wrap.append(el("h4", "", draft.title), el("p", "c-note", `${draft.wordCount} mots · ${draft.outline.length} sections · ${L("gates", "gates")} ${failed.length ? `${failed.length} ${L("à corriger", "to fix")}` : L("tous passés", "all passed")}`), gates);
+      for (const [key,label] of [['title',L('Titre','Title')],['metaDescription',L('Méta-description','Meta description')]]) { const l=el('label','decision-field',label),input=el('input');input.value=draft[key];input.oninput=()=>{draft[key]=input.value;};l.append(input);wrap.append(l); }
       const body = el("textarea"); body.value = draft.body; body.rows = 14; body.style.width = "100%"; body.setAttribute("aria-label", "Draft body");
       draft.body = body.value;
-      body.onchange = () => { draft.body = body.value; };
+      body.oninput = () => { draft.body = body.value; };
       const actions = el("p");
-      actions.append(button(L("Créer le brouillon WordPress", "Create WordPress draft"), async () => {
-        message.textContent = L("Création du brouillon…", "Creating draft…");
+      actions.append(button(L("Envoyer à l’inbox", "Send to inbox"), async () => {
+        message.textContent = L("Enregistrement pour relecture…", "Saving for review…");
         try {
-          const r = await api("/content/publish", { draft: { ...draft, approved: true } });
-          message.textContent = L(`Brouillon WordPress créé (post ${r.postId}), non publié.`, `WordPress draft created (post ${r.postId}), not published.`);
+          await api('/decision/propose', { kind: 'wordpress', origin: context ? `Intent: ${context.source.source} · ${context.stage} · ${context.targetUrl}` : 'Article editor', payload: {title:draft.title,slug:draft.slug,body:draft.body,outline:draft.outline,metaDescription:draft.metaDescription,entities:draft.entities} });
+          message.textContent = L("Proposition enregistrée dans Studio → Approbations. Aucun transfert effectué.", "Proposal saved in Studio → Approvals. No transfer performed.");
         } catch (error) { message.textContent = error.message; }
       }));
+      const open=el('a','decision-link',L('Ouvrir les approbations →','Open approvals →'));open.href='#ops';actions.append(open);
       wrap.append(body, actions);
     }
     content.replaceChildren(wrap);

@@ -140,9 +140,11 @@ export async function auditGa4SetupV2(params: {
 
   // ─── 7. Triggers overview ───────────────────────────────────
   let triggersCount = 0;
+  let triggersRead = false;
   try {
     const triggers = await listGtmTriggers(accountId, containerId, wsId);
     triggersCount = triggers.count;
+    triggersRead = true;
 
     if (triggersCount === 0) {
       issues.push({
@@ -169,6 +171,7 @@ export async function auditGa4SetupV2(params: {
         endDate,
       });
 
+      if (comparison.error) issues.push({ severity: 'info', code: 'GA4_COMPARISON_SKIPPED', message: 'GA4 event comparison unavailable.' });
       if (comparison.comparison) {
         const { configuredInGtmButNotSeenInGa4, trulyMissingInGtm, matched } =
           comparison.comparison;
@@ -237,6 +240,8 @@ export async function auditGa4SetupV2(params: {
   else grade = "F";
 
   return {
+    coverage: { parameters: !!paramAnalysis, triggers: triggersRead, ga4: !!comparison?.comparison,
+      complete: !!paramAnalysis && triggersRead && !!comparison?.comparison },
     meta: {
       accountId,
       containerId,
