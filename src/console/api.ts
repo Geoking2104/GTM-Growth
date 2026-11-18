@@ -50,7 +50,7 @@ import { analyticsRoutes } from "./analytics.js";
 import { gtmRoutes } from "./gtm-console.js";
 import { socialRoutes } from "./social.js";
 import { localSeoRoutes } from "./local-seo.js";
-import { applyPreviewRoutes } from "./apply-routes.js";
+import { applyPreviewRoutes, applyWriteRoutes } from "./apply-routes.js";
 import { withCredential } from "../auth/service-account.js";
 import { fetchPublicPage } from "../http/public-fetch.js";
 import { analyzePositioning } from "../geo/positioning.js";
@@ -420,7 +420,7 @@ export function discoverTenant(store: TenantStore, query: { email?: string; host
 }
 
 export function allConsoleRoutes(): ConsoleRoute[] {
-  return [...phase1Routes, ...phase2Routes, ...phase3Routes, ...analyticsRoutes, ...gtmRoutes, ...aiVisibilityRoutes, ...aiProviderRoutes, ...aiConnectionRoutes, ...competitionRoutes, ...operationsRoutes, ...applyPreviewRoutes, ...localSeoRoutes, ...socialRoutes, ...crmRoutes, ...visualCatalogRoutes, ...dataAgentRoutes, ...journeyRoutes, ...commerceRoutes, ...decisionInboxRoutes, ...decisionIntentRoutes, ...decisionPortfolioRoutes, ...measurementRoutes];
+  return [...phase1Routes, ...phase2Routes, ...phase3Routes, ...analyticsRoutes, ...gtmRoutes, ...aiVisibilityRoutes, ...aiProviderRoutes, ...aiConnectionRoutes, ...competitionRoutes, ...operationsRoutes, ...applyPreviewRoutes, ...applyWriteRoutes, ...localSeoRoutes, ...socialRoutes, ...crmRoutes, ...visualCatalogRoutes, ...dataAgentRoutes, ...journeyRoutes, ...commerceRoutes, ...decisionInboxRoutes, ...decisionIntentRoutes, ...decisionPortfolioRoutes, ...measurementRoutes];
 }
 
 export function mountConsoleApi(app: Express, options: ConsoleOptions = {}): void {

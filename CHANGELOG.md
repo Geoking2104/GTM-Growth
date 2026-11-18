@@ -2,6 +2,36 @@
 
 ## Unreleased
 
+### Double-approved WordPress writer with verified execution and rollback
+
+- Completed the persisted Apply Mode execution pipeline (ADR §3): `apply_attempts`
+  and `apply_rollback_approvals` tables with a partial unique index holding at
+  most one active attempt per tenant target, idempotency keys, HTTP status and
+  written/verified digests, plus per-proposal hash-chained journal events for
+  every state transition.
+- Added the execution engine: on a backing-up drift check (observed digest must
+  equal the reviewed proposal), an encrypted pre-write snapshot, an atomically
+  consumed single-use approval, and a target-scoped attempt lock; the scoped
+  writer is only invoked after the lock is held. A lost adapter ACK lands in
+  `uncertain` and keeps the lock; a failing or mismatching re-inspection lands
+  in `to_verify`; only a matching post-write digest yields `verified`.
+- Added the rollback path: a second explicit re-approvable approval with a 5
+  minute TTL, single-use consumption, snapshot retention checks and a
+  drift-safe restore that never clobbers a target which moved on (the attempt
+  ends `failed` and the encrypted snapshot is preserved); an already-restored
+  target closes idempotently without a second write.
+- Added the WordPress REST writer adapter (`title`+`content` only, never
+  `status`/`slug`, JSON bodies bounded, errors bounded, credentials never in
+  logs) and opt-in console mutation routes (`/apply/wordpress-post`, `/approve`,
+  `/execute`, `/rollback`, `/attempt`) served by per-tenant `WP_*` environment
+  credentials hostname-bound to the registered target. The default export is
+  fail-closed: every mutating route refuses until the server opts in.
+- Tests cover the full write→verify→rollback lifecycle, drift rejection without
+  consuming the approval, lost-ACK uncertainty with the kept lock, `to_verify`
+  on tampered writes, snapshot-preserving rollback failures, target locks
+  across proposals, route fail-closure, and the wire contract of the writer
+  on the real SQLite registry.
+
 ### Before/after public audit comparisons
 
 - Completed audits served by `GET /api/audits/:id` now carry an additive

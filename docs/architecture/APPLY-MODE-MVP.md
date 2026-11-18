@@ -1,6 +1,6 @@
 # Apply Mode — architecture and phased delivery (ADR, 2026-11-09)
 
-**Status:** Phases 0.1–0.2 read-only preview and Phase 0.3 encrypted registry foundations implemented; approval APIs and production writers are not connected. **No production-write adapter is enabled.**
+**Status:** Phases 0.1–0.2 read-only preview, Phase 0.3 encrypted registry and the first Phase 0.4 slice are implemented: an opt-in WordPress REST writer executes double-approved post/page `title`+`content` proposals with single-use approval consumption, a one-active-attempt target lock, a drift compare-and-swap, a verified execution receipt and a second-approved rollback with drift-safe restore. The engine, registry, writer and console routes ship off by default (the composition root mounts only the fail-closed route set; production registry construction from `APPLY_DB_PATH`/`APPLY_DATA_KEY_B64` remains a later increment per §7.3); robots.txt file writers remain pending the owner's file-connector decision (§7.4), and GTM publication is not part of Apply Mode.
 
 This ADR incorporates the [owner-supplied *Cahier des charges — Mode Appliquer v1.0*](../specs/APPLY-MODE-v1-2026-11-09.md) into the GTM Growth roadmap. The core principle is **copilot, never autopilot**: inspect the evidence, show a concrete diff, preview, obtain an authenticated approval, back up, write to one declared target, independently verify, and offer rollback. The approved GEO v2 score rubric and its incomplete-evidence safeguards remain separate.
 
