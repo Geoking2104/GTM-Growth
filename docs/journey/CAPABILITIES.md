@@ -54,6 +54,21 @@ are compared; points and scores stay withheld and the stored snapshot contract
 is unchanged. Console UI display of the comparison is not part of this
 increment. See the [audit pipeline runbook](../technical/AUDIT-PIPELINE.md).
 
+Increment of 18 November 2026: the **first Phase 0.4 execution slice** of Apply
+Mode is implemented. A scoped WordPress REST writer updates exactly the
+reviewed `title`+`content` of one existing post or page, only after a drift
+compare-and-swap, an encrypted pre-write snapshot and the atomic consumption of
+a single-use approval under a one-active-attempt target lock. The engine
+verifies by re-inspection (`verified`, `to_verify`, or `uncertain` with the lock
+kept), and a second explicit approval authorizes a drift-safe rollback that
+never clobbers a target that moved on. Console mutation routes are opt-in from the server composition root with
+per-tenant `WP_*` environment credentials and fail closed by default; the
+`APPLY_*` registry key/database flags are documented in the ADR but their
+production server wiring remains a later increment. robots.txt file writers
+are still pending the owner's file-connector selection and GTM publication
+remains out of scope. Not part of the 15 November reviewed revision
+`353e658`.
+
 | Stage / capability | Source status | Activation or scope | Evidence / reference |
 | --- | --- | --- | --- |
 | Diagnose: public read / 360° report | Implemented in feature branch; **not yet merged/deployed** | One public page, GEO v1/SEO evidence, five distinct pillars, evidence-linked FR/EN actions and A4 browser print. Private metrics and score gains remain unknown; before/after comparisons exist at the audit API level for public outcomes with matching method and URL | [Free report contract](../product/FREE-REPORT-360.md), [free read](../../src/freeread/index.ts), [public API](../PUBLIC_API.md) |
@@ -63,7 +78,7 @@ increment. See the [audit pipeline runbook](../technical/AUDIT-PIPELINE.md).
 | Understand: products/pages | Implemented | Bounded public metadata sample or previewed admin JSON import; not an exhaustive crawl | [Console readiness](../product/CONSOLE-READINESS.md), [catalog API](../../src/console/visual-catalog.ts) |
 | Understand: search/keywords | Implemented | Authorised GSC property, date range and tracking configuration | [Google adapters](../../src/google/), [keywords](../../src/console/keywords.ts) |
 | Prepare: generators/content ops | Implemented | Templates or optional model configuration; approved WordPress creation is draft-only | [Content ops](../../src/console/content-ops.ts), [Ops routes](../../src/console/ops-routes.ts) |
-| Prepare: Apply Mode | Preview implemented; execution foundation | Robots diff; encrypted snapshot/approval registry is library-only. No connected production writer or real rollback | [Apply ADR](../architecture/APPLY-MODE-MVP.md), [preview routes](../../src/console/apply-routes.ts) |
+| Prepare: Apply Mode | Preview implemented; first execution slice implemented behind opt-in flags | Robots diff; encrypted snapshot/approval registry; WordPress REST `title`+`content` writer with single-use approval, target lock, verified execution receipt and second-approved rollback. Off by default; no robots.txt file writer or GTM publication | [Apply ADR](../architecture/APPLY-MODE-MVP.md), [execution engine](../../src/apply/execution.ts), [routes](../../src/console/apply-routes.ts) |
 | Prepare: Social | Implemented + optional integration | Roles, exact independent approvals, explicit scheduling, Postiz accounts and ZenML worker. Outreach sending remains manual | [Reviewed contract](../product/SOCIAL-TOOLKIT-SPEC-REVIEW.md), [operations](../../deploy/social/README.md) |
 | Prepare: IndexNow / Google writes | Implemented | Tool-specific enablement/confirmation; receipt is not indexing proof | [IndexNow](../INDEXNOW.md), [GTM writes](../PHASE3_WRITE.md) |
 | Measure: GA4/GSC/GTM | Implemented | Service account, enabled APIs and exact resource access | [Tracking integration](../GTM_INTEGRATION.md), [Google modules](../../src/google/) |

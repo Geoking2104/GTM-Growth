@@ -57,6 +57,11 @@ function lines(text: string): string[] {
 
 /** Bounded LCS diff: no shell, no external diff process and no file writes. */
 export function unifiedFileDiff(kind: ApplyFileKind, before: string, after: string): string {
+  return boundedLcsDiff(paths[kind], paths[kind], before, after);
+}
+
+/** Shared bounded diff core with explicit header paths (used by post metadata proposals too). */
+export function boundedLcsDiff(aPath: string, bPath: string, before: string, after: string): string {
   boundedText(before, "Current file");
   boundedText(after, "Proposed file");
   const original = lines(before), proposed = lines(after);
@@ -85,7 +90,7 @@ export function unifiedFileDiff(kind: ApplyFileKind, before: string, after: stri
   if (before.endsWith("\n") !== after.endsWith("\n") || before.includes("\r\n") !== after.includes("\r\n")) {
     changes.push("\\ File newline representation changed (see exact SHA-256 hashes)");
   }
-  return [`--- a${paths[kind]}`, `+++ b${paths[kind]}`,
+  return [`--- a${aPath}`, `+++ b${bPath}`,
     `@@ -1,${original.length} +1,${proposed.length} @@`, ...changes, ""].join("\n");
 }
 
