@@ -1,0 +1,63 @@
+name: gtm-geo-renderer
+
+services:
+  egress:
+    build:
+      context: ../..
+      dockerfile: deploy/geo-renderer/Dockerfile
+    command: ["node", "dist/geo/rendering/geo-egress.js"]
+    environment:
+      GEO_TARGET_HOSTNAME: ${GEO_TARGET_HOSTNAME:?Verified hostname required}
+    networks: [private, outbound]
+    read_only: true
+    tmpfs: ["/tmp:rw,noexec,nosuid,size=16m"]
+    cap_drop: [ALL]
+    security_opt: ["no-new-privileges:true"]
+    pids_limit: 64
+    mem_limit: 128m
+    cpus: 0.25
+    restart: "no"
+
+  renderer:
+    build:
+      context: ../..
+      dockerfile: deploy/geo-renderer/Dockerfile
+    command: ["node", "dist/geo/rendering/geo-renderer.js", "${GEO_TENANT_ID:?Tenant required}", "${GEO_URL:?URL required}"]
+    environment:
+      GEO_TARGET_HOSTNAME: ${GEO_TARGET_HOSTNAME:?Verified hostname required}
+      GEO_DOMAIN_REGISTRY_PATH: /registry/domain-verifications.sqlite3
+      HOME: /tmp
+    depends_on: [egress]
+    networks: [private]
+    volumes:
+      - type: volume
+        source: existing_gtm_data
+        target: /registry
+        read_only: true
+    read_only: true
+    tmpfs: ["/tmp:rw,nosuid,size=256m"]
+    shm_size: 256m
+    cap_drop: [ALL]
+    security_opt:
+      - "no-new-privileges:true"
+      # Docker seccomp profile from microsoft/playwright; used by Chromium only.
+      - "seccomp:deploy/geo-renderer/seccomp_profile.json"
+    pids_limit: 128
+    mem_limit: 1g
+    cpus: 1.0
+    restart: "no"
+
+networks:
+  private:
+    driver: bridge
+    internal: true
+    enable_ipv6: false
+    driver_opts:
+      # Docker Engine >=28: prevent a host address on this internal bridge.
+      com.docker.network.bridge.gateway_mode_ipv4: isolated
+  outbound: {}
+
+volumes:
+  existing_gtm_data:
+    external: true
+    name: ${GEO_DATA_VOLUME_NAME:?Existing volume name required}
