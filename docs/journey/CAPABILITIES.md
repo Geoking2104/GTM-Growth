@@ -34,11 +34,22 @@ sampling or console panel UI is added. See the
 [observation model specification](../specs/AI-VISIBILITY-OBSERVATION-MODEL-v1-2026-11-18.md).
 Not part of the 15 November reviewed revision `353e658`.
 
+Increment of 18 November 2026: the **isolated Playwright renderer** and the
+**fail-closed HTTPS egress gateway** for verified-domain GEO v2 audits are merged
+(PR #29): the renderer authorises every request against the tenant-domain grant
+read-only, and the egress gateway admits only the verified hostname on 443 at
+public IPv4 addresses, inside a resource-capped, read-only Docker topology with a
+network-boundary CI smoke. No public service, domain-verification route or
+production deployment is included. PR #30 was closed as superseded because its
+42-control contracts and evidence enrichment already exist on main; the mapping
+is recorded in the pull request. Not part of the 15 November reviewed revision
+`353e658`.
+
 | Stage / capability | Source status | Activation or scope | Evidence / reference |
 | --- | --- | --- | --- |
 | Diagnose: public read / 360° report | Implemented in feature branch; **not yet merged/deployed** | One public page, GEO v1/SEO evidence, five distinct pillars, evidence-linked FR/EN actions and A4 browser print. Private metrics and before/after gains remain unknown | [Free report contract](../product/FREE-REPORT-360.md), [free read](../../src/freeread/index.ts), [public API](../PUBLIC_API.md) |
 | Diagnose: GEO, citability, sitemap, performance | Implemented | Authorised URLs; lab/field data and readiness remain distinct | [GEO](../GEO.md), [CLI](../CLI.md) |
-| Diagnose: GEO v2 | Foundation; 42-control integration deferred | Category budgets, calculator, ownership registry and offline rendering code exist on main. Live isolated browser execution is not a public service | [Rubric](../../src/geo/score/v2/rubric.ts), [offline worker](../../src/render/worker.ts), [pilot ADR](../architecture/GEO-V2-PLAYWRIGHT-PILOT.md); [PR #30](https://github.com/Geoking2104/GTM-Growth/pull/30) open at review |
+| Diagnose: GEO v2 | Foundation; renderer and egress gate merged | 42-control contracts, ownership registry and offline rendering code are on main; the isolated renderer and the fail-closed egress gateway are merged with CI smokes but not deployed as a public service. Verified-domain grants are operator-issued; before/after comparisons are not inferred | [Rubric](../../src/geo/score/v2/rubric.ts), [renderer](../../src/geo/rendering/geo-renderer.ts), [egress gate](../../src/geo/rendering/geo-egress.ts), [deploy guide](../../deploy/geo-renderer/README.md), [pilot ADR](../architecture/GEO-V2-PLAYWRIGHT-PILOT.md) |
 | Understand: buyer questions | Implemented | Actual Product/Service context and explicit confirmation; at most two selected comparable offers; unsupported stages stay empty | [Current contract](../product/CUSTOMER-JOURNEY-INTEGRATION.md), [model](../../site/console/customer-journey-model.js) |
 | Understand: products/pages | Implemented | Bounded public metadata sample or previewed admin JSON import; not an exhaustive crawl | [Console readiness](../product/CONSOLE-READINESS.md), [catalog API](../../src/console/visual-catalog.ts) |
 | Understand: search/keywords | Implemented | Authorised GSC property, date range and tracking configuration | [Google adapters](../../src/google/), [keywords](../../src/console/keywords.ts) |
