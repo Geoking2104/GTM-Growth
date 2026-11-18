@@ -62,7 +62,7 @@ export async function runVisibilityCheck(
         collected.push(...outcome.successes);
       }
       if (collected.length) {
-        const dataset = normalizeImport({ brands, responses: collected });
+        const dataset = normalizeImport({ brands, responses: collected }, "collected");
         insertDataset(tenantId, dataset);
         datasetId = dataset.id;
       }

@@ -137,3 +137,26 @@ configuration et d'une procédure d'activation. Plusieurs comptes API peuvent ê
 les clés sont chiffrées côté serveur. Sans clé, l'import JSON de réponses sauvegardées reste
 disponible. Chaque lancement demande un accord explicite et accepte au plus cinq
 questions ; les réponses valides alimentent les graphiques et la concurrence.
+
+## Observation provenance and citation gaps (2026-11-18 increment)
+
+Every stored answer observation now carries a **provenance**:
+
+- `imported`: it entered through the tenant-reviewed JSON import.
+- `collected`: it came from an explicit, bounded provider API run (OpenAI, Claude, Mistral, Grok, or the scheduled visibility runner).
+- `unverified`: datasets stored before the field existed are reported as unverified in summaries; they are never silently relabeled. Re-importing stored observations preserves their original provenance.
+
+The read-only workspace route **/ai-visibility/citation-gaps** analyses the citations of one
+stored panel (same `datasetId`, `source` and `brand` filters as the report):
+
+- classifies every cited URL as `own` (the tracked brand's declared website), `competitor`
+  (another tracked brand's website), `reddit`, `youtube`, `linkedin`, `wikipedia` or `web`,
+  with citation counts, cited prompts and share of citations;
+- lists up to 50 prompts that mention the brand while citing other sources, with the mention
+  evidence and the cited URLs.
+
+Evidence rules: a brand without a declared website leaves the own-source gap **unknown**
+(`evaluated: false`, never zero), and a response without any citation is absent evidence,
+not a gap. Cited URLs describe this stored panel only; they are not engine market share or
+consumer-session coverage. The console panel UI and scheduled reporting are outside this
+increment. See the [observation model specification](../specs/AI-VISIBILITY-OBSERVATION-MODEL-v1-2026-11-18.md).
