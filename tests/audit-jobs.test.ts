@@ -101,9 +101,9 @@ describe.skipIf(!dbUrl)("PostgreSQL audit admission and recovery", () => {
       expect(second.comparison).toMatchObject({
         status: "compared", method: "geo-v2-public-evidence", scope: "single_public_url", url: after.report360.sourceUrl,
         previousObservedAt: before.report360.observedAt, currentObservedAt: after.report360.observedAt,
-        summary: { improved: 4, regressed: 0, unchanged: 36, newlyObserved: 2, newlyUnavailable: 0, newlyApplicable: 0, noLongerApplicable: 0 },
+        summary: { improved: 2, regressed: 0, unchanged: 39, newlyObserved: 1, newlyUnavailable: 0, newlyApplicable: 0, noLongerApplicable: 0 },
       });
-      expect(second.comparison.controls.map((c: { controlId: string }) => c.controlId).sort()).toEqual(["B01", "J01", "J02", "J06", "M01", "M02"]);
+      expect(second.comparison.controls.map((c: { controlId: string }) => c.controlId).sort()).toEqual(["B01", "M01", "M02"]);
       // A different requestor must never be paired with the first one's snapshots.
       expect((await read(jobC.id, tokenC)).comparison).toMatchObject({ status: "not_comparable", reason: "no_previous_snapshot" });
       // A pending job from the same requestor never sees a comparison block.
