@@ -1,4 +1,4 @@
-import { describe, expect, it } from "vitest";
+import { describe, expect, it, vi } from "vitest";
 import { mkdirSync, writeFileSync } from "node:fs";
 import { dirname } from "node:path";
 import { ReportAccessService, ReportAccessError, normaliseReportEmail, type ReportInvitation } from "../src/report-access/service.js";
@@ -43,6 +43,32 @@ const invitation = async (service: ReportAccessService, email = " Owner@Example.
 };
 
 describe("report email-code access", () => {
+  it("checks invitation quotas before performing another read or sending mail", async () => {
+    const service = new ReportAccessService(opts), read = vi.fn().mockResolvedValue(report), send = vi.fn().mockResolvedValue(undefined);
+    const input = { email: "quota@example.com", url: "https://example.com/", language: "fr" as const, ip: "quota-ip" };
+    for (let i = 0; i < 4; i++) await service.invite(input, read, send);
+    await expect(service.invite(input, read, send)).rejects.toMatchObject({ status: 429 });
+    expect(read).toHaveBeenCalledTimes(4); expect(send).toHaveBeenCalledTimes(4); service.close();
+  });
+  it("returns the existing invitation on a successful replay and never retries an ambiguous SMTP write", async () => {
+    const service = new ReportAccessService(opts), read = vi.fn().mockResolvedValue(report), send = vi.fn().mockResolvedValue(undefined);
+    const input = { email: "dedupe@example.com", url: "https://example.com/", language: "en" as const, ip: "dedupe-ip", requestKey: "A".repeat(43) };
+    const first = await service.invite(input, read, send);
+    expect((await service.invite(input, read, send)).id).toBe(first.id);
+    expect(read).toHaveBeenCalledTimes(1); expect(send).toHaveBeenCalledTimes(1);
+    const uncertain = { ...input, requestKey: "B".repeat(43) }, ambiguousSend = vi.fn().mockRejectedValue(new Error("connection lost after acceptance"));
+    await expect(service.invite(uncertain, read, ambiguousSend)).rejects.toMatchObject({ code: "mail_unavailable" });
+    await expect(service.invite(uncertain, read, ambiguousSend)).rejects.toMatchObject({ status: 409 });
+    expect(ambiguousSend).toHaveBeenCalledTimes(1); service.close();
+  });
+  it("reserves requests while an earlier read is still in progress", async () => {
+    const service = new ReportAccessService(opts); let release: (r: FreeReport360) => void = () => {};
+    const read = vi.fn(() => new Promise<FreeReport360>(done => { release = done; }));
+    const input = { email: "concurrent@example.com", url: "https://example.com/", language: "en" as const, ip: "concurrent-ip", requestKey: "C".repeat(43) };
+    const first = service.invite(input, read, async () => {});
+    await expect(service.invite(input, read, async () => {})).rejects.toMatchObject({ status: 409 });
+    release(report); await first; expect(read).toHaveBeenCalledTimes(1); service.close();
+  });
   it("normalises email and rejects malformed address values", () => {
     expect(normaliseReportEmail(" Owner+News@Example.com ")).toBe("owner+news@example.com");
     for (const v of ["a@b", "a@b..com", "header\r\n@example.com", "user@localhost", "nobody", 34]) expect(normaliseReportEmail(v)).toBeNull();

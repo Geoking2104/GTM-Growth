@@ -2,6 +2,18 @@
 
 ## Unreleased
 
+### Reliable public audit pilot
+
+- Added transactional PostgreSQL admission/outbox, a dedicated BullMQ/Redis queue,
+  bounded separate workers, stable request IDs, retries and stale-write fencing.
+- Added resumable EN/FR browser progress and reuse of the exact server snapshot
+  for email-code reports. Invitation quotas now reserve before reads/SMTP and
+  successful request replays reuse the existing invitation.
+- Added protected Prometheus monitoring, dependency/worker readiness, isolated
+  OVH services and real PostgreSQL/Redis integration CI. Updated core images and
+  CI to maintained Node 24. Remaining module-store migration and live provider
+  activation are outside this increment; see the audit pipeline runbook.
+
 ### Free report 360° (base merged; production qualification pending)
 
 - Added a versioned, evidence-led public `report360` payload with five distinct

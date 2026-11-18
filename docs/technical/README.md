@@ -9,6 +9,11 @@ the source baseline for this review is `353e658`.
 
 ## Runtime and responsibility map
 
+The [durable audit pipeline](AUDIT-PIPELINE.md) adds dedicated PostgreSQL request
+storage, a BullMQ outbox dispatcher and separate Redis workers for public reads.
+API and worker images now use Node 24. Other module stores remain on SQLite/files;
+only audit workers are ready for independent replication in this increment.
+
 The [console decision refit](../journey/CONSOLE-DECISION-REFIT.md) includes five
 business areas plus a member Portfolio, a durable cross-module inbox, synchronized
 intent evidence and a four-check GTM audit. `src/console/decision-*.ts` and
@@ -19,11 +24,12 @@ are not implemented by this release.
 
 | Layer | Implementation | Role |
 | --- | --- | --- |
-| Core | Node ≥20, TypeScript, Express, Zod | Public API, authenticated console API, MCP and CLI |
+| Core | Node ≥24, TypeScript, Express, Zod | Public API, authenticated console API, MCP and CLI |
 | UI | Static FR/EN HTML/CSS and JavaScript modules in `site/` | Shared landing generation, console navigation and source-aware states |
 | Billing | Dedicated Mollie GTM profile; `src/billing/` and isolated SQLite | Verified payments, paid/grace/read-only policy, explicit enrollment and atomic quotas; disabled by default. [Activation runbook](../billing/MOLLIE-SUBSCRIPTIONS-IMPLEMENTATION.md) |
 | Identity | Keycloak; PostgreSQL for Keycloak | OIDC/JWKS validation, tenant membership and resource scope |
 | Application state | Module SQLite stores on the local persistent volume | Tenant registry, observations, approvals, CRM events and workflow state |
+| Public audit jobs | Dedicated PostgreSQL + BullMQ + separate Redis | Durable admission/outbox, bounded workers and immutable completed snapshots |
 | Cache | Optional Redis | Caching; not the durable workflow database |
 | Hosting | Existing OVH stack: Docker Compose, Nginx, TLS | Primary product deployment |
 | Local worker | Optional Node-RED | Poll queued GBP/LOC jobs |

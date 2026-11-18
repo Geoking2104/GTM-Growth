@@ -2,6 +2,7 @@
 import { el } from "./render.js";
 import { LANG } from "./i18n.js";
 import { API_BASE } from "./config.js";
+import { requestPublicRead } from "../audit-client.js";
 const L = (fr, en) => LANG === "fr" ? fr : en;
 const button = (label, fn, cls = "btn btn-small") => { const b = el("button", cls, label); b.type = "button"; b.onclick = fn; return b; };
 const keyFor = (me) => `gtm-console-wizard-v1:${me.tenant.id}:${me.email || me.username || "user"}`;
@@ -55,8 +56,7 @@ export function openWizard({ state, api, scope, saveSettings, renderSettings, re
       content.append(el("p", "c-note", L("La lecture mesure le HTML public. Vérifiez le profil proposé ; le secteur est à renseigner par vos soins.", "The read measures public HTML. Review the suggested profile; enter the industry yourself.")));
       if (!read) content.append(button(L("Analyser le site", "Analyze website"), () => run(async () => {
         const root = API_BASE.replace(/\/console$/, "");
-        const [response, extracted] = await Promise.all([fetch(`${root}/free-read`, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ url: selected }) }), api("/onboarding/profile", { url: selected })]);
-        const data = await response.json(); if (!response.ok) throw new Error(data.error || L("Lecture impossible", "Read failed"));
+        const [data, extracted] = await Promise.all([requestPublicRead(selected, { endpoint: `${root}/free-read` }), api("/onboarding/profile", { url: selected })]);
         read = data; const domain = new URL(selected).hostname; const saved = state.me.tenant.siteProfiles?.[domain];
         const pf = extracted.profile || extracted; profile = saved ? { ...saved } : { name: pf.siteName || pf.title || "", description: pf.description || "", industry: "" };
         profileHints = saved ? "" : [pf.siteNameSource === "schema" ? L("nom lu dans les données structurées", "name read from structured data") : pf.siteName ? L("nom lu dans les balises meta", "name read from meta tags") : "", pf.lang ? `${L("langue")} ${pf.lang}` : "", (pf.schemaTypes || []).length ? `${L("données structurées")} : ${pf.schemaTypes.join(", ")}` : ""].filter(Boolean).join(" · ");

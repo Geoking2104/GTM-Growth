@@ -45,7 +45,8 @@
     "tenant:provision": "tsx scripts/provision-tenant.ts",
     "site:render": "node scripts/render-landing.mjs",
     "site:check": "node scripts/check-site.mjs",
-    "docs:check": "node scripts/check-docs.mjs"
+    "docs:check": "node scripts/check-docs.mjs",
+    "start:audit-worker": "node dist/audit-jobs/worker.js"
   },
   "keywords": [
     "mcp",
@@ -78,11 +79,13 @@
   },
   "homepage": "https://github.com/Geoking2104/GTM-Growth#readme",
   "engines": {
-    "node": ">=20"
+    "node": ">=24"
   },
   "dependencies": {
     "@modelcontextprotocol/sdk": "^1.12.0",
+    "@prometheus-io/client": "^0.16.1",
     "better-sqlite3": "^11.10.0",
+    "bullmq": "^6.7.7",
     "cors": "^2.8.5",
     "dotenv": "^16.4.5",
     "express": "^4.21.2",
@@ -91,6 +94,7 @@
     "ioredis": "^5.4.2",
     "nodemailer": "^7.0.13",
     "pdfkit": "^0.20.2",
+    "pg": "^8.23.1",
     "playwright-core": "1.64.1",
     "zod": "^3.23.8",
     "zod-to-json-schema": "^3.25.2"
@@ -103,6 +107,7 @@
     "@types/node": "^22.10.0",
     "@types/nodemailer": "^7.0.12",
     "@types/pdfkit": "^0.17.7",
+    "@types/pg": "^8.23.1",
     "@typescript-eslint/eslint-plugin": "^8.18.0",
     "@typescript-eslint/parser": "^8.18.0",
     "eslint": "^9.16.0",

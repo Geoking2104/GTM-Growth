@@ -13,6 +13,14 @@ if [[ ! -f "${ENV_FILE}" ]]; then
   exit 1
 fi
 
+# Stable, independent secrets for the audit ledger and internal monitoring.
+for name in AUDIT_DB_PASSWORD AUDIT_JOBS_SECRET METRICS_TOKEN; do
+  if ! grep -q "^${name}=" "${ENV_FILE}"; then
+    umask 077
+    printf '\n%s=%s\n' "$name" "$(openssl rand -hex 32)" >> "${ENV_FILE}"
+  fi
+done
+
 # Generate a stable, dedicated HMAC secret without exposing it in Actions logs.
 # Existing values are never overwritten; disabling the feature still works.
 if ! grep -q '^REPORT_ACCESS_SECRET=' "${ENV_FILE}"; then
@@ -33,6 +41,11 @@ cd "${APP_DIR}"
 GTM_THEME_REVISION="$(find deploy/kayroslab-vps/keycloak/themes -type f -print0 | LC_ALL=C sort -z | xargs -0 sha256sum | sha256sum | cut -d ' ' -f 1)"
 export GTM_THEME_REVISION
 docker compose --env-file "${ENV_FILE}" -f "${COMPOSE_FILE}" up -d --build --remove-orphans
+for attempt in $(seq 1 36); do
+  if curl --max-time 5 -fsS http://127.0.0.1:4300/api/health/readiness >/dev/null; then break; fi
+  if [ "$attempt" = 36 ]; then echo "Audit dependencies did not become ready." >&2; exit 1; fi
+  sleep 5
+done
 # Wait for SSO after a changed theme, then check the public delivery rather than
 # reporting success solely because Compose started the containers.
 for attempt in $(seq 1 36); do

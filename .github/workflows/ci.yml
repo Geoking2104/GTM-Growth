@@ -11,6 +11,39 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
+  audit-pipeline:
+    name: Audit · PostgreSQL and Redis recovery
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    services:
+      postgres:
+        image: postgres:16-alpine
+        env:
+          POSTGRES_USER: gtm_test
+          POSTGRES_PASSWORD: fixture-only-password
+          POSTGRES_DB: gtm_audit_test
+        ports: ["5432:5432"]
+        options: >-
+          --health-cmd "pg_isready -U gtm_test -d gtm_audit_test"
+          --health-interval 5s --health-timeout 3s --health-retries 10
+      redis:
+        image: redis:7-alpine
+        ports: ["6379:6379"]
+        options: >-
+          --health-cmd "redis-cli ping"
+          --health-interval 5s --health-timeout 3s --health-retries 10
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "24"
+          cache: npm
+      - run: npm ci
+      - run: npx vitest run tests/audit-jobs.test.ts
+        env:
+          TEST_AUDIT_DATABASE_URL: postgres://gtm_test:fixture-only-password@127.0.0.1:5432/gtm_audit_test
+          TEST_AUDIT_REDIS_URL: redis://127.0.0.1:6379
+
   build:
     name: Install · Typecheck · Lint · Test · Build · Smoke
     runs-on: ubuntu-latest
@@ -23,7 +56,7 @@ jobs:
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
-          node-version: "20"
+          node-version: "24"
           cache: npm
 
       - name: Install dependencies
@@ -75,7 +108,7 @@ jobs:
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
-          node-version: "20"
+          node-version: "24"
           cache: npm
 
       - name: Install dependencies
@@ -135,7 +168,7 @@ jobs:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
         with:
-          node-version: "20"
+          node-version: "24"
           cache: npm
       - run: npm ci
       - run: npx playwright-core install --with-deps chromium
@@ -157,7 +190,7 @@ jobs:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
         with:
-          node-version: "20"
+          node-version: "24"
       - name: Install pinned optional runtime
         run: npm install --prefix /tmp/gtm-node-red --ignore-scripts --no-audit --no-fund node-red@4.1.17
       - name: Execute exported pollers against a local fixture
@@ -189,7 +222,7 @@ jobs:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
         with:
-          node-version: "20"
+          node-version: "24"
           cache: npm
       - run: npm ci
       - run: npx playwright-core install --with-deps chromium
@@ -212,7 +245,7 @@ jobs:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
         with:
-          node-version: "20"
+          node-version: "24"
           cache: npm
       - run: npm ci
       - run: npx playwright-core install --with-deps chromium

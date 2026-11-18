@@ -74,6 +74,12 @@ export class ReportAccessService {
         token_digest TEXT PRIMARY KEY, invitation_id TEXT NOT NULL REFERENCES invitations(id) ON DELETE CASCADE,
         expires_at INTEGER NOT NULL
       );
+      CREATE TABLE IF NOT EXISTS invitation_requests (
+        request_digest TEXT PRIMARY KEY, email_digest TEXT NOT NULL, ip_digest TEXT NOT NULL,
+        input_digest TEXT NOT NULL, invitation_id TEXT, state TEXT NOT NULL, created_at INTEGER NOT NULL
+      );
+      CREATE INDEX IF NOT EXISTS invitation_request_email ON invitation_requests(email_digest,created_at);
+      CREATE INDEX IF NOT EXISTS invitation_request_ip ON invitation_requests(ip_digest,created_at);
     `);
     this.secret = options.secret;
     this.now = options.now ?? Date.now;
@@ -86,40 +92,65 @@ export class ReportAccessService {
   private cleanup(now: number): void {
     this.db.prepare("DELETE FROM sessions WHERE expires_at < ?").run(now);
     this.db.prepare("DELETE FROM invitations WHERE created_at < ?").run(now - RETENTION_MS);
+    this.db.prepare("DELETE FROM invitation_requests WHERE created_at < ?").run(now - RETENTION_MS);
   }
 
-  async invite(input: { email: unknown; url: string; language: ReportLanguage; ip: string }, reader: ReportReader, send: MailSender): Promise<{ id: string; expiresIn: number }> {
+  async invite(input: { email: unknown; url: string; language: ReportLanguage; ip: string; requestKey?: string; snapshotId?: string }, reader: ReportReader, send: MailSender): Promise<{ id: string; expiresIn: number }> {
     const email = normaliseReportEmail(input.email);
     if (!email) throw new ReportAccessError(400, "invalid_email");
     const now = this.now();
     const emailDigest = this.digest(`email:${email}`);
     const ipDigest = this.digest(`ip:${input.ip}`);
     this.cleanup(now);
-    // The public URL is checked by the route before the reader is called.
-    const report = await reader(input.url);
+    if (input.requestKey !== undefined && !/^[A-Za-z0-9_-]{43}$/.test(input.requestKey)) throw new ReportAccessError(400, "invalid_request_key");
+    const requestDigest = this.digest(`invite-request:${input.requestKey || randomBytes(32).toString("base64url")}`);
+    const inputDigest = this.digest(JSON.stringify([emailDigest, input.url, input.language, input.snapshotId || ""]));
+    // Reserve before any read or SMTP work, including concurrent requests from other processes.
+    const reused = this.db.transaction(() => {
+      const previous = this.db.prepare("SELECT * FROM invitation_requests WHERE request_digest=?").get(requestDigest) as { input_digest: string; state: string; invitation_id: string | null } | undefined;
+      if (previous) {
+        if (previous.input_digest !== inputDigest) throw new ReportAccessError(409, "request_key_conflict");
+        if (previous.state !== "sent") throw new ReportAccessError(409, "invitation_requires_review");
+        const row = this.db.prepare("SELECT expires_at FROM invitations WHERE id=?").get(previous.invitation_id) as { expires_at: number } | undefined;
+        if (!row || row.expires_at <= now) throw new ReportAccessError(410, "invitation_expired");
+        return { id: previous.invitation_id!, expiresIn: Math.ceil((row.expires_at - now) / 1000) };
+      }
+      const count = (column: "email_digest" | "ip_digest", value: string, after: number) =>
+        (this.db.prepare(`SELECT COUNT(*) AS count FROM invitation_requests WHERE ${column}=? AND created_at>?`).get(value, after) as { count: number }).count;
+      // Count historic invitations too during the first retention window after migration.
+      const historic = (column: "email_digest" | "ip_digest", value: string, after: number) =>
+        (this.db.prepare(`SELECT COUNT(*) AS count FROM invitations i WHERE ${column}=? AND created_at>? AND NOT EXISTS
+          (SELECT 1 FROM invitation_requests r WHERE r.invitation_id=i.id)`).get(value, after) as { count: number }).count;
+      if (count("email_digest", emailDigest, now - 86400_000) + historic("email_digest", emailDigest, now - 86400_000) >= MAX_EMAIL_DAY ||
+          count("ip_digest", ipDigest, now - 3600_000) + historic("ip_digest", ipDigest, now - 3600_000) >= MAX_IP_HOUR) throw new ReportAccessError(429, "too_many_invitations");
+      this.db.prepare("INSERT INTO invitation_requests VALUES(?,?,?,?,NULL,'preparing',?)").run(requestDigest, emailDigest, ipDigest, inputDigest, now);
+      return null;
+    }).immediate();
+    if (reused) return reused;
+    let report: FreeReport360;
+    try { report = await reader(input.url); }
+    catch { this.db.prepare("UPDATE invitation_requests SET state='failed' WHERE request_digest=?").run(requestDigest); throw new ReportAccessError(502, "report_unavailable"); }
     if (report.schemaVersion !== 1 || report.scope !== "single_public_url") throw new ReportAccessError(502, "report_unavailable");
     const payload = JSON.stringify(report);
     if (Buffer.byteLength(payload, "utf8") > MAX_REPORT_BYTES) throw new ReportAccessError(413, "report_too_large");
     const id = randomUUID();
     const code = String(randomInt(0, 1_000_000)).padStart(6, "0");
-    const expiresAt = now + CODE_TTL_MS;
-    // Recheck quotas under a SQLite write lock: concurrent requests cannot both
-    // consume the final permitted invitation slot.
+    const expiresAt = this.now() + CODE_TTL_MS;
+    // Commit the saved snapshot and its dispatch state together after admission.
     this.db.transaction(() => {
-      const count = (column: "email_digest" | "ip_digest", digest: string, after: number): number =>
-        (this.db.prepare(`SELECT COUNT(*) AS count FROM invitations WHERE ${column} = ? AND created_at > ?`).get(digest, after) as { count: number }).count;
-      if (count("email_digest", emailDigest, now - 24 * 60 * 60_000) >= MAX_EMAIL_DAY || count("ip_digest", ipDigest, now - 60 * 60_000) >= MAX_IP_HOUR) {
-        throw new ReportAccessError(429, "too_many_invitations");
-      }
       this.db.prepare(`INSERT INTO invitations (id, email_digest, ip_digest, code_digest, payload, language, created_at, expires_at)
         VALUES (?, ?, ?, ?, ?, ?, ?, ?)`).run(id, emailDigest, ipDigest, this.digest(`code:${id}:${emailDigest}:${code}`), payload, input.language, now, expiresAt);
+      this.db.prepare("UPDATE invitation_requests SET invitation_id=?,state='sending' WHERE request_digest=?").run(id, requestDigest);
     }).immediate();
     try {
       await send({ id, code, email, language: input.language, url: report.sourceUrl, expiresAt });
     } catch {
       this.db.prepare("DELETE FROM invitations WHERE id = ?").run(id);
+      // SMTP may have accepted the email before disconnecting. Never automatically resend it.
+      this.db.prepare("UPDATE invitation_requests SET state='uncertain' WHERE request_digest=?").run(requestDigest);
       throw new ReportAccessError(503, "mail_unavailable");
     }
+    this.db.prepare("UPDATE invitation_requests SET state='sent' WHERE request_digest=?").run(requestDigest);
     return { id, expiresIn: CODE_TTL_MS / 1000 };
   }
 

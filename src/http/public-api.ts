@@ -21,6 +21,8 @@ import { appendLead, validateLead } from "../leads/store.js";
 import { runFreeRead } from "../freeread/index.js";
 import { fetchPublicPage } from "./public-fetch.js";
 import { logger } from "../utils/logger.js";
+import { AuditError, type AuditStore } from "../audit-jobs/store.js";
+import { auditResponse } from "../audit-jobs/routes.js";
 
 const CACHE_TTL_MS = 10 * 60_000;
 const MAX_BODY = 4 * 1024;
@@ -54,6 +56,12 @@ function createLimiter(perMinute: number) {
 
 const freeReadLimiter = createLimiter(8);
 const leadLimiter = createLimiter(5);
+
+/** Trust the edge header only when explicitly configured behind our private Nginx. */
+export function publicClientIp(req: Request): string {
+  const edge = req.get("X-Real-IP");
+  return process.env.TRUST_EDGE_IP === "true" && edge && isIP(edge) ? edge : req.ip || "unknown";
+}
 
 /** Private, loopback, link-local and metadata ranges — refused outright. */
 export function isPrivateAddress(address: string): boolean {
@@ -129,14 +137,15 @@ function originAllowed(origin: string | undefined): boolean {
 function cors(res: Response, origin: string | undefined): void {
   res.setHeader("Access-Control-Allow-Origin", origin && originAllowed(origin) ? origin : "*");
   res.setHeader("Vary", "Origin");
-  res.setHeader("Access-Control-Allow-Methods", "POST, OPTIONS");
-  res.setHeader("Access-Control-Allow-Headers", "Content-Type");
+  res.setHeader("Access-Control-Allow-Methods", "GET, POST, OPTIONS");
+  res.setHeader("Access-Control-Allow-Headers", "Content-Type, Prefer, Idempotency-Key, Authorization");
   res.setHeader("Access-Control-Max-Age", "600");
 }
 
 const cache = new Map<string, { at: number; payload: unknown }>();
+const inFlight = new Map<string, Promise<unknown>>();
 
-export function mountPublicApi(app: Express): void {
+export function mountPublicApi(app: Express, deps: { audits?: AuditStore; validateTarget?: typeof checkTarget } = {}): void {
   app.options("/api/free-read", (req, res) => {
     cors(res, req.headers.origin);
     res.status(204).end();
@@ -150,23 +159,42 @@ export function mountPublicApi(app: Express): void {
     cors(res, req.headers.origin);
     if (!originAllowed(req.headers.origin)) return res.status(403).json({ error: "origin not allowed" });
 
-    const ip = req.ip ?? "unknown";
-    if (!freeReadLimiter(ip)) return res.status(429).json({ error: "Too many reads — try again in a minute." });
-
     const body = (req.body ?? {}) as { url?: unknown };
-    const check = await checkTarget(body.url);
+    if (JSON.stringify(req.body ?? {}).length > MAX_BODY) return res.status(413).json({ error: "payload_too_large" });
+    const check = await (deps.validateTarget ?? checkTarget)(body.url);
     if (!check.ok || !check.url) return res.status(400).json({ error: check.reason ?? "invalid url" });
 
-    const key = check.url.toLowerCase();
+    const target = new URL(check.url); target.hash = "";
+    const key = target.href;
+    const ip = publicClientIp(req);
+    if (deps.audits && req.get("Prefer") === "respond-async") {
+      res.setHeader("Cache-Control", "private, no-store");
+      try {
+        const job = await deps.audits.submit(key, req.get("Idempotency-Key") || "", ip);
+        res.setHeader("Retry-After", "2");
+        return res.status(job.status === "completed" ? 200 : 202).json({ auditJob: auditResponse(job) });
+      } catch (e) {
+        return res.status(e instanceof AuditError ? e.status : 503).json({ error: e instanceof AuditError ? e.code : "audit_unavailable" });
+      }
+    }
+    if (!freeReadLimiter(ip)) return res.status(429).json({ error: "Too many reads — try again in a minute." });
     const cached = cache.get(key);
     if (cached && Date.now() - cached.at < CACHE_TTL_MS) {
       return res.json({ ...(cached.payload as object), cached: true });
     }
 
     try {
-      const result = await runFreeRead({ url: check.url, timeoutMs: 12_000, fetcher: fetchPublicPage });
-      cache.set(key, { at: Date.now(), payload: result });
-      if (cache.size > 500) cache.clear();
+      // Legacy callers retain their JSON contract, with bounded concurrency and coalescing.
+      if (!inFlight.has(key)) {
+        if (inFlight.size >= 2) return res.status(503).json({ error: "audit_capacity_reached" });
+        const work = runFreeRead({ url: key, timeoutMs: 8000, fetcher: fetchPublicPage }).then(result => {
+          cache.set(key, { at: Date.now(), payload: result });
+          if (cache.size > 500) cache.clear();
+          return result;
+        }).finally(() => { inFlight.delete(key); });
+        inFlight.set(key, work);
+      }
+      const result = await inFlight.get(key);
       return res.json(result);
     } catch (error) {
       logger.info(`[free-read] ${check.url} failed: ${(error as Error).message}`);
@@ -178,7 +206,7 @@ export function mountPublicApi(app: Express): void {
     cors(res, req.headers.origin);
     if (!originAllowed(req.headers.origin)) return res.status(403).json({ error: "origin not allowed" });
 
-    const ip = req.ip ?? "unknown";
+    const ip = publicClientIp(req);
     if (!leadLimiter(ip)) return res.status(429).json({ error: "Too many requests — try again shortly." });
 
     const raw = JSON.stringify(req.body ?? {});

@@ -21,14 +21,16 @@ const TEXT = {
 };
 const el = (tag, cls, value) => { const n = document.createElement(tag); if (cls) n.className = cls; if (value !== undefined) n.textContent = value; return n; };
 
-export function renderReportInvitation(report, language = "fr") {
+export function renderReportInvitation(report, language = "fr", auditJob = null) {
   if (report?.schemaVersion !== 1 || typeof report.sourceUrl !== "string") return null;
   const lang = language === "en" ? "en" : "fr", copy = TEXT[lang];
+  let requestKey = null;
   const section = el("section", "public-panel report-invite");
   section.append(el("p", "public-eyebrow", copy.badge), el("h2", "", copy.title), el("p", "public-description", copy.intro));
   const form = el("form", "report-invite-form");
   const label = el("label", "", copy.email); const input = el("input");
   input.type = "email"; input.name = "email"; input.autocomplete = "email"; input.required = true; input.maxLength = 254;
+  input.addEventListener("input", () => { requestKey = null; });
   label.append(input);
   const button = el("button", "public-url-button", copy.action); button.type = "submit"; button.disabled = true;
   const status = el("p", "report-invite-feedback", copy.info); status.setAttribute("role", "status");
@@ -42,8 +44,8 @@ export function renderReportInvitation(report, language = "fr") {
     button.disabled = true; status.textContent = copy.wait;
     try {
       const response = await fetch("/api/report-access/invite", {
-        method: "POST", headers: { "Content-Type": "application/json", Accept: "application/json" },
-        body: JSON.stringify({ url: report.sourceUrl, email: input.value.trim(), language: lang }),
+        method: "POST", headers: { "Content-Type": "application/json", Accept: "application/json", "Idempotency-Key": requestKey ||= btoa(String.fromCharCode(...crypto.getRandomValues(new Uint8Array(32)))).replace(/\+/g, "-").replace(/\//g, "_").replace(/=+$/, "") },
+        body: JSON.stringify({ url: report.sourceUrl, email: input.value.trim(), language: lang, ...(auditJob ? { auditId: auditJob.id, auditToken: auditJob.token } : {}) }),
         signal: AbortSignal.timeout(30_000),
       });
       if (!response.ok) { status.textContent = response.status === 429 ? copy.limit : copy.error; return; }

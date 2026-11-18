@@ -1,5 +1,5 @@
 # ─── Build stage ───────────────────────────────────────────────
-FROM node:20-alpine AS builder
+FROM node:24-alpine AS builder
 
 WORKDIR /app
 
@@ -13,7 +13,7 @@ COPY site/console/customer-journey-model.* ./site/console/
 RUN npm run build
 
 # ─── Production stage ─────────────────────────────────────────
-FROM node:20-alpine
+FROM node:24-alpine
 
 # Security: run as non-root
 RUN addgroup -g 1001 -S nodejs && \

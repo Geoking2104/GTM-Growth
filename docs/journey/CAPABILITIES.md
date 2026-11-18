@@ -18,6 +18,12 @@ in the reviewed source. It does not mean deployed, connected or accepted by a li
 
 ## Capabilities by journey
 
+Increment of 18 November 2026: [durable public audit pilot](../technical/AUDIT-PIPELINE.md)
+is implemented in source with PostgreSQL admission/outbox, bounded BullMQ workers,
+resumable browser progress, snapshot-based invitations and protected metrics.
+It does not establish an OVH release, real SMTP acceptance, live Mollie activation
+or migration of the remaining module stores. See the exact pipeline tests/runbook.
+
 | Stage / capability | Source status | Activation or scope | Evidence / reference |
 | --- | --- | --- | --- |
 | Diagnose: public read / 360° report | Implemented in feature branch; **not yet merged/deployed** | One public page, GEO v1/SEO evidence, five distinct pillars, evidence-linked FR/EN actions and A4 browser print. Private metrics and before/after gains remain unknown | [Free report contract](../product/FREE-REPORT-360.md), [free read](../../src/freeread/index.ts), [public API](../PUBLIC_API.md) |
