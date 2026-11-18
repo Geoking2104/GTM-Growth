@@ -71,6 +71,47 @@ describe.skipIf(!dbUrl)("PostgreSQL audit admission and recovery", () => {
       expect(text).not.toContain("example.com"); expect(text).not.toContain("campaign_id"); expect(text).not.toContain(token);
     } finally { await new Promise<void>(done => server.close(() => done())); }
   });
+  it("pairs before/after comparisons only with the requestor's own earlier snapshot of the same URL", async () => {
+    const app = express(), store = open(), url = "https://example.com/before-after";
+    const page = (body: string) => async (target: string) => target.endsWith("/robots.txt") || target.includes("sitemap")
+      ? { url: target, status: 404, ok: false, headers: {}, body: "" }
+      : { url: target, status: 200, ok: true, headers: {}, body };
+    const before = await runFreeRead({ url, fetcher: page("<html><head></head><body></body></html>") });
+    const after = await runFreeRead({ url, fetcher: page("<html lang=\"fr\"><head><title>Benchmark</title><meta name=\"description\" content=\"Desc\"></head><body><h1>Benchmark</h1><h2>Section</h2></body></html>") });
+    const tokenA = key(), tokenB = key(), tokenC = key();
+    const jobA = await store.submit(url, tokenA, "compare-ip"), runA = (await store.begin(jobA.id))!;
+    time += 1_000;
+    const jobB = await store.submit(url, tokenB, "compare-ip"), runB = (await store.begin(jobB.id))!;
+    time += 1_000;
+    const jobC = await store.submit(url, tokenC, "other-ip"), runC = (await store.begin(jobC.id))!;
+    expect(await store.complete(runA, before)).toBe(true);
+    expect(await store.complete(runB, after)).toBe(true);
+    expect(await store.complete(runC, after)).toBe(true);
+    mountAuditRoutes(app, { store, ready: async () => {} });
+    const server = app.listen(0, "127.0.0.1");
+    await new Promise<void>(done => server.once("listening", done));
+    const base = `http://127.0.0.1:${(server.address() as { port: number }).port}`;
+    try {
+      const read = (jobId: string, token: string) => fetch(`${base}/api/audits/${jobId}`, { headers: { Authorization: `Bearer ${token}` } }).then(r => r.json());
+      const first = await read(jobA.id, tokenA);
+      expect(first.comparison).toMatchObject({ status: "not_comparable", reason: "no_previous_snapshot" });
+      const second = await read(jobB.id, tokenB);
+      expect(second.result.report360.comparison).toBeNull();
+      expect(second.result.report360).toEqual(after.report360);
+      expect(second.comparison).toMatchObject({
+        status: "compared", method: "geo-v2-public-evidence", scope: "single_public_url", url: after.report360.sourceUrl,
+        previousObservedAt: before.report360.observedAt, currentObservedAt: after.report360.observedAt,
+        summary: { improved: 2, regressed: 0, unchanged: 39, newlyObserved: 1, newlyUnavailable: 0, newlyApplicable: 0, noLongerApplicable: 0 },
+      });
+      expect(second.comparison.controls.map((c: { controlId: string }) => c.controlId).sort()).toEqual(["B01", "M01", "M02"]);
+      // A different requestor must never be paired with the first one's snapshots.
+      expect((await read(jobC.id, tokenC)).comparison).toMatchObject({ status: "not_comparable", reason: "no_previous_snapshot" });
+      // A pending job from the same requestor never sees a comparison block.
+      const pendingToken = key(), pending = await store.submit(url, pendingToken, "compare-ip");
+      expect(await read(pending.id, pendingToken)).toMatchObject({ id: pending.id, status: "pending" });
+      expect(await read(pending.id, pendingToken)).not.toHaveProperty("comparison");
+    } finally { await new Promise<void>(done => server.close(() => done())); }
+  });
   it.skipIf(!redisUrl)("drains an admission created before Redis dispatch and retries one read without duplicate completion", async () => {
     vi.stubEnv("AUDIT_JOBS_ENABLED", "true"); vi.stubEnv("AUDIT_DATABASE_URL", dbUrl!);
     vi.stubEnv("AUDIT_REDIS_URL", redisUrl!); vi.stubEnv("AUDIT_JOBS_SECRET", secret);

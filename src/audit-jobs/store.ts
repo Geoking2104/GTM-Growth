@@ -13,6 +13,8 @@ export class AuditError extends Error {
 export interface AuditJob {
   id: string; url: string; status: "pending" | "queued" | "running" | "completed" | "failed";
   created_at: string; updated_at: string; expires_at: string; attempts: number;
+  /** HMAC of the submitting IP; pairs this requestor's own snapshots only. */
+  owner_digest: string;
   run_token: string | null; result: FreeReadResult | null; error_code: string | null;
 }
 export class AuditStore {
@@ -68,6 +70,13 @@ export class AuditStore {
     const rows = await this.pool.query<AuditJob>("SELECT * FROM gtm_audit_jobs WHERE id=$1 AND token_digest=$2 AND expires_at>$3", [id, digest(token), this.now()]);
     if (!rows.rows[0]) throw new AuditError(404, "audit_not_found");
     return rows.rows[0];
+  }
+  /** Most recent completed snapshot of the same URL by the same requestor, before the given job. */
+  async previousCompleted(ownerDigest: string, url: string, jobId: string, createdAt: string): Promise<AuditJob | null> {
+    const rows = await this.pool.query<AuditJob>(`SELECT * FROM gtm_audit_jobs WHERE owner_digest=$1 AND url=$2 AND status='completed'
+      AND result IS NOT NULL AND expires_at>$5 AND (created_at<$4 OR (created_at=$4 AND id<>$3))
+      ORDER BY created_at DESC, id LIMIT 1`, [ownerDigest, url, jobId, Number(createdAt), this.now()]);
+    return rows.rows[0] ?? null;
   }
   async dispatchable(): Promise<AuditJob[]> {
     const now = this.now();

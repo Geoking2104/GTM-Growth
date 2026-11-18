@@ -1,6 +1,7 @@
 import type { Express } from "express";
 import { timingSafeEqual } from "node:crypto";
 import { AuditError, type AuditStore } from "./store.js";
+import { compareAuditSnapshots } from "./comparison.js";
 import { auditRegistry, auditJobs, auditHttp } from "./metrics.js";
 export function auditResponse(job: { id: string; status: string; attempts: number; created_at: string; expires_at: string; result: unknown; error_code: string | null }) {
   return { id: job.id, status: job.status, attempts: job.attempts, createdAt: Number(job.created_at), expiresAt: Number(job.expires_at),
@@ -23,7 +24,14 @@ export function mountAuditRoutes(app: Express, runtime: { store: AuditStore; rea
   app.get("/api/audits/:id", async (req, res) => {
     res.setHeader("Cache-Control", "private, no-store");
     if (!runtime) return res.status(503).json({ error: "audit_jobs_disabled" });
-    try { return res.json(auditResponse(await runtime.store.authorised(req.params.id, req.get("Authorization")?.replace(/^Bearer /, "")))); }
+    try {
+      const job = await runtime.store.authorised(req.params.id, req.get("Authorization")?.replace(/^Bearer /, ""));
+      const response = auditResponse(job);
+      if (job.status !== "completed" || !job.result) return res.json(response);
+      // Pair only this requestor's own earlier snapshot of the same URL; compareAuditSnapshots re-checks method and scope.
+      const previous = await runtime.store.previousCompleted(job.owner_digest, job.url, job.id, job.created_at);
+      return res.json({ ...response, comparison: compareAuditSnapshots(previous?.result, job.result) });
+    }
     catch (e) { return res.status(e instanceof AuditError ? e.status : 503).json({ error: e instanceof AuditError ? e.code : "audit_unavailable" }); }
   });
   app.get("/api/metrics", async (req, res) => {

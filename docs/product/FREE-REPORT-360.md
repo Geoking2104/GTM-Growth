@@ -110,7 +110,7 @@ anonymous report.
 | C2 · Email-code downloads | Optional SMTP invite, no code in URL, single-use/expiry/attempt limits, protected HTML/PDF/Markdown, FR/EN parity | **Implemented and unit/API-tested**; **SMTP credentials, live mail delivery and production browser QA pending** |
 | D · Enriched evidence | First-party screenshot after DNS TXT or HTTPS file verification, isolated Playwright resources, redaction and retention limits | **Not implemented in public free flow** |
 | E · Measured integrations | Consent-based GSC/GA4, AI-answer collection, CRM and Social imported from exact authorised tenant sources | **Links to existing private modules provided**; no provider data fetched anonymously, connectors and data provenance still require activation/verification |
-| F · Follow-up | Persist plan and real before/after snapshot comparisons with matching method and URL | **Not implemented**; current comparison intentionally `null` |
+| F · Follow-up | Persist plan and real before/after snapshot comparisons with matching method and URL | **Plan already persisted in the audit snapshot**; before/after comparison implemented at the audit API level (matching method, scope and URL, public outcomes only), UI display of the comparison pending |
 | G · Release | CI, staging, security, responsive, FR/EN, accessibility and real Save as PDF validation | **Pending approval and deployment** |
 
 ### Security checks

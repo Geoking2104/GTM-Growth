@@ -45,9 +45,18 @@ production deployment is included. PR #30 was closed as superseded because its
 is recorded in the pull request. Not part of the 15 November reviewed revision
 `353e658`.
 
+Increment of 18 November 2026: **before/after public audit comparisons** are
+implemented at the audit API level: a completed `GET /api/audits/:id` response
+now pairs the requestor's own earlier completed snapshot of the same URL
+(matching method and observed page required) and reports outcome-level counters,
+changed controls, plan evolution and observation dates. Only public outcomes
+are compared; points and scores stay withheld and the stored snapshot contract
+is unchanged. Console UI display of the comparison is not part of this
+increment. See the [audit pipeline runbook](../technical/AUDIT-PIPELINE.md).
+
 | Stage / capability | Source status | Activation or scope | Evidence / reference |
 | --- | --- | --- | --- |
-| Diagnose: public read / 360° report | Implemented in feature branch; **not yet merged/deployed** | One public page, GEO v1/SEO evidence, five distinct pillars, evidence-linked FR/EN actions and A4 browser print. Private metrics and before/after gains remain unknown | [Free report contract](../product/FREE-REPORT-360.md), [free read](../../src/freeread/index.ts), [public API](../PUBLIC_API.md) |
+| Diagnose: public read / 360° report | Implemented in feature branch; **not yet merged/deployed** | One public page, GEO v1/SEO evidence, five distinct pillars, evidence-linked FR/EN actions and A4 browser print. Private metrics and score gains remain unknown; before/after comparisons exist at the audit API level for public outcomes with matching method and URL | [Free report contract](../product/FREE-REPORT-360.md), [free read](../../src/freeread/index.ts), [public API](../PUBLIC_API.md) |
 | Diagnose: GEO, citability, sitemap, performance | Implemented | Authorised URLs; lab/field data and readiness remain distinct | [GEO](../GEO.md), [CLI](../CLI.md) |
 | Diagnose: GEO v2 | Foundation; renderer and egress gate merged | 42-control contracts, ownership registry and offline rendering code are on main; the isolated renderer and the fail-closed egress gateway are merged with CI smokes but not deployed as a public service. Verified-domain grants are operator-issued; before/after comparisons are not inferred | [Rubric](../../src/geo/score/v2/rubric.ts), [renderer](../../src/geo/rendering/geo-renderer.ts), [egress gate](../../src/geo/rendering/geo-egress.ts), [deploy guide](../../deploy/geo-renderer/README.md), [pilot ADR](../architecture/GEO-V2-PLAYWRIGHT-PILOT.md) |
 | Understand: buyer questions | Implemented | Actual Product/Service context and explicit confirmation; at most two selected comparable offers; unsupported stages stay empty | [Current contract](../product/CUSTOMER-JOURNEY-INTEGRATION.md), [model](../../site/console/customer-journey-model.js) |
