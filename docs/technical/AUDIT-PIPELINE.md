@@ -33,6 +33,37 @@ two distinct in-flight reads per API process and coalescing of identical request
 Legacy invitation callers without an audit reference still perform a fresh read;
 the unchanged stateless Cloudflare Worker does not provide durable audit jobs.
 
+### Before/after comparisons
+
+`GET /api/audits/:id` responses for **completed** audits now carry an additive
+`comparison` field. The server selects, inside the same ledger, the most recent
+earlier **completed** audit of the same URL by the same requestor (same
+`owner_digest`, the HMAC of the submitting IP), never across requestors. The
+comparison is computed on the fly at read time and is never stored in the
+snapshot: `result.report360.comparison` stays `null`, and re-serving an older
+audit is unaffected.
+
+`compareAuditSnapshots` (`src/audit-jobs/comparison.ts`) compares only when the
+method (`geo-v2-public-evidence`), the scope (`single_public_url`) and the
+observed final/source URL match between the two snapshots; otherwise it answers
+`not_comparable` with the reason (`no_previous_snapshot`, `method_mismatch`,
+`scope_mismatch`). When snapshots match, the response reports:
+
+- `summary` counters over all 42 ledger controls: `improved`, `regressed`,
+  `unchanged`, `newly_observed`, `newly_unavailable`, `newly_applicable`,
+  `no_longer_applicable`;
+- `controls`, only the changed ones, with `previousOutcome`, `currentOutcome`
+  and `change` per stable control id;
+- `actions` plan evolution by stable action id: `resolved`, `new` and the count
+  of unchanged actions (the plan itself remains persisted in each snapshot);
+- `previousObservedAt` / `currentObservedAt`, `url`, `gridVersion`.
+
+Only public outcomes (`pass`, `review`, `unknown`, `not_applicable`) are
+compared. Earned points and scores are never released, consistent with the
+owner-consent redaction contract of the public ledger. `tests/audit-comparison.test.ts`
+covers the pure classifier; the PostgreSQL suite checks requestor pairing,
+including cross-requestor and URL isolation, on the completed-audit route.
+
 ## Limits and configuration
 
 | Setting / limit | Behavior |

@@ -2,6 +2,25 @@
 
 ## Unreleased
 
+### Before/after public audit comparisons
+
+- Completed audits served by `GET /api/audits/:id` now carry an additive
+  `comparison` computed at read time from the requestor's own earlier
+  completed snapshot of the same URL (same owner digest in the PostgreSQL
+  ledger); it is never persisted in the snapshot and cross-requestor pairing
+  is impossible by construction.
+- Comparisons require the same method, scope and observed source URL;
+  otherwise the answer is `not_comparable` with an explicit reason
+  (`no_previous_snapshot`, `method_mismatch`, `scope_mismatch`).
+- Matching snapshots expose outcome counters (improved, regressed, unchanged,
+  newly observed/unavailable/applicability), the changed controls with their
+  previous and current public outcomes, plan evolution by stable action id,
+  and both observation dates.
+- Public outcomes only (`pass`, `review`, `unknown`, `not_applicable`): earned
+  points and scores remain withheld and the stored `report360.comparison`
+  contract stays `null`. Tests cover the pure classifier plus requestor, URL
+  and pending-state isolation on the real PostgreSQL ledger.
+
 ### Isolated GEO renderer and fail-closed HTTPS egress gateway
 
 - Added the verified-domain rendering pilot (PR #29): a one-shot Playwright
