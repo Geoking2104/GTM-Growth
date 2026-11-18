@@ -78,6 +78,12 @@ export class AuditStore {
       ORDER BY created_at DESC, id LIMIT 1`, [ownerDigest, url, jobId, Number(createdAt), this.now()]);
     return rows.rows[0] ?? null;
   }
+  /** The requestor's own completed snapshots of one URL, oldest first and bounded: the raw material of one impact timeline. */
+  async timelineForOwner(ownerDigest: string, url: string, limit = 12): Promise<AuditJob[]> {
+    const rows = await this.pool.query<AuditJob>(`SELECT * FROM gtm_audit_jobs WHERE owner_digest=$1 AND url=$2 AND status='completed'
+      AND result IS NOT NULL AND expires_at>$3 ORDER BY created_at ASC, id LIMIT $4`, [ownerDigest, url, this.now(), limit]);
+    return rows.rows;
+  }
   async dispatchable(): Promise<AuditJob[]> {
     const now = this.now();
     await this.pool.query("DELETE FROM gtm_audit_jobs WHERE expires_at<=$1", [now]);

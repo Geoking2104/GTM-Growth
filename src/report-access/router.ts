@@ -5,6 +5,7 @@ import { runFreeRead } from "../freeread/index.js";
 import { fetchPublicPage } from "../http/public-fetch.js";
 import { renderReportMarkdown, renderReportPdf } from "./export.js";
 import { ReportAccessService, ReportAccessError, type MailSender, type ReportReader, type ReportLanguage } from "./service.js";
+import { parseBrand, brandSlug } from "./brand.js";
 import { createSmtpSender, smtpSettings } from "./mailer.js";
 
 const COOKIE = "gtm_report_session";
@@ -69,6 +70,8 @@ export function mountReportAccessApi(app: Express, deps: ReportAccessDependencie
     if (JSON.stringify(req.body || {}).length > MAX_JSON_LENGTH) return res.status(413).json({ error: "payload_too_large" });
     const body = req.body || {};
     if (typeof body.url !== "string" || typeof body.email !== "string" || !["fr", "en"].includes(body.language)) return res.status(400).json({ error: "invalid_request" });
+    const brand = body.brand == null ? null : parseBrand(body.brand);
+    if (body.brand != null && !brand) return res.status(400).json({ error: "invalid_brand" });
     const checked = await (deps.validateUrl ?? checkTarget)(body.url);
     if (!checked.ok || !checked.url) return res.status(400).json({ error: "invalid_url" });
     try {
@@ -79,7 +82,7 @@ export function mountReportAccessApi(app: Express, deps: ReportAccessDependencie
         return job.result.report360;
       } : reader;
       const result = await service.invite({ email: body.email, url: checked.url, language: body.language as ReportLanguage,
-        ip: publicClientIp(req), requestKey: req.get("Idempotency-Key"), snapshotId: typeof body.auditId === "string" ? body.auditId : undefined }, snapshotReader, sender);
+        ip: publicClientIp(req), requestKey: req.get("Idempotency-Key"), snapshotId: typeof body.auditId === "string" ? body.auditId : undefined, brand }, snapshotReader, sender);
       return res.status(201).json({ ok: true, id: result.id, expiresIn: result.expiresIn });
     } catch (error) { return apiError(res, error); }
   });
@@ -105,19 +108,19 @@ export function mountReportAccessApi(app: Express, deps: ReportAccessDependencie
   };
   app.get("/api/report-access/report", (req, res) => {
     const result = authorised(req, res);
-    if (result) res.json({ report360: result.report, language: result.language });
+    if (result) res.json({ report360: result.report, language: result.language, brand: result.brand });
   });
   app.get("/api/report-access/download", async (req, res) => {
     const result = authorised(req, res);
     if (!result) return;
     const format = req.query.format;
     if (format !== "md" && format !== "pdf") return res.status(400).json({ error: "invalid_format" });
-    const name = `gtm-growth-report-360-${result.language}`;
+    const name = result.brand ? `${brandSlug(result.brand.name)}-rapport-360-${result.language}` : `gtm-growth-report-360-${result.language}`;
     res.setHeader("Content-Disposition", `attachment; filename="${name}.${format}"`);
     if (format === "md") {
-      res.type("text/markdown; charset=utf-8").send(renderReportMarkdown(result.report, result.language));
+      res.type("text/markdown; charset=utf-8").send(renderReportMarkdown(result.report, result.language, { brand: result.brand }));
     } else {
-      try { res.type("application/pdf").send(await renderReportPdf(result.report, result.language)); }
+      try { res.type("application/pdf").send(await renderReportPdf(result.report, result.language, { brand: result.brand })); }
       catch { if (!res.headersSent) res.status(500).json({ error: "export_unavailable" }); }
     }
   });

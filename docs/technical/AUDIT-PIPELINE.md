@@ -64,6 +64,30 @@ owner-consent redaction contract of the public ledger. `tests/audit-comparison.t
 covers the pure classifier; the PostgreSQL suite checks requestor pairing,
 including cross-requestor and URL isolation, on the completed-audit route.
 
+### Impact timeline and J+14/J+28 follow-ups
+
+`GET /api/audits/:id/timeline` (same run-token authorisation) builds, at read
+time, the impact timeline of **one scope**: the last retained (12) completed
+snapshots of that URL by the same requestor, compared as consecutive pairs by
+the same `compareAuditSnapshots` classifier. Each step carries its observation
+dates, both grid versions, both measured-coverage fractions and an **explicit
+confidence** (`high`, `medium`, `low`) with machine-checkable reasons
+(`same_grid_version`, `measured_coverage_x_xx_y_yy`, `interval_days_n`,
+`confidence_capped_*`, `confidence_limited_*`). Confidence drops to `low`
+when the grid version changed, the pair is not comparable, the window is under
+one day or over a year, or coverage is under 0.20; it is capped at `medium`
+while measured coverage stays partial or the interval exceeds 180 days. A
+snapshot from another page refuses the whole timeline (`scope_mismatch`).
+
+Counters are **never summed**: each step reports its own outcome counters and
+no totals are computed across steps, scopes or clients. The response also
+carries the **J+14 and J+28 follow-up dates** computed from the latest
+observation (UTC calendar days, `upcoming`/`due`), each with a bilingual
+suggested action — re-run the same URL with the same method, then send the
+white-label client report in the client's language. Reminders are surfaces
+only: nothing is emailed or scheduled automatically.
+`tests/impact-timeline.test.ts` covers the pure classifier.
+
 ## Limits and configuration
 
 | Setting / limit | Behavior |

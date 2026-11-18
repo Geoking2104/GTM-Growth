@@ -9,6 +9,7 @@ import { mkdirSync } from "node:fs";
 import path from "node:path";
 import Database from "better-sqlite3";
 import type { FreeReport360 } from "../freeread/report360.js";
+import type { WhiteLabelBrand } from "./brand.js";
 
 export type ReportLanguage = "fr" | "en";
 export interface ReportInvitation {
@@ -25,7 +26,7 @@ export type ReportReader = (url: string) => Promise<FreeReport360>;
 
 interface RecordRow {
   id: string; email_digest: string; ip_digest: string; code_digest: string;
-  payload: string; language: ReportLanguage; created_at: number;
+  payload: string; language: ReportLanguage; brand: string | null; created_at: number;
   expires_at: number; attempts: number; consumed_at: number | null;
 }
 
@@ -81,6 +82,9 @@ export class ReportAccessService {
       CREATE INDEX IF NOT EXISTS invitation_request_email ON invitation_requests(email_digest,created_at);
       CREATE INDEX IF NOT EXISTS invitation_request_ip ON invitation_requests(ip_digest,created_at);
     `);
+    // White-label branding column (additive migration for existing installs).
+    const columns = this.db.prepare("PRAGMA table_info(invitations)").all() as { name: string }[];
+    if (!columns.some(column => column.name === "brand")) this.db.exec("ALTER TABLE invitations ADD COLUMN brand TEXT");
     this.secret = options.secret;
     this.now = options.now ?? Date.now;
   }
@@ -95,7 +99,7 @@ export class ReportAccessService {
     this.db.prepare("DELETE FROM invitation_requests WHERE created_at < ?").run(now - RETENTION_MS);
   }
 
-  async invite(input: { email: unknown; url: string; language: ReportLanguage; ip: string; requestKey?: string; snapshotId?: string }, reader: ReportReader, send: MailSender): Promise<{ id: string; expiresIn: number }> {
+  async invite(input: { email: unknown; url: string; language: ReportLanguage; ip: string; requestKey?: string; snapshotId?: string; brand?: WhiteLabelBrand | null }, reader: ReportReader, send: MailSender): Promise<{ id: string; expiresIn: number }> {
     const email = normaliseReportEmail(input.email);
     if (!email) throw new ReportAccessError(400, "invalid_email");
     const now = this.now();
@@ -104,7 +108,7 @@ export class ReportAccessService {
     this.cleanup(now);
     if (input.requestKey !== undefined && !/^[A-Za-z0-9_-]{43}$/.test(input.requestKey)) throw new ReportAccessError(400, "invalid_request_key");
     const requestDigest = this.digest(`invite-request:${input.requestKey || randomBytes(32).toString("base64url")}`);
-    const inputDigest = this.digest(JSON.stringify([emailDigest, input.url, input.language, input.snapshotId || ""]));
+    const inputDigest = this.digest(JSON.stringify([emailDigest, input.url, input.language, input.snapshotId || "", input.brand ?? null]));
     // Reserve before any read or SMTP work, including concurrent requests from other processes.
     const reused = this.db.transaction(() => {
       const previous = this.db.prepare("SELECT * FROM invitation_requests WHERE request_digest=?").get(requestDigest) as { input_digest: string; state: string; invitation_id: string | null } | undefined;
@@ -138,8 +142,8 @@ export class ReportAccessService {
     const expiresAt = this.now() + CODE_TTL_MS;
     // Commit the saved snapshot and its dispatch state together after admission.
     this.db.transaction(() => {
-      this.db.prepare(`INSERT INTO invitations (id, email_digest, ip_digest, code_digest, payload, language, created_at, expires_at)
-        VALUES (?, ?, ?, ?, ?, ?, ?, ?)`).run(id, emailDigest, ipDigest, this.digest(`code:${id}:${emailDigest}:${code}`), payload, input.language, now, expiresAt);
+      this.db.prepare(`INSERT INTO invitations (id, email_digest, ip_digest, code_digest, payload, language, brand, created_at, expires_at)
+        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`).run(id, emailDigest, ipDigest, this.digest(`code:${id}:${emailDigest}:${code}`), payload, input.language, input.brand ? JSON.stringify(input.brand) : null, now, expiresAt);
       this.db.prepare("UPDATE invitation_requests SET invitation_id=?,state='sending' WHERE request_digest=?").run(id, requestDigest);
     }).immediate();
     try {
@@ -181,7 +185,7 @@ export class ReportAccessService {
     return { token, expiresIn: SESSION_TTL_MS / 1000 };
   }
 
-  authorisedReport(id: unknown, token: unknown): { report: FreeReport360; language: ReportLanguage } {
+  authorisedReport(id: unknown, token: unknown): { report: FreeReport360; language: ReportLanguage; brand: WhiteLabelBrand | null } {
     if (typeof id !== "string" || !/^[0-9a-f-]{36}$/.test(id) || typeof token !== "string" || !/^[A-Za-z0-9_-]{43}$/.test(token)) {
       throw new ReportAccessError(401, "verification_required");
     }
@@ -189,7 +193,7 @@ export class ReportAccessService {
       WHERE s.token_digest = ? AND s.invitation_id = ? AND s.expires_at > ? AND i.created_at > ?`)
       .get(this.digest(`session:${token}`), id, this.now(), this.now() - RETENTION_MS) as RecordRow | undefined;
     if (!row) throw new ReportAccessError(401, "verification_required");
-    return { report: JSON.parse(row.payload) as FreeReport360, language: row.language };
+    return { report: JSON.parse(row.payload) as FreeReport360, language: row.language, brand: row.brand ? JSON.parse(row.brand) as WhiteLabelBrand : null };
   }
 
   close(): void { this.db.close(); }

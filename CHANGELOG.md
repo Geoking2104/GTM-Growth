@@ -2,6 +2,38 @@
 
 ## Unreleased
 
+### Impact timeline, J+14/J+28 follow-ups and white-label client exports
+
+- Added the per-scope impact timeline: `GET /api/audits/:id/timeline` builds,
+  at read time and per requestor only, the consecutive pairwise comparisons of
+  the requestor's own completed snapshots of that URL (bounded to the last 12
+  retained observations). Every step carries its observation dates, grid
+  versions, measured-coverage fractions and an `explicit confidence`
+  (`high`/`medium`/`low`) with machine-checkable reasons: steps downgrade when
+  the grid version changed, the observation window is under one day or over a
+  year, or measured coverage is partial; a non-comparable pair stays visible
+  with its guard reason instead of being dropped.
+- Reminders are surfaces, not actions: each timeline response carries the
+  J+14 and J+28 follow-up dates computed from the latest observation (UTC
+  calendar days, `upcoming`/`due`), each with a bilingual
+  (fr/en) suggested action — re-run the same URL with the same method, then
+  send the white-label client report in the client's language. Nothing is
+  emailed or scheduled automatically.
+- Impact counters are never summed: the timeline reports per-step outcome
+  counters only; no totals across steps, scopes or clients are computed, and
+  points and scores remain withheld. A snapshot from another page refuses the
+  whole timeline (`scope_mismatch`).
+- Added per-client white-label branding to the email-verified report exports:
+  `POST /api/report-access/invite` accepts one strictly validated brand
+  (`name`, optional `tagline`, optional `accentColor`; no URLs, no unknown
+  keys, bounded strings) persisted with the invitation, and the existing
+  A4 PDF/Markdown pipeline renders it — branded header band with
+  luminance-checked ink, branded metadata and download filename — in the
+  invitation's language. The export stays one snapshot per report in one
+  language; aggregated or multi-client metrics are refused at runtime.
+  Existing invitations keep the house GTM Growth identity (additive
+  `brand` column).
+
 ### Double-approved WordPress writer with verified execution and rollback
 
 - Completed the persisted Apply Mode execution pipeline (ADR §3): `apply_attempts`
