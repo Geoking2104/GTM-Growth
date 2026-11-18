@@ -2,6 +2,26 @@
 
 ## Unreleased
 
+### AI observation provenance and citation gaps
+
+- Added observation provenance to stored AI-answer panels: `imported`
+  (tenant-reviewed import) or `collected` (explicit bounded provider API run),
+  with pre-existing datasets summarized as `unverified` instead of being
+  silently relabeled. Re-importing stored observations preserves their origin.
+- Added citation gap analysis for one stored panel: every cited URL is
+  classified (own declared website, other tracked brands, Reddit, YouTube,
+  LinkedIn, Wikipedia, web) with citation counts, cited prompts and share of
+  citations, top cited hosts, and a bounded list of prompts that mention the
+  brand while citing other sources. Exposed as the read-only
+  `/ai-visibility/citation-gaps` console route with the same dataset, source
+  and brand filters as the report.
+- Evidence rules kept explicit: a brand without a declared website leaves the
+  own-source gap unknown (never zero), and a response without citations is
+  absent evidence, not a gap. No provider call, market sampling or engine
+  market-share estimate is added; the console panel UI is outside this
+  increment. Specification:
+  `docs/specs/AI-VISIBILITY-OBSERVATION-MODEL-v1-2026-11-18.md`.
+
 ### Reliable public audit pilot
 
 - Added transactional PostgreSQL admission/outbox, a dedicated BullMQ/Redis queue,

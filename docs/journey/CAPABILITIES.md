@@ -24,6 +24,16 @@ resumable browser progress, snapshot-based invitations and protected metrics.
 It does not establish an OVH release, real SMTP acceptance, live Mollie activation
 or migration of the remaining module stores. See the exact pipeline tests/runbook.
 
+Increment of 18 November 2026: AI observation **provenance** (`imported` / `collected`,
+with pre-existing panels summarized as `unverified`) and **citation gap analysis** are
+implemented in source: every stored answer keeps its origin across re-imports, and the
+read-only `/ai-visibility/citation-gaps` route classifies the panel's cited URLs (own,
+competitor, Reddit, YouTube, LinkedIn, Wikipedia, web) with bounded gap lists. A brand
+without a declared website is unknown evidence, never zero; no provider call, market
+sampling or console panel UI is added. See the
+[observation model specification](../specs/AI-VISIBILITY-OBSERVATION-MODEL-v1-2026-11-18.md).
+Not part of the 15 November reviewed revision `353e658`.
+
 | Stage / capability | Source status | Activation or scope | Evidence / reference |
 | --- | --- | --- | --- |
 | Diagnose: public read / 360° report | Implemented in feature branch; **not yet merged/deployed** | One public page, GEO v1/SEO evidence, five distinct pillars, evidence-linked FR/EN actions and A4 browser print. Private metrics and before/after gains remain unknown | [Free report contract](../product/FREE-REPORT-360.md), [free read](../../src/freeread/index.ts), [public API](../PUBLIC_API.md) |
@@ -39,6 +49,7 @@ or migration of the remaining module stores. See the exact pipeline tests/runboo
 | Measure: GA4/GSC/GTM | Implemented | Service account, enabled APIs and exact resource access | [Tracking integration](../GTM_INTEGRATION.md), [Google modules](../../src/google/) |
 | Measure: AI imports | Implemented | Sourced, dated answer dataset and tenant authorisation | [Provider guide](../product/AI-VISIBILITY-PROVIDERS.md) |
 | Measure: API collection | Implemented for OpenAI, Claude, Mistral, Grok; Gemini collection blocked | Selected API account, explicit collection/cost confirmation. Consumer chat subscription/login is not API authorisation | [Collectors](../../src/console/ai-visibility-providers.ts), [account guide](../product/AI-VISIBILITY-PROVIDERS.md) |
+| Measure: citation gaps | Implemented (18 Nov 2026 increment; not in the reviewed `353e658` revision) | One stored/collected panel; provenance kept across re-imports; brand website must be declared, unknown stays unevaluated | [Observation model](../specs/AI-VISIBILITY-OBSERVATION-MODEL-v1-2026-11-18.md), [citations](../../src/console/ai-citations.ts) |
 | Measure: commerce | Implemented; live store qualification required | Shopify custom app / PrestaShop webservice, sealed credentials, sync/webhook; real-time PrestaShop needs an external companion module | [Commerce spec](../specs/ECOMMERCE-CONNECTORS-v1-2026-11-13.md), [current KPI limitations](../marketing/MEASUREMENT.md#known-commerce-limitations-in-this-revision) |
 | Measure: native CRM / client plugin | Implemented; collection off until enabled | Explicit CRM roles and exact identity proof; server adapter for external CRM/web/social sources. Vendor-specific CRM adapters are not included | [CRM spec](../product/CRM-CUSTOMER-JOURNEY-SPEC.md), [plugin API](../../integrations/crm-plugin/README.md) |
 | Coordinate: global/local SEO | Implemented | Registry, exact location grants, declared ranks, 24 LOC controls and audits. Several controls need declared evidence | [Global/local](../product/GLOBAL-LOCAL-SEO.md), [operations](../product/LOCAL-SEO-OPERATIONS.md) |

@@ -132,7 +132,7 @@ export const aiProviderRoutes: ConsoleRoute[] = (Object.keys(AI_PROVIDERS) as AI
       const account = resolveAIAccount(id, provider, ctx.body.accountId);
       const result = await collectProvider(provider, ctx.body, account.key, config.model, fetch, account);
       if (!result.successes.length) return { id: null, succeeded: 0, failed: result.failures };
-      const dataset = normalizeImport({ brands: result.brands, responses: result.successes }); insertDataset(id, dataset);
+      const dataset = normalizeImport({ brands: result.brands, responses: result.successes }, "collected"); insertDataset(id, dataset);
       return { id: dataset.id, succeeded: result.successes.length, failed: result.failures };
     } finally { running.delete(lock); }
   } },

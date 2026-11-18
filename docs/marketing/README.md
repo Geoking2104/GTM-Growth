@@ -94,6 +94,7 @@ outreach sequence. [Social implementation contract](../product/SOCIAL-TOOLKIT-SP
 | Are search clicks changing? | GSC property, dimensions, dates | Compare like-for-like periods; clicks are not people |
 | Are visitors taking the intended action? | GA4 sessions/key events with configured tracking | Event configuration and coverage determine what can be concluded |
 | Does an AI response mention the brand? | Dated saved answers or an explicit supported API run | API observations are not all consumer chat sessions or market share |
+| Which sources are cited instead of us? | Citation analysis of the same stored panel, brand website declared | Cited URLs describe that panel only; an undeclared website leaves the gap unknown, not zero |
 | Which order has a channel signal? | Store order, UTM/referrer, attribution method/confidence | Correlation only; current aggregate limitations must be checked |
 | What happened for this contact? | Exact scoped identity link plus sourced CRM events | No automatic identity from GA4, Postiz, campaigns or IP addresses |
 | Is a local correction accepted? | Official GBP API readback | Acceptance is not proof of public Maps visibility or ranking |
