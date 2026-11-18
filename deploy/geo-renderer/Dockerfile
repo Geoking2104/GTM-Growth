@@ -4,6 +4,8 @@ COPY package*.json ./
 RUN npm ci
 COPY tsconfig.json ./
 COPY src ./src
+# Main's source imports the shared console model; the root Dockerfile copies it for typecheck parity.
+COPY site/console/customer-journey-model.* ./site/console/
 RUN npm run build
 RUN npm prune --omit=dev
 
@@ -18,6 +20,7 @@ COPY --from=builder /usr/local/bin/node /usr/local/bin/node
 COPY --from=builder /app/node_modules ./node_modules
 COPY package*.json ./
 COPY --from=builder /app/dist ./dist
+COPY site/console/customer-journey-model.js ./site/console/customer-journey-model.js
 RUN node --version && node -e "require('better-sqlite3')(':memory:').close()"
 RUN useradd -m -U -s /usr/sbin/nologin geo
 USER geo
