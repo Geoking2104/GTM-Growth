@@ -62,6 +62,8 @@ const classify = (step: {
   return { confidence: limited ? "medium" : "high", confidenceReasons: reasons };
 };
 
+const isUsableObservation = (o: FreeReadResult | null | undefined): o is FreeReadResult => !!o && !!o.report360 && !!o.geoV2;
+
 /**
  * Builds the impact timeline of one scope from the requestor's own snapshots.
  * Snapshots must all cover the exact same page (source URL and final URL);
@@ -69,7 +71,7 @@ const classify = (step: {
  * than polluting one client's history.
  */
 export function buildImpactTimeline(observations: Array<FreeReadResult | null | undefined>, url: string, now: Date = new Date()): ImpactTimeline {
-  const valid = observations.filter(o => o && o.report360 && o.geoV2);
+  const valid = observations.filter(isUsableObservation);
   if (!valid.length) return { status: "insufficient_observations", url, observationCount: 0, latestObservedAt: null, followUps: [], note: `${TIMELINE_NOTE} ${FOLLOW_UP_NOTE}` };
   const scope = valid[0];
   if (valid.some(o => o.report360.sourceUrl !== scope.report360.sourceUrl || o.finalUrl !== scope.finalUrl))
