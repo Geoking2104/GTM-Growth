@@ -64,8 +64,14 @@ permanent guarantee of production health or feature activation.
 
 ## Persistence and recovery
 
-- Application SQLite stores are local to one host/volume; Keycloak uses its own
-  PostgreSQL volume. Redis is optional cache, not the recovery source.
+For the new public audit ledger, dedicated queue Redis, monitoring, backup and
+rollback, follow [Audit pipeline](AUDIT-PIPELINE.md). Keep one API instance until
+the remaining module stores and process-local transport sessions are migrated.
+
+- Existing application SQLite stores are local to one host/volume; Keycloak uses
+  its own PostgreSQL volume. Public audit jobs use a separate PostgreSQL ledger.
+  Optional cache Redis and dedicated queue Redis are distinct; the latter is
+  transport, while the audit ledger is the recovery source.
 - Follow the module runbook for consistent SQLite backups (backup API, or stop
   writers before copying the database and any journal). Include tenant data,
   historical imports, CRM HMAC keys and required encryption keys in restore planning.

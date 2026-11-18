@@ -1,5 +1,6 @@
 /** Evidence-gated buyer questions. No provider call, automatic collection or publication. */
 import { buildJourneyPreview } from "./customer-journey-model.js";
+import { requestPublicRead } from "../audit-client.js";
 const el = (tag, cls = "", text) => { const n = document.createElement(tag); n.className = cls; if (text !== undefined) n.textContent = text; return n; };
 const line = v => String(v || "").replace(/[\r\n]+/g, " ").trim();
 const safeLink = (url, label) => { const a = el("a", "", label); try { const u = new URL(url); if (["https:", "http:"].includes(u.protocol) && !u.username && !u.password) { a.href = u.href; a.target = "_blank"; a.rel = "noopener noreferrer"; } } catch {} return a; };
@@ -63,7 +64,7 @@ export function renderJourneyPreview({ data = {}, language = "fr", mode = "publi
   form.addEventListener("input", invalidate);
   product.onchange = () => { for (const c of competitors) c.check.checked = false; category.value = current.journeyContext?.products.find(p => p.id === product.value)?.category || ""; invalidate(); };
   category.onchange = () => { for (const c of competitors) c.check.checked = false; invalidate(); };
-  const read = readPage || (async url => { const response = await fetch("/api/free-read", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ url }), signal: AbortSignal.timeout(25000) }); if (!response.ok) throw new Error("read unavailable"); const result = await response.json(); if (result.httpStatus < 200 || result.httpStatus >= 400) throw new Error("read unavailable"); return result; });
+  const read = readPage || (async url => { const result = await requestPublicRead(url); if (result.httpStatus < 200 || result.httpStatus >= 400) throw new Error("read unavailable"); return result; });
   const extra = el("details", "journey-add-sources"); extra.append(el("summary", "", t("Lire une fiche produit ou une page concurrente", "Read a product page or competitor page")));
   const pageLabel = el("label", "", t("URL publique de la fiche", "Public page URL")), pageInput = el("input"); pageInput.type = "url"; pageInput.maxLength = 2048; pageLabel.append(pageInput); extra.append(pageLabel);
   const competitorList = el("div", "journey-competitors");

@@ -10,6 +10,12 @@ services:
       TRANSPORT: http
       HOST: 0.0.0.0
       PORT: 3000
+      TRUST_EDGE_IP: "true"
+      AUDIT_JOBS_ENABLED: ${AUDIT_JOBS_ENABLED:-true}
+      AUDIT_DATABASE_URL: postgres://gtm_audits:${AUDIT_DB_PASSWORD:?Audit database password required}@audit-db:5432/gtm_audits
+      AUDIT_REDIS_URL: redis://audit-redis:6379
+      AUDIT_JOBS_SECRET: ${AUDIT_JOBS_SECRET:?Audit signing secret required}
+      METRICS_TOKEN: ${METRICS_TOKEN:-}
       REDIS_URL: redis://redis:6379
       LEADS_PATH: /data/leads.jsonl
       GOOGLE_APPLICATION_CREDENTIALS: /secrets/service-account.json
@@ -52,6 +58,10 @@ services:
     depends_on:
       redis:
         condition: service_healthy
+      audit-db:
+        condition: service_healthy
+      audit-redis:
+        condition: service_healthy
     restart: unless-stopped
     healthcheck:
       test: ["CMD", "wget", "-qO-", "http://127.0.0.1:3000/health"]
@@ -71,6 +81,66 @@ services:
       interval: 10s
       timeout: 3s
       retries: 5
+
+  # Durable audit ledger, isolated from Keycloak and the evictable response cache.
+  audit-db:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_DB: gtm_audits
+      POSTGRES_USER: gtm_audits
+      POSTGRES_PASSWORD: ${AUDIT_DB_PASSWORD:?Audit database password required}
+    command: ["postgres", "-c", "max_connections=30", "-c", "shared_buffers=64MB"]
+    volumes:
+      - gtm_growth_audit_db:/var/lib/postgresql/data
+    mem_limit: 512m
+    cpus: 0.5
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U gtm_audits -d gtm_audits"]
+      interval: 10s
+      timeout: 3s
+      retries: 5
+
+  audit-redis:
+    image: redis:7-alpine
+    command: redis-server --appendonly yes --maxmemory 128mb --maxmemory-policy noeviction
+    volumes:
+      - gtm_growth_audit_redis:/data
+    mem_limit: 192m
+    cpus: 0.25
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 3s
+      retries: 5
+
+  audit-worker:
+    build:
+      context: ../..
+      dockerfile: Dockerfile
+    command: ["node", "dist/audit-jobs/worker.js"]
+    environment:
+      NODE_ENV: production
+      AUDIT_JOBS_ENABLED: "true"
+      AUDIT_DATABASE_URL: postgres://gtm_audits:${AUDIT_DB_PASSWORD:?Audit database password required}@audit-db:5432/gtm_audits
+      AUDIT_REDIS_URL: redis://audit-redis:6379
+      AUDIT_JOBS_SECRET: ${AUDIT_JOBS_SECRET:?Audit signing secret required}
+    depends_on:
+      audit-db:
+        condition: service_healthy
+      audit-redis:
+        condition: service_healthy
+    mem_limit: 512m
+    cpus: 1
+    stop_grace_period: 180s
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "wget", "-qO-", "http://127.0.0.1:3001/health"]
+      interval: 15s
+      timeout: 5s
+      retries: 3
+      start_period: 30s
 
   # ── Keycloak (SSO de la console) — mode production, base Postgres ──
   keycloak:
@@ -135,6 +205,8 @@ services:
     restart: unless-stopped
 
 volumes:
+  gtm_growth_audit_db:
+  gtm_growth_audit_redis:
   gtm_growth_ollama:
   gtm_growth_keycloak_db:
   gtm_growth_data:

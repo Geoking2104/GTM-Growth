@@ -4,6 +4,7 @@ import { dictFor } from "./i18n.js";
 import { renderTables, sampleTables } from "./tables.js";
 import { renderSitemapMap } from "./sitemap-map.js";
 import { translateLiveTables } from "./fr/server-tables.js";
+import { requestPublicRead, auditStatusText } from "./audit-client.js";
 
 const language = document.documentElement.lang === "fr" ? "fr" : "en";
 const dict = dictFor(language);
@@ -61,14 +62,9 @@ function renderInitialResult(url, report) {
 
 async function loadLiveRead(url, host, view, requestId) {
   try {
-    const response = await fetch("/api/free-read", {
-      method: "POST",
-      headers: { "Content-Type": "application/json", Accept: "application/json" },
-      body: JSON.stringify({ url }),
-      signal: AbortSignal.timeout(20_000),
-    });
-    if (!response.ok) throw new Error(`HTTP ${response.status}`);
-    const payload = await response.json();
+    const payload = await requestPublicRead(url, { endpoint: "/api/free-read", onStatus: status => {
+      if (requestId === generation) view.note.textContent = auditStatusText(status, language);
+    } });
     if (requestId !== generation) return;
 
     if (Array.isArray(payload.geoV2?.controls)) {

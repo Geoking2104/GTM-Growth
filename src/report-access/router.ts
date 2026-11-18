@@ -1,5 +1,6 @@
 import type { Express, Request, Response } from "express";
-import { checkTarget } from "../http/public-api.js";
+import { checkTarget, publicClientIp } from "../http/public-api.js";
+import type { AuditStore } from "../audit-jobs/store.js";
 import { runFreeRead } from "../freeread/index.js";
 import { fetchPublicPage } from "../http/public-fetch.js";
 import { renderReportMarkdown, renderReportPdf } from "./export.js";
@@ -15,13 +16,9 @@ export interface ReportAccessDependencies {
   reader?: ReportReader;
   publicOrigin?: string;
   validateUrl?: typeof checkTarget;
+  audits?: AuditStore;
 }
 
-function clientIp(req: Request): string {
-  // Nginx overwrites X-Real-IP and the backend binds only to localhost.
-  const trusted = req.get("X-Real-IP");
-  return trusted && /^[0-9a-f:.]{3,45}$/i.test(trusted) ? trusted : req.ip || "unknown";
-}
 function cookieToken(req: Request): string | null {
   for (const part of (req.headers.cookie || "").split(";")) {
     const pair = part.trim();
@@ -75,7 +72,14 @@ export function mountReportAccessApi(app: Express, deps: ReportAccessDependencie
     const checked = await (deps.validateUrl ?? checkTarget)(body.url);
     if (!checked.ok || !checked.url) return res.status(400).json({ error: "invalid_url" });
     try {
-      const result = await service.invite({ email: body.email, url: checked.url, language: body.language as ReportLanguage, ip: clientIp(req) }, reader, sender);
+      const snapshotReader: ReportReader = body.auditId !== undefined ? async () => {
+        if (!deps.audits) throw new ReportAccessError(503, "audit_jobs_disabled");
+        const job = await deps.audits.authorised(body.auditId, body.auditToken);
+        if (job.status !== "completed" || !job.result) throw new ReportAccessError(409, "audit_not_ready");
+        return job.result.report360;
+      } : reader;
+      const result = await service.invite({ email: body.email, url: checked.url, language: body.language as ReportLanguage,
+        ip: publicClientIp(req), requestKey: req.get("Idempotency-Key"), snapshotId: typeof body.auditId === "string" ? body.auditId : undefined }, snapshotReader, sender);
       return res.status(201).json({ ok: true, id: result.id, expiresIn: result.expiresIn });
     } catch (error) { return apiError(res, error); }
   });

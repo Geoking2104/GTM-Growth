@@ -178,7 +178,16 @@ See the [customer and technical guide](docs/PAP.md),
 
 ## Run locally
 
-Node.js **20 or newer**; package version **0.22.0**. Public audits work without Google credentials.
+Node.js **24 or newer**; package version **0.22.0**. Public audits work without Google credentials.
+
+The [reliable audit pilot](docs/technical/AUDIT-PIPELINE.md) adds PostgreSQL-backed
+requests, dedicated BullMQ/Redis workers, resumable EN/FR browser progress and
+server-side reuse of the completed snapshot for email-gated HTML/PDF/Markdown.
+Admission and invitation limits are checked before work. Protected metrics and
+dependency readiness support capacity measurement. OVH Compose provides the new
+services; generic installations opt in. Keep one API replica while the remaining
+module stores use SQLite/files. Source validation does not certify live deployment,
+SMTP delivery or Mollie activation.
 
 ```bash
 git clone https://github.com/Geoking2104/GTM-Growth.git

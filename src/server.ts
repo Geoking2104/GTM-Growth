@@ -25,6 +25,8 @@ import { mountConsoleApi } from "./console/api.js";
 import { ecommerceWebhookRouter } from "./console/ecommerce-webhooks.js";
 import { startScheduler } from "./console/ops-scheduler.js";
 import { buildDataAgentBridge } from "./data-agent/bridge.js";
+import { startAuditRuntime } from "./audit-jobs/runtime.js";
+import { mountAuditRoutes } from "./audit-jobs/routes.js";
 
 function getVersion(): string {
   try {
@@ -101,7 +103,7 @@ export async function startServer(transportType: "stdio" | "http" = "stdio") {
   app.use(cors({
     origin: "*",
     methods: ["GET", "POST", "OPTIONS", "DELETE"],
-    allowedHeaders: ["Content-Type", "Authorization", "MCP-Session-Id"],
+    allowedHeaders: ["Content-Type", "Authorization", "MCP-Session-Id", "Prefer", "Idempotency-Key"],
   }));
   const billing = mountBillingApi(app);
   const cloud = billing?.access;
@@ -135,8 +137,10 @@ export async function startServer(transportType: "stdio" | "http" = "stdio") {
   });
 
   // Public website API â€” free read and lead capture (no MCP session needed).
-  mountPublicApi(app);
-  mountReportAccessApi(app);
+  const auditRuntime = await startAuditRuntime();
+  mountAuditRoutes(app, auditRuntime);
+  mountPublicApi(app, { audits: auditRuntime?.store });
+  mountReportAccessApi(app, { audits: auditRuntime?.store });
 
   // Console API â€” Keycloak-protected (OIDC bearer tokens validated via JWKS).
   mountConsoleApi(app, { cloud });
@@ -253,11 +257,11 @@ export async function startServer(transportType: "stdio" | "http" = "stdio") {
     logger.info(`Ready for custom MCP connectors`);
   });
 
-  const shutdown = () => {
+  const shutdown = async () => {
     logger.info("[server] Shutting down...");
     sessions.clear();
-    httpServer.close(() => process.exit(0));
-    setTimeout(() => process.exit(0), 5000).unref();
+    httpServer.close(async () => { await auditRuntime?.close(); process.exit(0); });
+    setTimeout(() => process.exit(1), 30_000).unref();
   };
   process.on("SIGTERM", shutdown);
   process.on("SIGINT", shutdown);

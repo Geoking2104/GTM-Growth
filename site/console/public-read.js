@@ -7,6 +7,7 @@ import { translateLiveTables } from "../fr/server-tables.js";
 import { renderJourneyPreview } from "./customer-journey.js";
 import { renderFreeReport360 } from "./report360.js";
 import { renderReportInvitation } from "./report-invite.js";
+import { requestPublicRead, auditStatusText } from "../audit-client.js";
 
 const COPY = {
   fr: {
@@ -210,7 +211,7 @@ function renderResult(box, data, url, lang) {
   if (metrics.children.length) box.append(metrics);
   const report = renderFreeReport360(data.report360, lang);
   if (report) box.append(report);
-  const invitation = renderReportInvitation(data.report360, lang);
+  const invitation = renderReportInvitation(data.report360, lang, data.auditJob);
   if (invitation) box.append(invitation);
   box.append(renderPublicAgent(data, lang));
   box.append(el("p", "public-micro", `${copy.scoreNote} ${copy.gainsNote}`));
@@ -252,12 +253,9 @@ export function mountPublicRead({ initialUrl = "", language = "fr", endpoint = "
     box.replaceChildren(el("p", "public-panel c-loading", copy.loading));
     const button = form.querySelector("button[type=submit]"); if (button) button.disabled = true;
     try {
-      const response = await fetch(endpoint, {
-        method: "POST", headers: { "Content-Type": "application/json", Accept: "application/json" },
-        body: JSON.stringify({ url }), signal: AbortSignal.timeout(25_000),
-      });
-      if (!response.ok) throw new Error(`HTTP ${response.status}`);
-      const data = await response.json();
+      const data = await requestPublicRead(url, { endpoint, onStatus: status => {
+        if (id === generation) box.firstChild.textContent = auditStatusText(status, lang);
+      } });
       if (id !== generation) return;
       renderResult(box, data, url, lang);
       try { sessionStorage.setItem("gtm-console-onboarding-url", url); } catch { /* Storage is optional. */ }

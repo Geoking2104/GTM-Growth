@@ -1,5 +1,11 @@
 # Track 1 — Marketing
 
+The [reliable audit pilot](../technical/AUDIT-PIPELINE.md) lets visitors track and
+resume a public page analysis, then request an email-gated copy of that completed
+snapshot in HTML, PDF and Markdown. This is public evidence, not connected private
+analytics or a paid AI visibility measurement. Real email delivery and cloud
+subscription activation require separate production acceptance.
+
 The console now uses five business areas: Cockpit & Priorities, Diagnosis &
 Opportunities, Studio & Approvals, Impact & Revenue, and Sources & Workspace.
 The [refit scope](../journey/CONSOLE-DECISION-REFIT.md) separates the delivered
