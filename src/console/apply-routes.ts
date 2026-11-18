@@ -85,9 +85,7 @@ function envWordpressWriter(tenantId: string, target: WordpressPostTarget, env: 
   catch { return null; }
 }
 
-function expectRestTarget(input: {
-  url: unknown; restType: unknown; postId: unknown;
-}): (WordpressPostTarget & { hostname: string }) | null {
+function expectRestTarget(input: Record<string, unknown>): (WordpressPostTarget & { hostname: string }) | null {
   if (typeof input.url !== "string" || !input.url.trim() || input.url.length > 2048)
     return null;
   let site: URL;
