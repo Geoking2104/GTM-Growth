@@ -2,6 +2,27 @@
 
 ## Unreleased
 
+### Isolated GEO renderer and fail-closed HTTPS egress gateway
+
+- Added the verified-domain rendering pilot (PR #29): a one-shot Playwright
+  renderer that authorises the target and every in-page request against the
+  tenant-domain grant read-only, an HTTPS CONNECT egress gateway admitting only
+  the verified hostname on 443 at public IPv4 addresses (DNS answers resolved
+  and inspected before connecting), and a trusted verification transport that
+  pins public IPv4 addresses, forbids redirects and bounds responses for the
+  operator CLI.
+- Added the isolated deployment topology: internal Docker bridge with isolated
+  gateway mode, one-connection egress service, resource-capped read-only
+  containers and the Playwright seccomp profile, plus an offline Chromium
+  sandbox smoke and a CI network-boundary assertion that host, direct-internet
+  and cloud-metadata egress stay blocked. No production deployment, public API
+  route or queue consumer is part of this merge.
+- Closed PR #30 as superseded after a full audit against current `main`: the
+  42-control scoring contracts and llms evidence enrichment already exist
+  byte-identical on main, and the free-read/site integration it proposed was
+  replaced by the newer public coverage model; the mapping is recorded in the
+  pull request.
+
 ### AI observation provenance and citation gaps
 
 - Added observation provenance to stored AI-answer panels: `imported`
