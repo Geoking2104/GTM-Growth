@@ -2,6 +2,7 @@ import type { Express } from "express";
 import { timingSafeEqual } from "node:crypto";
 import { AuditError, type AuditStore } from "./store.js";
 import { compareAuditSnapshots } from "./comparison.js";
+import { buildImpactTimeline } from "../impact/timeline.js";
 import { auditRegistry, auditJobs, auditHttp } from "./metrics.js";
 export function auditResponse(job: { id: string; status: string; attempts: number; created_at: string; expires_at: string; result: unknown; error_code: string | null }) {
   return { id: job.id, status: job.status, attempts: job.attempts, createdAt: Number(job.created_at), expiresAt: Number(job.expires_at),
@@ -9,7 +10,7 @@ export function auditResponse(job: { id: string; status: string; attempts: numbe
 }
 export function mountAuditRoutes(app: Express, runtime: { store: AuditStore; ready(): Promise<void> } | null) {
   app.use((req, res, next) => {
-    const route = req.path === "/api/free-read" ? "free_read" : /^\/api\/audits\/[^/]+$/.test(req.path) ? "audit_status" : req.path.startsWith("/api/report-access/") ? "report_access" : null;
+    const route = req.path === "/api/free-read" ? "free_read" : /^\/api\/audits\/[^/]+\/timeline$/.test(req.path) ? "impact_timeline" : /^\/api\/audits\/[^/]+$/.test(req.path) ? "audit_status" : req.path.startsWith("/api/report-access/") ? "report_access" : null;
     if (route) {
       const end = auditHttp.startTimer({ route });
       res.once("finish", () => end({ status: String(res.statusCode) }));
@@ -31,6 +32,17 @@ export function mountAuditRoutes(app: Express, runtime: { store: AuditStore; rea
       // Pair only this requestor's own earlier snapshot of the same URL; compareAuditSnapshots re-checks method and scope.
       const previous = await runtime.store.previousCompleted(job.owner_digest, job.url, job.id, job.created_at);
       return res.json({ ...response, comparison: compareAuditSnapshots(previous?.result, job.result) });
+    }
+    catch (e) { return res.status(e instanceof AuditError ? e.status : 503).json({ error: e instanceof AuditError ? e.code : "audit_unavailable" }); }
+  });
+  app.get("/api/audits/:id/timeline", async (req, res) => {
+    res.setHeader("Cache-Control", "private, no-store");
+    if (!runtime) return res.status(503).json({ error: "audit_jobs_disabled" });
+    try {
+      // One timeline per scope: only this requestor's own completed snapshots of this job's URL.
+      const job = await runtime.store.authorised(req.params.id, req.get("Authorization")?.replace(/^Bearer /, ""));
+      const rows = await runtime.store.timelineForOwner(job.owner_digest, job.url, 12);
+      return res.json(buildImpactTimeline(rows.map(row => row.result), job.url));
     }
     catch (e) { return res.status(e instanceof AuditError ? e.status : 503).json({ error: e instanceof AuditError ? e.code : "audit_unavailable" }); }
   });

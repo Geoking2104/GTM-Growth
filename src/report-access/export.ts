@@ -2,6 +2,19 @@
 import PDFDocument from "pdfkit";
 import type { FreeReport360, ReportAction, ReportPillarId } from "../freeread/report360.js";
 import type { ReportLanguage } from "./service.js";
+import { readableOn, type WhiteLabelBrand } from "./brand.js";
+
+export interface ExportOptions {
+  /** Per-client white-label branding; null keeps the house GTM Growth identity. */
+  brand?: WhiteLabelBrand | null;
+}
+
+/** Without metric summing: an export is always ONE snapshot in ONE language. */
+const singleSnapshot = (report: FreeReport360): FreeReport360 => {
+  if (Array.isArray(report) || typeof report !== "object" || report === null)
+    throw new TypeError("The white-label export takes exactly one snapshot; aggregated or multi-client metrics are refused.");
+  return report;
+};
 
 const PALETTE = { ink: "#262144", muted: "#675e85", accent: "#6935DC", line: "#E3DCF5", soft: "#F6F2FF", white: "#FFFFFF" };
 const PILLAR_COLORS: Record<ReportPillarId, string> = { seo: "#6935DC", geo: "#2474AB", ai: "#9855B5", crm: "#B57C1A", social: "#148570" };
@@ -123,11 +136,14 @@ export function actionGuide(action: ReportAction, lang: ReportLanguage): { title
   };
 }
 
-export function renderReportMarkdown(report: FreeReport360, language: ReportLanguage): string {
+export function renderReportMarkdown(report: FreeReport360, language: ReportLanguage, options: ExportOptions = {}): string {
+  singleSnapshot(report);
+  const brand = options.brand ?? null;
   const fr = language === "fr";
   const out: string[] = [
-    `# GTM Growth - ${fr ? "Rapport gratuit 360°" : "Free 360° report"}`,
+    `# ${brand ? brand.name : "GTM Growth"} - ${fr ? "Rapport gratuit 360°" : "Free 360° report"}`,
     "",
+    ...(brand?.tagline ? [`> ${markdownClean(brand.tagline, 140)}`, ""] : []),
     `- ${fr ? "Page analysée" : "Analysed page"}: ${markdownUrl(report.sourceUrl)}`,
     `- ${fr ? "Relevé" : "Observed"}: ${date(report.observedAt, language)}`,
     `- ${fr ? "Périmètre" : "Scope"}: ${fr ? "une seule URL publique" : "one public URL"}`,
@@ -188,9 +204,13 @@ export function renderReportMarkdown(report: FreeReport360, language: ReportLang
 }
 
 /** Vector-only PDF; one source snapshot, no external image fetch or private data. */
-export async function renderReportPdf(report: FreeReport360, language: ReportLanguage): Promise<Buffer> {
+export async function renderReportPdf(report: FreeReport360, language: ReportLanguage, options: ExportOptions = {}): Promise<Buffer> {
+  singleSnapshot(report);
+  const brand = options.brand ?? null;
   const fr = language === "fr";
-  const pdf = new PDFDocument({ size: "A4", margin: 42, bufferPages: true, info: { Title: `GTM Growth - ${fr ? "Rapport" : "Report"} 360`, Subject: "Public page evidence and reviewed actions", Creator: "GTM Growth" } });
+  const name = brand?.name ?? "GTM Growth";
+  const bandColor = brand?.accentColor ?? "#281649";
+  const pdf = new PDFDocument({ size: "A4", margin: 42, bufferPages: true, info: { Title: `${name} - ${fr ? "Rapport" : "Report"} 360`, Subject: "Public page evidence and reviewed actions", Creator: name } });
   const pieces: Buffer[] = [];
   pdf.on("data", (part: Buffer) => pieces.push(part));
   const completed = new Promise<Buffer>((resolve, reject) => { pdf.on("end", () => resolve(Buffer.concat(pieces))); pdf.on("error", reject); });
@@ -198,10 +218,11 @@ export async function renderReportPdf(report: FreeReport360, language: ReportLan
   const text = (v: unknown, max = 450): string => clean(v, max);
   const drawText = (value: string, x: number, y: number, options: PDFKit.Mixins.TextOptions = {}) => pdf.text(value, x, y, { width: usable, ...options });
 
-  pdf.rect(0, 0, width, 170).fill("#281649");
-  pdf.fillColor(PALETTE.white).font("Helvetica-Bold").fontSize(12).text("GTM Growth", left, 39);
+  pdf.rect(0, 0, width, 170).fill(bandColor);
+  pdf.fillColor(readableOn(bandColor)).font("Helvetica-Bold").fontSize(12).text(name, left, 39);
   pdf.fontSize(27).text(fr ? "Rapport gratuit 360" : "Free 360 report", left, 75, { width: usable });
-  pdf.fillColor("#DFD2FF").font("Helvetica").fontSize(10).text(fr ? "Un diagnostic public expliqué, sourcé et actionnable" : "Public evidence with an understandable action plan", left, 121);
+  const subtitle = brand?.tagline ?? (fr ? "Un diagnostic public expliqué, sourcé et actionnable" : "Public evidence with an understandable action plan");
+  pdf.fillColor(brand ? readableOn(bandColor) : "#DFD2FF").font("Helvetica").fontSize(10).text(subtitle, left, 121, { width: usable });
   pdf.fillColor(PALETTE.muted).font("Helvetica").fontSize(9);
   drawText(`${fr ? "Page source" : "Source URL"}: ${text(report.sourceUrl, 300)}`, left, 190, { link: report.sourceUrl });
   drawText(`${fr ? "Relevé" : "Observed"}: ${date(report.observedAt, language)}  |  ${fr ? "Périmètre" : "Scope"}: ${fr ? "une seule page" : "one page"}`, left, 207);
@@ -337,7 +358,7 @@ export async function renderReportPdf(report: FreeReport360, language: ReportLan
     pdf.switchToPage(i);
     pdf.strokeColor(PALETTE.line).lineWidth(0.7).moveTo(left, 776).lineTo(width - left, 776).stroke();
     pdf.fillColor(PALETTE.muted).font("Helvetica").fontSize(7.5)
-      .text(`GTM Growth | ${report.method}`, left, 784, { height: 11, lineBreak: false });
+      .text(`${name} | ${report.method}`, left, 784, { height: 11, lineBreak: false });
     pdf.text(`${i + 1} / ${pages.count}`, width - 85, 784, { width: 42, height: 11, align: "right", lineBreak: false });
   }
   pdf.end();

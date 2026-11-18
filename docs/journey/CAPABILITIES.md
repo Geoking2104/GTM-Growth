@@ -69,6 +69,19 @@ are still pending the owner's file-connector selection and GTM publication
 remains out of scope. Not part of the 15 November reviewed revision
 `353e658`.
 
+Increment of 18 November 2026: **per-scope impact timelines and white-label
+client exports** are implemented. `GET /api/audits/:id/timeline` compares the
+requestor's own consecutive completed snapshots of one URL, pairwise through
+the existing public-outcome classifier, with an explicit per-step confidence
+(grid version, measured coverage, observation window) — and counters are
+never summed across steps, scopes or clients. J+14 and J+28 follow-ups are
+surfaced as bilingual suggested dates only; nothing is emailed or scheduled
+automatically. Email-verified invitations accept one strictly validated client
+brand rendered by the existing A4 PDF/Markdown pipeline, still one snapshot
+per report and one language per client, with no metric aggregation. Console
+UI display remains a later increment. Not part of the 15 November reviewed
+revision `353e658`.
+
 | Stage / capability | Source status | Activation or scope | Evidence / reference |
 | --- | --- | --- | --- |
 | Diagnose: public read / 360° report | Implemented in feature branch; **not yet merged/deployed** | One public page, GEO v1/SEO evidence, five distinct pillars, evidence-linked FR/EN actions and A4 browser print. Private metrics and score gains remain unknown; before/after comparisons exist at the audit API level for public outcomes with matching method and URL | [Free report contract](../product/FREE-REPORT-360.md), [free read](../../src/freeread/index.ts), [public API](../PUBLIC_API.md) |
@@ -86,6 +99,8 @@ remains out of scope. Not part of the 15 November reviewed revision
 | Measure: API collection | Implemented for OpenAI, Claude, Mistral, Grok; Gemini collection blocked | Selected API account, explicit collection/cost confirmation. Consumer chat subscription/login is not API authorisation | [Collectors](../../src/console/ai-visibility-providers.ts), [account guide](../product/AI-VISIBILITY-PROVIDERS.md) |
 | Measure: citation gaps | Implemented (18 Nov 2026 increment; not in the reviewed `353e658` revision) | One stored/collected panel; provenance kept across re-imports; brand website must be declared, unknown stays unevaluated | [Observation model](../specs/AI-VISIBILITY-OBSERVATION-MODEL-v1-2026-11-18.md), [citations](../../src/console/ai-citations.ts) |
 | Measure: commerce | Implemented; live store qualification required | Shopify custom app / PrestaShop webservice, sealed credentials, sync/webhook; real-time PrestaShop needs an external companion module | [Commerce spec](../specs/ECOMMERCE-CONNECTORS-v1-2026-11-13.md), [current KPI limitations](../marketing/MEASUREMENT.md#known-commerce-limitations-in-this-revision) |
+| Report: impact timeline and J+14/J+28 reminders | Implemented (18 November 2026 increment; not in the reviewed `353e658` revision) | One requestor, one public-URL scope; consecutive snapshot pairs with explicit per-step confidence; J+14/J+28 are surfaced dates only, never automatic actions; outcome counters are never summed across steps, scopes or clients | [Timeline](../../src/impact/timeline.ts), [follow-ups](../../src/impact/follow-ups.ts), [pipeline runbook](../technical/AUDIT-PIPELINE.md) |
+| Report: white-label client export | Implemented (18 November 2026 increment; not in the reviewed `353e658` revision) | One strictly validated brand per email-verified invitation (bounded name/tagline/color); the branded A4 PDF/Markdown export reuses the same saved snapshot: one report, one language, no metric aggregation | [Brand validation](../../src/report-access/brand.ts), [export](../../src/report-access/export.ts) |
 | Measure: native CRM / client plugin | Implemented; collection off until enabled | Explicit CRM roles and exact identity proof; server adapter for external CRM/web/social sources. Vendor-specific CRM adapters are not included | [CRM spec](../product/CRM-CUSTOMER-JOURNEY-SPEC.md), [plugin API](../../integrations/crm-plugin/README.md) |
 | Coordinate: global/local SEO | Implemented | Registry, exact location grants, declared ranks, 24 LOC controls and audits. Several controls need declared evidence | [Global/local](../product/GLOBAL-LOCAL-SEO.md), [operations](../product/LOCAL-SEO-OPERATIONS.md) |
 | Coordinate: GBP dashboard | Implemented; operator setup required | On-demand reviews/performance, partial success; review sample up to 50; transient data | [Retail spec](../product/GBP-RETAIL-SPEC.md), [dashboard](../../src/local-seo/dashboard.ts) |
