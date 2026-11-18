@@ -185,7 +185,7 @@ export class ReportAccessService {
     return { token, expiresIn: SESSION_TTL_MS / 1000 };
   }
 
-  authorisedReport(id: unknown, token: unknown): { report: FreeReport360; language: ReportLanguage } {
+  authorisedReport(id: unknown, token: unknown): { report: FreeReport360; language: ReportLanguage; brand: WhiteLabelBrand | null } {
     if (typeof id !== "string" || !/^[0-9a-f-]{36}$/.test(id) || typeof token !== "string" || !/^[A-Za-z0-9_-]{43}$/.test(token)) {
       throw new ReportAccessError(401, "verification_required");
     }
