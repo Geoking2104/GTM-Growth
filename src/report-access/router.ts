@@ -6,6 +6,7 @@ import { fetchPublicPage } from "../http/public-fetch.js";
 import { renderReportMarkdown, renderReportPdf } from "./export.js";
 import { ReportAccessService, ReportAccessError, type MailSender, type ReportReader, type ReportLanguage } from "./service.js";
 import { parseBrand, brandSlug } from "./brand.js";
+import { parseFollowUpChoice } from "./follow-ups.js";
 import { createSmtpSender, smtpSettings } from "./mailer.js";
 
 const COOKIE = "gtm_report_session";
@@ -72,6 +73,8 @@ export function mountReportAccessApi(app: Express, deps: ReportAccessDependencie
     if (typeof body.url !== "string" || typeof body.email !== "string" || !["fr", "en"].includes(body.language)) return res.status(400).json({ error: "invalid_request" });
     const brand = body.brand == null ? null : parseBrand(body.brand);
     if (body.brand != null && !brand) return res.status(400).json({ error: "invalid_brand" });
+    const followUp = parseFollowUpChoice(body.followUp);
+    if (followUp === null) return res.status(400).json({ error: "invalid_follow_up" });
     const checked = await (deps.validateUrl ?? checkTarget)(body.url);
     if (!checked.ok || !checked.url) return res.status(400).json({ error: "invalid_url" });
     try {
@@ -82,7 +85,7 @@ export function mountReportAccessApi(app: Express, deps: ReportAccessDependencie
         return job.result.report360;
       } : reader;
       const result = await service.invite({ email: body.email, url: checked.url, language: body.language as ReportLanguage,
-        ip: publicClientIp(req), requestKey: req.get("Idempotency-Key"), snapshotId: typeof body.auditId === "string" ? body.auditId : undefined, brand }, snapshotReader, sender);
+        ip: publicClientIp(req), requestKey: req.get("Idempotency-Key"), snapshotId: typeof body.auditId === "string" ? body.auditId : undefined, brand, followUp }, snapshotReader, sender);
       return res.status(201).json({ ok: true, id: result.id, expiresIn: result.expiresIn });
     } catch (error) { return apiError(res, error); }
   });
@@ -109,6 +112,14 @@ export function mountReportAccessApi(app: Express, deps: ReportAccessDependencie
   app.get("/api/report-access/report", (req, res) => {
     const result = authorised(req, res);
     if (result) res.json({ report360: result.report, language: result.language, brand: result.brand });
+  });
+  // J+14/J+28 scheduled plan for a verified session: milestones and dispatch
+  // state only; the recipient address itself never leaves the store.
+  app.get("/api/report-access/follow-ups", (req, res) => {
+    if (!available || !service) return res.status(503).json({ error: "mail_not_configured" });
+    if (!sameOrigin(req, res)) return;
+    try { return res.json(service.authorisedFollowUps(req.query.id, cookieToken(req))); }
+    catch (error) { return apiError(res, error); }
   });
   app.get("/api/report-access/download", async (req, res) => {
     const result = authorised(req, res);

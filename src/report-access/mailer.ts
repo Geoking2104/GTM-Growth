@@ -2,6 +2,7 @@
 import nodemailer from "nodemailer";
 import { isIP } from "node:net";
 import type { ReportInvitation, MailSender } from "./service.js";
+import { followUpMailText, type FollowUpSender } from "./follow-ups.js";
 
 export interface SmtpSettings { host: string; port: number; user: string; password: string; from: string; publicOrigin: string }
 
@@ -33,5 +34,24 @@ export function createSmtpSender(settings: SmtpSettings): MailSender {
       : `Your GTM Growth free report is ready.\n\nCode: ${invite.code}\nThis code expires in 15 minutes and works only once.\n\n1. Return to ${link}\n2. Enter the receiving email address and this code.\n3. View the HTML report and download PDF or Markdown.\n\nIf you did not request this report, ignore this email. No account was created.`;
     await transport.sendMail({ from: settings.from, to: invite.email, subject, text: message,
       headers: { "X-Auto-Response-Suppress": "All" } });
+  };
+}
+
+/** Scheduled J+14/J+28 white-label follow-ups: same strict TLS transport,
+ * one branded PDF attachment reusing the A4 pipeline. */
+export function createSmtpFollowUpSender(settings: SmtpSettings): FollowUpSender {
+  const transport = nodemailer.createTransport({
+    host: settings.host, port: settings.port, secure: settings.port === 465,
+    requireTLS: settings.port !== 465, auth: { user: settings.user, pass: settings.password },
+    connectionTimeout: 10_000, greetingTimeout: 8_000, socketTimeout: 15_000,
+    tls: { minVersion: "TLSv1.2", rejectUnauthorized: true },
+  });
+  return async (mail): Promise<void> => {
+    const fields = followUpMailText(mail.language, mail.brand, mail.milestone, mail.observedAt, mail.measuredAt, mail.url,
+      mail.language === "fr" ? mail.suggestion.fr : mail.suggestion.en, mail.reportNote);
+    const house = { from: settings.from };
+    await transport.sendMail({ from: house.from, to: mail.to, subject: fields.subject, text: fields.text,
+      headers: { "X-Auto-Response-Suppress": "All" },
+      attachments: [{ filename: mail.filename, content: mail.pdf, contentType: "application/pdf" }] });
   };
 }
