@@ -50,7 +50,7 @@ const ls = (k) => localStorage.getItem(`gtm-console-${k}`) || "";
 const state = { url: ls("url"), property: ls("property"), ga4Property: ls("ga4Property"), bingSite: ls("bingSite"), days: Number(ls("days")) || 28, searchType: ls("searchType") || "web", overview: null, overviewFor: "", me: null };
 /** Corps commun des requêtes Track : domaine, propriétés, période. */
 const scope = (extra = {}) => ({ url: state.url || undefined, property: state.property || undefined, ga4Property: state.ga4Property || undefined, bingSite: state.bingSite || undefined, days: state.days, searchType: state.searchType, ...extra });
-const rerender = () => show(current.section, current.tab);
+const rerender = () => show(current.section, current.tab, current.pinId ? { pinId: current.pinId } : undefined);
 /** Vue de données : barre de période + rendu ; ne demande pas de domaine. */
 const live = (route, render, opts = {}) => ({ needsDomain: false, async: async () => [toolbar(state, rerender, opts), ...[render(await api(route, scope()))].flat()] });
 const tool = (id) => TABS.find((x) => x.id === id);
@@ -253,7 +253,7 @@ const SECTIONS = {
     { id: "ops", icon: "operations", build: () => custom("ops", [
       { id: "prompts", label: LANG === "fr" ? "Visibilité IA en direct" : "Live AI visibility", needsDomain: false, async: async () => renderOpsPrompts({ api, me: state.me }) },
       { id: "rank", label: LANG === "fr" ? "Positions suivies" : "Tracked rankings", needsDomain: false, async: async () => renderOpsRank({ api, me: state.me }) },
-      { id: "articles", label: LANG === "fr" ? "Articles" : "Articles", needsDomain: false, async: async () => renderOpsArticles({ api, me: state.me }) },
+      { id: "articles", label: LANG === "fr" ? "Articles" : "Articles", needsDomain: false, async: async (filters) => renderOpsArticles({ api, me: state.me, pinId: filters?.pinId }) },
       { id: "alerts", label: LANG === "fr" ? "Alertes" : "Alerts", needsDomain: false, async: async () => renderOpsAlerts({ api, me: state.me }) }]) },
   ],
 };
@@ -288,6 +288,11 @@ function launchWizard() {
 }
 let started = false;
 let current = { section: "overview", tab: "" };
+function routeFromHash() {
+  const [section, tab, id] = location.hash.slice(1).split('/');
+  const pinId = section === 'ops' && tab === 'articles' && /^[0-9a-f-]{36}$/.test(id || '') ? id : undefined;
+  return [section, tab, pinId ? { pinId } : undefined];
+}
 let dataAgent = null;
 async function saveSettings(body) {
   const token = await accessToken();
@@ -307,13 +312,14 @@ async function show(sectionId, tabId, initialFilters) {
   const def = section.build();
   const requestedTab = !state.me?.tenant && state.me?.platformAdmin && section.id === 'settings' && !tabId ? 'access' : tabId;
   const tab = def.tabs.find((x) => x.id === requestedTab) ?? def.tabs[0];
-  current = { section: section.id, tab: tab.id };
+  const pinId = section.id === 'ops' && tab.id === 'articles' ? initialFilters?.pinId : undefined;
+  current = { section: section.id, tab: tab.id, pinId };
   const decision = decisionLocation(section.id, tab.id);
   if (state.me?.tenant) {
     if (!dataAgent) { dataAgent = createDataAgent({ api, language: LANG, workspaceName: state.me.tenant.name }); $("#c-data-agent").replaceChildren(dataAgent.element); }
     dataAgent.setSection(section.id);
   }
-  history.replaceState(null, "", `#${section.id}${tab.id !== def.tabs[0].id ? `/${tab.id}` : ""}`);
+  history.replaceState(null, "", `#${section.id}${tab.id !== def.tabs[0].id ? `/${tab.id}` : ""}${pinId ? `/${pinId}` : ""}`);
   document.querySelectorAll(".app-nav a").forEach((a) => { const on = a.dataset.section === decision.area; a.classList.toggle("is-active", on); if (on) a.setAttribute("aria-current", "true"); else a.removeAttribute("aria-current"); });
   const screenTitle = (section.id === "platform" ? (LANG === "fr" ? "Administration plateforme" : "Platform administration") : section.id === "competition" ? (LANG === "fr" ? "Concurrence" : "Competition") : section.id === "ai_visibility" ? (LANG === "fr" ? "Visibilité IA" : "AI visibility") : t(`s_${section.id}`));
   $("#c-crumb").textContent = decisionLabel(decision.area, LANG);
@@ -527,12 +533,12 @@ async function start() {
     const notice = el("p", "c-error", LANG === "fr" ? `Le domaine ${state.requestedDomainUnavailable} n’est pas autorisé dans cet espace. Contactez votre administrateur pour l’ajouter.` : `The domain ${state.requestedDomainUnavailable} is not authorized in this workspace. Contact your administrator to add it.`);
     notice.setAttribute("role", "alert"); $("#c-app").prepend(notice);
   }
-  const [s, tb] = location.hash.slice(1).split("/");
+  const [s, tb, filters] = routeFromHash();
   if (!state.url || !state.me?.tenant) { picker.hidden = false; sw.setAttribute("aria-expanded", "true"); }
   startBackground();
   started = true;
-  show(s || (state.me?.tenant?.usageType === "agency" && state.me?.memberships?.length > 1 ? "portfolio" : "overview"), tb);
+  show(s || (state.me?.tenant?.usageType === "agency" && state.me?.memberships?.length > 1 ? "portfolio" : "overview"), tb, filters);
   if (state.me?.tenant && !state.requestedDomainUnavailable && (state.openRequestedWizard || !localStorage.getItem(`gtm-console-wizard-v1:${state.me.tenant.id}:${state.me.email || state.me.username || "user"}`))) launchWizard();
 }
-window.addEventListener("hashchange", () => { const [a, b] = location.hash.slice(1).split("/"); if (a && ALL.some((x) => x.id === a)) show(a, b); });
+window.addEventListener("hashchange", () => { const [a, b, filters] = routeFromHash(); if (a && ALL.some((x) => x.id === a)) show(a, b, filters); });
 start().catch((error) => { console.error(error); loginScreen(); $("#c-login-error").textContent = error.message; });

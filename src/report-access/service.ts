@@ -1,6 +1,7 @@
 /**
  * Public report delivery. Email verification grants access to ONE saved public
- * snapshot, never to a tenant, CRM identity or authenticated console resource.
+ * snapshot and any evidence explicitly copied to that invitation, never to a
+ * tenant, CRM identity or authenticated console resource.
  * Codes are single-use and HMAC-peppered; sessions are opaque, short-lived and
  * stored only as digests. No code or session token is logged.
  */
@@ -25,6 +26,7 @@ export interface ReportInvitation {
 
 export type MailSender = (invitation: ReportInvitation) => Promise<void>;
 export type ReportReader = (url: string) => Promise<FreeReport360>;
+export interface PrivateVisibilityEvidence { source: string; observedAt: string; excerpt?: string; citations: string[] }
 
 interface RecordRow {
   id: string; email_digest: string; ip_digest: string; code_digest: string;
@@ -78,6 +80,11 @@ export class ReportAccessService {
       CREATE TABLE IF NOT EXISTS sessions (
         token_digest TEXT PRIMARY KEY, invitation_id TEXT NOT NULL REFERENCES invitations(id) ON DELETE CASCADE,
         expires_at INTEGER NOT NULL
+      );
+      CREATE TABLE IF NOT EXISTS invitation_evidence (
+        invitation_id TEXT NOT NULL REFERENCES invitations(id) ON DELETE CASCADE,
+        tenant_id TEXT NOT NULL, pin_id TEXT NOT NULL, payload TEXT NOT NULL,
+        PRIMARY KEY(invitation_id, tenant_id, pin_id)
       );
       CREATE TABLE IF NOT EXISTS invitation_requests (
         request_digest TEXT PRIMARY KEY, email_digest TEXT NOT NULL, ip_digest TEXT NOT NULL,
@@ -279,7 +286,29 @@ export class ReportAccessService {
     return { token, expiresIn: SESSION_TTL_MS / 1000 };
   }
 
-  authorisedReport(id: unknown, token: unknown): { report: FreeReport360; language: ReportLanguage; brand: WhiteLabelBrand | null } {
+  shareVisibilityEvidence(input: { id: string; email: string; tenantId: string; pinId: string; page: string; evidence: PrivateVisibilityEvidence }): void {
+    const email = normaliseReportEmail(input.email), now = this.now();
+    const payload = JSON.stringify(input.evidence);
+    if (!email || payload.length > 25000) throw new ReportAccessError(400, 'invalid_evidence_grant');
+    this.db.transaction(() => {
+      const row = this.db.prepare(`SELECT payload FROM invitations i WHERE i.id=? AND i.email_digest=? AND i.created_at>?
+        AND ((i.consumed_at IS NULL AND i.expires_at>?) OR EXISTS (
+          SELECT 1 FROM sessions s WHERE s.invitation_id=i.id AND s.expires_at>?
+        ))`).get(input.id, this.digest(`email:${email}`), now - RETENTION_MS, now, now) as { payload: string } | undefined;
+      if (!row || new URL((JSON.parse(row.payload) as FreeReport360).sourceUrl).href !== input.page) throw new ReportAccessError(404, 'report_scope_unavailable');
+      const existing = this.db.prepare('SELECT 1 FROM invitation_evidence WHERE invitation_id=? AND tenant_id=? AND pin_id=?').get(input.id, input.tenantId, input.pinId);
+      const count = this.db.prepare('SELECT count(*) AS total FROM invitation_evidence WHERE invitation_id=?').get(input.id) as { total: number };
+      if (!existing && count.total >= 20) throw new ReportAccessError(409, 'report_evidence_limit');
+      this.db.prepare(`INSERT INTO invitation_evidence VALUES (?,?,?,?) ON CONFLICT(invitation_id,tenant_id,pin_id) DO UPDATE SET payload=excluded.payload`)
+        .run(input.id, input.tenantId, input.pinId, payload);
+    }).immediate();
+  }
+
+  revokeVisibilityEvidence(id: string, tenantId: string): void {
+    this.db.prepare('DELETE FROM invitation_evidence WHERE invitation_id=? AND tenant_id=?').run(id, tenantId);
+  }
+
+  authorisedReport(id: unknown, token: unknown, includeEvidence = false): { report: FreeReport360; language: ReportLanguage; brand: WhiteLabelBrand | null; visibilityEvidence?: PrivateVisibilityEvidence[] } {
     if (typeof id !== "string" || !/^[0-9a-f-]{36}$/.test(id) || typeof token !== "string" || !/^[A-Za-z0-9_-]{43}$/.test(token)) {
       throw new ReportAccessError(401, "verification_required");
     }
@@ -287,7 +316,9 @@ export class ReportAccessService {
       WHERE s.token_digest = ? AND s.invitation_id = ? AND s.expires_at > ? AND i.created_at > ?`)
       .get(this.digest(`session:${token}`), id, this.now(), this.now() - RETENTION_MS) as RecordRow | undefined;
     if (!row) throw new ReportAccessError(401, "verification_required");
-    return { report: JSON.parse(row.payload) as FreeReport360, language: row.language, brand: row.brand ? JSON.parse(row.brand) as WhiteLabelBrand : null };
+    const evidence = includeEvidence ? this.db.prepare('SELECT payload FROM invitation_evidence WHERE invitation_id=? ORDER BY rowid').all(row.id) as Array<{ payload: string }> : [];
+    return { report: JSON.parse(row.payload) as FreeReport360, language: row.language, brand: row.brand ? JSON.parse(row.brand) as WhiteLabelBrand : null,
+      ...(evidence.length ? { visibilityEvidence: evidence.map(item => JSON.parse(item.payload) as PrivateVisibilityEvidence) } : {}) };
   }
 
   close(): void { this.db.close(); }

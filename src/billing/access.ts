@@ -13,6 +13,7 @@ export function subscriptionAccess(sub: BillingSubscription | undefined, graceDa
 /** Explicit, cached-data or protective actions. New routes require a subscription by default. */
 const retainedRoutes = new Set([
   "/decision/inbox", "/decision/intent", "/decision/measurement/latest", "/decision/portfolio/card",
+  "/decision/editorial/brief", "/decision/editorial/follow-ups", "/decision/editorial/revoke-evidence",
   "/ai-visibility/datasets", "/ai-visibility/report", "/ai-visibility/citation-gaps", "/ai-visibility/accounts", "/ai-visibility/accounts/disconnect",
   "/ai-visibility/openai-status", "/ai-visibility/gemini-status", "/visibility/prompts", "/visibility/runs",
   "/visibility/schedule", "/visibility/schedule/options", "/visibility/schedule/pause", "/visibility/schedule/billed",

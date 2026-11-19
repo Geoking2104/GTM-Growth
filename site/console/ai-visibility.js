@@ -4,6 +4,7 @@ import { el } from "./render.js";
 import { LANG } from "./i18n.js";
 import { entityCell, visibilityChart, metricIcon } from "./visuals.js";
 import { renderProviderCollection, collectionSummary } from "./ai-provider-collection.js";
+import { answerPinKey } from "./decision-flows.js";
 const L = (fr, en) => LANG === "fr" ? fr : en;
 function renderAnswer(row) {
   const paragraph = el("p"); let offset = 0;
@@ -221,7 +222,15 @@ export function renderAiVisibility({ api, me, initialFilters = {} }) {
         const decide = async (decision) => { try { await api("/ai-visibility/review", { datasetId: current, responseId: row.id, brand: mention.brand, status: decision, sentiment: choice.value }); await load(); } catch (error) { result.textContent = error.message; } };
         review.onsubmit = (event) => event.preventDefault(); review.append(category, button(L("Confirmer la mention", "Confirm mention"), () => decide("confirmed")), button(L("Rejeter la mention", "Reject mention"), () => decide("rejected")), result); d.append(review);
       }
-    } for (const url of row.citations || []) { const link = el("a", "", url); link.href = url; link.target = "_blank"; link.rel = "noopener noreferrer"; d.append(link, el("br")); } evidence.append(d); }
+    } for (const url of row.citations || []) { const link = el("a", "", url); link.href = url; link.target = "_blank"; link.rel = "noopener noreferrer"; d.append(link, el("br")); }
+      if (me?.role === 'tenant-admin') d.append(button(L('Épingler dans Intention', 'Pin to Intent'), () => {
+        try {
+          sessionStorage.setItem(answerPinKey(me.tenant.id), JSON.stringify({ datasetId: current, responseId: row.id, brand, prompt: row.prompt }));
+          location.hash = '#diagnose/intent';
+        } catch (error) { status.textContent = error.message; }
+      }));
+      evidence.append(d);
+    }
     output.append(evidence);
   }
   list(); return root;

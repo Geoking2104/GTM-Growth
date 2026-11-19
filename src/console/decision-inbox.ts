@@ -14,14 +14,13 @@ import { createApplyPreviewRoutes } from './apply-routes.js';
 import { qualityGates, publishToWordPress, wpConfigFromEnv } from './content-ops.js';
 import { changeDecision, readDecision, logDecision, type Review } from './decision-store.js';
 import { decisionPrincipal, fingerprint, ownedMeasurement, ownedPage } from './decision-context.js';
+import { draftSchema, editorialReference, requireEditorialPin } from './decision-editorial.js';
 import type { HandlerContext, ConsoleRoute } from './util.js';
 
 const kinds = ['wordpress', 'diff', 'gtm', 'gtm-publish', 'crm-identity', 'crm-event'] as const;
-const draftSchema = z.object({ title: z.string().min(1).max(200), slug: z.string().min(1).max(200), body: z.string().min(1).max(100000),
-  metaDescription: z.string().max(500), entities: z.array(z.string().min(1).max(200)).min(1).max(20).optional(), outline: z.array(z.object({ h2: z.string().max(500), bullets: z.array(z.string().max(1000)).max(30) })).max(30) });
 const gtmSchema = z.object({ container: z.string(), workspace: z.string().optional(), path: z.string().optional(), kind: z.enum(['tags','triggers','variables']).optional(),
   op: z.enum(['create-workspace','delete-workspace','create','update','delete','create-version']), resource: z.union([z.string().max(50000),z.record(z.unknown())]).optional(), name: z.string().max(200).optional(), description: z.string().max(1000).optional(), notes: z.string().max(2000).optional() }).strict();
-const proposalInput = z.object({ kind: z.enum(kinds), origin: z.string().max(500).default(''), payload: z.unknown() }).strict();
+const proposalInput = z.object({ kind: z.enum(kinds), origin: z.string().max(500).default(''), payload: z.unknown(), editorial: editorialReference.optional() }).strict();
 const nativeRoutes = [...socialRoutes, ...localSeoRoutes];
 export const nativeCall = async (ctx: HandlerContext, route: string, body: Record<string, unknown> = {}) => {
   const definition = nativeRoutes.find(r => r.path === route); if (!definition) throw new Error('DECISION_ROUTE');
@@ -32,10 +31,14 @@ const dependencies = { inventory: gtmInventory, write: gtmWrite, publish: gtmPub
   preview: (ctx: HandlerContext) => createApplyPreviewRoutes()[0].handler(ctx), native: nativeCall };
 export async function proposeReview(ctx: HandlerContext, raw: unknown, io = dependencies) {
   const who = decisionPrincipal(ctx, true), input = proposalInput.parse(raw);
+  if (input.editorial && input.kind !== 'wordpress') throw new Error('DECISION_CHANGED');
   let payload: any, title = '', target = '', before: string | undefined;
   if (input.kind === 'wordpress') {
-    payload = draftSchema.parse(input.payload); payload.gates = qualityGates(payload);
-    title = payload.title; target = wpConfigFromEnv(who.tenant.id)?.siteUrl || 'WordPress';
+    if (!input.editorial) {
+      payload = draftSchema.parse(input.payload); payload.gates = qualityGates(payload);
+      title = payload.title;
+    }
+    target = wpConfigFromEnv(who.tenant.id)?.siteUrl || 'WordPress';
   } else if (input.kind === 'diff') {
     const p = z.object({ url: z.string().url() }).strict().parse(input.payload); ownedPage(ctx, p.url);
     payload = await io.preview({ ...ctx, body: { url: p.url, fix: 'robots-ai', mode: 'dry-run' } });
@@ -76,12 +79,28 @@ export async function proposeReview(ctx: HandlerContext, raw: unknown, io = depe
     }
     target = payload.profileId; title = input.kind === 'crm-event' ? 'Link observed event' : 'Link verified identity';
   }
-  if (JSON.stringify(payload).length > 150000) throw new Error('DECISION_CAPACITY');
   const previewExpiry = input.kind === 'diff' ? payload.preview?.expiresAt : undefined;
-  const at = new Date().toISOString(), digest = fingerprint([input.kind, target, payload, before]);
+  const at = new Date().toISOString();
   return changeDecision(who.tenant.id, s => {
+    let origin = input.origin;
+    if (input.editorial) {
+      const { pinId, revision } = input.editorial;
+      const pin = requireEditorialPin(ctx, s, pinId);
+      const brief = s.editorialBriefs?.find(item => item.pinId === pinId);
+      if (!brief || brief.revision !== revision) throw new Error('DECISION_CHANGED');
+      if (target === 'WordPress') throw new Error('WORDPRESS_NOT_CONFIGURED');
+      if (new URL(target).origin !== new URL(pin.targetUrl).origin) throw new TenantAccessError('DECISION_PAGE_SCOPE');
+      const previous = s.reviews.find(item => item.kind === 'wordpress' && item.payload.editorial?.pinId === pinId && item.payload.editorial.revision === revision
+        && item.status !== 'rejected' && (!['proposed', 'approved'].includes(item.status) || Date.parse(item.expiresAt) > Date.now()));
+      if (previous) return previous;
+      payload = { ...brief.draft, gates: qualityGates(brief.draft), editorial: { pinId, revision, url: pin.targetUrl } };
+      title = brief.draft.title;
+      origin = `AI · ${pin.targetUrl} · v${revision}`;
+    }
+    if (JSON.stringify(payload).length > 150000) throw new Error('DECISION_CAPACITY');
+    const digest = fingerprint([input.kind, target, payload, before]);
     const prior = s.reviews.find(r => r.author === who.actor && r.digest === digest && ['proposed','approved'].includes(r.status) && Date.parse(r.expiresAt) > Date.now()); if (prior) return prior;
-    const review: Review = { id: randomUUID(), kind: input.kind, title, target, origin: input.origin, payload, baseline: before, author: who.actor, createdAt: at,
+    const review: Review = { id: randomUUID(), kind: input.kind, title, target, origin, payload, baseline: before, author: who.actor, createdAt: at,
       expiresAt: previewExpiry || new Date(Date.now() + 7 * 86400000).toISOString(), digest, status: 'proposed' };
     s.reviews.push(review); logDecision(s, who.actor, 'review-proposed', review.id); return review;
   });
@@ -108,7 +127,8 @@ export async function unifiedInbox(ctx: HandlerContext, io = dependencies) {
     rows.push({ id: r.id, source: 'decision', type: r.kind, title: r.title, target: r.target, origin: r.origin, author: r.author, at: r.createdAt,
       status: expired && ['proposed','approved'].includes(r.status) ? 'expired' : r.status, digest: r.digest, expiresAt: r.expiresAt,
       canApprove: who.admin && !expired && !blocked && r.status === 'proposed', canExecute: who.admin && r.status === 'approved' && !expired && r.kind !== 'diff', reason: !who.admin ? 'admin-required' : expired ? 'expired' : blocked ? 'quality-gates' : r.kind === 'diff' ? 'preview-only' : 'explicit-execution', details: { ...r.payload, result: r.result, error: r.error },
-      href: r.kind.startsWith('gtm') ? '#gtm' : r.kind.startsWith('crm') ? '#crm' : r.kind === 'diff' ? '#apply_mode' : '#ops/articles' });
+      href: r.kind.startsWith('gtm') ? '#gtm' : r.kind.startsWith('crm') ? '#crm' : r.kind === 'diff' ? '#apply_mode'
+        : r.payload.editorial ? `#ops/articles/${r.payload.editorial.pinId}` : '#ops/articles' });
   }
   rows.sort((a, b) => b.at.localeCompare(a.at) || a.id.localeCompare(b.id));
   return { rows, sources, partial: sources.some(s => s.status !== 'available'), pending: rows.filter(r => ['PENDING','draft','proposed'].includes(r.status)).length, at: new Date().toISOString() };
@@ -129,6 +149,7 @@ export async function decideReview(ctx: HandlerContext, raw: unknown, io = depen
   return changeDecision(who.tenant.id, s => {
     const r = s.reviews.find(r => r.id === i.id);
     if (!r || r.status !== 'proposed' || r.digest !== i.digest || Date.parse(r.expiresAt) <= Date.now()) throw new Error('DECISION_CHANGED');
+    if (r.payload.editorial) requireEditorialPin(ctx, s, r.payload.editorial.pinId);
     if (i.decision === 'approve' && r.kind === 'wordpress' && qualityGates(r.payload).some(g => !g.passed)) throw new Error('DECISION_QUALITY_GATES');
     r.status = i.decision === 'approve' ? 'approved' : 'rejected'; r.approval = { actor: who.actor, at: new Date().toISOString(), comment: i.comment };
     logDecision(s, who.actor, 'review-' + r.status, r.id); return r;
@@ -136,7 +157,8 @@ export async function decideReview(ctx: HandlerContext, raw: unknown, io = depen
 }
 export async function executeReview(ctx: HandlerContext, raw: unknown, io = dependencies) {
   const who = decisionPrincipal(ctx, true), i = z.object({ id: z.string().uuid(), digest: z.string().length(64), confirmed: z.literal(true), confirm: z.string().max(100).optional() }).strict().parse(raw);
-  const review = readDecision(who.tenant.id).reviews.find(r => r.id === i.id);
+  const state = readDecision(who.tenant.id);
+  const review = state.reviews.find(r => r.id === i.id);
   if (!review || review.status !== 'approved' || review.digest !== i.digest || Date.parse(review.expiresAt) <= Date.now() || review.kind === 'diff') throw new Error('DECISION_CHANGED');
   if (review.kind.startsWith('gtm')) {
     ownedMeasurement(ctx, review.payload.container, undefined, review.payload.workspace);
@@ -145,6 +167,7 @@ export async function executeReview(ctx: HandlerContext, raw: unknown, io = depe
     if (review.kind === 'gtm-publish' && i.confirm !== review.payload.publicId) throw new Error('GTM_CONFIRM_PUBLIC_ID');
   }
   if (review.kind === 'wordpress') {
+    if (review.payload.editorial) requireEditorialPin(ctx, state, review.payload.editorial.pinId);
     if (qualityGates(review.payload).some(g => !g.passed)) throw new Error('DECISION_QUALITY_GATES');
     const config = wpConfigFromEnv(who.tenant.id);
     if (!config) throw new Error('WORDPRESS_NOT_CONFIGURED');

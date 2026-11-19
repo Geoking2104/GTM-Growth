@@ -80,6 +80,36 @@ Neither state can be automatically dispatched again. A process interruption may
 leave `executing`; inspect the native destination before preparing a replacement.
 Technical previews can be approved but never executed by this module.
 
+### AI evidence to editorial impact
+
+From an AI answer, pin the observation and its citations to an owned page and
+an Intent stage. The pin fixes the question, source, tracked brand and capture
+context. Open the linked brief in Articles, save a revision and submit it to the
+inbox. Approval and draft creation use the existing WordPress checks. Later
+edits create a new revision and preserve the approved draft in the inbox.
+
+After publication in WordPress, verify the completed inbox item from the brief.
+WordPress must return a public, password-free post or page at the pinned URL
+with the approved title and content. If the draft was applied to an existing
+post or page, enter that published item's ID and type. The effective date uses
+the later of publication and last modification reported by WordPress in UTC.
+The verified record preserves the submitted version and WordPress post ID.
+[WordPress post fields](https://developer.wordpress.org/rest-api/reference/posts/)
+
+J+14 and J+28 compare equal, closed UTC windows on either side of that date.
+The comparison excludes the intervention day and requires the pinned cohort
+and at least five observations in each window. The brief shows the reason for
+an unavailable comparison. Source-only comparisons are marked as limited
+confidence. Causal attribution requires separate evidence.
+
+A workspace admin can share the displayed answer excerpt and individual
+citations with a specific private web report. Use the `id` from the report link,
+the exact report page and the recipient's email. The invitation or verified
+session must still be active. The recipient opens the evidence through the
+report's normal email-code login. PDF and Markdown exports contain the base
+report. An admin can revoke this workspace's evidence for that report from
+Intent. Grants expire with the report and use its existing access store.
+
 ### Measurement integrity
 
 `/decision/measurement/run` reuses page installation, GA4 setup and duplicate-tag
@@ -112,6 +142,10 @@ with the existing deployment procedure; no extra daemon or migration is required
 | `/decision/intent` | Read scoped stage/page pins and state version |
 | `/decision/intent/evidence` | Retrieve existing GSC/Bing/AI observations; no model generation |
 | `/decision/intent/pin`, `/remove` | Admin edits using expected state version; no client-supplied metrics |
+| `/decision/intent/ai-pin` | Admin pins a stored answer by workspace panel and observation IDs |
+| `/decision/editorial/brief`, `/save` | Read a page-linked brief and save with an expected revision |
+| `/decision/editorial/verify`, `/follow-ups` | Verify a published WordPress revision and read its J+14 and J+28 cohort comparisons |
+| `/decision/editorial/share-evidence`, `/revoke-evidence` | Grant or revoke selected evidence on one private report |
 | `/decision/measurement/run`, `/latest` | Explicit admin audit / member read of latest valid scope |
 | `/decision/portfolio/card` | One explicitly authorized member workspace per request |
 

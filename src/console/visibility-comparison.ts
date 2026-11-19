@@ -79,14 +79,14 @@ export function matchedMetric(
 export function readVisibilityComparison(
   tenantId: string,
   body: Record<string, unknown>,
-  options: { defaultBrand?: string; alert?: AlertConfig; now?: Date; action?: { id: string; completedAt: string; prompt: string } } = {},
+  options: { defaultBrand?: string; alert?: AlertConfig; now?: Date; action?: { id: string; completedAt: string; prompt: string; days?: 14 | 28; cohort?: string } } = {},
 ) {
   const now = options.now ?? new Date();
   const action = options.action;
   const actionDay = action ? utcDayStart(new Date(action.completedAt)) : null;
   if (actionDay !== null && !Number.isFinite(actionDay)) throw new Error("Invalid completion date");
-  // Leave the UTC completion day out of both 30-day windows.
-  const scope = actionDay === null ? body : { ...body, from: dateLabel(actionDay + DAY), to: dateLabel(actionDay + 30 * DAY) };
+  // Leave the UTC completion day out of both windows.
+  const scope = actionDay === null ? body : { ...body, from: dateLabel(actionDay + DAY), to: dateLabel(actionDay + (action?.days ?? 30) * DAY) };
   const { panel, filters, group } = readVisibilityScope(tenantId, scope);
   const { from, to, source } = filters;
   if (!from || !to) throw new Error("A start and end date are required");
@@ -110,7 +110,8 @@ export function readVisibilityComparison(
     for (const dataset of compatiblePanels(tenantId, panel, includeHistory)) {
       datasets++;
       for (const row of dataset.observations) {
-        if ((!source || row.source === source) && (!prompt || row.prompt === prompt) && (!groupPrompts || groupPrompts.has(row.prompt))) yield row;
+        if ((!source || row.source === source) && (!prompt || row.prompt === prompt) && (!groupPrompts || groupPrompts.has(row.prompt))
+          && (!action?.cohort || action.cohort === cohortKey(row))) yield row;
       }
     }
   }
