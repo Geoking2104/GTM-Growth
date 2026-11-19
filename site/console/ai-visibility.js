@@ -169,7 +169,8 @@ export function renderAiVisibility({ api, me, initialFilters = {} }) {
     if (gaps && Array.isArray(gaps.categories) && gaps.totals && typeof gaps.evaluated === "boolean") {
       const CATEGORY_LABELS = { own: L("Site propre", "Own site"), competitor: L("Concurrents", "Competitors"), reddit: "Reddit", youtube: "YouTube", linkedin: "LinkedIn", wikipedia: "Wikipedia", web: L("Web autre", "Other web") };
       const analysis = el("section", "ai-chart"); analysis.append(el("h3", "", L("Écarts de citations", "Citation gaps")), el("p", "c-note", gaps.evaluated ? L("Écarts calculés uniquement à partir des citations stockées de ce panel.", gaps.note || "Gaps computed only from this panel’s stored citations.") : L("Déclarez le site de la marque pour évaluer les écarts.", gaps.note || "Declare the brand website to assess citation gaps.")));
-      analysis.append(el("p", "c-note", `${gaps.totals.observations} ${L("observations", "observations")} · ${gaps.totals.withCitations} ${L("avec citations", "with citations")} · ${gaps.totals.citations} ${L("citations", "citations")} · ${gaps.totals.promptsMentioningBrand} ${L("prompts citant la marque", "prompts mentioning the brand")} · ${gaps.totals.promptsMentioningBrandWithOwnCitation} ${L("avec citation du site propre", "with an own-site citation")}`));
+      const ownMentions = gaps.evaluated ? gaps.totals.promptsMentioningBrandWithOwnCitation : "—";
+      analysis.append(el("p", "c-note", `${gaps.totals.observations} ${L("observations", "observations")} · ${gaps.totals.withCitations} ${L("avec citations", "with citations")} · ${gaps.totals.citations} ${L("citations", "citations")} · ${gaps.totals.promptsMentioningBrand} ${L("réponses mentionnant la marque", "answers mentioning the brand")} · ${ownMentions} ${L("avec citation du site propre", "with an own-site citation")}`));
       const metadata = gaps.totals.withCitationMetadata ?? gaps.totals.withCitations;
       analysis.append(el("p", "c-note", L(`Métadonnées de citations disponibles · ${metadata}/${gaps.totals.observations}`, `Citation metadata available · ${metadata}/${gaps.totals.observations}`)));
       if (gaps.evaluated && metadata && Number.isInteger(gaps.totals.citingOwnSite)) {
@@ -182,7 +183,8 @@ export function renderAiVisibility({ api, me, initialFilters = {} }) {
       for (const row of gaps.categories) {
         if (!row.citations && !row.citedPrompts && row.category !== "own") continue;
         const line = el("div", "ai-bar-row"); const track = el("span", "ai-bar-track"); const fill = el("i", "ai-bar-fill"); fill.style.width = `${row.shareOfCitations === null ? 0 : row.shareOfCitations}%`; track.append(fill);
-        line.append(el("span", "", CATEGORY_LABELS[row.category] || row.category), track, el("strong", "", `${row.citations} · ${fmt(row.shareOfCitations === null ? null : row.shareOfCitations)}`));
+        const categoryTotal = row.category === "own" && !gaps.evaluated ? "—" : `${row.citations} · ${fmt(row.shareOfCitations)}`;
+        line.append(el("span", "", CATEGORY_LABELS[row.category] || row.category), track, el("strong", "", categoryTotal));
         analysis.append(line);
       }
       for (const host of Array.isArray(gaps.topHosts) ? gaps.topHosts : []) { const line = el("div", "ai-bar-row"); const link = el("a", "ai-chart-link", host.host); link.href = /^https?:\/\//i.test(host.example) ? host.example : `https://${host.host}/`; link.target = "_blank"; link.rel = "noopener noreferrer"; line.append(link, el("span", "c-note", `${CATEGORY_LABELS[host.category] || host.category} · ${host.citations}`)); analysis.append(line); }

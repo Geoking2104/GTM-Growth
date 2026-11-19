@@ -87,7 +87,8 @@ export function citationGaps(dataset: Dataset, source = "", brand = ""): Citatio
   }
   const categories: CitationCategoryRow[] = CITATION_CATEGORIES.map((category) => {
     const row = rows.get(category)!;
-    return { category, citations: row.citations, citedPrompts: row.citedPrompts, shareOfCitations: totalCitations ? row.citations / totalCitations * 100 : null };
+    const hasDenominator = totalCitations > 0 && (category !== "own" || Boolean(ownHost));
+    return { category, citations: row.citations, citedPrompts: row.citedPrompts, shareOfCitations: hasDenominator ? row.citations / totalCitations * 100 : null };
   });
   const topHosts = [...hosts.entries()].map(([host, entry]) => ({ host, category: entry.category, citations: entry.citations, example: entry.example }))
     .sort((a, b) => b.citations - a.citations || a.host.localeCompare(b.host)).slice(0, MAX_HOSTS);

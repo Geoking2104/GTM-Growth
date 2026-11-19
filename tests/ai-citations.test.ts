@@ -39,7 +39,8 @@ describe("citation gap analysis", () => {
     const result = citationGaps(incomplete, "", "Alpha");
     expect(result.evaluated).toBe(false); expect(result.ownWebsite).toBeNull(); expect(result.gaps).toEqual([]);
     expect(result.note).toMatch(/website/i);
-    expect(result.categories.find((c) => c.category === "own").citations).toBe(0);
+    expect(result.categories.find((c) => c.category === "own")).toMatchObject({ citations: 0, shareOfCitations: null });
+    expect(result.categories.find((c) => c.category === "reddit").shareOfCitations).toBeGreaterThan(0);
   });
   it("filters by source and resolves the requested brand like summarize", () => {
     const dataset = normalizeImport(input);
