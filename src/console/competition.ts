@@ -4,6 +4,7 @@ import { discoverCandidates } from "./competition-discovery.js";
 import { visibilityAlert, type AlertConfig } from "./competition-alerts.js";
 import type { ConsoleRoute } from "./util.js";
 import { getDataset, listDatasets, insertDataset, readCompetitionState, updateCompetitionState } from "./ai-visibility-store.js";
+import { readVisibilityScope } from "./visibility-scope.js";
 
 type Action = { id: string; title: string; owner: string; status: "todo" | "doing" | "done"; datasetId: string; prompt: string; createdAt: string; completedAt?: string; page?: string };
 type Priority = { datasetId: string; prompt: string; importance: number; effort: number; page: string };
@@ -26,7 +27,7 @@ export const competitionRoutes: ConsoleRoute[] = [
     const dataset = getDataset<{ id: string; createdAt: string; brands: unknown[]; observations: Array<{ prompt: string; answer: string; source: string; observedAt: string; citations?: string[]; citationSpans?: Array<{ start: number; end: number; url: string }> }> }>(tenant(ctx), datasetId);
     if (!dataset) throw new Error("Dataset not found");
     const { normalizeImport } = await import("./ai-visibility.js");
-    const revised = normalizeImport({ brands: ctx.body.brands, responses: dataset.observations });
+    const revised = normalizeImport({ brands: ctx.body.brands, responses: dataset.observations }, "stored");
     insertDataset(tenant(ctx), revised);
     return { id: revised.id, count: revised.observations.length };
   } },
@@ -42,16 +43,12 @@ export const competitionRoutes: ConsoleRoute[] = [
     return updateCompetitionState(tenant(ctx), initial(), (s) => { const groups = s.groups ??= []; if (id) { const group = groups.find((g) => g.id === id && g.datasetId === datasetId); if (!group) throw new Error("Group not found"); Object.assign(group, { name, prompts }); } else { if (groups.length >= 100) throw new Error("Group limit reached"); groups.push({ id: randomUUID(), datasetId, name, prompts }); } });
   } },
   { path: "/competition/report", needsUrl: false, handler: async (ctx) => {
-    const datasetId = clean(ctx.body.datasetId, 100), source = clean(ctx.body.source, 100), brand = clean(ctx.body.brand, 100);
-    const dataset = getDataset<Parameters<typeof import("./ai-visibility.js").summarize>[0]>(tenant(ctx), datasetId); if (!dataset) throw new Error("Dataset not found");
-    const state = readCompetitionState(tenant(ctx), initial()), groupId = clean(ctx.body.groupId, 100), from = clean(ctx.body.from, 10), to = clean(ctx.body.to, 10);
-    const group = groupId ? (state.groups ?? []).find((g) => g.id === groupId && g.datasetId === datasetId) : undefined;
-    if (groupId && !group) throw new Error("Group not found");
-    for (const date of [from, to]) if (date && (!/^\d{4}-\d{2}-\d{2}$/.test(date) || !Number.isFinite(Date.parse(`${date}T00:00:00Z`)) || new Date(`${date}T00:00:00Z`).toISOString().slice(0, 10) !== date)) throw new Error("Invalid date");
-    if (from && to && from > to) throw new Error("Invalid date range");
-    const filtered = { ...dataset, observations: dataset.observations.filter((r) => (!group || group.prompts.includes(r.prompt)) && (!from || r.observedAt.slice(0, 10) >= from) && (!to || r.observedAt.slice(0, 10) <= to)) };
-    const { summarize } = await import("./ai-visibility.js"); const report = summarize(filtered, source, brand);
-    return { generatedAt: new Date().toISOString(), filters: { source, groupId, from, to }, methodology: "Visibility is responses mentioning a brand divided by valid responses. Unreviewed detections are provisional.", ...report, groups: (state.groups ?? []).filter((g) => g.datasetId === datasetId), actions: state.actions.filter((a) => a.datasetId === datasetId && (!group || group.prompts.includes(a.prompt))), priorities: (state.priorities ?? []).filter((p) => p.datasetId === datasetId && (!group || group.prompts.includes(p.prompt))) };
+    const id = tenant(ctx);
+    const { dataset, filters: { brand, ...filters }, group, groups } = readVisibilityScope(id, ctx.body);
+    const state = readCompetitionState(id, initial());
+    const { summarize } = await import("./ai-visibility.js");
+    const report = summarize(dataset, filters.source, brand);
+    return { generatedAt: new Date().toISOString(), filters, methodology: "Visibility is responses mentioning a brand divided by valid responses. Unreviewed detections are provisional.", ...report, groups, actions: state.actions.filter((a) => a.datasetId === dataset.id && (!group || group.prompts.includes(a.prompt))), priorities: (state.priorities ?? []).filter((p) => p.datasetId === dataset.id && (!group || group.prompts.includes(p.prompt))) };
   } },
   { path: "/competition/alert-config", needsUrl: false, adminOnly: true, handler: async (ctx) => {
     if (ctx.body.disabled === true) return updateCompetitionState(tenant(ctx), initial(), (s) => { delete s.alert; });

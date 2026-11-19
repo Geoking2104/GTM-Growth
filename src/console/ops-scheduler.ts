@@ -56,7 +56,8 @@ export async function runDueJobs(options: SchedulerOptions = {}): Promise<{ tena
       const due = !config.lastPromptRun || now().getTime() - Date.parse(config.lastPromptRun) >= config.promptChecks.intervalHours * 3600_000;
       if (due) {
         const prompts = listPrompts(tenant.id);
-        const engines = (config.promptChecks.engines ?? ["openai"]).filter((e) => engineStatuses(tenant.id).find((s) => s.id === e)?.configured);
+        const available = new Set(engineStatuses(tenant.id).filter((engine) => engine.enabled && engine.configured).map((engine) => engine.id));
+        const engines = (config.promptChecks.engines ?? ["openai"]).filter((engine) => available.has(engine as "openai" | "gemini"));
         if (prompts.length && engines.length) {
           jobs++;
           try {

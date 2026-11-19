@@ -16,7 +16,7 @@ describe("citation gap analysis", () => {
   it("classifies cited sources and counts own-site citations honestly", () => {
     const result = citationGaps(normalizeImport(input), "", "Alpha");
     expect(result.brand).toBe("Alpha"); expect(result.ownWebsite).toBe("https://alpha.example/"); expect(result.evaluated).toBe(true);
-    expect(result.totals).toEqual({ observations: 4, withCitations: 3, citations: 6, promptsMentioningBrand: 3, promptsMentioningBrandWithOwnCitation: 1 });
+    expect(result.totals).toEqual({ observations: 4, withCitations: 3, withCitationMetadata: 3, citingOwnSite: 1, citations: 6, promptsMentioningBrand: 3, promptsMentioningBrandWithOwnCitation: 1 });
     expect(result.competitorHosts).toEqual(["beta.example"]);
     const by = Object.fromEntries(result.categories.map((c) => [c.category, c]));
     expect(CITATION_CATEGORIES).toEqual(["own", "competitor", "reddit", "youtube", "linkedin", "wikipedia", "web"]);
@@ -58,18 +58,29 @@ describe("citation gap analysis", () => {
     expect(result.categories.every((c) => c.shareOfCitations === null)).toBe(true);
     expect(result.gaps).toEqual([]);
   });
+  it("counts an explicit empty citation list in metadata coverage", () => {
+    const dataset = normalizeImport({ brands: input.brands, responses: [
+      input.responses[2], { ...input.responses[2], prompt: "Autre question ?", citations: [] },
+    ] });
+    expect(citationGaps(dataset).totals).toMatchObject({ observations: 2, withCitations: 0, withCitationMetadata: 1, citingOwnSite: 0 });
+  });
 });
 
 describe("observation provenance", () => {
   it("tags imports and provider runs without breaking stored panels", () => {
     expect(normalizeImport(input).observations.every((o) => o.provenance === "imported")).toBe(true);
     expect(normalizeImport(input, "collected").observations.every((o) => o.provenance === "collected")).toBe(true);
-    const mixed = { brands: input.brands, responses: [{ ...input.responses[0], provenance: "collected" }, input.responses[1]] };
+    const mixed = { brands: input.brands, responses: [{ ...input.responses[0], provenance: "collected", collectionVerified: true }, input.responses[1]] };
     const dataset = normalizeImport(mixed);
-    expect(dataset.observations[0].provenance).toBe("collected"); expect(dataset.observations[1].provenance).toBe("imported");
-    // Re-normalizing stored observations (competition flow) preserves the origin.
-    const reImported = normalizeImport({ brands: input.brands, responses: dataset.observations });
-    expect(reImported.observations[0].provenance).toBe("collected"); expect(reImported.observations[1].provenance).toBe("imported");
+    expect(dataset.observations[0]).toMatchObject({ provenance: "imported", declaredProvenance: "collected" });
+    expect(dataset.observations[0].collectionVerified).toBeUndefined();
+    const collected = normalizeImport(input, "collected");
+    const revised = normalizeImport({ brands: input.brands, responses: collected.observations }, "stored");
+    expect(summarize(revised).provenance.collected).toBe(4);
+    const reImported = normalizeImport({ brands: input.brands, responses: collected.observations });
+    expect(summarize(reImported).provenance).toEqual({ imported: 4, collected: 0, unverified: 0 });
+    delete collected.observations[0].collectionVerified;
+    expect(summarize(collected).provenance).toEqual({ imported: 0, collected: 3, unverified: 1 });
   });
   it("summarizes provenance and keeps legacy panels as unverified", () => {
     const dataset = normalizeImport(input);

@@ -64,17 +64,30 @@ describe("competition tenant data", () => {
   });
   it("keeps groups and filtered reports tenant-scoped", async () => {
     process.env.AI_VISIBILITY_PATH = mkdtempSync(path.join(tmpdir(), "competition-"));
-    const { normalizeImport } = await import("../src/console/ai-visibility.js");
+    const { normalizeImport, aiVisibilityRoutes } = await import("../src/console/ai-visibility.js");
     const data = normalizeImport({ brands: [{ name: "Alpha" }], responses: [
       { prompt: "One?", answer: "Alpha and Beta", source: "A", observedAt: "2026-01-01T00:00:00Z" },
       { prompt: "Two?", answer: "Gamma", source: "A", observedAt: "2026-01-02T00:00:00Z" },
+      { prompt: "One?", answer: "Alpha yesterday", source: "A", observedAt: "2025-12-31T00:00:00Z" },
+      { prompt: "One?", answer: "Alpha from another engine", source: "B", observedAt: "2026-01-01T00:00:00Z" },
     ] }); insertDataset("acme", data);
     const config = { datasetId: data.id, name: "One", prompts: ["One?"] };
     expect(route("/competition/group").adminOnly).toBe(true);
     await expect(route("/competition/group").handler(ctx("globex", config))).rejects.toThrow();
     const state = await route("/competition/group").handler(ctx("acme", config)) as { groups: Array<{ id: string }> };
-    const report = await route("/competition/report").handler(ctx("acme", { datasetId: data.id, groupId: state.groups[0].id })) as { total: number };
+    const filters = { datasetId: data.id, groupId: state.groups[0].id, from: "2026-01-01", to: "2026-01-02", source: "A" };
+    const report = await route("/competition/report").handler(ctx("acme", filters)) as { total: number };
     expect(report.total).toBe(1);
+    for (const [name, expected] of [
+      ["report", { total: 1 }],
+      ["share-of-voice", { totalResponses: 1 }],
+      ["citation-gaps", { totals: { observations: 1 } }],
+    ] as const) {
+      const endpoint = aiVisibilityRoutes.find((candidate) => candidate.path === `/ai-visibility/${name}`)!;
+      expect(await endpoint.handler(ctx("acme", filters))).toMatchObject(expected);
+      await expect(endpoint.handler(ctx("globex", filters))).rejects.toThrow("Dataset not found");
+      await expect(endpoint.handler(ctx("acme", { ...filters, groupId: "invalid" }))).rejects.toThrow("Group not found");
+    }
     await expect(route("/competition/report").handler(ctx("globex", { datasetId: data.id }))).rejects.toThrow();
     await expect(route("/competition/report").handler(ctx("acme", { datasetId: data.id, from: "2026-02-30" }))).rejects.toThrow();
     const found = await route("/competition/discovery").handler(ctx("acme", { datasetId: data.id })) as { candidates: Array<{ name: string }> };

@@ -26,7 +26,7 @@ export interface CitationGapRow { id: string; prompt: string; observedAt: string
 export interface CitationGaps {
   panel: string; createdAt: string; brand: string; source: string | null;
   ownWebsite: string | null; evaluated: boolean; note: string;
-  totals: { observations: number; withCitations: number; citations: number; promptsMentioningBrand: number; promptsMentioningBrandWithOwnCitation: number };
+  totals: { observations: number; withCitations: number; withCitationMetadata: number; citingOwnSite: number; citations: number; promptsMentioningBrand: number; promptsMentioningBrandWithOwnCitation: number };
   categories: CitationCategoryRow[];
   topHosts: CitationHostRow[];
   gaps: CitationGapRow[];
@@ -52,13 +52,14 @@ export function citationGaps(dataset: Dataset, source = "", brand = ""): Citatio
 
   const rows = new Map<CitationCategory, { citations: number; citedPrompts: number }>(CITATION_CATEGORIES.map((category) => [category, { citations: 0, citedPrompts: 0 }]));
   const hosts = new Map<string, { category: CitationCategory; citations: number; example: string }>();
-  let totalCitations = 0, withCitations = 0, promptsMentioningBrand = 0, promptsMentioningBrandWithOwnCitation = 0;
+  let totalCitations = 0, withCitations = 0, withCitationMetadata = 0, citingOwnSite = 0, promptsMentioningBrand = 0, promptsMentioningBrandWithOwnCitation = 0;
   const gaps: CitationGapRow[] = [];
   const mentionsBrand = (r: Dataset["observations"][number]) => r.mentions.some((m) => m.brand === activeName && m.status !== "rejected");
 
   for (const observation of observations) {
-    const citations = observation.citations ?? [];
+    const citations = [...new Set(observation.citations ?? [])];
     if (citations.length) withCitations++;
+    if (citations.length || observation.citationMetadata === "available") withCitationMetadata++;
     const mentioned = mentionsBrand(observation);
     if (mentioned) promptsMentioningBrand++;
     let citesOwn = false;
@@ -70,6 +71,7 @@ export function citationGaps(dataset: Dataset, source = "", brand = ""): Citatio
       const entry = hosts.get(host) ?? { category, citations: 0, example: url };
       entry.citations++; hosts.set(host, entry);
     }
+    if (citesOwn) citingOwnSite++;
     if (citesOwn && mentioned) promptsMentioningBrandWithOwnCitation++;
     // Unknown citation evidence (no cited URLs at all) is absent evidence, not a gap.
     if (ownHost && mentioned && citations.length && !citesOwn && gaps.length < MAX_GAPS) {
@@ -96,7 +98,7 @@ export function citationGaps(dataset: Dataset, source = "", brand = ""): Citatio
     note: evaluated
       ? "Gaps are computed from this panel's stored citation URLs only; they are not engine market share or all consumer sessions."
       : "The tracked brand has no declared website in this panel: own-source citation gaps stay unknown, never zero. Declare the brand website before interpreting own-category numbers.",
-    totals: { observations: observations.length, withCitations, citations: totalCitations, promptsMentioningBrand, promptsMentioningBrandWithOwnCitation },
+    totals: { observations: observations.length, withCitations, withCitationMetadata, citingOwnSite, citations: totalCitations, promptsMentioningBrand, promptsMentioningBrandWithOwnCitation },
     categories, topHosts, gaps,
     competitorHosts,
   };
