@@ -13,6 +13,7 @@
  * Row numbers in errors are the export file's own spreadsheet row (header is row 1).
  */
 import type { Provenance } from "./ai-visibility.js";
+import { normalizeMeasurement } from "./visibility-measurement.js";
 
 export type TrackerProvider = "meteoria" | "peec" | "qwairy" | "profound" | "generic";
 export const TRACKER_PROVIDERS: TrackerProvider[] = ["meteoria", "peec", "qwairy", "profound", "generic"];
@@ -69,6 +70,14 @@ const ALIASES: Record<TrackerProvider, { prompt: string[]; answer: string[]; dat
     citations: ["citations", "citedurls", "sources", "links", "references", "urls"],
   },
 };
+
+const CONTEXT_ALIASES = {
+  model: ["modelversion", "modelid"],
+  mode: ["capturemode", "collectionmode", "modedecollecte"],
+  language: ["language", "locale", "langue"],
+  market: ["market", "country", "marche", "pays"],
+};
+const mappingFor = (provider: TrackerProvider) => ({ ...ALIASES[provider], ...CONTEXT_ALIASES });
 
 interface TrackerImportInput { provider: unknown; format: unknown; payload: unknown; brands: unknown }
 
@@ -158,6 +167,13 @@ function mapRow(provider: TrackerProvider, record: Record<string, string> | Reco
   const source = `${PROVIDER_LABELS[provider]} import${engine ? ` (${engine.slice(0, 60)})` : ""}`.slice(0, 100);
   const response: Record<string, unknown> = { prompt, answer, source, observedAt: normalised.observedAt, provenance: TRACKER_PROVENANCE };
   if (citationsRaw !== undefined) response.citations = citations;
+  const context = Object.fromEntries(Object.entries(CONTEXT_ALIASES).map(([field, names]) => [field, find(names)]));
+  try {
+    const measurement = normalizeMeasurement(context);
+    if (measurement) response.measurement = { ...(engine ? { engine: engine.trim().slice(0, 100) } : {}), ...measurement };
+  } catch (error) {
+    throw new Error(`Row ${rowNumber}: ${(error as Error).message}`);
+  }
   return { response, engine, normalisedDate: normalised.partial };
 }
 
@@ -166,10 +182,9 @@ interface MappedBody { responses: Array<Record<string, unknown>>; engines: strin
 function csvBody(provider: TrackerProvider, payload: string): MappedBody {
   const rows = parseCsv(payload);
   if (rows.length < 2) throw new Error("CSV export requires a header row and at least one data row");
-  const aliases = ALIASES[provider];
-  const belongsTo = (header: string, names: string[]): boolean => names.includes(key(header));
+  const known = Object.values(mappingFor(provider)).flat();
   const header = rows[0];
-  const used = header.map((h) => belongsTo(h, [...aliases.prompt, ...aliases.answer, ...aliases.date, ...aliases.engine, ...aliases.citations]));
+  const used = header.map((h) => known.includes(key(h)));
   if (!header.some((h, i) => used[i])) throw new Error("CSV export has no recognised column; expected prompt, answer and date columns");
   const ignored = [...new Set(header.filter((h, i) => h.trim() && !used[i]))];
   const engines = new Set<string>();
@@ -202,8 +217,7 @@ function jsonBody(provider: TrackerProvider, payload: string): MappedBody {
   }
   if (!list.length) throw new Error("JSON export contains no answers");
   if (list.length > MAX_ROWS) throw new Error(`Tracker exports are bounded to ${MAX_ROWS} rows`);
-  const aliases = ALIASES[provider];
-  const known = [...aliases.prompt, ...aliases.answer, ...aliases.date, ...aliases.engine, ...aliases.citations];
+  const known = Object.values(mappingFor(provider)).flat();
   const engines = new Set<string>();
   const ignored = new Set<string>();
   const headers = new Set<string>();
@@ -237,7 +251,7 @@ export function normalizeTrackerExport(input: unknown): TrackerNormalisedImport 
   if (body.payload.length > MAX_TRACKER_PAYLOAD_CHARS) throw new Error("Tracker export exceeds the 5 MB import bound");
   if (!Array.isArray(body.brands) || body.brands.length < 1) throw new Error("Tracker import requires the tenant brand declaration (1–10 brands)");
   const parsed = body.format === "csv" ? csvBody(provider, body.payload) : jsonBody(provider, body.payload);
-  const mapping = Object.fromEntries(Object.entries(ALIASES[provider]).map(([field, aliases]) => [field, parsed.headers.filter((header) => aliases.includes(key(header)))]));
+  const mapping = Object.fromEntries(Object.entries(mappingFor(provider)).map(([field, aliases]) => [field, parsed.headers.filter((header) => aliases.includes(key(header)))]));
   return {
     body: { brands: body.brands, responses: parsed.responses },
     meta: { provider, format: body.format, rows: parsed.responses.length, engines: parsed.engines, ignoredColumns: parsed.ignored, normalisedDates: parsed.normalisedDates, provenance: TRACKER_PROVENANCE, mapping },

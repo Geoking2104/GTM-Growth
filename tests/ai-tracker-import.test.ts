@@ -6,6 +6,14 @@ import { normalizeImport } from "../src/console/ai-visibility.js";
 const brands = [{ name: "Alpha", aliases: [] }, { name: "Beta", aliases: [] }];
 
 describe("AI visibility tracker import connectors (R1)", () => {
+  it("preserves explicit measurement context in generic tracker exports", () => {
+    const payload = "prompt,answer,date,engine,model_version,market,language,collection_mode\nQ?,Alpha,2026-11-19,OpenAI,v2,fr,FR,api";
+    const parsed = normalizeTrackerExport({ provider: "generic", format: "csv", payload, brands: [{ name: "Alpha" }] });
+    const source = normalizeImport(parsed.body).observations[0];
+    expect(source).toMatchObject({ provenance: "imported", measurement: { engine: "OpenAI", model: "v2", market: "FR", language: "fr", mode: "api" } });
+    expect(source.collectionVerified).toBeUndefined();
+    expect(parsed.meta.mapping.model).toEqual(["model_version"]);
+  });
   it("parses RFC-4180 CSV with BOM, CRLF, quoted fields and escaped quotes", () => {
     const csv = "\uFEFF\"Prompt, said the\",\"Answer \"\"ok\"\", avec virgule\"\r\nQ1,\"Ligne\nen deux\",2026-11-01T09:00:00Z\r\nQ2,\"Suite\",2026-11-02T10:00:00Z";
     const rows = parseCsv(csv);

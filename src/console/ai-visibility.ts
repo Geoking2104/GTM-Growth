@@ -10,13 +10,14 @@ import { citationGaps } from "./ai-citations.js";
 import { normalizeTrackerExport, TRACKER_IMPORT_WARNING } from "./ai-tracker-import.js";
 import { shareOfVoiceView } from "./ai-share-of-voice.js";
 import { readVisibilityScope } from "./visibility-scope.js";
+import { normalizeMeasurement, observationOrigin, type MeasurementContext } from "./visibility-measurement.js";
 
 export type Sentiment = "positive" | "neutral" | "negative" | "mixed" | "unknown";
 /** How an answer reached this workspace: a tenant-reviewed import or an explicit
  * bounded provider API run. Legacy datasets without the field stay "unverified". */
 export type Provenance = "imported" | "collected";
 interface Brand { name: string; aliases: string[]; website?: string; logoUrl?: string }
-interface InputResponse { prompt: string; answer: string; source: string; observedAt: string; citations?: string[]; citationSpans?: Array<{ start: number; end: number; url: string }>; provenance?: Provenance }
+interface InputResponse { prompt: string; answer: string; source: string; observedAt: string; citations?: string[]; citationSpans?: Array<{ start: number; end: number; url: string }>; provenance?: Provenance; measurement?: MeasurementContext }
 interface Observation extends InputResponse {
   id: string;
   declaredProvenance?: Provenance;
@@ -59,7 +60,12 @@ export function normalizeImport(input: unknown, origin: Provenance | "stored" = 
     const rawSpans = r.citationSpans ?? []; if (!Array.isArray(rawSpans) || rawSpans.length > 100) throw new Error("Invalid citation spans");
     const citationSpans = rawSpans.map((v) => { if (!v || typeof v !== "object" || Array.isArray(v)) throw new Error("Invalid citation span"); const span = v as Record<string, unknown>; if (!Number.isInteger(span.start) || !Number.isInteger(span.end) || Number(span.start) < 0 || Number(span.end) <= Number(span.start) || Number(span.end) > answer.length || typeof span.url !== "string" || !citations.includes(span.url)) throw new Error("Invalid citation span"); return { start: Number(span.start), end: Number(span.end), url: span.url }; }).sort((a, b) => a.start - b.start);
     if (citationSpans.some((v, i) => i > 0 && v.start < citationSpans[i - 1].end)) throw new Error("Overlapping citation spans");
-    const normalizedDate = new Date(observedAt).toISOString(); const id = createHash("sha256").update(JSON.stringify([prompt, answer, source, normalizedDate])).digest("hex"); if (hashes.has(id)) throw new Error("Duplicate response in import"); hashes.add(id);
+    const normalizedDate = new Date(observedAt).toISOString();
+    const measurement = normalizeMeasurement(r.measurement);
+    const identity = [prompt, answer, source, normalizedDate, ...(measurement ? [measurement] : [])];
+    const id = createHash("sha256").update(JSON.stringify(identity)).digest("hex");
+    if (hashes.has(id)) throw new Error("Duplicate response in import");
+    hashes.add(id);
     const sentences = answer.split(/(?<=[.!?])\s+|\n+/u).filter(Boolean);
     const provenance = origin === "stored" ? readProvenance(r.provenance) : origin;
     const declaredProvenance = readProvenance(r.declaredProvenance) ?? readProvenance(r.provenance);
@@ -73,7 +79,7 @@ export function normalizeImport(input: unknown, origin: Provenance | "stored" = 
       const sentiment: Sentiment = pos && neg ? "mixed" : pos ? "positive" : neg ? "negative" : "unknown";
       return [{ brand: brand.name, evidence: found[0].slice(0, 500), sentiment, method: "heuristic-v1-unvalidated" }];
     });
-    return { id, prompt, answer, source, observedAt: normalizedDate, citations, citationSpans, provenance, declaredProvenance, citationMetadata, ...(verified ? { collectionVerified: true as const } : {}), mentions };
+    return { id, prompt, answer, source, observedAt: normalizedDate, citations, citationSpans, provenance, declaredProvenance, citationMetadata, ...(measurement ? { measurement } : {}), ...(verified ? { collectionVerified: true as const } : {}), mentions };
   });
   return { id: randomUUID(), createdAt: new Date().toISOString(), brands, observations };
 }
@@ -98,11 +104,7 @@ export function summarize(dataset: Dataset, source = "", brand = "") {
   const activeBrand = dataset.brands.some((b) => b.name === brand) ? brand : dataset.brands[0].name;
   const observations = dataset.observations.filter((r) => !source || r.source === source);
   const provenance = { imported: 0, collected: 0, unverified: 0 };
-  for (const r of observations) {
-    if (r.provenance === "collected" && r.collectionVerified) provenance.collected++;
-    else if (r.provenance === "imported") provenance.imported++;
-    else provenance.unverified++;
-  }
+  for (const r of observations) provenance[observationOrigin(r)]++;
   const counts = dataset.brands.map((b) => ({ brand: b.name, count: observations.filter((r) => r.mentions.some((m) => m.brand === b.name && m.status !== "rejected")).length }));
   const count = counts.find((x) => x.brand === activeBrand)?.count ?? 0; const totalMentions = counts.reduce((n, c) => n + c.count, 0);
   const sentiment = { positive: 0, neutral: 0, negative: 0, mixed: 0, unknown: 0 };
@@ -148,7 +150,7 @@ export async function collectOpenAI(input: unknown, key: string, transport: type
     try {
       const response = await transport("https://api.openai.com/v1/responses", { method: "POST", headers: { "Content-Type": "application/json", ...accountHeaders("openai", account || { key }) }, body: JSON.stringify({ model: "gpt-4.1-mini", store: false, input: prompt, max_output_tokens: 1500, tools: [{ type: "web_search" }] }), signal: AbortSignal.timeout(25000), redirect: "error" });
       if (!response.ok) { failures.push({ prompt, reason: `HTTP ${response.status}` }); continue; }
-      const result = await response.json() as { status?: string; output?: Array<{ type?: string; content?: Array<{ type?: string; text?: string; annotations?: Array<{ type?: string; url?: string; start_index?: number; end_index?: number }> }> }> };
+      const result = await response.json() as { status?: string; model?: unknown; output?: Array<{ type?: string; content?: Array<{ type?: string; text?: string; annotations?: Array<{ type?: string; url?: string; start_index?: number; end_index?: number }> }> }> };
       if (result.status !== "completed") { failures.push({ prompt, reason: "Incomplete response" }); continue; }
       let answer = ""; const spans: Array<{ start: number; end: number; url: string }> = []; let invalid = false;
       for (const part of (result.output ?? []).filter((o) => o.type === "message").flatMap((o) => o.content ?? [])) {
@@ -169,7 +171,8 @@ export async function collectOpenAI(input: unknown, key: string, transport: type
       answer = trimmed;
       spans.sort((a, b) => a.start - b.start); if (spans.some((span, i) => i > 0 && span.start < spans[i - 1].end)) invalid = true;
       if (!answer.trim() || answer.length > 20000 || invalid) { failures.push({ prompt, reason: "No usable answer or citation metadata" }); continue; }
-      successes.push({ prompt, answer, source: "OpenAI API + web search (gpt-4.1-mini)", observedAt: new Date().toISOString(), citations: [...new Set(spans.map((span) => span.url))], citationSpans: spans });
+      const model = typeof result.model === "string" && /^[a-zA-Z0-9._:-]{1,100}$/.test(result.model) ? result.model : undefined;
+      successes.push({ prompt, answer, source: "OpenAI API + web search (gpt-4.1-mini)", observedAt: new Date().toISOString(), citations: [...new Set(spans.map((span) => span.url))], citationSpans: spans, measurement: { engine: "openai", mode: "api", ...(model ? { model } : {}) } });
     } catch { failures.push({ prompt, reason: "Request failed or timed out" }); }
   }
   return { successes, failures, brands: body.brands };

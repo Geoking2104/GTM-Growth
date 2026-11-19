@@ -84,7 +84,8 @@ export function renderAiVisibility({ api, me, initialFilters = {} }) {
         trackerReviewed = { signature, digest: result.previewDigest };
         const parts = [`${result.provider} · ${result.format} · ${result.count} ${L("réponses", "answers")}`,
           result.engines?.length ? result.engines.join(", ") : L("moteur inconnu", "unknown engine")];
-        const labels = { prompt: L("Question", "Prompt"), answer: L("Réponse", "Answer"), date: L("Date", "Date"), engine: L("Moteur", "Engine"), citations: "Citations" };
+        const labels = { prompt: L("Question", "Prompt"), answer: L("Réponse", "Answer"), date: L("Date", "Date"), engine: L("Moteur", "Engine"), citations: "Citations",
+          model: L("Modèle", "Model"), mode: L("Mode de collecte", "Collection mode"), language: L("Langue", "Language"), market: L("Marché", "Market") };
         for (const [field, columns] of Object.entries(result.mapping || {})) {
           if (columns.length) parts.push(`${labels[field] || field} ← ${columns.join(", ")}`);
         }

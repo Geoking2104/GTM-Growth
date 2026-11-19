@@ -70,6 +70,13 @@ export function listDatasets<T extends StoredDataset>(tenantId: string): T[] {
   validateTenant(tenantId); const db = database(); migrateLegacy(db, tenantId);
   return (db.prepare("SELECT payload FROM datasets WHERE tenant_id = ? ORDER BY created_at, id").all(tenantId) as Row[]).map(parse<T>);
 }
+export function* recentDatasets<T extends StoredDataset>(tenantId: string): IterableIterator<T> {
+  validateTenant(tenantId);
+  const db = database();
+  migrateLegacy(db, tenantId);
+  const rows = db.prepare("SELECT payload FROM datasets WHERE tenant_id = ? ORDER BY created_at DESC, id DESC").iterate(tenantId) as Iterable<Row>;
+  for (const row of rows) yield parse<T>(row);
+}
 export function getDataset<T extends StoredDataset>(tenantId: string, id: string): T | undefined {
   validateTenant(tenantId); const db = database(); migrateLegacy(db, tenantId);
   const row = db.prepare("SELECT payload FROM datasets WHERE tenant_id = ? AND id = ?").get(tenantId, id) as Row | undefined; return row ? parse<T>(row) : undefined;

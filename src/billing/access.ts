@@ -19,7 +19,7 @@ const retainedRoutes = new Set([
   "/social/state", "/social/analytics", "/social/export", "/local-seo/state", "/local-seo/export",
   "/local-seo/evidence/read", "/local-seo/gbp/unbind", "/local-seo/publication/cancel",
   "/commerce/stores", "/commerce/disconnect", "/commerce/dashboard", "/commerce/orders", "/commerce/products", "/commerce/feed/readiness",
-  "/competition/state", "/competition/report", "/crm/overview", "/crm/contact/detail", "/crm/timeline", "/crm/export",
+  "/competition/state", "/competition/report", "/competition/comparison", "/crm/overview", "/crm/contact/detail", "/crm/timeline", "/crm/export",
 ]);
 export class CloudAccess {
   constructor(readonly config: BillingConfig, readonly store: BillingStore) {}

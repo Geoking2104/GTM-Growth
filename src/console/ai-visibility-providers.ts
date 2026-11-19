@@ -108,8 +108,11 @@ export async function collectProvider(provider: AIProvider, input: unknown, key:
         : { model, input: [{ role: "user", content: prompt }], store: false, max_output_tokens: 1500, tools: [{ type: "web_search" }] };
       const response = await transport(AI_PROVIDERS[provider].endpoint, { method: "POST", headers, body: JSON.stringify(payload), signal: AbortSignal.timeout(25000), redirect: "error" });
       if (!response.ok) { failures.push({ prompt, reason: `HTTP ${response.status}` }); continue; }
-      const parsed = parseProviderAnswer(provider, await response.json());
-      const observation = { prompt, answer: parsed.answer, citations: parsed.citations, citationSpans: parsed.citationSpans, source: `${AI_PROVIDERS[provider].name} API${parsed.searchUsed ? " + web search" : ""} (${model})`, observedAt: new Date().toISOString() };
+      const raw = await response.json();
+      const parsed = parseProviderAnswer(provider, raw);
+      const exposedModel = text(object(raw).model);
+      const measurement = { engine: provider, mode: "api" as const, ...(/^[a-zA-Z0-9._:-]{1,100}$/.test(exposedModel) ? { model: exposedModel } : {}) };
+      const observation = { prompt, answer: parsed.answer, citations: parsed.citations, citationSpans: parsed.citationSpans, source: `${AI_PROVIDERS[provider].name} API${parsed.searchUsed ? " + web search" : ""} (${model})`, observedAt: new Date().toISOString(), measurement };
       normalizeImport({ brands: body.brands, responses: [observation] });
       successes.push(observation);
     } catch { failures.push({ prompt, reason: "Request failed, timed out, or returned an incomplete answer/citations" }); }

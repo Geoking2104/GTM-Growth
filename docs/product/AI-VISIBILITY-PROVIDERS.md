@@ -208,3 +208,33 @@ Evidence rules: a brand without a declared website leaves the own-source gap **u
 (`evaluated: false`, never zero), and a response without any citation is absent evidence,
 not a gap. Cited URLs describe this stored panel only; they are not engine market share or
 consumer-session coverage. See the [observation model specification](../specs/AI-VISIBILITY-OBSERVATION-MODEL-v1-2026-11-18.md).
+
+## Comparing periods in Competition
+
+Choose a start and end date in Competition. The API compares the selected UTC
+window to the immediately preceding window of equal length. Both windows must
+be closed. The optional history toggle finds compatible panels in the same
+workspace by tracked brands, aliases and declared websites. The selected
+panel takes precedence when a response appears in several panels. For a
+completed action, the console compares the 30 UTC days before and after its
+completion day. That day is excluded from both windows.
+
+The method `matched-cohorts-v1` gives equal weight to matching prompts,
+sources, provenance and available engine, model, capture mode, language and
+market. Older observations without detailed context are matched by their
+existing prompt, source and provenance only. The comparison counts matched
+and excluded answers separately. It requires five matched answers per window
+by default, or the workspace threshold configured for the same panel and
+brand. Share of voice also requires tracked-brand mentions in each cohort
+and window. The same cohort matching is used for visibility alerts.
+
+Generic CSV/JSON imports recognize optional columns `model_version`,
+`collection_mode`, `language` and `market`. Canonical JSON answers can supply
+`measurement: { engine, model, mode, language, market }`. The capture mode can
+be `api`, `consumer`, `tracker` or `manual`. Import context is declared by the
+source. API collection records its own engine and an exposed model when the
+response supplies one. Missing fields remain unknown.
+
+The comparison CSV is generated from the filtered report. The tenant-scoped
+read-only route `POST /competition/comparison` and MCP tool
+`competition_comparison` use the same calculations.
