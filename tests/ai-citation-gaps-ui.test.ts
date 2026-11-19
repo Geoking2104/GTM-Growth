@@ -42,7 +42,7 @@ it.each(["fr", "en"])("renders the citation gaps section with evidence links in 
   const rows = section.querySelectorAll("div.ai-bar-row");
   expect(rows.length).toBeGreaterThanOrEqual(3);
   const redditRow = [...rows].find(r => r.querySelector("span")?.textContent === "Reddit")!;
-  expect(redditRow.querySelector("strong")!.textContent).toContain("66.7 %");
+  expect(redditRow.querySelector("strong")!.textContent).toContain(lang === "fr" ? "66,7 %" : "66.7 %");
   const ownRow = [...rows].find(r => r.querySelector("span")?.textContent === (lang === "fr" ? "Site propre" : "Own site"))!;
   expect(ownRow.querySelector("strong")!.textContent).toContain("0 %");
   const hostLink = section.querySelector<HTMLAnchorElement>("a.ai-chart-link")!;
