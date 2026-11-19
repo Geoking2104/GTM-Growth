@@ -60,10 +60,10 @@ export function renderAiVisibility({ api, me }) {
   async function load() {
     const seq = ++request; output.replaceChildren(); if (!current) { status.textContent = ""; output.append(renderDataGuide("competition")); return; }
     status.textContent = L("Chargement…", "Loading…");
-    try { const [report, views] = await Promise.all([api("/ai-visibility/report", { datasetId: current, source, brand }), api("/ai-visibility/share-of-voice", { datasetId: current, source, brand }).catch(() => null)]); if (seq !== request) return; brand = report.brand; render(report, views); status.textContent = ""; }
+    try { const [report, views, gaps] = await Promise.all([api("/ai-visibility/report", { datasetId: current, source, brand }), api("/ai-visibility/share-of-voice", { datasetId: current, source, brand }).catch(() => null), api("/ai-visibility/citation-gaps", { datasetId: current, source, brand }).catch(() => null)]); if (seq !== request) return; brand = report.brand; render(report, views, gaps); status.textContent = ""; }
     catch (error) { if (seq === request) { status.textContent = ""; output.replaceChildren(renderDataGuide("competition", { error, retry: load })); } }
   }
-  function render(data, views) {
+  function render(data, views, gaps) {
     output.replaceChildren();
     if (!data.total) output.append(renderDataGuide("competition", { reason: L("Aucune réponse dans ce filtre. Choisissez une autre source ou un autre jeu.", "No answers match this filter. Choose another source or dataset.") }));
     const filters = el("div", "ai-filters");
@@ -91,6 +91,23 @@ export function renderAiVisibility({ api, me }) {
     for (const row of data.responses) { const seen = new Set(); for (const url of row.citations || []) { try { seen.add(new URL(url).hostname); } catch { /* invalid URLs never become links */ } } for (const domain of seen) domains.set(domain, (domains.get(domain) || 0) + 1); }
     if (!domains.size) citations.append(el("p", "c-note", L("Aucune citation renseignée.", "No citations supplied.")));
     for (const [domain, count] of [...domains].sort((a, b) => b[1] - a[1])) { const row = el("div", "ai-bar-row"); const b = button(domain, () => { output.querySelectorAll(".ai-answer").forEach((node) => { node.hidden = !JSON.parse(node.dataset.domains || "[]").includes(domain); }); selectedDay.textContent = `${domain} · ${count} ${L("réponse(s)", "answer(s)")}`; }); b.className = "ai-chart-link"; const track = el("span", "ai-bar-track"), fill = el("i", "ai-bar-fill"); fill.style.width = `${data.total ? count / data.total * 100 : 0}%`; track.append(fill); row.append(b, track, el("strong", "", String(count))); citations.append(row); } output.append(citations);
+    if (gaps && Array.isArray(gaps.categories) && gaps.totals && typeof gaps.evaluated === "boolean") {
+      const CATEGORY_LABELS = { own: L("Site propre", "Own site"), competitor: L("Concurrents", "Competitors"), reddit: "Reddit", youtube: "YouTube", linkedin: "LinkedIn", wikipedia: "Wikipedia", web: L("Web autre", "Other web") };
+      const analysis = el("section", "ai-chart"); analysis.append(el("h3", "", L("Écarts de citations", "Citation gaps")), el("p", "c-note", gaps.note || L("Écarts calculés uniquement depuis les citations stockées de ce panel.", "Gaps computed only from this panel's stored citations.")));
+      analysis.append(el("p", "c-note", `${gaps.totals.observations} ${L("observations", "observations")} · ${gaps.totals.withCitations} ${L("avec citations", "with citations")} · ${gaps.totals.citations} ${L("citations", "citations")} · ${gaps.totals.promptsMentioningBrand} ${L("prompts citant la marque", "prompts mentioning the brand")} · ${gaps.totals.promptsMentioningBrandWithOwnCitation} ${L("avec citation du site propre", "with an own-site citation")}`));
+      for (const row of gaps.categories) {
+        if (!row.citations && !row.citedPrompts && row.category !== "own") continue;
+        const line = el("div", "ai-bar-row"); const track = el("span", "ai-bar-track"); const fill = el("i", "ai-bar-fill"); fill.style.width = `${row.shareOfCitations === null ? 0 : row.shareOfCitations}%`; track.append(fill);
+        line.append(el("span", "", CATEGORY_LABELS[row.category] || row.category), track, el("strong", "", `${row.citations} · ${fmt(row.shareOfCitations === null ? null : row.shareOfCitations)}`));
+        analysis.append(line);
+      }
+      for (const host of Array.isArray(gaps.topHosts) ? gaps.topHosts : []) { const line = el("div", "ai-bar-row"); const link = el("a", "ai-chart-link", host.host); link.href = `https://${host.host}/`; link.target = "_blank"; link.rel = "noopener noreferrer"; line.append(link, el("span", "c-note", `${CATEGORY_LABELS[host.category] || host.category} · ${host.citations}`)); analysis.append(line); }
+      if (Array.isArray(gaps.gaps) && gaps.gaps.length) {
+        analysis.append(el("p", "c-note", L("Réponses où la marque est citée sans citation du site propre. Preuves et citations ci-dessous.", "Answers that mention the brand without an own-site citation. Evidence and citations below.")));
+        for (const gap of gaps.gaps) { const d = el("details", "ai-answer"); d.append(el("summary", "", `${gap.observedAt.slice(0, 10)} · ${gap.prompt} · ${L("site propre absent des citations", "own site missing from citations")}`), el("p", "c-note", gap.evidence)); for (const url of gap.citations || []) { const cite = el("a", "", url); cite.href = url; cite.target = "_blank"; cite.rel = "noopener noreferrer"; d.append(cite, el("br")); } analysis.append(d); }
+      }
+      output.append(analysis);
+    }
     const evidence = el("section", "ai-chart"); evidence.append(el("h3", "", L("Réponses et preuves", "Answers and evidence")));
     for (const row of data.responses) { const d = el("details", "ai-answer"); d.dataset.day = row.observedAt.slice(0, 10); d.dataset.prompt = row.prompt; d.dataset.source = row.source; d.dataset.domains = JSON.stringify((row.citations || []).map((url) => { try { return new URL(url).hostname; } catch { return ""; } })); d.append(el("summary", "", `${row.observedAt.slice(0, 10)} · ${row.source} · ${row.prompt}`), renderAnswer(row)); for (const mention of row.mentions) {
       d.append(el("p", "c-note", `${mention.brand}: ${mention.sentiment} · ${mention.status || L("à vérifier", "needs review")} · ${mention.evidence}`));
