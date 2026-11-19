@@ -9,8 +9,16 @@ import { runVisibilityCheck, engineStatuses } from "./visibility-runner.js";
 import { runRankCheck, supplierFromEnv } from "./rank-tracking.js";
 import { TenantStore, type Tenant } from "../tenants/store.js";
 import { logger } from "../utils/logger.js";
+import { ReportAccessService } from "../report-access/service.js";
+import { createSmtpFollowUpSender, smtpSettings } from "../report-access/mailer.js";
+import { dispatchDueFollowUps, followUpsEnabled, FOLLOWUP_REPORT_NOTE, type FollowUpReader, type FollowUpSender, type FollowUpStore } from "../report-access/follow-ups.js";
+import { renderReportPdf } from "../report-access/export.js";
+import { followUpSuggestionFor } from "../impact/follow-ups.js";
+import type { FreeReport360 } from "../freeread/report360.js";
+import { runFreeRead } from "../freeread/index.js";
+import { fetchPublicPage } from "../http/public-fetch.js";
 
-export interface SchedulerOptions { cloud?: import("../billing/access.js").CloudAccess; intervalMinutes?: number; tenantStore?: TenantStore; transport?: typeof fetch; now?: () => Date }
+export interface SchedulerOptions { cloud?: import("../billing/access.js").CloudAccess; intervalMinutes?: number; tenantStore?: TenantStore; transport?: typeof fetch; now?: () => Date; reportFollowUps?: { store: FollowUpStore; sender: FollowUpSender; reader: FollowUpReader; limit?: number } }
 let timer: NodeJS.Timeout | null = null;
 
 export function startScheduler(options: SchedulerOptions = {}): void {
@@ -86,7 +94,55 @@ export async function runDueJobs(options: SchedulerOptions = {}): Promise<{ tena
       }
     }
   }
-  return { tenants: store.list().length, jobs, details };
+  // R9 scheduled follow-ups pass (outside the tenant loop: report-access
+  // follow-ups are recipient+page scoped, not tenant scoped).
+  const followUpPass = await drainReportFollowUps(options, now);
+  return { tenants: store.list().length, jobs: jobs + followUpPass.jobs, details: [...details, ...followUpPass.details] };
+}
+
+/** Scheduled R9 follow-ups pass, drained once per tick after tenant jobs.
+ * The default wiring is env-gated and fail-closed (REPORT_FOLLOW_UPS_ENABLED);
+ * tests inject a store/sender/reader through the same options. */
+export async function drainReportFollowUps(options: SchedulerOptions, now: () => Date): Promise<{ tenants: number; jobs: number; details: Array<{ tenant: string; job: string; status: string }> }> {
+  const details: Array<{ tenant: string; job: string; status: string }> = [];
+  let jobs = 0;
+  const injected = options.reportFollowUps;
+  const settings = process.env.REPORT_ACCESS_ENABLED === "true" ? smtpSettings() : null;
+  const runtime = injected ?? (followUpsEnabled() && settings && process.env.REPORT_ACCESS_SECRET && process.env.REPORT_ACCESS_SECRET.length >= 32
+    ? {
+      store: new ReportAccessService({ dbPath: process.env.REPORT_ACCESS_DB_PATH || "data/report-access.sqlite3", secret: process.env.REPORT_ACCESS_SECRET }),
+      sender: createSmtpFollowUpSender(settings),
+      reader: followUpReaderFromEnv(),
+    }
+    : null);
+  if (!runtime) return { tenants: 0, jobs, details };
+  // When this pass built the store itself, close it again: the next tick
+  // reopens fresh, so no database handle accumulates on a long-lived scheduler.
+  const ownsStore = !injected;
+  jobs++;
+  try {
+    const result = await dispatchDueFollowUps({
+      store: runtime.store, reader: runtime.reader, send: runtime.sender,
+      renderPdf: (report, language, opts) => renderReportPdf(report as FreeReport360, language, { brand: opts?.brand ?? null }),
+      suggestionFor: (milestone) => followUpSuggestionFor(milestone),
+      reportNote: FOLLOWUP_REPORT_NOTE,
+      limit: injected?.limit ?? 5, now,
+    });
+    details.push({ tenant: "report-access", job: "report-follow-ups", status: `sent:${result.sent}/failed:${result.failed}` });
+  } finally {
+    if (ownsStore && runtime.store instanceof ReportAccessService) runtime.store.close();
+  }
+  return { tenants: 0, jobs, details };
+}
+
+/** Same public read method as the report-access invitations (one live HTTP
+ * fetch of the same page, deterministic checks). */
+function followUpReaderFromEnv(): FollowUpReader {
+  return async (url: string) => {
+    const result = await runFreeRead({ url, timeoutMs: 12_000, fetcher: fetchPublicPage });
+    if (result.httpStatus < 200 || result.httpStatus >= 400) throw new Error("unreadable_page");
+    return { observedAt: result.report360.observedAt, sourceUrl: result.report360.sourceUrl, blob: JSON.stringify(result.report360) };
+  };
 }
 
 /** Record a lost-mention alert by comparing the two latest datasets (used by

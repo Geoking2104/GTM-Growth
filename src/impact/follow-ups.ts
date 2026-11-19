@@ -50,3 +50,11 @@ export function planFollowUps(observedAt: string | null | undefined, now: Date =
     };
   });
 }
+
+/** Shared suggestion text: timeline surfacing and report-access scheduled
+ * dispatch use the same bilingual wording, never a divergent copy. Accepts
+ * both label forms ("J+14" surfaced to requestors, "J14" stored on the
+ * scheduled rows whose column constraint drops the "+"). */
+export function followUpSuggestionFor(label: "J+14" | "J+28" | "J14" | "J28"): { fr: string; en: string } {
+  return SUGGESTIONS[label === "J+14" || label === "J14" ? 14 : 28];
+}

@@ -10,6 +10,8 @@ import path from "node:path";
 import Database from "better-sqlite3";
 import type { FreeReport360 } from "../freeread/report360.js";
 import type { WhiteLabelBrand } from "./brand.js";
+import { sealAddress, openAddress, FOLLOWUP_MAX_ATTEMPTS, type DueFollowUp, type FollowUpChoice, type ScheduledMilestone } from "./follow-ups.js";
+import { planFollowUps } from "../impact/follow-ups.js";
 
 export type ReportLanguage = "fr" | "en";
 export interface ReportInvitation {
@@ -37,6 +39,8 @@ const MAX_ATTEMPTS = 5;
 const MAX_EMAIL_DAY = 4;
 const MAX_IP_HOUR = 8;
 const MAX_REPORT_BYTES = 500_000;
+/** Follow-up rows outlive invitations (J+28 needs 28 days; invitations go after 7). */
+const FOLLOWUP_RETENTION_MS = 90 * 24 * 60 * 60_000;
 
 export class ReportAccessError extends Error {
   constructor(public readonly status: number, public readonly code: string) { super(code); }
@@ -81,6 +85,25 @@ export class ReportAccessService {
       );
       CREATE INDEX IF NOT EXISTS invitation_request_email ON invitation_requests(email_digest,created_at);
       CREATE INDEX IF NOT EXISTS invitation_request_ip ON invitation_requests(ip_digest,created_at);
+      CREATE TABLE IF NOT EXISTS follow_ups (
+        id TEXT PRIMARY KEY,
+        email_digest TEXT NOT NULL,
+        email_sealed TEXT NOT NULL,
+        language TEXT NOT NULL,
+        brand TEXT,
+        url TEXT NOT NULL,
+        observed_at TEXT NOT NULL,
+        milestone TEXT NOT NULL CHECK(milestone IN ('J14','J28')),
+        due_at INTEGER NOT NULL,
+        status TEXT NOT NULL DEFAULT 'pending' CHECK(status IN ('pending','sent','failed')),
+        attempts INTEGER NOT NULL DEFAULT 0,
+        sent_at INTEGER,
+        error TEXT,
+        fresh_payload TEXT,
+        created_at INTEGER NOT NULL
+      );
+      CREATE UNIQUE INDEX IF NOT EXISTS follow_ups_once ON follow_ups(email_digest, url, milestone);
+      CREATE INDEX IF NOT EXISTS follow_ups_due_idx ON follow_ups(status, due_at);
     `);
     // White-label branding column (additive migration for existing installs).
     const columns = this.db.prepare("PRAGMA table_info(invitations)").all() as { name: string }[];
@@ -97,18 +120,21 @@ export class ReportAccessService {
     this.db.prepare("DELETE FROM sessions WHERE expires_at < ?").run(now);
     this.db.prepare("DELETE FROM invitations WHERE created_at < ?").run(now - RETENTION_MS);
     this.db.prepare("DELETE FROM invitation_requests WHERE created_at < ?").run(now - RETENTION_MS);
+    this.db.prepare("DELETE FROM follow_ups WHERE created_at < ?").run(now - FOLLOWUP_RETENTION_MS);
   }
 
-  async invite(input: { email: unknown; url: string; language: ReportLanguage; ip: string; requestKey?: string; snapshotId?: string; brand?: WhiteLabelBrand | null }, reader: ReportReader, send: MailSender): Promise<{ id: string; expiresIn: number }> {
+  async invite(input: { email: unknown; url: string; language: ReportLanguage; ip: string; requestKey?: string; snapshotId?: string; brand?: WhiteLabelBrand | null; followUp?: FollowUpChoice | null }, reader: ReportReader, send: MailSender): Promise<{ id: string; expiresIn: number }> {
     const email = normaliseReportEmail(input.email);
     if (!email) throw new ReportAccessError(400, "invalid_email");
+    const followUp = input.followUp ?? "none";
+    if (followUp !== "none" && followUp !== "auto") throw new ReportAccessError(400, "invalid_follow_up");
     const now = this.now();
     const emailDigest = this.digest(`email:${email}`);
     const ipDigest = this.digest(`ip:${input.ip}`);
     this.cleanup(now);
     if (input.requestKey !== undefined && !/^[A-Za-z0-9_-]{43}$/.test(input.requestKey)) throw new ReportAccessError(400, "invalid_request_key");
     const requestDigest = this.digest(`invite-request:${input.requestKey || randomBytes(32).toString("base64url")}`);
-    const inputDigest = this.digest(JSON.stringify([emailDigest, input.url, input.language, input.snapshotId || "", input.brand ?? null]));
+    const inputDigest = this.digest(JSON.stringify([emailDigest, input.url, input.language, input.snapshotId || "", input.brand ?? null, followUp]));
     // Reserve before any read or SMTP work, including concurrent requests from other processes.
     const reused = this.db.transaction(() => {
       const previous = this.db.prepare("SELECT * FROM invitation_requests WHERE request_digest=?").get(requestDigest) as { input_digest: string; state: string; invitation_id: string | null } | undefined;
@@ -155,7 +181,75 @@ export class ReportAccessService {
       throw new ReportAccessError(503, "mail_unavailable");
     }
     this.db.prepare("UPDATE invitation_requests SET state='sent' WHERE request_digest=?").run(requestDigest);
+    // Agency explicitly opted into J+14/J+28 follow-ups: seal the recipient
+    // address and plan both milestones from the observed date. Nothing is
+    // scheduled when the choice stays "none" (the default).
+    if (followUp === "auto") this.scheduleFollowUps(email, emailDigest, input.language, input.brand ?? null, report, now);
     return { id, expiresIn: CODE_TTL_MS / 1000 };
+  }
+
+  /** Idempotent per (recipient, page, milestone): a repeated identical
+   * invitation never doubles the plan. The address is stored sealed. */
+  private scheduleFollowUps(email: string, emailDigest: string, language: ReportLanguage, brand: WhiteLabelBrand | null, report: FreeReport360, now: number): void {
+    const plan = planFollowUps(report.observedAt);
+    if (!plan) return;
+    const insert = this.db.prepare(`INSERT OR IGNORE INTO follow_ups
+      (id, email_digest, email_sealed, language, brand, url, observed_at, milestone, due_at, status, attempts, created_at)
+      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, 'pending', 0, ?)`);
+    for (const item of plan) {
+      insert.run(randomUUID(), emailDigest, sealAddress(this.secret, email), language, brand ? JSON.stringify(brand) : null,
+        report.sourceUrl, report.observedAt, item.label.replace("+", ""), Date.parse(item.dueAt), now);
+    }
+  }
+
+  /** Due pending follow-ups, oldest first, decrypted inside the store. */
+  dueFollowUps(now: number, limit: number): DueFollowUp[] {
+    const rows = this.db.prepare(`SELECT * FROM follow_ups WHERE status='pending' AND due_at <= ? ORDER BY due_at, id LIMIT ?`)
+      .all(now, Math.max(1, Math.min(limit, 20))) as Array<RecordRow & { email_sealed: string; url: string; observed_at: string; milestone: string; due_at: number; attempts: number }>;
+    const due: DueFollowUp[] = [];
+    for (const row of rows) {
+      const email = openAddress(this.secret, row.email_sealed);
+      if (!email) { this.db.prepare(`UPDATE follow_ups SET status='failed', error='unsealed', attempts=attempts+1 WHERE id=?`).run(row.id); continue; }
+      due.push({ id: row.id, email, language: row.language, brand: row.brand ? JSON.parse(row.brand) as WhiteLabelBrand : null,
+        url: row.url, observedAt: row.observed_at, milestone: row.milestone as ScheduledMilestone, dueAt: new Date(row.due_at).toISOString(), attempts: row.attempts });
+    }
+    return due;
+  }
+
+  /** Terminal on success; capped retry on failure. The fresh snapshot kept on
+   * the row is the dispatch evidence (never summed, single scope). */
+  completeFollowUp(id: string, outcome: { status: "sent" | "failed"; error?: string; freshPayload?: string }): void {
+    const now = this.now();
+    if (outcome.status === "sent") {
+      if (outcome.freshPayload !== undefined && Buffer.byteLength(outcome.freshPayload, "utf8") > MAX_REPORT_BYTES) throw new Error("Follow-up snapshot too large");
+      this.db.prepare(`UPDATE follow_ups SET status='sent', sent_at=?, error=NULL, fresh_payload=? WHERE id=? AND status='pending'`)
+        .run(now, outcome.freshPayload ?? null, id);
+      return;
+    }
+    const row = this.db.prepare("SELECT attempts FROM follow_ups WHERE id=?").get(id) as { attempts: number } | undefined;
+    if (!row) return;
+    const attempts = row.attempts + 1;
+    const status = attempts >= FOLLOWUP_MAX_ATTEMPTS ? "failed" : "pending";
+    this.db.prepare("UPDATE follow_ups SET attempts=?, status=?, error=? WHERE id=?").run(attempts, status, outcome.error?.slice(0, 160) ?? null, id);
+  }
+
+  /** Follow-up plan for a verified session (recipient and page only; the
+   * address itself never leaves the store). */
+  authorisedFollowUps(id: unknown, token: unknown): { followUps: Array<{ milestone: string; dueAt: string; status: string; sentAt: number | null; attempts: number }> } {
+    if (typeof id !== "string" || !/^[0-9a-f-]{36}$/.test(id) || typeof token !== "string" || !/^[A-Za-z0-9_-]{43}$/.test(token)) {
+      throw new ReportAccessError(401, "verification_required");
+    }
+    const now = this.now();
+    const row = this.db.prepare(`SELECT i.payload AS payload, i.email_digest AS email_digest FROM sessions s
+      JOIN invitations i ON i.id = s.invitation_id
+      WHERE s.token_digest = ? AND s.invitation_id = ? AND s.expires_at > ? AND i.created_at > ?`)
+      .get(this.digest(`session:${token}`), id, now, now - RETENTION_MS) as { payload: string; email_digest: string } | undefined;
+    if (!row) throw new ReportAccessError(401, "verification_required");
+    const url = (JSON.parse(row.payload) as FreeReport360).sourceUrl;
+    const rows = this.db.prepare(`SELECT milestone, due_at, status, sent_at, attempts FROM follow_ups
+      WHERE email_digest = ? AND url = ? ORDER BY due_at`).all(row.email_digest, url) as
+      Array<{ milestone: string; due_at: number; status: string; sent_at: number | null; attempts: number }>;
+    return { followUps: rows.map(r => ({ milestone: r.milestone, dueAt: new Date(r.due_at).toISOString(), status: r.status, sentAt: r.sent_at, attempts: r.attempts })) };
   }
 
   verify(input: { id: unknown; email: unknown; code: unknown }): { token: string; expiresIn: number } {

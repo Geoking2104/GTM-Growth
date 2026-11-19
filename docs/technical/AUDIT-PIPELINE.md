@@ -84,9 +84,32 @@ no totals are computed across steps, scopes or clients. The response also
 carries the **J+14 and J+28 follow-up dates** computed from the latest
 observation (UTC calendar days, `upcoming`/`due`), each with a bilingual
 suggested action — re-run the same URL with the same method, then send the
-white-label client report in the client's language. Reminders are surfaces
-only: nothing is emailed or scheduled automatically.
+white-label client report in the client's language. By default reminders stay
+surfaces only: nothing is emailed or scheduled automatically.
 `tests/impact-timeline.test.ts` covers the pure classifier.
+
+### Scheduled J+14/J+28 white-label dispatch (double opt-in)
+
+Sending a follow-up requires **two explicit consents**. The agency opts in per
+invitation (`followUp: "auto"`; anything other than `none`/`auto` is rejected),
+and the operator sets `REPORT_FOLLOW_UPS_ENABLED=true` on top of the existing
+`REPORT_ACCESS_*` and SMTP configuration — fail-closed by default, so a bare
+upgrade schedules nothing. The recipient address is stored AES-256-GCM sealed
+under an HKDF-derived key (purpose-separated from codes and sessions), never
+in clear and never surfaced again through any route.
+
+The ops scheduler drains due milestones once per pass, after tenant jobs,
+in a bounded batch: it re-measures the exact same URL with the same public
+read method, refuses any snapshot from another page (`scope_mismatch`),
+renders the fresh snapshot as one branded PDF through the same A4 pipeline,
+and sends the bilingual white-label email with the attachment over strict
+TLS. Failures retry at most three times, then stay terminal `failed`; the
+plan is unique per (recipient, page, milestone) and rows are kept 90 days.
+`GET /api/report-access/follow-ups` shows the verified recipient their plan
+(milestones, dates, pending/sent state, attempts) and never an address.
+`scheduled` reports obey the same anti-summing contract: one scope, one
+snapshot, no totals. `tests/report-followups.test.ts` covers sealing, the
+service boundary, dispatch, scope refusal, the retry cap and both routes.
 
 ## Limits and configuration
 

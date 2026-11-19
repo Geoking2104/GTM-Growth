@@ -2,6 +2,34 @@
 
 ## Unreleased
 
+### Scheduled J+14/J+28 white-label client follow-ups
+
+- Follow-up sending is now possible, but only through an explicit double
+  opt-in: the agency chooses `followUp: "auto"` on a single invitation
+  (strictly validated; `none` remains the default and anything else is
+  rejected as `invalid_follow_up`), and the operator sets
+  `REPORT_FOLLOW_UPS_ENABLED=true` on top of the existing report-access and
+  SMTP configuration. Without both, nothing is scheduled or sent.
+- The recipient address is stored AES-256-GCM sealed under an HKDF-derived
+  key bound to the report-access secret (purpose-separated from codes and
+  sessions); it is never kept in clear and never logged or surfaced through
+  any API.
+- The ops scheduler drains due follow-ups once per pass (bounded batch, after
+  tenant jobs): it re-measures the exact same URL with the same public
+  method, refuses a snapshot from another page (`scope_mismatch`), renders
+  the fresh snapshot as one branded PDF through the existing A4 pipeline and
+  sends the bilingual (fr/en) white-label email with the PDF attached over
+  strict TLS. The fresh snapshot is kept on the row as dispatch evidence.
+- Failures are bounded and legible: each milestone retries at most three
+  times, then stays terminal `failed` with its last error; the plan is unique
+  per (recipient, page, milestone) so a repeated identical invitation never
+  doubles a send; rows are kept 90 days, beyond the 7-day invitation window.
+- `GET /api/report-access/follow-ups` shows the verified recipient their own
+  plan (milestones, due dates, pending/sent state, attempts) — and nothing
+  else: no address, no cross-recipient data, no summed metrics. The scheduled
+  reports keep the same anti-summing contract as the first report: one
+  scope, one snapshot, no totals.
+
 ### Impact timeline, J+14/J+28 follow-ups and white-label client exports
 
 - Added the per-scope impact timeline: `GET /api/audits/:id/timeline` builds,
