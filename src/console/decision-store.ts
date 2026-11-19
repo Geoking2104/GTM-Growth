@@ -14,12 +14,26 @@ export interface IntentEvidence {
   id: string; source: "gsc" | "bing" | "ai"; query: string; page: string | null;
   clicks: number | null; impressions: number | null; ctr: number | null; position: number | null;
   observedAt: string; period: string; sourceScope: string; detail?: string;
+  responseId?: string;
+  ai?: { answer: string; citations: string[]; source: string; brand: string; cohort: string };
 }
 export interface IntentPin { id: string; stage: string; targetUrl: string; evidence: IntentEvidence; actor: string; at: string; }
+export interface EditorialDraft {
+  title: string; slug: string; body: string; metaDescription: string;
+  outline: Array<{ h2: string; bullets: string[] }>; entities?: string[];
+}
+export interface EditorialBrief {
+  pinId: string; revision: number; draft: EditorialDraft; savedAt: string;
+}
+export interface EditorialIntervention {
+  reviewId: string; pinId: string; revision: number; effectiveAt: string; verifiedAt: string; postId: number;
+}
 export interface DecisionState {
   version: number; reviews: Review[]; audits: any[]; evidence: IntentEvidence[]; pins: IntentPin[];
   auditLog: Array<{ at: string; actor: string; action: string; target: string }>;
   overviews?: Array<{ url: string; at: string; score: number | null }>;
+  editorialBriefs?: EditorialBrief[];
+  editorialInterventions?: EditorialIntervention[];
 }
 const connections = new Map<string, Database.Database>();
 function db() {

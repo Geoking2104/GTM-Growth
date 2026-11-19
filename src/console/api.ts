@@ -63,6 +63,8 @@ import { journeyRoutes } from "./journey.js";
 import { commerceRoutes } from "./commerce.js";
 import { decisionInboxRoutes } from './decision-inbox.js';
 import { decisionIntentRoutes } from './decision-intent.js';
+import { decisionEditorialRoutes } from './decision-editorial.js';
+import { ReportAccessError } from '../report-access/service.js';
 import { decisionPortfolioRoutes } from './decision-portfolio.js';
 import { measurementRoutes } from './measurement-audit.js';
 import { changeDecision } from './decision-store.js';
@@ -374,7 +376,7 @@ export function buildConsoleRouter(routes: ConsoleRoute[], options: ConsoleOptio
         return res.json(data);
       } catch (error) {
         logger.info(`[console] ${route.path} failed: ${(error as Error).message}`);
-        return fail(res, error instanceof TenantAccessError || error instanceof CloudAccessError ? error.status : error instanceof ZodError ? 400 : /^(DECISION_CHANGED|DECISION_EVIDENCE_EXPIRED|MEASUREMENT_ALREADY_RUNNING)$/.test((error as Error).message) ? 409 : 502, (error as Error).message);
+        return fail(res, error instanceof TenantAccessError || error instanceof CloudAccessError || error instanceof ReportAccessError ? error.status : error instanceof ZodError ? 400 : /^(DECISION_CHANGED|DECISION_EVIDENCE_EXPIRED|MEASUREMENT_ALREADY_RUNNING|WORDPRESS_PUBLICATION_UNVERIFIED)$/.test((error as Error).message) ? 409 : 502, (error as Error).message);
       }
     });
   }
@@ -423,7 +425,7 @@ export function discoverTenant(store: TenantStore, query: { email?: string; host
 }
 
 export function allConsoleRoutes(visibilityJobs?: VisibilityJobStore | null): ConsoleRoute[] {
-  return [...phase1Routes, ...phase2Routes, ...phase3Routes, ...analyticsRoutes, ...gtmRoutes, ...aiVisibilityRoutes, ...aiProviderRoutes, ...aiConnectionRoutes, ...competitionRoutes, ...operationsRoutes, ...visibilityScheduleRoutes(visibilityJobs), ...applyPreviewRoutes, ...applyWriteRoutes, ...localSeoRoutes, ...socialRoutes, ...crmRoutes, ...visualCatalogRoutes, ...dataAgentRoutes, ...journeyRoutes, ...commerceRoutes, ...decisionInboxRoutes, ...decisionIntentRoutes, ...decisionPortfolioRoutes, ...measurementRoutes];
+  return [...phase1Routes, ...phase2Routes, ...phase3Routes, ...analyticsRoutes, ...gtmRoutes, ...aiVisibilityRoutes, ...aiProviderRoutes, ...aiConnectionRoutes, ...competitionRoutes, ...operationsRoutes, ...visibilityScheduleRoutes(visibilityJobs), ...applyPreviewRoutes, ...applyWriteRoutes, ...localSeoRoutes, ...socialRoutes, ...crmRoutes, ...visualCatalogRoutes, ...dataAgentRoutes, ...journeyRoutes, ...commerceRoutes, ...decisionInboxRoutes, ...decisionIntentRoutes, ...decisionEditorialRoutes, ...decisionPortfolioRoutes, ...measurementRoutes];
 }
 
 export function mountConsoleApi(app: Express, options: ConsoleOptions = {}): void {
