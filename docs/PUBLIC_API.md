@@ -3,16 +3,16 @@
 The two original endpoints are served either by the Express app (Node, same process as the MCP
 transports) or by a Cloudflare Worker — same routes, same shared modules:
 
-- **Node server:** `npm run cli -- serve-http` (below)
-- **Cloudflare Worker:** `npm run worker:deploy` — see [WORKER.md](WORKER.md)
+- **Node server:** `pnpm run cli serve-http` (below)
+- **Cloudflare Worker:** `pnpm run worker:deploy` — see [WORKER.md](WORKER.md)
 
 They exist so the landing page can do two things a static site cannot do alone:
 read a page server-side, and send a contact request without opening a mail client.
 
 ```bash
-npm run build
+pnpm run build
 PORT=3111 LEADS_PATH=./data/leads.jsonl SITE_ORIGINS=https://example.com \
-  npm run cli -- serve-http
+  pnpm run cli serve-http
 ```
 
 | Route | Method | Purpose |
@@ -217,6 +217,6 @@ pretending it was sent.
 ## CLI equivalents
 
 ```bash
-npm run cli -- geo-free-read --url https://example.com   # the same payload, in the terminal
-LEADS_PATH=./data/leads.jsonl npm run cli -- leads        # read captured leads
+pnpm run cli geo-free-read --url https://example.com   # the same payload, in the terminal
+LEADS_PATH=./data/leads.jsonl pnpm run cli leads        # read captured leads
 ```

@@ -164,11 +164,11 @@ API keys: `PAGESPEED_API_KEY` / `CRUX_API_KEY` or shared `GOOGLE_API_KEY`.
 ## CLI twin (same repo, outside the agent)
 
 ```
-npm run cli -- list-properties
-npm run cli -- audit-web --account WEB --container WEB --property 123
-npm run cli -- audit-sgtm --account SRV --container SRV
-npm run cli -- verify-secrets --property 123
-npm run cli -- cutover-checklist ...
+pnpm run cli list-properties
+pnpm run cli audit-web --account WEB --container WEB --property 123
+pnpm run cli audit-sgtm --account SRV --container SRV
+pnpm run cli verify-secrets --property 123
+pnpm run cli cutover-checklist ...
 ```
 
 See repo `docs/CLI.md`.

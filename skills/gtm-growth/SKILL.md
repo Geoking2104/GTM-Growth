@@ -5,7 +5,7 @@ license: Apache-2.0
 compatibility: Requires the gtm-growth MCP server (stdio or HTTPS). Works with Grok, Claude, and Codex.
 metadata:
   source: https://github.com/Geoking2104/GTM-Growth
-  version: "0.17.0"
+  version: "0.23.0"
   display_name: GTM Growth
 external_urls:
   - https://github.com/Geoking2104/GTM-Growth

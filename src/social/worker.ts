@@ -612,7 +612,7 @@ const workersSchema = z.record(
     })
     .strict(),
 );
-export function socialWorkerRouter(cloud?: CloudAccess) {
+export function socialWorkerRouter(cloud?: CloudAccess): Router {
   const router = Router();
   router.use((req, res, next) => {
     try {

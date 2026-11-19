@@ -4,7 +4,7 @@
  *
  *   node scripts/collect-sample.mjs [url] [outfile]
  *
- * Requires `npm run build` first. The JSON is the evidence behind
+ * Requires `pnpm run build` first. The JSON is the evidence behind
  * `site/reports/opendpe.html`; regenerate both when copying the report.
  */
 import fs from "node:fs";

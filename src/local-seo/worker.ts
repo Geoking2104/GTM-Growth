@@ -42,7 +42,7 @@ export async function runJob(tenant:string,allowed:readonly string[],provider:Gb
       j.status=revoked?"revoked":j.attempt<3?"queued":"failed";j.error=code;j.leaseUntil=Date.now()+(code==="GBP_QUOTA"?3600000:60000);log(s,"worker",`job-${j.status}`,j.siteId);return {jobId:j.id,status:j.status,error:code};});
   }
 }
-export function localWorkerRouter(execute:typeof runJob=runJob, cloud?: CloudAccess) {
+export function localWorkerRouter(execute:typeof runJob=runJob, cloud?: CloudAccess): Router {
   const router=Router();
   router.post("/tick",async(req,res)=>{
     try {

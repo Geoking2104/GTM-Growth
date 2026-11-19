@@ -51,7 +51,7 @@ const requestSchema = z.object({
 export function bridgeSignature(secret: string, timestamp: string, nonce: string, raw: Buffer | string) {
   return createHmac("sha256", secret).update(`v1:${timestamp}:${nonce}:`).update(raw).digest("hex");
 }
-export function buildDataAgentBridge(options: { store?: TenantStore; env?: NodeJS.ProcessEnv; cloud?: CloudAccess } = {}) {
+export function buildDataAgentBridge(options: { store?: TenantStore; env?: NodeJS.ProcessEnv; cloud?: CloudAccess } = {}): express.Router {
   const env = options.env ?? process.env; const store = options.store ?? new TenantStore(); const router = express.Router();
   // Mount before express.json in the HTTP server. Only signed, bounded payloads reach JSON parsing.
   router.post("/read", express.raw({ type: "application/json", limit: "16kb" }), async (req, res) => {

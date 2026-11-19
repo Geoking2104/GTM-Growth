@@ -54,11 +54,11 @@ production services. [Integration map](INTEGRATION-MAP.md) expands the boundarie
 ```bash
 git clone https://github.com/Geoking2104/GTM-Growth.git
 cd GTM-Growth
-npm ci
+pnpm install --frozen-lockfile
 cp .env.example .env
-npm run build
-npm run cli -- help
-npm run cli -- geo-audit --url https://example.com
+pnpm run build
+pnpm run cli help
+pnpm run cli geo-audit --url https://example.com
 ```
 
 Public audit tools do not need Google credentials. For connected Google tools,
@@ -68,9 +68,9 @@ property. Start with read permissions. GBP uses its own listing-manager OAuth
 configuration, not the analytics service account.
 
 ```bash
-npm run start:stdio
+pnpm run start:stdio
 # Alternatively, after configuring access:
-HOST=127.0.0.1 npm run start:http
+HOST=127.0.0.1 pnpm run start:http
 ```
 
 The HTTP backend defaults to port 3000; it is not the complete Nginx/static-site/SSO
@@ -139,15 +139,15 @@ reading order logical. Deep guides retain their existing URLs.
 ## Verify and operate
 
 ```bash
-npm run docs:check
-npm run typecheck
-npm run lint
-npm test
-npm run build
-npm run site:check
+pnpm run docs:check
+pnpm run typecheck
+pnpm run lint
+pnpm test
+pnpm run build
+pnpm run site:check
 ```
 
-Run the checks appropriate to a change. Site source edits require `npm run
+Run the checks appropriate to a change. Site source edits require `pnpm run
 site:render` before `site:check`; generated EN/FR pages must match their sources.
 CI also runs the production image, bilingual browser flows and optional runtime
 smoke tests. [Operations](OPERATIONS.md) covers activation, release evidence and

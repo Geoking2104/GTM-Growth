@@ -46,7 +46,7 @@ for (const locale of ["en", "fr"]) {
     const guideTarget = path.join(root, 'site', guidePath(locale, track), 'index.html');
     const guideHtml = guidePage(locale, track);
     if (check) {
-      if (!fs.existsSync(guideTarget) || fs.readFileSync(guideTarget, 'utf8') !== guideHtml) throw new Error(`${guideTarget} is stale; run npm run site:render`);
+      if (!fs.existsSync(guideTarget) || fs.readFileSync(guideTarget, 'utf8') !== guideHtml) throw new Error(`${guideTarget} is stale; run pnpm run site:render`);
     } else {
       fs.mkdirSync(path.dirname(guideTarget), { recursive: true });
       fs.writeFileSync(guideTarget, guideHtml);

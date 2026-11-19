@@ -135,7 +135,7 @@ are unchanged. Production payments require the separate [billing acceptance](../
 
 ## Operation and observation
 
-Run `npm run build`, then `npm run start:http` and `npm run start:audit-worker`
+Run `pnpm run build`, then `pnpm run start:http` and `pnpm run start:audit-worker`
 with the same audit database, Redis and secret. The OVH deployment script generates
 independent persisted secrets if absent. It starts dedicated PostgreSQL, Redis and
 worker services with bounded resources. It preserves the old `/data` volume and

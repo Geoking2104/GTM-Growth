@@ -218,7 +218,7 @@ Avant l'activation de la clé Live, publier et faire valider :
 
 **Bascule après approbation humaine expresse :**
 
-1. CI verte : `npm run typecheck`, `npm run lint`, `npm test`, `npm run build` ; contrôle des tests d'intégration et du pipeline de sécurité.
+1. CI verte : `pnpm run typecheck`, `pnpm run lint`, `pnpm test`, `pnpm run build` ; contrôle des tests d'intégration et du pipeline de sécurité.
 2. Sauvegardes vérifiées, migration **sur base GTM seulement**, aucune modification du schéma Keycloak ou openDPE.
 3. Vérifier que le script `deploy/kayroslab-vps/deploy.sh` cible uniquement GTM Growth ; ne redémarrer ni openDPE ni KayrosLab.
 4. Déployer d'abord avec `BILLING_MODE=test` et `BILLING_CHECKOUT_ENABLED=false`, vérifier santé, console, API et routage public du webhook.

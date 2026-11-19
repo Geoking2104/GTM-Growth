@@ -10,7 +10,7 @@
  *   POST /api/lead        contact request (forwarded, and stored in KV if bound)
  *   GET  /health
  *
- * Deploy: `npm run worker:deploy` (see docs/WORKER.md).
+ * Deploy: `pnpm run worker:deploy` (see docs/WORKER.md).
  */
 
 import { runFreeRead } from "../freeread/index.js";

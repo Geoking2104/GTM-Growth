@@ -1,6 +1,6 @@
 # Documentation hub
 
-[Project README](../README.md) · [Shared journey](journey/README.md) · [Capability register](journey/CAPABILITIES.md)
+[Project README](../README.md) · [Shared journey](journey/README.md) · [Capability register](journey/CAPABILITIES.md) · [Upgrade guide](UPGRADING.md)
 
 Read from customer decision to implementation. Marketing and technical guides use
 the same five stages: **Diagnose → Understand → Prepare → Measure → Coordinate**.
@@ -87,7 +87,7 @@ capabilities and do not override source behavior or release evidence.
 The journey blueprint owns vocabulary and handoffs. The capability register owns
 availability and release evidence. Reading tracks explain the same facts for their
 audiences. Domain contracts own API/detail, runbooks own activation/recovery, and
-historical documents preserve intent. Run `npm run docs:check` after edits.
+historical documents preserve intent. Run `pnpm run docs:check` after edits.
 
 ## PAP 1.0 read pilot
 

@@ -1,7 +1,7 @@
 /**
  * Provisionne un client GTM Growth dans Keycloak (organisation ou realm dédié).
  *
- *   npm run tenant:provision -- --id acme --name "Acme" --email-domain acme.fr \
+ *   pnpm run tenant:provision --id acme --name "Acme" --email-domain acme.fr \
  *     --domain acme.fr --property sc-domain:acme.fr --admin jean@acme.fr [--mode realm] \
  *     [--idp google|microsoft|oidc|saml --idp-client-id … --idp-client-secret-env VAR --idp-tenant …]
  *

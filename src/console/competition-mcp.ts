@@ -20,7 +20,7 @@ const definitions = [
   { name: "competition_discovery", description: "List unverified candidate names with excerpts from a tenant dataset.", path: "/competition/discovery", schema: z.object({ datasetId: z.string().min(1).max(100) }).strict() },
   { name: "competition_alert", description: "Read the tenant's configured visibility alert.", path: "/competition/alert", schema: z.object({}).strict() },
 ];
-export function buildCompetitionMcpRouter(options: ConsoleOptions = {}) {
+export function buildCompetitionMcpRouter(options: ConsoleOptions = {}): express.Router {
   const router = express.Router(), store = options.store ?? new TenantStore();
   const config = withTrust(options.config === undefined ? oidcConfigFromEnv() : options.config, store);
   router.use(requireOidc(config, options.jwksLoader));

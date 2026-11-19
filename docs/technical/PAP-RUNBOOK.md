@@ -69,12 +69,12 @@ Errors include a request ID and a stable code: 400 invalid request/version/Sessi
 | 19–20 | French and English consent → read → disconnect, keyboard navigation and narrow viewport |
 
 ```bash
-npm run typecheck
-npm run lint
-npm test
-npm run build
-npm run docs:check
-npm run site:check
+pnpm run typecheck
+pnpm run lint
+pnpm test
+pnpm run build
+pnpm run docs:check
+pnpm run site:check
 PLAYWRIGHT_CHROMIUM_EXECUTABLE=/usr/bin/chromium node scripts/qa-poppy.mjs
 ```
 

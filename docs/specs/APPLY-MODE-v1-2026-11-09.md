@@ -410,22 +410,22 @@ Ne jamais publier directement dans GTM. Le flux passe toujours par un workspace 
 
 ```bash
 # Audit - lecture seule par défaut
-npm run cli -- geo-audit --url https://acme.com
+pnpm run cli geo-audit --url https://acme.com
 
 # Simuler sans écrire
-npm run cli -- geo-apply --url https://acme.com --fix robots-ai --dry-run
+pnpm run cli geo-apply --url https://acme.com --fix robots-ai --dry-run
 
 # Voir le diff
-npm run cli -- geo-apply --url https://acme.com --fix robots-ai --diff
+pnpm run cli geo-apply --url https://acme.com --fix robots-ai --diff
 
 # Appliquer avec confirmation explicite
-npm run cli -- geo-apply --url https://acme.com --fix robots-ai --confirm=true
+pnpm run cli geo-apply --url https://acme.com --fix robots-ai --confirm=true
 
 # Vérifier après application
-npm run cli -- geo-verify --url https://acme.com --fix robots-ai
+pnpm run cli geo-verify --url https://acme.com --fix robots-ai
 
 # Annuler
-npm run cli -- geo-rollback --url https://acme.com --fix robots-ai --to snapshot-2026-11-09-14-32
+pnpm run cli geo-rollback --url https://acme.com --fix robots-ai --to snapshot-2026-11-09-14-32
 ```
 
 Règles CLI :

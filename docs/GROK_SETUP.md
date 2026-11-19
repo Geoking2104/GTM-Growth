@@ -14,7 +14,7 @@ Claude and Codex use the same skill. See [CLAUDE_SETUP.md](CLAUDE_SETUP.md) and 
 ## A. Grok Build
 
 ```bash
-cd GTM-Growth && npm install && npm run build
+cd GTM-Growth && pnpm install && pnpm run build
 export GOOGLE_APPLICATION_CREDENTIALS=/path/to/sa.json
 grok mcp doctor gtm-growth
 grok   # run inside the repo — uses .grok/config.toml
@@ -42,8 +42,8 @@ Tools appear as `gtm-growth__<tool_name>`.
 ### 2. Run the server
 
 ```bash
-npm install && npm run build
-npm run start:http
+pnpm install && pnpm run build
+pnpm run start:http
 ngrok http 3000
 # use https://xxxx.ngrok-free.app/mcp
 ```

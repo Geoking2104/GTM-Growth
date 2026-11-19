@@ -85,21 +85,21 @@ Five smaller tools answer questions the rubric cannot:
 ## 3. CLI
 
 ```bash
-npm run cli -- geo-audit --url https://example.com
-npm run cli -- geo-audit --url https://example.com --no-ai-discovery
-npm run cli -- geo-sitemap --url https://example.com --max-urls 10
-npm run cli -- geo-llms --url https://example.com --out ./public/llms.txt
-npm run cli -- geo-schema --kind organization --name "Acme" --url https://acme.com \
+pnpm run cli geo-audit --url https://example.com
+pnpm run cli geo-audit --url https://example.com --no-ai-discovery
+pnpm run cli geo-sitemap --url https://example.com --max-urls 10
+pnpm run cli geo-llms --url https://example.com --out ./public/llms.txt
+pnpm run cli geo-schema --kind organization --name "Acme" --url https://acme.com \
   --same-as "https://wikipedia.org/wiki/Acme,https://linkedin.com/company/acme" \
   --out ./public/schema.html
-npm run cli -- geo-robots --url https://example.com --out ./public/robots.txt
-npm run cli -- geo-citability --url https://example.com
-npm run cli -- geo-crawlers --url https://example.com
-npm run cli -- geo-drift --url https://example.com          # exit 1 when stale
-npm run cli -- geo-risks --url https://example.com
-npm run cli -- geo-positioning --url https://acme.com --competitors https://a.com,https://b.com
-npm run cli -- geo-platforms --url https://acme.com
-npm run cli -- geo-report --url https://acme.com --out ./report.pdf
+pnpm run cli geo-robots --url https://example.com --out ./public/robots.txt
+pnpm run cli geo-citability --url https://example.com
+pnpm run cli geo-crawlers --url https://example.com
+pnpm run cli geo-drift --url https://example.com          # exit 1 when stale
+pnpm run cli geo-risks --url https://example.com
+pnpm run cli geo-positioning --url https://acme.com --competitors https://a.com,https://b.com
+pnpm run cli geo-platforms --url https://acme.com
+pnpm run cli geo-report --url https://acme.com --out ./report.pdf
 ```
 
 `geo-audit` prints the same JSON an agent receives: score, breakdown, checks and
@@ -111,7 +111,7 @@ artifact when `--out` is given, otherwise print it to stdout.
 `geo-free-read` returns the same payload the landing page consumes:
 
 ```bash
-npm run cli -- geo-free-read --url https://example.com
+pnpm run cli geo-free-read --url https://example.com
 ```
 
 It fetches the page, `robots.txt` and one sitemap once, injects them into the GEO
@@ -143,7 +143,7 @@ Colour follows the band (green ≥80, amber ≥60, red below); charts and pictog
 are drawn as vectors, so the file stays around 43 kB and uses standard PDF fonts.
 
 ```bash
-npm run cli -- geo-report --url https://example.com --out ./report.pdf --contact https://your-site
+pnpm run cli geo-report --url https://example.com --out ./report.pdf --contact https://your-site
 ```
 
 ---
@@ -169,7 +169,7 @@ breakdown and the returned fix order — is in the README, section 8,
 
 A reproducible before/after — a day-one page at 9/100, then 96/100 after the
 generated artifacts and editorial fixes — is printed by
-`npm run build && npm run demo:geo` (offline, no credentials).
+`pnpm run build && pnpm run demo:geo` (offline, no credentials).
 
 ---
 

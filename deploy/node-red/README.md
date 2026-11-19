@@ -13,7 +13,9 @@ Provision a tenant-bound token/hash map as described in [operations](../../docs/
 For an isolated runtime smoke test (no Google calls):
 
 ```sh
-npm install --prefix /tmp/gtm-node-red --ignore-scripts --no-audit --no-fund node-red@4.1.17
+mkdir -p /tmp/gtm-node-red
+printf '%s\n' '{"name":"gtm-node-red-smoke","private":true}' > /tmp/gtm-node-red/package.json
+pnpm --dir /tmp/gtm-node-red add --ignore-scripts --save-exact node-red@4.1.17
 NODE_RED_ENTRY=/tmp/gtm-node-red/node_modules/node-red/red.js node scripts/qa-local-seo-flows.mjs
 ```
 

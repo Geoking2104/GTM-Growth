@@ -6,7 +6,7 @@ Bundles the **GTM Growth** MCP server for Grok Build.
 
 ```bash
 cd /path/to/GTM Growth
-npm install && npm run build
+pnpm install && pnpm run build
 
 # Project scope (recommended while developing in this repo)
 grok mcp add --scope project ga-to-grok -- node dist/index.js --transport stdio

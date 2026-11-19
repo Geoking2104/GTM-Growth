@@ -5,55 +5,74 @@ Commands aligned with the GA4 / GTM / Search Console / performance workflows.
 ## Install / build
 
 ```bash
-npm install
-npm run build
-npm run cli -- help
+corepack enable pnpm
+pnpm install --frozen-lockfile
+pnpm run build
+node dist/bin.js doctor
+node dist/bin.js help
 ```
 
 Environment: see `.env.example`.
+
+`doctor` prints the installed version, Node compatibility, dependency and SQLite
+binding status, configuration presence, and bounded PostgreSQL and Redis probes.
+It prints statuses without exposing configuration secrets. Use
+`doctor --require-services` to require the durable audit database and queue in CI.
+
+### Audit exit codes
+
+| Code | Meaning | Conditions |
+| --- | --- | --- |
+| `0` | Audit completed and selected gates passed | A GEO page can be read and its score meets the threshold when provided |
+| `1` | A gate failed | `geo-audit`, `geo-sitemap` or `geo-report` falls below `--min-score 0…100`, `geo-drift` is out of sync, a tracking audit finds a critical issue, a reachable health endpoint is unhealthy, or `doctor --require-services` finds a missing or unreachable audit service |
+| `2` | Audit could not run | Invalid commands or options, an exception, no usable page in a GEO audit, all health probes unreachable, or an unsupported or incomplete installation reported by `doctor` |
+
+GEO scores and findings remain part of the JSON result when a gate fails. For
+`geo-sitemap`, the score gate applies to successfully read pages. The report
+also includes the number of unreadable pages.
 
 ---
 
 ## Discovery
 
 ```bash
-npm run cli -- list-properties
-npm run cli -- list-sgtm
-npm run cli -- list-search-sites
+pnpm run cli list-properties
+pnpm run cli list-sgtm
+pnpm run cli list-search-sites
 ```
 
 ## Search Console
 
 ```bash
-npm run cli -- search-overview --site "https://example.com/"
-npm run cli -- top-queries --site "https://example.com/" --limit 20
-npm run cli -- inspect-url --site "https://example.com/" --url "https://example.com/page"
+pnpm run cli search-overview --site "https://example.com/"
+pnpm run cli top-queries --site "https://example.com/" --limit 20
+pnpm run cli inspect-url --site "https://example.com/" --url "https://example.com/page"
 ```
 
 ## Performance
 
 ```bash
-npm run cli -- pagespeed --url "https://example.com/" --strategy mobile
-npm run cli -- crux --origin "https://example.com" --form-factor PHONE
+pnpm run cli pagespeed --url "https://example.com/" --strategy mobile
+pnpm run cli crux --origin "https://example.com" --form-factor PHONE
 ```
 
 ## GEO — AI search readiness
 
 ```bash
-npm run cli -- geo-audit --url "https://example.com"
-npm run cli -- geo-audit --url "https://example.com" --no-ai-discovery
-npm run cli -- geo-sitemap --url "https://example.com" --max-urls 10
-npm run cli -- geo-llms --url "https://example.com" --out ./public/llms.txt
-npm run cli -- geo-schema --kind organization --name "Acme" --url "https://acme.com" --out ./schema.html
-npm run cli -- geo-schema --kind faq --name "Acme" --url "https://acme.com/faq" --faq-file ./faqs.json
-npm run cli -- geo-robots --url "https://example.com" --out ./public/robots.txt
-npm run cli -- geo-apply --url "https://example.com" --fix robots-ai --dry-run
-npm run cli -- geo-apply --url "https://example.com" --fix robots-ai --diff
-npm run cli -- geo-citability --url "https://example.com"
-npm run cli -- geo-crawlers --url "https://example.com"
-npm run cli -- geo-drift --url "https://example.com"        # exits 1 when llms.txt is stale
-npm run cli -- geo-risks --url "https://example.com"
-npm run cli -- geo-positioning --url "https://acme.com" --competitors "https://a.com,https://b.com"
+pnpm run cli geo-audit --url "https://example.com"
+pnpm run cli geo-audit --url "https://example.com" --no-ai-discovery
+pnpm run cli geo-sitemap --url "https://example.com" --max-urls 10
+pnpm run cli geo-llms --url "https://example.com" --out ./public/llms.txt
+pnpm run cli geo-schema --kind organization --name "Acme" --url "https://acme.com" --out ./schema.html
+pnpm run cli geo-schema --kind faq --name "Acme" --url "https://acme.com/faq" --faq-file ./faqs.json
+pnpm run cli geo-robots --url "https://example.com" --out ./public/robots.txt
+pnpm run cli geo-apply --url "https://example.com" --fix robots-ai --dry-run
+pnpm run cli geo-apply --url "https://example.com" --fix robots-ai --diff
+pnpm run cli geo-citability --url "https://example.com"
+pnpm run cli geo-crawlers --url "https://example.com"
+pnpm run cli geo-drift --url "https://example.com"        # exits 1 when llms.txt is stale
+pnpm run cli geo-risks --url "https://example.com"
+pnpm run cli geo-positioning --url "https://acme.com" --competitors "https://a.com,https://b.com"
 ```
 
 `geo-audit` prints the score, per-category breakdown, every check with evidence, and the
@@ -72,10 +91,10 @@ See [Apply Mode architecture](architecture/APPLY-MODE-MVP.md).
 ## Analytics and sGTM
 
 ```bash
-npm run cli -- traffic --property 123456789 --start 7daysAgo
-npm run cli -- analyze-ecommerce --property 123456789
-npm run cli -- audit-web --account 111 --container 222 --property 123456789
-npm run cli -- cutover-checklist ...
+pnpm run cli traffic --property 123456789 --start 7daysAgo
+pnpm run cli analyze-ecommerce --property 123456789
+pnpm run cli audit-web --account 111 --container 222 --property 123456789
+pnpm run cli cutover-checklist ...
 ```
 
-See `npm run cli -- help` for the full list.
+See `pnpm run cli help` for the full list.

@@ -84,7 +84,7 @@ export const socialMcpDefinitions = [
     run: (p: Principal, i: any) => saveOutreach(p, i.key, i.input),
   },
 ];
-export function buildSocialMcpRouter(options: ConsoleOptions = {}) {
+export function buildSocialMcpRouter(options: ConsoleOptions = {}): express.Router {
   const router = express.Router(),
     store = options.store ?? new TenantStore();
   const config = withTrust(

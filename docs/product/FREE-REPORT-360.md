@@ -144,8 +144,8 @@ anonymous report.
 1. Review the feature PR and the output for at least one public test fixture
    and one permitted site. Confirm editorial guidelines with a non-technical
    French and English reviewer.
-2. Run `npm ci`, `npm run typecheck`, `npm test`, `npm run lint`,
-   `npm run build`, `npm run docs:check`, `npm run site:check` and Worker dry run.
+2. Run `pnpm install --frozen-lockfile`, `pnpm run typecheck`, `pnpm test`, `pnpm run lint`,
+   `pnpm run build`, `pnpm run docs:check`, `pnpm run site:check` and Worker dry run.
 3. Verify the actual front-end bundle loads `report360.js` in staging; deploy
    the corresponding server/Worker revision atomically with the site, or accept
    the supported missing-field fallback during rollout.

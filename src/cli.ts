@@ -3,18 +3,14 @@
  * GTM Growth CLI — one command per workflow step
  *
  * Usage:
- *   npx ga-to-grok-cli <command> [options]
- *   npm run cli -- <command> [options]
+ *   gtm-growth <command> [options]
+ *   pnpm run cli <command> [options]
  */
 
 import { config } from "dotenv";
 config();
 
 import { readFileSync, writeFileSync } from "fs";
-
-import { initRedis } from "./cache/redis.js";
-
-initRedis();
 
 type Args = Record<string, string | boolean>;
 
@@ -60,13 +56,33 @@ function print(data: unknown) {
   console.log(JSON.stringify(data, null, 2));
 }
 
+function scoreThreshold(args: Args) {
+  if (args["min-score"] === undefined) return undefined;
+  const value = Number(req(args, "min-score"));
+  if (!Number.isFinite(value) || value < 0 || value > 100) throw new Error("--min-score must be between 0 and 100");
+  return value;
+}
+
+function pageOutcome(status: number, score = 0, minimum = 0) {
+  if (status < 200 || status >= 300) process.exitCode = 2;
+  else if (score < minimum) process.exitCode = 1;
+}
+
+function printTrackingAudit(result: { error?: string; issues?: Array<{ severity: string }> }) {
+  print(result);
+  if (result.error || !result.issues) process.exitCode = 2;
+  else if (result.issues.some(issue => issue.severity === "critical")) process.exitCode = 1;
+}
+
 function help() {
   console.log(`
 GTM Growth CLI — workflow commands
 
 Usage:
-  ga-to-grok-cli <command> [options]
-  npm run cli -- <command> [options]
+  gtm-growth <command> [options]
+  pnpm run cli <command> [options]
+
+  doctor                    [--require-services] (configuration and connectivity)
 
 ── Discovery ──────────────────────────────────────────
   list-properties
@@ -119,12 +135,12 @@ Usage:
   traffic                   --property <id> [--start <date>] [--end <date>]
 
 ── GEO / AEO · AI search readiness ──────────────────
-  geo-audit                 --url <url> [--no-ai-discovery]
+  geo-audit                 --url <url> [--no-ai-discovery] [--min-score <0..100>]
   geo-apply                 --url <url> --fix robots-ai [--dry-run] [--diff]
                             Preview only; --confirm/--apply are refused until approval adapters exist
   geo-snapshot              --url <url> --out <snapshot.json>    captured evidence (not Score v2)
   geo-replay                --in <snapshot.json>                  offline legacy audit replay
-  geo-sitemap               --url <url> [--sitemap <url>] [--max-urls <n>]
+  geo-sitemap               --url <url> [--sitemap <url>] [--max-urls <n>] [--min-score <0..100>]
   geo-llms                  --url <url> [--sitemap <url>] [--name <site>]
                             [--description <text>] [--out <file>]
   geo-schema                --kind website|organization|faq|article|product|localbusiness
@@ -137,7 +153,7 @@ Usage:
   geo-risks                 --url <url>
   geo-positioning           --url <url> --competitors <url,url,…> [--max-terms <n>]
   geo-platforms             --url <url>
-  geo-report                --url <url> [--out <file.pdf>] [--contact <url>]
+  geo-report                --url <url> [--out <file.pdf>] [--contact <url>] [--min-score <0..100>]
   geo-free-read             --url <url> [--json]   SEO tables + GA4/GSC readiness
   indexnow-keygen           --host <host>          generate the key + key file
   indexnow-verify           --host <host> --key <key>
@@ -154,10 +170,10 @@ Usage:
   serve-stdio               Start MCP STDIO server
 
 Examples:
-  npm run cli -- list-search-sites
-  npm run cli -- top-queries --site https://example.com/
-  npm run cli -- pagespeed --url https://example.com/ --strategy mobile
-  npm run cli -- crux --origin https://example.com --form-factor PHONE
+  pnpm run cli list-search-sites
+  pnpm run cli top-queries --site https://example.com/
+  pnpm run cli pagespeed --url https://example.com/ --strategy mobile
+  pnpm run cli crux --origin https://example.com --form-factor PHONE
 `);
 }
 
@@ -165,12 +181,24 @@ async function main() {
   const { command, args } = parseArgs(process.argv);
 
   try {
+    if (!["doctor", "help", "--help", "-h"].includes(command)) {
+      const { initRedis } = await import("./cache/redis.js");
+      initRedis();
+    }
     switch (command) {
       case "help":
       case "--help":
       case "-h":
         help();
         break;
+      case "doctor": {
+        const { doctor } = await import("./doctor.js");
+        const report = await doctor();
+        print(report);
+        if (!report.ready) process.exitCode = 2;
+        else if (bool(args, "require-services") && (report.services.postgres !== "reachable" || report.services.auditRedis !== "reachable")) process.exitCode = 1;
+        break;
+      }
 
       case "list-properties": {
         const { listProperties } = await import("./google/admin-api.js");
@@ -263,7 +291,7 @@ async function main() {
 
       case "audit-web": {
         const { auditGa4SetupV2 } = await import("./google/gtm-audit-v2.js");
-        print(
+        printTrackingAudit(
           await auditGa4SetupV2({
             accountId: req(args, "account"),
             containerId: req(args, "container"),
@@ -277,7 +305,7 @@ async function main() {
       }
       case "audit-sgtm": {
         const { auditSgtmSetup } = await import("./google/sgtm-api.js");
-        print(
+        printTrackingAudit(
           await auditSgtmSetup({
             accountId: req(args, "account"),
             containerId: req(args, "container"),
@@ -290,7 +318,7 @@ async function main() {
         const { auditMeasurementProtocolClient } = await import(
           "./google/mp-client-audit.js"
         );
-        print(
+        printTrackingAudit(
           await auditMeasurementProtocolClient({
             accountId: req(args, "account"),
             containerId: req(args, "container"),
@@ -395,14 +423,12 @@ async function main() {
       }
       case "health": {
         const { checkSgtmHealth } = await import("./google/sgtm-health.js");
-        print(
-          await checkSgtmHealth({
-            url: req(args, "url"),
-            timeoutMs: str(args, "timeout")
-              ? parseInt(String(str(args, "timeout")), 10)
-              : undefined,
-          })
-        );
+        const result = await checkSgtmHealth({
+          url: req(args, "url"),
+          timeoutMs: str(args, "timeout") ? parseInt(String(str(args, "timeout")), 10) : undefined,
+        });
+        print(result);
+        if (!result.healthy) process.exitCode = result.probes.some(probe => probe.statusCode !== null) ? 1 : 2;
         break;
       }
       case "observability": {
@@ -447,11 +473,13 @@ async function main() {
       case "geo-audit": {
         const { runGeoAudit } = await import("./geo/audit.js");
         const { summarizeAudit } = await import("./geo/report.js");
+        const minimum = scoreThreshold(args);
         const result = await runGeoAudit({
           url: req(args, "url"),
           includeAiDiscovery: !bool(args, "no-ai-discovery"),
         });
         print(summarizeAudit(result));
+        pageOutcome(result.httpStatus, result.score, minimum);
         break;
       }
       case "geo-apply": {
@@ -494,19 +522,17 @@ async function main() {
         const audit = await runGeoAudit({ url: envelope.snapshot.url, fetcher });
         print({ snapshotHash: envelope.snapshotHash, verified: true, mode: "offline",
           note: "Legacy GEO audit replay; not official GEO Score v2", audit: summarizeAudit(audit) });
+        pageOutcome(audit.httpStatus);
         break;
       }
       case "geo-sitemap": {
         const { runSiteGeoAudit } = await import("./geo/site.js");
-        print(
-          await runSiteGeoAudit({
-            url: req(args, "url"),
-            sitemapUrl: str(args, "sitemap"),
-            maxUrls: str(args, "max-urls")
-              ? parseInt(String(str(args, "max-urls")), 10)
-              : undefined,
-          })
-        );
+        const minimum = scoreThreshold(args);
+        const result = await runSiteGeoAudit({ url: req(args, "url"), sitemapUrl: str(args, "sitemap"),
+          maxUrls: str(args, "max-urls") ? parseInt(String(str(args, "max-urls")), 10) : undefined });
+        print(result);
+        if (result.pagesAudited === result.pagesFailed) process.exitCode = 2;
+        else if (minimum !== undefined && result.averageScore < minimum) process.exitCode = 1;
         break;
       }
       case "geo-llms": {
@@ -659,7 +685,7 @@ async function main() {
         const { buildPlatformReadiness } = await import("./geo/platforms.js");
         const { runCitability } = await import("./geo/citability.js");
         const { writeGeoReportPdf } = await import("./report/pdf.js");
-        const url = req(args, "url");
+        const minimum = scoreThreshold(args), url = req(args, "url");
         const audit = await runGeoAudit({ url });
         const platforms = buildPlatformReadiness(audit);
         let citability;
@@ -682,12 +708,14 @@ async function main() {
           score: audit.score,
           projectedScore: audit.projectedScore,
         });
+        pageOutcome(audit.httpStatus, audit.score, minimum);
         break;
       }
       case "geo-free-read": {
         const { runFreeRead } = await import("./freeread/index.js");
         const result = await runFreeRead({ url: req(args, "url") });
         print(result);
+        pageOutcome(result.httpStatus);
         break;
       }
       case "leads": {
@@ -806,11 +834,11 @@ async function main() {
       default:
         console.error(`Unknown command: ${command}\n`);
         help();
-        process.exit(1);
+        process.exit(2);
     }
   } catch (err: any) {
     console.error(`Error: ${err.message || err}`);
-    process.exit(1);
+    process.exit(2);
   }
 }
 
