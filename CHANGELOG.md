@@ -2,6 +2,25 @@
 
 ## Unreleased
 
+### Citation gaps in the visibility panel (R2)
+
+- The citation-source gap analysis delivered with the observation model is
+  now surfaced in the console panel: a "Citation gaps" section renders next
+  to the cited-domains list for every reader, from the read-only
+  `/ai-visibility/citation-gaps` route. It displays the panel-scope note, the
+  observation and mention totals (observations, with citations, citations,
+  prompts mentioning the brand, prompts mentioning the brand with an
+  own-site citation) without summing shares, per-category bars (own site
+  always shown — the benchmark's own-zero is a finding, not an absence —
+  plus competitor, Reddit, YouTube, LinkedIn, Wikipedia, other web), the
+  top cited hosts with a clickable example link (`noopener noreferrer`),
+  and one evidence row per answer that mentions the brand without an
+  own-site citation, with the stored proof and the cited URLs.
+- A brand without a declared website keeps unknown evidence honest: the
+  section shows the standing "declare the brand website" note, renders no
+  gap row and shows `—` instead of a zero share. If the view fails, the
+  report still renders unchanged.
+
 ### Visibility panel: tracker import and share-of-voice UI (R1)
 
 - The visibility panel now exposes the normalised tracker imports in the

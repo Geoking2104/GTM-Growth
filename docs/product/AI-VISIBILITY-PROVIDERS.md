@@ -188,6 +188,13 @@ stored panel (same `datasetId`, `source` and `brand` filters as the report):
 - lists up to 50 prompts that mention the brand while citing other sources, with the mention
   evidence and the cited URLs.
 
+The console panel renders this analysis as a "Citation gaps" section next to the
+cited-domains list: per-category bars (the own-site bar always shown, so an own
+zero stays a visible finding), top cited hosts with a clickable example link, and
+one evidence row per brand-mentioning answer that lacks an own-site citation. A
+brand without a declared website keeps the gaps unevaluated with the standing
+`—`-not-zero display.
+
 Evidence rules: a brand without a declared website leaves the own-source gap **unknown**
 (`evaluated: false`, never zero), and a response without any citation is absent evidence,
 not a gap. Cited URLs describe this stored panel only; they are not engine market share or
