@@ -7,6 +7,7 @@ import { validTenantId } from "../tenants/store.js";
 export interface StoredDataset { id: string; createdAt: string; brands: unknown[]; observations: unknown[] }
 type Row = { payload: string };
 const connections = new Map<string, Database.Database>();
+const DATASET_LIMIT = 100;
 function root(): string { return path.resolve(process.env.AI_VISIBILITY_PATH ?? path.join(path.dirname(process.env.TENANTS_PATH ?? "data/tenants.json"), "ai-visibility")); }
 function validateTenant(id: string) { if (!validTenantId(id)) throw new Error("Invalid tenant"); }
 function database(): Database.Database {
@@ -93,13 +94,21 @@ export function findDatasetImport(tenantId: string, fingerprint: string): string
   return row?.id ?? null;
 }
 
+function countDatasets(db: Database.Database, tenantId: string) {
+  return (db.prepare("SELECT COUNT(*) AS n FROM datasets WHERE tenant_id = ?").get(tenantId) as { n: number }).n;
+}
+
+export function hasVisibilityDatasetCapacity(tenantId: string): boolean {
+  validateTenant(tenantId); const db = database(); migrateLegacy(db, tenantId);
+  return countDatasets(db, tenantId) < DATASET_LIMIT;
+}
+
 export function insertDataset<T extends StoredDataset>(tenantId: string, data: T, fingerprint?: string) {
   validateTenant(tenantId); const db = database(); migrateLegacy(db, tenantId);
   const insert = db.transaction(() => {
     const existing = fingerprint && findDatasetImport(tenantId, fingerprint);
     if (existing) return { id: existing, reused: true };
-    const count = db.prepare("SELECT COUNT(*) AS n FROM datasets WHERE tenant_id = ?").get(tenantId) as { n: number };
-    if (count.n >= 100) throw new Error("Dataset limit reached");
+    if (countDatasets(db, tenantId) >= DATASET_LIMIT) throw new Error("Dataset limit reached");
     db.prepare("INSERT INTO datasets (tenant_id, id, created_at, payload) VALUES (?, ?, ?, ?)").run(tenantId, data.id, data.createdAt, JSON.stringify(data));
     if (fingerprint) db.prepare("INSERT INTO dataset_imports (tenant_id, fingerprint, dataset_id) VALUES (?, ?, ?)").run(tenantId, fingerprint, data.id);
     return { id: data.id, reused: false };

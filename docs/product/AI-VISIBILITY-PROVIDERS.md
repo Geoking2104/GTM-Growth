@@ -238,3 +238,35 @@ response supplies one. Missing fields remain unknown.
 The comparison CSV is generated from the filtered report. The tenant-scoped
 read-only route `POST /competition/comparison` and MCP tool
 `competition_comparison` use the same calculations.
+
+## Scheduled collections
+
+Set `VISIBILITY_JOBS_ENABLED=true` on the console server to expose scheduled
+collections. The runtime reuses `AUDIT_DATABASE_URL` and `AUDIT_REDIS_URL`
+with separate PostgreSQL tables and a dedicated BullMQ queue. The setting
+disables the old visibility timer while leaving rank checks in place. For a
+return to the previous runtime, review the legacy prompt-check setting before
+turning the feature flag off.
+
+In **Tracked questions**, a workspace administrator selects a saved API
+account, an existing panel, a cadence, a daily UTC call ceiling and a daily
+estimated USD ceiling. Enter the estimated USD cost per call before confirming.
+The first slot becomes eligible in the current UTC hour. Each admitted run
+snapshots the tracked questions and reserves the whole estimated amount.
+The admission ledger is separate from the provider invoice. Administrators
+can record a billed amount for a finished run and see the difference.
+
+PostgreSQL holds the reservations, questions and results. Redis carries only
+unit identifiers. Each panel, slot, provider, account and prompt combination
+is unique within its workspace. A fresh lease can recover work interrupted
+before the call marker. An expired lease after that marker yields an uncertain
+outcome. A 429 closes that unit with a provider rate-limit status. Neither
+case automatically resends that unit. Missing a scheduling interval produces
+the latest due slot, so a restart does not backfill old billable runs.
+
+Pausing, changing schedules or removing the saved account stops future
+dispatches for affected runs. A call that already crossed the durable marker
+may still finish. Gemini is unavailable for scheduled collection.
+Successful answers are assembled into one reviewable Visibilité IA dataset
+per completed run. The durable run history is retained for 30 days. Saved
+datasets follow their existing workspace storage behavior.

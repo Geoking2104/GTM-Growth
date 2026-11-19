@@ -39,7 +39,7 @@ jobs:
           node-version: "24"
           cache: npm
       - run: npm ci
-      - run: npx vitest run tests/audit-jobs.test.ts
+      - run: npx vitest run tests/audit-jobs.test.ts tests/visibility-jobs.test.ts
         env:
           TEST_AUDIT_DATABASE_URL: postgres://gtm_test:fixture-only-password@127.0.0.1:5432/gtm_audit_test
           TEST_AUDIT_REDIS_URL: redis://127.0.0.1:6379
