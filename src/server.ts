@@ -23,7 +23,8 @@ import { mountReportAccessApi } from "./report-access/router.js";
 import { buildCompetitionMcpRouter } from "./console/competition-mcp.js";
 import { mountConsoleApi } from "./console/api.js";
 import { ecommerceWebhookRouter } from "./console/ecommerce-webhooks.js";
-import { startScheduler } from "./console/ops-scheduler.js";
+import { startScheduler, stopScheduler } from "./console/ops-scheduler.js";
+import { startVisibilityJobs } from "./visibility-jobs/runtime.js";
 import { buildDataAgentBridge } from "./data-agent/bridge.js";
 import { startAuditRuntime } from "./audit-jobs/runtime.js";
 import { mountAuditRoutes } from "./audit-jobs/routes.js";
@@ -143,7 +144,11 @@ export async function startServer(transportType: "stdio" | "http" = "stdio") {
   mountReportAccessApi(app, { audits: auditRuntime?.store });
 
   // Console API â€” Keycloak-protected (OIDC bearer tokens validated via JWKS).
-  mountConsoleApi(app, { cloud });
+  const visibilityJobs = await startVisibilityJobs(cloud).catch(() => {
+    logger.warn("[visibility-jobs] unavailable at startup");
+    return null;
+  });
+  mountConsoleApi(app, { cloud, visibilityJobs: visibilityJobs?.store });
   app.use("/api/internal/local-seo", localWorkerRouter(undefined, cloud));
   app.use("/api/internal/social", socialWorkerRouter(cloud));
   app.use("/api/integrations/crm", crmPluginRouter(cloud));
@@ -260,7 +265,8 @@ export async function startServer(transportType: "stdio" | "http" = "stdio") {
   const shutdown = async () => {
     logger.info("[server] Shutting down...");
     sessions.clear();
-    httpServer.close(async () => { await auditRuntime?.close(); process.exit(0); });
+    stopScheduler();
+    httpServer.close(async () => { await Promise.allSettled([auditRuntime?.close(), visibilityJobs?.close()]); process.exit(0); });
     setTimeout(() => process.exit(1), 30_000).unref();
   };
   process.on("SIGTERM", shutdown);

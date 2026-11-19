@@ -46,6 +46,8 @@ import { aiConnectionRoutes } from "./ai-connections.js";
 import { aiProviderRoutes } from "./ai-visibility-providers.js";
 import { competitionRoutes } from "./competition.js";
 import { operationsRoutes } from "./ops-routes.js";
+import { visibilityScheduleRoutes } from "../visibility-jobs/routes.js";
+import type { VisibilityJobStore } from "../visibility-jobs/store.js";
 import { analyticsRoutes } from "./analytics.js";
 import { gtmRoutes } from "./gtm-console.js";
 import { socialRoutes } from "./social.js";
@@ -172,6 +174,7 @@ export const phase1Routes: ConsoleRoute[] = [
 
 export interface ConsoleOptions {
   cloud?: CloudAccess;
+  visibilityJobs?: VisibilityJobStore | null;
   config?: OidcConfig | null;
   jwksLoader?: JwksLoader;
   routes?: ConsoleRoute[];
@@ -419,8 +422,8 @@ export function discoverTenant(store: TenantStore, query: { email?: string; host
   return { id: tenant.id, name: tenant.branding.displayName ?? tenant.name, mode: tenant.mode, issuer: tenant.issuer, organization: tenant.mode === "organization" ? tenant.id : null, branding: { logoUrl: tenant.branding.logoUrl ?? null, primaryColor: tenant.branding.primaryColor ?? null } };
 }
 
-export function allConsoleRoutes(): ConsoleRoute[] {
-  return [...phase1Routes, ...phase2Routes, ...phase3Routes, ...analyticsRoutes, ...gtmRoutes, ...aiVisibilityRoutes, ...aiProviderRoutes, ...aiConnectionRoutes, ...competitionRoutes, ...operationsRoutes, ...applyPreviewRoutes, ...applyWriteRoutes, ...localSeoRoutes, ...socialRoutes, ...crmRoutes, ...visualCatalogRoutes, ...dataAgentRoutes, ...journeyRoutes, ...commerceRoutes, ...decisionInboxRoutes, ...decisionIntentRoutes, ...decisionPortfolioRoutes, ...measurementRoutes];
+export function allConsoleRoutes(visibilityJobs?: VisibilityJobStore | null): ConsoleRoute[] {
+  return [...phase1Routes, ...phase2Routes, ...phase3Routes, ...analyticsRoutes, ...gtmRoutes, ...aiVisibilityRoutes, ...aiProviderRoutes, ...aiConnectionRoutes, ...competitionRoutes, ...operationsRoutes, ...visibilityScheduleRoutes(visibilityJobs), ...applyPreviewRoutes, ...applyWriteRoutes, ...localSeoRoutes, ...socialRoutes, ...crmRoutes, ...visualCatalogRoutes, ...dataAgentRoutes, ...journeyRoutes, ...commerceRoutes, ...decisionInboxRoutes, ...decisionIntentRoutes, ...decisionPortfolioRoutes, ...measurementRoutes];
 }
 
 export function mountConsoleApi(app: Express, options: ConsoleOptions = {}): void {
@@ -437,5 +440,5 @@ export function mountConsoleApi(app: Express, options: ConsoleOptions = {}): voi
     return found ? res.json(found) : fail(res, 404, "Aucun espace client trouvÃ©.");
   });
   app.use("/api/platform", buildPlatformRouter(opts));
-  app.use("/api/console", buildConsoleRouter(options.routes ?? allConsoleRoutes(), opts));
+  app.use("/api/console", buildConsoleRouter(options.routes ?? allConsoleRoutes(options.visibilityJobs), opts));
 }

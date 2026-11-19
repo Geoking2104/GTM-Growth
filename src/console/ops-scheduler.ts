@@ -52,7 +52,7 @@ export async function runDueJobs(options: SchedulerOptions = {}): Promise<{ tena
   for (const tenant of store.list().filter((t) => t.status === "active")) {
     const config = readAutomationConfig(tenant.id);
     // Prompt checks (T-1): due when enabled, prompts exist, engine key exists.
-    if (config.promptChecks?.enabled) {
+    if (config.promptChecks?.enabled && process.env.VISIBILITY_JOBS_ENABLED !== "true") {
       const due = !config.lastPromptRun || now().getTime() - Date.parse(config.lastPromptRun) >= config.promptChecks.intervalHours * 3600_000;
       if (due) {
         const prompts = listPrompts(tenant.id);
