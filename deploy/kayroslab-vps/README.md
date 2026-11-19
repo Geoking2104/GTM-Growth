@@ -165,7 +165,7 @@ Optionnel — générateurs via modèle open source : `docker compose --profile 
   - le secret du client `gtm-provisioner` → `KEYCLOAK_ADMIN_CLIENT_SECRET` dans `.env.local` ;
   - les rôles du compte de service (`manage-realm`, `manage-users`, `manage-clients`, `manage-identity-providers`) ;
   - le compte `platform-admin`.
-- Pour ajouter un client, la méthode recommandée en production est `POST /api/platform/tenants`, avec un jeton `platform-admin`. Autre possibilité, depuis le dépôt cloné sur le VPS : `KEYCLOAK_INTERNAL_URL=http://127.0.0.1:8180 TENANTS_PATH=<volume gtm_growth_data>/tenants.json npm run tenant:provision -- …`. L'image de production n'embarque pas `scripts/`. Voir le [parcours technique et les limites d’accès](../../docs/technical/README.md#access-boundaries).
+- Pour ajouter un client, la méthode recommandée en production est `POST /api/platform/tenants`, avec un jeton `platform-admin`. Autre possibilité, depuis le dépôt cloné sur le VPS : `KEYCLOAK_INTERNAL_URL=http://127.0.0.1:8180 TENANTS_PATH=<volume gtm_growth_data>/tenants.json pnpm run tenant:provision …`. L'image de production n'embarque pas `scripts/`. Voir le [parcours technique et les limites d’accès](../../docs/technical/README.md#access-boundaries).
 - Le realm s'importe au premier démarrage (`--import-realm` n'écrase pas un realm existant). Sur un Keycloak déjà initialisé, appliquer à la main : Organisations activées, mappers `groups` et `organization`, rôle `platform-admin`, client `gtm-provisioner`.
 
 ## Stockage de la visibilité IA

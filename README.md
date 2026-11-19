@@ -26,7 +26,7 @@ player or third-party tracking is added.
 
 Maintain the experience in `site/landing/template.html`, its EN/FR dictionaries,
 `scripts/visual-home-markup.mjs`, and `site/visual-home.{css,js}`. Run
-`npm run site:render` after content changes and `npm run site:check` before release.
+`pnpm run site:render` after content changes and `pnpm run site:check` before release.
 The browser QA checks the six scenes, keyboard controls, reduced motion, mobile
 layout and existing free-audit journey. Source changes require a separate verified
 OVH deployment; Cloud merchant activation remains a separate operation.
@@ -178,7 +178,7 @@ See the [customer and technical guide](docs/PAP.md),
 
 ## Run locally
 
-Node.js **24 or newer**; package version **0.22.0**. Public audits work without Google credentials.
+Node.js **24 or newer** and pnpm **11.25.0**. The **0.23.0** CLI runs public audits without Google credentials.
 
 The [reliable audit pilot](docs/technical/AUDIT-PIPELINE.md) adds PostgreSQL-backed
 requests, dedicated BullMQ/Redis workers, resumable EN/FR browser progress and
@@ -192,14 +192,18 @@ SMTP delivery or Mollie activation.
 ```bash
 git clone https://github.com/Geoking2104/GTM-Growth.git
 cd GTM-Growth
-npm ci
-cp .env.example .env
-npm run build
-npm run cli -- geo-audit --url https://example.com
+corepack enable pnpm
+pnpm install --frozen-lockfile
+pnpm run build
+node dist/bin.js doctor
+node dist/bin.js geo-audit --url https://example.com
 ```
 
-Use `npm run start:stdio` for a local MCP client. For HTTP development, configure
-access first and use `HOST=127.0.0.1 npm run start:http`. Console SSO and connected
+See the [upgrade guide](docs/UPGRADING.md) for the existing-installation migration,
+package release checklist and single-command usage after publication.
+
+Use `pnpm run start:stdio` for a local MCP client. For HTTP development, configure
+access first and use `HOST=127.0.0.1 pnpm run start:http`. Console SSO and connected
 Google tools need their own configuration; see [technical setup](docs/technical/README.md#local-setup)
 and the [integration map](docs/technical/INTEGRATION-MAP.md). Shared MCP credentials
 are an operator trust boundary, not end-user tenant isolation.

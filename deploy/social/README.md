@@ -106,10 +106,10 @@ For a human CLI session, supply the same OIDC token in `GTM_OIDC_TOKEN`, the exa
 ## Verification
 
 ```bash
-npm run typecheck
-npm test
-npm run build
-npm run site:check
+pnpm run typecheck
+pnpm test
+pnpm run build
+pnpm run site:check
 python -m venv /tmp/gtm-social-qa
 /tmp/gtm-social-qa/bin/pip install -r integrations/social-zenml/requirements.txt
 /tmp/gtm-social-qa/bin/python integrations/social-zenml/smoke.py

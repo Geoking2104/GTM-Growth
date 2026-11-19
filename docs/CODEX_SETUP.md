@@ -25,7 +25,7 @@ cp -R skills/gtm-growth .codex/skills/gtm-growth
 ## Connect live data
 
 ```bash
-npm install && npm run build
+pnpm install && pnpm run build
 export GOOGLE_APPLICATION_CREDENTIALS=/absolute/path/to/sa.json
 ```
 

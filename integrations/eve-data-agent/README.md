@@ -16,8 +16,8 @@ model credential. No messages are sent by build/tests. See
 ## Operator setup
 
 1. Keep the existing GTM service on its current runtime. Run this directory
-   separately with **Node 26** and `npm ci`. Versions are pinned by package-lock.
-   Run `npm run typecheck`, `npm test`, and `npm run build`.
+   separately with **Node 26** and `pnpm install --frozen-lockfile`. Versions are pinned by pnpm-lock.yaml.
+   Run `pnpm run typecheck`, `pnpm test`, and `pnpm run build`.
 2. On the GTM server, copy `bindings.example.json` into the existing read-only
    secrets mount, e.g. `/opt/gtm-growth/.secrets/data-agent-bindings.json` on OVH.
    Replace every placeholder with verified exact IDs. The example deliberately
@@ -44,7 +44,7 @@ model credential. No messages are sent by build/tests. See
    you are authorized to use. The model's context capacity must be at least
    32,000 tokens. The explicit context budget avoids Gateway metadata fetching
    during compilation. It is not a claim about the selected model's maximum.
-5. Provision the Slack connector with `npx eve add channel/slack` using the
+5. Provision the Slack connector with `pnpm exec eve add channel/slack` using the
    operator's authorized Vercel/Slack accounts. Preserve the admission handlers
    in `agent/channels/slack.ts`. Set the returned `SLACK_CONNECTOR`, workspace
    ID, channel IDs and user IDs in the service environment; mirror those IDs in
@@ -52,7 +52,7 @@ model credential. No messages are sent by build/tests. See
    whose **entire membership** is permitted to see these aggregates; allowed
    askers are not the only people who can read replies. Shared-channel membership
    is not automatically checked. DMs need their conversation IDs explicitly listed.
-6. Deploy this service on Eve's supported hosting using `npx eve deploy`, or run
+6. Deploy this service on Eve's supported hosting using `pnpm exec eve deploy`, or run
    its built Node server behind HTTPS with durable Eve workflow storage configured.
    The latter is an operator deployment, not a new service wired into the OVH
    Compose file by this PR. Configure Slack's Eve webhook at `/eve/v1/slack`.

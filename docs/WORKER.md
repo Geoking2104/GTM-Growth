@@ -14,7 +14,7 @@ src/leads/validate.ts lead validation               ← shared
 wrangler.toml         config, bindings, vars
 ```
 
-Run `npm run worker:dry-run` to inspect the current bundle rather than relying on
+Run `pnpm run worker:dry-run` to inspect the current bundle rather than relying on
 historical size figures. This target runs under `workerd`; Node-specific stores
 and authenticated console workflows remain in the core app.
 
@@ -45,15 +45,15 @@ A push alone does not redeploy. See [CI/CD](CI_CD.md).
 ### 3. From your machine
 
 ```bash
-npx wrangler login
-npm run worker:deploy
+pnpm exec wrangler login
+pnpm run worker:deploy
 ```
 
 ## Deploy (one command, your account)
 
 ```bash
-npx wrangler login        # opens the browser once
-npm run worker:deploy
+pnpm exec wrangler login        # opens the browser once
+pnpm run worker:deploy
 ```
 
 Wrangler prints the URL it published to, e.g.
@@ -65,7 +65,7 @@ https://gtm-growth-api.<your-subdomain>.workers.dev
 Then point the site at it:
 
 ```bash
-npm run site:api -- https://gtm-growth-api.<your-subdomain>.workers.dev
+pnpm run site:api https://gtm-growth-api.<your-subdomain>.workers.dev
 ```
 
 That writes the `gg-api` meta tag in `site/index.html` and `site/fr/index.html`.
@@ -76,7 +76,7 @@ changing the API URL. Lead forwarding uses the configured destination.
 ## Local development
 
 ```bash
-npm run worker:dev      # http://127.0.0.1:8787, real workerd runtime
+pnpm run worker:dev      # http://127.0.0.1:8787, real workerd runtime
 ```
 
 ```bash
@@ -102,13 +102,13 @@ curl -s -X POST http://127.0.0.1:8787/api/lead \
 Secrets belong in `wrangler secret put <NAME>`, not in the file:
 
 ```bash
-npx wrangler secret put LEAD_FORWARD_URL
+pnpm exec wrangler secret put LEAD_FORWARD_URL
 ```
 
 ### Optional: keep a copy of leads in KV
 
 ```bash
-npx wrangler kv namespace create LEADS
+pnpm exec wrangler kv namespace create LEADS
 # copy the id into wrangler.toml under [[kv_namespaces]]
 ```
 

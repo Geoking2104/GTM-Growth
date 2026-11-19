@@ -3,14 +3,14 @@ FROM node:24-alpine AS builder
 
 WORKDIR /app
 
-COPY package*.json ./
-RUN apk add --no-cache python3 make g++ && npm ci
+COPY package.json pnpm-lock.yaml pnpm-workspace.yaml ./
+RUN apk add --no-cache python3 make g++ && corepack enable pnpm && pnpm install --frozen-lockfile
 
 COPY tsconfig.json ./
 COPY src ./src
 COPY site/console/customer-journey-model.* ./site/console/
 
-RUN npm run build
+RUN pnpm run build
 
 # ─── Production stage ─────────────────────────────────────────
 FROM node:24-alpine
@@ -21,8 +21,13 @@ RUN addgroup -g 1001 -S nodejs && \
 
 WORKDIR /app
 
-COPY package*.json ./
-RUN apk add --no-cache libstdc++ && apk add --no-cache --virtual .build-deps python3 make g++ && npm ci --omit=dev && npm cache clean --force && apk del .build-deps
+COPY package.json pnpm-lock.yaml pnpm-workspace.yaml ./
+RUN apk add --no-cache libstdc++ \
+    && apk add --no-cache --virtual .build-deps python3 make g++ \
+    && corepack enable pnpm \
+    && pnpm install --prod --frozen-lockfile \
+    && rm -rf "$(pnpm store path)" \
+    && apk del .build-deps
 
 COPY --from=builder /app/dist ./dist
 COPY site/console/customer-journey-model.js ./site/console/customer-journey-model.js

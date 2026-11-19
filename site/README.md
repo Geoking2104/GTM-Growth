@@ -21,8 +21,8 @@ The English presentation is the shared visual reference. Both homepages retain t
 After changing the template or a dictionary:
 
 ```bash
-npm run site:render
-npm run site:check
+pnpm run site:render
+pnpm run site:check
 ```
 
 The renderer rejects missing, extra or empty translations. The site check rejects stale output, structural divergence, broken local asset references or fragments, missing sections and console links without the selected locale. It also checks canonical URLs and the EN/FR language switch. JSON-LD FAQ content is generated from the visible localized questions and answers.

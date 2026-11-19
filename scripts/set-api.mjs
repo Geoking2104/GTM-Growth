@@ -2,8 +2,8 @@
 /**
  * Point the landing site at the public API.
  *
- *   npm run site:api -- https://gtm-growth-api.sub.workers.dev
- *   npm run site:api -- --clear
+ *   pnpm run site:api https://gtm-growth-api.sub.workers.dev
+ *   pnpm run site:api --clear
  *
  * Writes the `gg-api` meta tag in both language pages, so the free read switches
  * from sample rows to measured ones and the form posts to the API.
@@ -16,7 +16,7 @@ const pages = ["site/index.html", "site/fr/index.html"];
 const arg = process.argv.slice(2).find((value) => value !== "--");
 
 if (!arg) {
-  console.error("usage: npm run site:api -- https://your-worker.workers.dev");
+  console.error("usage: pnpm run site:api https://your-worker.workers.dev");
   process.exit(1);
 }
 

@@ -44,7 +44,7 @@ Self-hosting stays free. Solo €39/month and Agency €149/month remain pilot h
 - `scripts/journey-markup.mjs`: static semantic journey/explorer/hero rendering.
 - `site/journey.js`: progressive stage/profile/search/disclosure interaction; no remote calls.
 - `site/console/feature-guide.js`: contextual console orientation.
-- `site/landing/template.html` and locale dictionaries: shared editorial content. Run `npm run site:render` after changes.
-- `npm run site:check`: translation completeness, generated-file parity, identical FR/EN structure, IDs, assets and anchors.
+- `site/landing/template.html` and locale dictionaries: shared editorial content. Run `pnpm run site:render` after changes.
+- `pnpm run site:check`: translation completeness, generated-file parity, identical FR/EN structure, IDs, assets and anchors.
 - Vitest covers destination completeness, filters/reset, bilingual recommendations, optional storage, unsafe/expired handoffs and all existing console navigation/tenant-isolation checks.
 - The existing CI browser workflow checks desktop/mobile FR/EN, stage controls, search/reset, pilot CTAs, disclosures, forms and the public analysis. Screenshots are uploaded as CI artifacts. Real tenant analytics, external publication, payment and Slack activation are outside this presentation change.

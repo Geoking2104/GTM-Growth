@@ -1,11 +1,12 @@
 {
   "name": "gtm-growth",
-  "version": "0.22.0",
+  "version": "0.23.0",
   "description": "Open-source MCP server connecting GA4, GTM/sGTM, Search Console, Indexing API, PageSpeed, CrUX and GEO/AEO audits to Grok, Claude, and Codex",
   "type": "module",
+  "packageManager": "pnpm@11.25.0",
   "main": "dist/index.js",
   "bin": {
-    "gtm-growth": "./dist/index.js",
+    "gtm-growth": "./dist/bin.js",
     "gtm-growth-cli": "./dist/cli.js"
   },
   "scripts": {
@@ -36,7 +37,9 @@
     "test": "vitest run",
     "lint": "eslint src --ext .ts",
     "typecheck": "tsc --noEmit && tsc -p tsconfig.worker.json",
-    "prepublishOnly": "npm run build && npm test",
+    "prepack": "pnpm run build",
+    "prepublishOnly": "pnpm run release:check && pnpm test",
+    "release:check": "node scripts/check-release.mjs",
     "figures": "node scripts/render-figures.mjs",
     "worker:dev": "wrangler dev",
     "worker:deploy": "wrangler deploy",
@@ -121,6 +124,7 @@
     "dist",
     "skills",
     "assets",
+    "site/console/customer-journey-model.js",
     "README.md",
     "LICENSE",
     "CHANGELOG.md"

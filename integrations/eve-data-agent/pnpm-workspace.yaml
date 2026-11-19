@@ -1,0 +1,4 @@
+packages: []
+allowBuilds:
+  '@mongodb-js/zstd': true
+  node-liblzma: true

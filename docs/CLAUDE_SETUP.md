@@ -37,7 +37,7 @@ This repo ships [`.mcp.json`](../.mcp.json):
 }
 ```
 
-Build first: `npm install && npm run build`.
+Build first: `pnpm install && pnpm run build`.
 
 Remote HTTP: point Claude at `https://your-host/mcp`. Set `MCP_API_TOKEN` on the server and send `Authorization: Bearer <token>`.
 

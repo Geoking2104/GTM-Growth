@@ -224,7 +224,7 @@ export function pluginOperation(
   }
   throw new Error("CRM_NOT_FOUND");
 }
-export function crmPluginRouter(cloud?: CloudAccess) {
+export function crmPluginRouter(cloud?: CloudAccess): Router {
   const router = Router();
   router.post("/:operation", (req, res) => {
     try {

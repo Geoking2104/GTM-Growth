@@ -1,8 +1,8 @@
 # Cloudflare Worker — public website API (free read + lead capture).
 #
-#   npx wrangler login          # once, in your browser
-#   npm run worker:dev          # local, http://localhost:8787
-#   npm run worker:deploy       # publishes to https://gtm-growth-api.<subdomain>.workers.dev
+#   pnpm exec wrangler login          # once, in your browser
+#   pnpm run worker:dev          # local, http://localhost:8787
+#   pnpm run worker:deploy       # publishes to https://gtm-growth-api.<subdomain>.workers.dev
 #
 # Then put that URL in site/index.html and site/fr/index.html:
 #   <meta name="gg-api" content="https://gtm-growth-api.<subdomain>.workers.dev">
@@ -19,7 +19,7 @@ workers_dev = true
 # front the site with one.
 SITE_ORIGINS = "https://geoking2104.github.io,http://localhost:8099,http://localhost:8787"
 # Where validated leads are forwarded (Formspree today). Set as a secret instead
-# if you prefer: `npx wrangler secret put LEAD_FORWARD_URL`.
+# if you prefer: `pnpm exec wrangler secret put LEAD_FORWARD_URL`.
 LEAD_FORWARD_URL = "https://formspree.io/f/meaavjpa"
 
 # Optional: keep a copy of every lead for 180 days.

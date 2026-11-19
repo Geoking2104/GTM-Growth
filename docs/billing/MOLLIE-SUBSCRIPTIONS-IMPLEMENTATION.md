@@ -61,12 +61,12 @@ Optional: `BILLING_GRACE_DAYS=7`; `BILLING_DATA_PATH` on durable backed-up stora
 ## Validation
 
 ```bash
-npm ci
-npm run typecheck
-npm run lint
-npx vitest run tests/billing.test.ts
-npm test
-npm run build
+pnpm install --frozen-lockfile
+pnpm run typecheck
+pnpm run lint
+pnpm exec vitest run tests/billing.test.ts
+pnpm test
+pnpm run build
 node scripts/check-site.mjs
 ```
 

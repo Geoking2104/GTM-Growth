@@ -34,21 +34,25 @@ Do not rewrite original supplied specifications as though they were delivered co
 
 ## Working on code and site copy
 
-Install with `npm ci`. Use a focused branch and PR that describes the changed
-customer behavior, source boundary and validation. Do not include credentials,
-customer exports, generated build directories or unrelated formatting changes.
+Start from `main`, open a short-lived branch and use a PR to record the issue or
+decision, customer behavior and checks. Remove merged branches when their
+follow-up work is complete. Archive still-relevant work with a link to its
+tracking issue before closing a branch. Keep credentials and customer exports
+outside the repository.
 
 ```bash
-npm run docs:check
-npm run typecheck
-npm run lint
-npm test
-npm run build
-npm run site:check
+corepack enable pnpm
+pnpm install --frozen-lockfile
+pnpm run docs:check
+pnpm run typecheck
+pnpm run lint
+pnpm test
+pnpm run build
+pnpm run site:check
 ```
 
 Run the checks appropriate to the change. For landing/catalog copy, edit shared
-sources under `site/` and run `npm run site:render`; commit both generated languages.
+sources under `site/` and run `pnpm run site:render`; commit both generated languages.
 Use existing browser QA for affected flows. Avoid tests that merely duplicate prose;
 prefer broken-link checks and behavior/parity tests.
 
@@ -61,3 +65,4 @@ configuration mappings and metric definitions belong in tables.
 A PR or merge is not a deployment. Follow [operations](docs/technical/OPERATIONS.md)
 and the manual workflow/environment gates. Record the actual deployed revision and
 verification evidence. Optional providers need their own live acceptance.
+For release metadata, signed tags and the CLI package, see the [upgrade guide](docs/UPGRADING.md).

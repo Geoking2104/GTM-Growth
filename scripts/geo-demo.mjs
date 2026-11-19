@@ -8,7 +8,7 @@
  * plus the editorial fixes the audit asks for (meta, headings, figures).
  *
  * Everything runs offline against the built engine. Numbers printed here are
- * the ones quoted in the README — run `npm run demo:geo` to reproduce.
+ * the ones quoted in the README — run `pnpm run demo:geo` to reproduce.
  */
 import { runGeoAudit } from "../dist/geo/audit.js";
 import { CATEGORY_LABEL } from "../dist/geo/config.js";

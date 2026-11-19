@@ -1,6 +1,24 @@
 # Changelog
 
-## Unreleased
+## [Unreleased]
+
+## [0.23.0] - 2026-11-19
+
+### Added
+
+- `gtm-growth doctor` checks the Node runtime, installed dependencies, SQLite
+  binding and optional PostgreSQL and Redis connectivity without emitting credentials.
+- Release readiness checks align the CLI, agent skill, changelog and capability register.
+  CI installs the actual packaged CLI in a clean directory and exercises its exit codes.
+
+### Changed
+
+- Migrate the repository and standalone Eve integration to pinned pnpm lockfiles.
+- Dispatch CLI subcommands through `gtm-growth`. Keep the MCP server entry point
+  for existing installations using `gtm-growth` with server flags or no arguments.
+- Use exit status 1 for a failed audit gate and 2 for an audit that cannot run.
+
+Release reference is available after the signed tag exists. [v0.23.0](https://github.com/Geoking2104/GTM-Growth/releases/tag/v0.23.0)
 
 ### Citation gaps in the visibility panel (R2)
 

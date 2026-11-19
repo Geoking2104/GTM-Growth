@@ -18,6 +18,10 @@ in the reviewed source. It does not mean deployed, connected or accepted by a li
 
 ## Capabilities by journey
 
+Release review **0.23.0** · **2026-11-19**. The pnpm migration, CLI bootstrap,
+`doctor` and release checks are available in source. Publication and runtime
+activation require their own evidence. [Upgrade guide](../UPGRADING.md)
+
 Increment of 18 November 2026: [durable public audit pilot](../technical/AUDIT-PIPELINE.md)
 is implemented in source with PostgreSQL admission/outbox, bounded BullMQ workers,
 resumable browser progress, snapshot-based invitations and protected metrics.

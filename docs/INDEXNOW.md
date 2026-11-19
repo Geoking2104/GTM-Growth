@@ -113,18 +113,18 @@ locally, which is also the safest default.
 ### 4.3 Through the CLI
 
 ```bash
-npm run cli -- indexnow-keygen  --host example.com
-npm run cli -- indexnow-verify  --host example.com --key <key>
-npm run cli -- indexnow-submit  --host example.com --key <key> \
+pnpm run cli indexnow-keygen  --host example.com
+pnpm run cli indexnow-verify  --host example.com --key <key>
+pnpm run cli indexnow-submit  --host example.com --key <key> \
   --urls https://example.com/a,https://example.com/b --confirm=true
-npm run cli -- analysis-board   --url https://example.com --indexnow-key <key>
+pnpm run cli analysis-board   --url https://example.com --indexnow-key <key>
 ```
 
 `indexnow-verify` exits `1` when the key file is wrong, so it drops straight into
 CI:
 
 ```yaml
-- run: npm run cli -- indexnow-verify --host $HOST --key ${{ secrets.INDEXNOW_KEY }}
+- run: pnpm run cli indexnow-verify --host $HOST --key ${{ secrets.INDEXNOW_KEY }}
 ```
 
 ## 5. Operating rules

@@ -73,7 +73,7 @@ export GTM_SERVER_ACCOUNT_ID=111
 export GTM_SERVER_CONTAINER_ID=999
 export SGTM_HEALTH_URL=https://tags.example.com/healthy
 
-npm run build
+pnpm run build
 bash scripts/ci-validate.sh
 ```
 

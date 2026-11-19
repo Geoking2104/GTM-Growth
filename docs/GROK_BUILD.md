@@ -18,7 +18,7 @@ Tools appear as `gtm-growth__<tool_name>`.
 ```bash
 git clone https://github.com/Geoking2104/GTM-Growth.git
 cd GTM-Growth
-npm install && npm run build
+pnpm install && pnpm run build
 
 export GOOGLE_APPLICATION_CREDENTIALS=/path/to/sa.json
 export GA4_PROPERTY_ID=123456789
