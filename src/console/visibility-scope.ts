@@ -3,7 +3,7 @@ import { getDataset, readCompetitionState } from "./ai-visibility-store.js";
 
 type QuestionGroup = { id: string; datasetId: string; name: string; prompts: string[] };
 type Filters = { source: string; brand: string; groupId: string; from: string; to: string };
-type VisibilityScope = { dataset: Dataset; filters: Filters; group?: QuestionGroup; groups: QuestionGroup[]; sources: string[] };
+type VisibilityScope = { dataset: Dataset; panel: Dataset; filters: Filters; group?: QuestionGroup; groups: QuestionGroup[]; sources: string[] };
 
 function field(value: unknown, max: number) {
   if (value === undefined || value === "") return "";
@@ -34,5 +34,5 @@ export function readVisibilityScope(tenantId: string, body: Record<string, unkno
     const date = row.observedAt.slice(0, 10);
     return (!prompts || prompts.has(row.prompt)) && (!filters.from || date >= filters.from) && (!filters.to || date <= filters.to);
   });
-  return { dataset: { ...dataset, observations }, filters, group, groups, sources: [...new Set(dataset.observations.map((row) => row.source))].sort() };
+  return { dataset: { ...dataset, observations }, panel: dataset, filters, group, groups, sources: [...new Set(dataset.observations.map((row) => row.source))].sort() };
 }

@@ -11,3 +11,8 @@ it("alerts only after two comparable consecutive drops", () => {
   expect(visibilityAlert([...base, ...mid, ...day("2026-11-04", 5, 1, "other")], config, now).state).toBe("insufficient");
   expect(visibilityAlert([...base, ...mid, ...late.slice(0, 4)], config, now).state).toBe("insufficient");
 });
+it("does not treat a new model as a fall in visibility", () => {
+  const before = day("2026-11-02", 5, 5).map((row) => ({ ...row, measurement: { model: "v1" } }));
+  const after = [...day("2026-11-03", 5, 0), ...day("2026-11-04", 5, 0)].map((row) => ({ ...row, measurement: { model: "v2" } }));
+  expect(visibilityAlert([...before, ...after], config, now)).toMatchObject({ state: "insufficient", common: 0 });
+});
