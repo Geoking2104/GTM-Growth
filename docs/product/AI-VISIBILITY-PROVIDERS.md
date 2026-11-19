@@ -159,6 +159,11 @@ no provider call and no sampling:
   the observation-model limits still apply (1–10 brands, 1–1000 answers,
   bounded answers and citations) and every observation is provenance
   `imported`.
+- The console panel surfaces both routes: the "Import a tracker export"
+  block (tenant administrators) previews the count, engines, ignored
+  columns and normalised dates before any commit, and a "Share of voice
+  per engine" section renders for every panel reader with `null` shares
+  shown as `—`.
 
 `POST /ai-visibility/share-of-voice` (same `datasetId`, `source` and `brand`
 filters as the report) returns per-engine mention counts, share of voice

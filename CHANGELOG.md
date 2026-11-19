@@ -2,6 +2,25 @@
 
 ## Unreleased
 
+### Visibility panel: tracker import and share-of-voice UI (R1)
+
+- The visibility panel now exposes the normalised tracker imports in the
+  console itself: tenant administrators open "Import a tracker export",
+  choose the provider (Meteoria, Peec AI, Qwairy, Profound) and format, paste
+  the exported CSV/JSON contents and declare the brands. The same
+  review-then-commit discipline as the JSON import applies — nothing is
+  stored before a successful preview, any edit re-disables the commit, and
+  the preview feedback lists the recognised count, engines, ignored columns
+  and normalised dates with the standing measurement warning. The stored
+  dataset becomes the panel's selected dataset.
+- A "Share of voice per engine" section renders alongside the report for
+  every reader of the panel (not only administrators): one bar per engine
+  for the active brand, an all-engines row, and `null` shares rendered as
+  an explicit `—`. The section keeps the measured scope note (proportions
+  of the stored panel only, not engine market share, not consumer
+  sessions) and disappears without breaking the report when the view is
+  unavailable.
+
 ### Normalised tracker imports and share-of-voice views (R1)
 
 - Datasets the tenant already owns from a dedicated AI-visibility tracker can
