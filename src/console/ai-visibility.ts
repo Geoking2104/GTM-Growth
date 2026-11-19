@@ -7,8 +7,10 @@ import type { ConsoleRoute } from "./util.js";
 import { listDatasets, getDataset, insertDataset, updateDataset } from "./ai-visibility-store.js";
 import { visualUrl } from "./visual-catalog.js";
 import { citationGaps } from "./ai-citations.js";
+import { normalizeTrackerExport, TRACKER_IMPORT_WARNING } from "./ai-tracker-import.js";
+import { shareOfVoiceView } from "./ai-share-of-voice.js";
 
-type Sentiment = "positive" | "neutral" | "negative" | "mixed" | "unknown";
+export type Sentiment = "positive" | "neutral" | "negative" | "mixed" | "unknown";
 /** How an answer reached this workspace: a tenant-reviewed import or an explicit
  * bounded provider API run. Legacy datasets without the field stay "unverified". */
 export type Provenance = "imported" | "collected";
@@ -153,6 +155,13 @@ export const aiVisibilityRoutes: ConsoleRoute[] = [
   { path: "/ai-visibility/openai-run", needsUrl: false, adminOnly: true, handler: async (ctx) => { const tenantId = tenant(ctx), account = resolveAIAccount(tenantId, "openai", ctx.body.accountId), result = await collectOpenAI(ctx.body, account.key, fetch, account); if (!result.successes.length) return { id: null, succeeded: 0, failed: result.failures }; const dataset = normalizeImport({ brands: result.brands, responses: result.successes }, "collected"); insertDataset(tenantId, dataset); return { id: dataset.id, succeeded: result.successes.length, failed: result.failures }; } },
   { path: "/ai-visibility/import-preview", needsUrl: false, adminOnly: true, handler: async ({ body }) => { const data = normalizeImport(body); return { brands: data.brands, count: data.observations.length, sources: [...new Set(data.observations.map((r) => r.source))], warning: "Heuristic sentiment requires human review; no external calls." }; } },
   { path: "/ai-visibility/import", needsUrl: false, adminOnly: true, handler: async (ctx) => { const data = normalizeImport(ctx.body); insertDataset(tenant(ctx), data); return { id: data.id, count: data.observations.length }; } },
+  // Normalised tracker imports (R1): CSV/JSON exports the tenant already owns
+  // (Meteoria, Peec AI, Qwairy, Profound), mapped onto the canonical model with
+  // the brand declared in the request. Fail-closed per row, no provider call.
+  { path: "/ai-visibility/import-tracker-preview", needsUrl: false, adminOnly: true, handler: async (ctx) => { const parsed = normalizeTrackerExport(ctx.body); const data = normalizeImport(parsed.body); return { provider: parsed.meta.provider, format: parsed.meta.format, count: data.observations.length, engines: parsed.meta.engines, ignoredColumns: parsed.meta.ignoredColumns, normalisedDates: parsed.meta.normalisedDates, sources: [...new Set(data.observations.map((r) => r.source))], provenance: "imported", warning: TRACKER_IMPORT_WARNING }; } },
+  { path: "/ai-visibility/import-tracker", needsUrl: false, adminOnly: true, handler: async (ctx) => { const parsed = normalizeTrackerExport(ctx.body); const data = normalizeImport(parsed.body); insertDataset(tenant(ctx), data); return { id: data.id, count: data.observations.length, provider: parsed.meta.provider, engines: parsed.meta.engines, ignoredColumns: parsed.meta.ignoredColumns, normalisedDates: parsed.meta.normalisedDates, provenance: "imported" }; } },
+  // Share-of-voice view (R1): per-engine proportions over one stored panel.
+  { path: "/ai-visibility/share-of-voice", needsUrl: false, handler: async (ctx) => { const selected = typeof ctx.body.datasetId === "string" ? getDataset<Dataset>(tenant(ctx), ctx.body.datasetId) : undefined; if (!selected) throw new Error("Dataset not found"); return shareOfVoiceView(selected, typeof ctx.body.source === "string" ? ctx.body.source : "", typeof ctx.body.brand === "string" ? ctx.body.brand : ""); } },
   { path: "/ai-visibility/datasets", needsUrl: false, handler: async (ctx) => ({ datasets: listDatasets<Dataset>(tenant(ctx)).map(({ id, createdAt, brands, observations }) => ({ id, createdAt, brands, count: observations.length })) }) },
   { path: "/ai-visibility/review", needsUrl: false, adminOnly: true, handler: async (ctx) => {
     const tenantId = tenant(ctx), status = ctx.body.status, sentiment = ctx.body.sentiment;

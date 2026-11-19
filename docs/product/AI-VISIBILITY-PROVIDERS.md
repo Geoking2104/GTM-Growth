@@ -138,6 +138,34 @@ les clés sont chiffrées côté serveur. Sans clé, l'import JSON de réponses 
 disponible. Chaque lancement demande un accord explicite et accepte au plus cinq
 questions ; les réponses valides alimentent les graphiques et la concurrence.
 
+
+## Normalised tracker imports and share of voice (2026-11-19 increment)
+
+Datasets the tenant already owns from a dedicated tracker (Meteoria, Peec AI,
+Qwairy or Profound CSV/JSON exports) are imported exactly as measured, with
+no provider call and no sampling:
+
+- `POST /ai-visibility/import-tracker-preview` and
+  `POST /ai-visibility/import-tracker` (tenant administrators) take
+  `{ provider, format: "csv" | "json", payload, brands }`; the payload is the
+  exported text, `brands` is the tenant's own declaration (the export never
+  re-declares it).
+- Field aliases are documented per provider and matched case-, accent- and
+  punctuation-insensitively (English and French headers). Required columns:
+  prompt, answer, date. Optional: engine, citations. Unknown columns are
+  reported (`ignoredColumns`); partial dates (ISO date, `DD/MM/YYYY`) are
+  normalised and counted (`normalisedDates`).
+- One malformed row refuses the whole import with its spreadsheet row number;
+  the observation-model limits still apply (1–10 brands, 1–1000 answers,
+  bounded answers and citations) and every observation is provenance
+  `imported`.
+
+`POST /ai-visibility/share-of-voice` (same `datasetId`, `source` and `brand`
+filters as the report) returns per-engine mention counts, share of voice
+(within that engine's own mention total), visibility and sentiment per brand.
+Shares are proportions of the stored panel only: not engine market share, not
+consumer sessions; an engine without mentions reports `null`, never zero.
+
 ## Observation provenance and citation gaps (2026-11-18 increment)
 
 Every stored answer observation now carries a **provenance**:

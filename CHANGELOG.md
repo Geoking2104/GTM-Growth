@@ -2,6 +2,35 @@
 
 ## Unreleased
 
+### Normalised tracker imports and share-of-voice views (R1)
+
+- Datasets the tenant already owns from a dedicated AI-visibility tracker can
+  now be imported without any re-typing: CSV or JSON exports from **Meteoria,
+  Peec AI, Qwairy or Profound** are mapped onto the canonical observation
+  model through two console routes, `import-tracker-preview` and
+  `import-tracker`. The tenant declares the brand (name, aliases) in the
+  request; the export never re-declares what counts as the tenant's own
+  brand, so the declaration stays explicit and tenant-verified.
+- The mapping is strict and bilingual (English and French export headers):
+  documented field aliases per canonical column (prompt, answer, date,
+  engine, citations), an RFC-4180 CSV parser (quotes, escaped quotes,
+  embedded line breaks, CRLF, UTF-8 BOM) and accepted date forms (ISO,
+  ISO date, French `DD/MM/YYYY`). One malformed row refuses the whole
+  import with its spreadsheet row number; unknown columns are reported
+  (`ignoredColumns`), never silently repurposed; partial dates are counted
+  (`normalisedDates`) so the preview shows exactly what was normalised.
+  Imports stay bounded (5 MB text, 1000 answers) and tagged provenance
+  `imported`; no provider call, no sampling, no invented data.
+- New read-only route `share-of-voice`: per-engine proportions over one
+  stored panel. For each engine (and overall): responses, mention counts per
+  brand, share of voice (mentions within that engine's own mention total),
+  visibility (mentions over responses) and sentiment per brand. An engine
+  without mentions reports `null`, never a silent zero, and the response
+  carries the standing note: this is not engine market share and not
+  consumer sessions.
+- Mentions are counted at most once per response and per brand, and mentions
+  rejected through human review stay excluded from every share.
+
 ### Scheduled J+14/J+28 white-label client follow-ups
 
 - Follow-up sending is now possible, but only through an explicit double
