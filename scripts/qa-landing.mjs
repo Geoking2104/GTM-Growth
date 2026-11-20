@@ -261,7 +261,8 @@ async function visitPublicConsole(browserInstance, locale, viewport, label) {
   await page.locator('.journey-context button[type="submit"]').click();
   await page.screenshot({ path: path.join(outputDir, `${screenshotPrefix}-journey.png`), fullPage: true });
   const copy = await page.locator(".report360-action-geo").innerText();
-  assert.match(copy, /GEO v2 M01/);
+  assert.match(copy, /M01 · /);
+  assert.doesNotMatch(copy, /GEO v2/);
   const engines = page.locator(".public-engine img");
   assert.equal(await engines.count(), 6);
   // Lazy images below the longer mobile journey load when brought into view.

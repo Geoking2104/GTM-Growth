@@ -111,6 +111,18 @@ describe("bilingual free 360 report", () => {
     expect(tree.querySelector(".report360-connection-crm a")?.getAttribute("href")).toBe(`/console/?lang=${lang}#crm/connections`);
     expect(tree.querySelector(".report360-connection-social a")?.getAttribute("href")).toBe(`/console/?lang=${lang}#social/connections`);
     expect(tree.textContent).not.toContain("56/100");
-    expect(tree.textContent).not.toContain("No HTML title: 0/100");
+    expect(tree.textContent).not.toContain("No HTML title: 0/100");    // Plain-language score status instead of "v2" jargon, integrated with the category table.
+    expect(tree.textContent?.match(/.{0,60}(score v2|v2 score|GEO v2(?!\.\d)|Grille GEO v2).{0,60}/i)?.[0] ?? null).toBeNull();
+    const status = tree.querySelector(".report360-v2-score-incomplete");
+    expect(status?.textContent).toContain(lang === "fr" ? "Note de visibilité IA sur 100 : pas encore calculée" : "AI visibility score out of 100: not calculated yet");
+    expect(status?.textContent).toContain(lang === "fr" ? "1 contrôles sur 42 sont faits et 41 restent à vérifier" : "1 of 42 checks are done and 41 still need verifying");
+    expect(status?.querySelectorAll(".report360-v2-missing li").length).toBeGreaterThan(0);
+    expect(status?.querySelector("a")?.getAttribute("href")).toBe("#c-login-form");
+    const rows = [...tree.querySelectorAll(".report360-v2-category")];
+    expect(rows.every(row => row.querySelectorAll(".report360-v2-cell").length === 3)).toBe(true);
+    const total = (key: string) => rows.reduce((sum, row) => sum + Number(row.querySelector(`.report360-v2-cell-${key} .report360-v2-cell-value`)?.textContent), 0);
+    expect(total("pass") + total("review")).toBe(1);
+    expect(total("unknown")).toBe(41);
+    expect(tree.querySelector(".report360-v2-method")?.textContent).toMatch(/\d/);
   });
 });

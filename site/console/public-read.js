@@ -14,8 +14,8 @@ const COPY = {
     loading: "Analyse de la page publique en cours…", invalid: "Saisissez une URL de site public valide (ex. https://exemple.fr).",
     unavailable: "La lecture est momentanément indisponible. Réessayez dans un instant ; aucune donnée fictive n’est affichée.",
     analyzed: "PAGE ANALYSÉE", intro: "Préparation technique d’une seule page, pas visibilité réelle dans les réponses IA.",
-    score: "GEO V2 · 42 CONTRÔLES", scoreNote: "Grille GEO v2 sur une page ; score non publié sans preuves complètes et accord du propriétaire.",
-    scoreMissing: "Score non publié", v2Observed: "contrôles GEO v2 observés", v2Unknown: "contrôles à documenter", v2Needs: "constats vérifiés à corriger",
+    score: "VISIBILITÉ IA · 42 CONTRÔLES", scoreNote: "Visibilité IA d’une seule page ; la note sur 100 n’est calculée qu’avec les 42 contrôles faits, et n’est publiée qu’avec l’accord du propriétaire.",
+    scoreMissing: "Note sur 100 : pas encore calculée", scoreProgress: "contrôles faits · note sur 100 quand les 42 le sont", v2Observed: "contrôles de visibilité IA observés", v2Unknown: "contrôles à vérifier", v2Needs: "constats vérifiés à corriger",
     pass: "contrôles validés", attention: "points à améliorer", scoreGain: "points théoriquement récupérables",
     gainsNote: "Les contrôles inconnus ne sont pas des échecs. Aucun gain de points ou de trafic n'est promis.",
     observed: "Ce que nous avons réellement observé", evidence: "PREUVES", noMeasurements: "Aucun contrôle détaillé disponible pour cette page.",
@@ -34,8 +34,8 @@ const COPY = {
     loading: "Analysing the public page…", invalid: "Enter a valid public website URL (e.g. https://example.com).",
     unavailable: "The read is temporarily unavailable. Please try again; no invented results are displayed.",
     analyzed: "ANALYSED PAGE", intro: "Technical readiness of one page, not actual visibility in AI answers.",
-    score: "GEO V2 · 42 CONTROLS", scoreNote: "GEO v2 evidence for one page; no score published without complete proof and owner approval.",
-    scoreMissing: "Score unpublished", v2Observed: "GEO v2 checks observed", v2Unknown: "checks needing evidence", v2Needs: "measured findings to review",
+    score: "AI VISIBILITY · 42 CHECKS", scoreNote: "AI visibility of one page; the score out of 100 is only calculated once all 42 checks are done, and only published with the owner’s consent.",
+    scoreMissing: "Score out of 100: not calculated yet", scoreProgress: "checks done · score out of 100 once all 42 are", v2Observed: "AI visibility checks observed", v2Unknown: "checks still to verify", v2Needs: "measured findings to review",
     pass: "checks passed", attention: "areas to improve", scoreGain: "theoretically recoverable points",
     gainsNote: "Unknown controls are not failed checks. No points or traffic gain is promised.",
     observed: "What we actually observed", evidence: "EVIDENCE", noMeasurements: "No detailed checks available for this page.",
@@ -191,11 +191,13 @@ function renderResult(box, data, url, lang) {
   const summary = el("section", "public-summary");
   const identity = el("div"); identity.append(el("p", "public-eyebrow", copy.analyzed), el("h2", "public-domain", hostname), el("p", "public-description", copy.intro));
   const scoring = el("div", "public-score"); scoring.append(el("span", "", copy.score));
-  // Never re-label the legacy v1 score as v2, even when the v2 ledger is incomplete.
-  scoring.append(el("strong", "", "—"), el("small", "", copy.scoreMissing));
+  // Never re-label the legacy v1 score as the 42-check score; show how many checks are done instead.
+  const v2 = data.report360?.geoV2;
+  const done = Array.isArray(v2?.controls) ? v2.controls.filter(c => c.status !== "unknown").length : null;
+  if (done === null) scoring.append(el("strong", "", "—"), el("small", "", copy.scoreMissing));
+  else scoring.append(el("strong", "", `${done}/42`), el("small", "", copy.scoreProgress));
   summary.append(identity, scoring);
   const metrics = el("div", "public-read-metrics");
-  const v2 = data.report360?.geoV2;
   for (const [num, caption] of [
     [v2?.controls?.filter(c => c.status === "measured").length, copy.v2Observed],
     [v2?.unmeasuredControls?.length, copy.v2Unknown],
