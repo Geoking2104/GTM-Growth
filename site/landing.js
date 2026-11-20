@@ -5,6 +5,7 @@ import { renderTables, sampleTables } from "./tables.js";
 import { renderSitemapMap } from "./sitemap-map.js";
 import { translateLiveTables } from "./fr/server-tables.js";
 import { requestPublicRead, auditStatusText } from "./audit-client.js";
+import { geoCheckTitle } from "./geo-check-titles.js";
 
 const language = document.documentElement.lang === "fr" ? "fr" : "en";
 const dict = dictFor(language);
@@ -38,8 +39,9 @@ function renderInitialResult(url, report) {
   title.tabIndex = -1;
   const verdictText = element("p", "", `${verdict(report.score, dict)} ${dict.summary(report.passed, report.total)}`);
   const score = element("p", "gg-score", `${L("Hygiène de l’URL", "URL hygiene")}: ${report.score}/100`);
-  const explanation = element("p", "gg-note", L("Ces 10 contrôles vérifient seulement l’adresse saisie, pas le contenu de votre site. La lecture serveur, lorsqu’elle est disponible, mesure les signaux GEO réels.", "These 10 checks inspect only the address you entered, not your site content. The server read measures actual GEO signals when available."));
-  const heading = element("h3", "", L("Contrôles de l’adresse", "Address checks"));
+  const explanation = element("p", "gg-note", L("Lecture de votre page en cours : les 42 contrôles de visibilité IA s’afficheront ici.", "Reading your page: the 42 AI visibility checks will appear here."));
+  const heading = element("h3", "", `${L("Vérification de l’adresse", "Address check")} (${report.total} points) · ${report.passed}/${report.total} ${L("conformes", "passed")}`);
+  const addressNote = element("p", "gg-note", L(`Ces ${report.total} points vérifient seulement la forme de l’adresse saisie (HTTPS, nom d’hôte, chemin…), pas le contenu de votre site. Ils sont distincts des 42 contrôles de visibilité IA ci-dessus.`, `These ${report.total} points only check the format of the address you entered (HTTPS, host name, path…), not your site content. They are separate from the 42 AI visibility checks above.`));
   const apiHeading = element("h3", "", L("Données SEO, GA4 et Search Console", "SEO, GA4 and Search Console data"));
   const note = element("p", "gg-note", dict.tables.loading);
   note.setAttribute("role", "status");
@@ -53,11 +55,11 @@ function renderInitialResult(url, report) {
   const mapHeading = element("h3", "", L("Carte du sitemap", "Sitemap map"));
   const map = element("div", "sitemap-map");
   renderSitemapMap(map, null, language);
-  result.replaceChildren(title, verdictText, score, explanation, actions, next, heading, renderChecks(report), apiHeading, note, tables, mapHeading, map);
+  result.replaceChildren(title, verdictText, score, explanation, actions, next, heading, addressNote, renderChecks(report), apiHeading, note, tables, mapHeading, map);
   result.hidden = false;
   result.scrollIntoView({ behavior: "smooth", block: "start" });
   title.focus({ preventScroll: true });
-  return { title, score, verdictText, note, tables, map, actions };
+  return { title, score, verdictText, explanation, note, tables, map, actions };
 }
 
 async function loadLiveRead(url, host, view, requestId) {
@@ -68,13 +70,16 @@ async function loadLiveRead(url, host, view, requestId) {
     if (requestId !== generation) return;
 
     if (Array.isArray(payload.geoV2?.controls)) {
-      const observed = payload.geoV2.controls.filter(c => c.status === "measured").length;
       const unknown = payload.geoV2.controls.filter(c => c.status === "unknown").length;
-      view.score.textContent = `GEO v2 · ${observed}/42 ${L("contrôles observés", "controls observed")}`;
-      view.verdictText.textContent = `${L("Audit de la page", "Page audit for")} ${host} · ${unknown} ${L("contrôles restent inconnus. Aucun score v2 publié sans preuve complète et consentement.", "controls remain unknown. No v2 score is published without complete evidence and consent.")}`;
+      const done = payload.geoV2.controls.length - unknown;
+      view.score.textContent = `${L("Visibilité IA · 42 contrôles", "AI visibility · 42 checks")} — ${done}/42 ${L("contrôles faits", "checks done")}`;
+      view.verdictText.textContent = unknown > 0
+        ? `${L("Audit de la page", "Page audit for")} ${host} · ${unknown} ${L("contrôles à vérifier. La note sur 100 est calculée quand les 42 le sont, dans votre espace.", "checks to verify. The score out of 100 is calculated once all 42 are done, in your workspace.")}`
+        : `${L("Audit de la page", "Page audit for")} ${host} · ${L("les 42 contrôles sont faits. La note sur 100 s'affiche dans votre espace.", "all 42 checks are done. The score out of 100 is shown in your workspace.")}`;
+      view.explanation.textContent = L("Les 42 contrôles de visibilité IA lisent votre page, son robots.txt, son llms.txt et son sitemap. Un contrôle à vérifier ne compte jamais comme un échec.", "The 42 AI visibility checks read your page, its robots.txt, llms.txt and sitemap. A check still to verify never counts as a failure.");
     } else {
-      view.score.textContent = L("GEO v2 : lecture indisponible", "GEO v2: read unavailable");
-      view.verdictText.textContent = L("Les mesures historiques v1 ne constituent pas un score GEO v2.", "Historical v1 measurements are not a GEO v2 score.");
+      view.score.textContent = L("Visibilité IA : lecture indisponible", "AI visibility: read unavailable");
+      view.verdictText.textContent = L("Les 42 contrôles de visibilité IA n'ont pas pu être lus pour cette page. Les anciennes mesures ne remplacent pas cette note.", "The 42 AI visibility checks could not be read for this page. Older measurements do not replace this score.");      view.explanation.textContent = "";
     }
     renderTables(view.tables, language === "fr" ? translateLiveTables(payload.tables ?? []) : (payload.tables ?? []), dict);
     const fixes = (payload.report360?.actions ?? []).filter(a => a.kind === "observed_fix" && a.pillar === "geo").slice(0, 3);
@@ -83,7 +88,7 @@ async function loadLiveRead(url, host, view, requestId) {
     const list = element("ol");
     for (const fix of fixes) {
       const item = element("li"), evidence = element("details");
-      item.append(element("strong", "", `GEO v2 ${fix.checkId}: ${fix.title || fix.checkId}`), element("p", "", L("Consultez le rapport 360° pour les étapes et la source du constat.", "Open the 360° report for the steps and the finding's source.")));
+      item.append(element("strong", "", `${fix.checkId} · ${geoCheckTitle(fix.checkId, fix.title, language)}`), element("p", "", L("Consultez le rapport 360° pour les étapes et la source du constat.", "Open the 360° report for the steps and the finding's source.")));
       evidence.append(element("summary", "", L("Voir le constat", "View the finding")), element("p", "", fix.proof?.value || L("Preuve indisponible", "Evidence unavailable")));
       item.append(evidence); list.append(item);
     }
@@ -96,6 +101,7 @@ async function loadLiveRead(url, host, view, requestId) {
   } catch {
     if (requestId !== generation) return;
     renderTables(view.tables, sampleTables(dict), dict);
+    view.explanation.textContent = L("Les 42 contrôles de visibilité IA n’ont pas pu être lus pour l’instant. Réessayez dans quelques instants.", "The 42 AI visibility checks could not be read right now. Please try again in a moment.");
     view.note.textContent = L("Lecture serveur momentanément indisponible. Les tableaux ci-dessous sont des EXEMPLES, pas des mesures de votre site.", "Server read temporarily unavailable. The tables below are SAMPLES, not measurements of your site.");
   }
 }

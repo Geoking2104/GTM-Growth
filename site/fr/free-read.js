@@ -34,8 +34,9 @@ function renderInitialResult(url, report) {
   title.tabIndex = -1;
   const verdictText = element("p", "", `${verdict(report.score, dict)} ${dict.summary(report.passed, report.total)}`);
   const score = element("p", "gg-score", `Hygiène de l’URL : ${report.score}/100`);
-  const explanation = element("p", "gg-note", "Ces 10 contrôles vérifient seulement l’adresse saisie, pas le contenu de votre site. La lecture serveur, lorsqu’elle est disponible, mesure les signaux GEO réels.");
-  const heading = element("h3", "", "Contrôles de l’adresse");
+  const explanation = element("p", "gg-note", "Lecture de votre page en cours : les 42 contrôles de visibilité IA s’afficheront ici.");
+  const heading = element("h3", "", `Vérification de l’adresse (${report.total} points) · ${report.passed}/${report.total} conformes`);
+  const addressNote = element("p", "gg-note", `Ces ${report.total} points vérifient seulement la forme de l’adresse saisie (HTTPS, nom d’hôte, chemin…), pas le contenu de votre site. Ils sont distincts des 42 contrôles de visibilité IA ci-dessus.`);
   const apiHeading = element("h3", "", "Données SEO, GA4 et Search Console");
   const note = element("p", "gg-note", dict.tables.loading);
   note.setAttribute("role", "status");
@@ -45,11 +46,11 @@ function renderInitialResult(url, report) {
   const next = element("a", "gg-next", "Ouvrir la console complète →");
   next.href = "/console/?lang=fr#overview";
 
-  result.replaceChildren(title, verdictText, score, explanation, heading, renderChecks(report), apiHeading, note, tables, next);
+  result.replaceChildren(title, verdictText, score, explanation, heading, addressNote, renderChecks(report), apiHeading, note, tables, next);
   result.hidden = false;
   result.scrollIntoView({ behavior: "smooth", block: "start" });
   title.focus({ preventScroll: true });
-  return { title, score, verdictText, note, tables };
+  return { title, score, verdictText, explanation, note, tables };
 }
 
 async function loadLiveRead(url, host, view, requestId) {
@@ -65,13 +66,17 @@ async function loadLiveRead(url, host, view, requestId) {
     if (requestId !== generation) return;
 
     if (Array.isArray(payload.geoV2?.controls)) {
-      const observed = payload.geoV2.controls.filter(c => c.status === "measured").length;
       const unknown = payload.geoV2.controls.filter(c => c.status === "unknown").length;
-      view.score.textContent = `GEO v2 · ${observed}/42 contrôles observés`;
-      view.verdictText.textContent = `Audit de la page ${host} · ${unknown} contrôles encore inconnus. Score non publié sans preuve complète et consentement.`;
+      const done = payload.geoV2.controls.length - unknown;
+      view.score.textContent = `Visibilité IA · 42 contrôles — ${done}/42 contrôles faits`;
+      view.verdictText.textContent = unknown > 0
+        ? `Audit de la page ${host} · ${unknown} contrôles à vérifier. La note sur 100 est calculée quand les 42 le sont, dans votre espace.`
+        : `Audit de la page ${host} · les 42 contrôles sont faits. La note sur 100 s'affiche dans votre espace.`;
+      view.explanation.textContent = "Les 42 contrôles de visibilité IA lisent votre page, son robots.txt, son llms.txt et son sitemap. Un contrôle à vérifier ne compte jamais comme un échec.";
     } else {
-      view.score.textContent = "GEO v2 : lecture indisponible";
-      view.verdictText.textContent = "Les mesures historiques v1 ne constituent pas un score GEO v2.";
+      view.score.textContent = "Visibilité IA : lecture indisponible";
+      view.verdictText.textContent = "Les 42 contrôles de visibilité IA n'ont pas pu être lus pour cette page. Les anciennes mesures ne remplacent pas cette note.";
+      view.explanation.textContent = "";
     }
     renderTables(view.tables, translateLiveTables(payload.tables ?? []), dict);
     view.note.textContent = dict.tables.serverNote({

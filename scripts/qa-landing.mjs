@@ -453,7 +453,10 @@ try {
   await frMeasured.goto(`${origin}/fr/`);
   await frMeasured.locator("#url-input").fill("example.com");
   await frMeasured.locator("#url-form button").click();
-  await frMeasured.getByText("GEO v2 · 2/42 contrôles observés").waitFor();
+  await frMeasured.getByText(/Visibilité IA · 42 contrôles — \d+\/42 contrôles faits/).waitFor();
+  assert.doesNotMatch(await frMeasured.locator("#read-result").innerText(), /GEO v2|score v2|inconnu/i);
+  assert.match(await frMeasured.locator(".landing-next-actions").innerText(), /M01 · Titre descriptif/);
+  assert.match(await frMeasured.locator("#read-result").innerText(), /Vérification de l’adresse \(\d+ points\)/);
   assert.doesNotMatch(await frMeasured.locator("#read-result").innerText(), /71\/100/);
   assert.match(await frMeasured.locator("#read-result").innerText(), /SEO — métadonnées/);
   assert.match(await frMeasured.locator("#read-result").innerText(), /48 caractères/);

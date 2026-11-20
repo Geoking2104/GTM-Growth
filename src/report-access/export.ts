@@ -64,15 +64,41 @@ const date = (value: string, language: ReportLanguage): string => {
   return Number.isFinite(parsed.getTime()) ? parsed.toLocaleString(language === "fr" ? "fr-FR" : "en-GB", { dateStyle: "medium", timeStyle: "short", timeZone: "UTC" }) + " UTC" : "-";
 };
 
+function v2Counts(report: FreeReport360) {
+  const controls = report.geoV2?.controls ?? [];
+  const count = (outcome: string) => controls.filter(control => control.outcome === outcome).length;
+  const unknown = controls.filter(control => control.status === "unknown").length;
+  return { total: controls.length, done: controls.length - unknown, unknown, pass: count("pass"), review: count("review"), excluded: count("not_applicable") };
+}
+
 function v2Summary(report: FreeReport360, language: ReportLanguage): string {
   const fr = language === "fr";
-  const controls = report.geoV2?.controls ?? [];
-  if (!controls.length) return fr ? "GEO v2 : collecte indisponible" : "GEO v2: evidence collection unavailable";
-  const measured = controls.filter(control => control.status === "measured").length;
-  const unknown = controls.filter(control => control.status === "unknown").length;
-  const excluded = controls.filter(control => control.status === "not_applicable").length;
-  return `GEO v2 · ${measured}/${controls.length} ${fr ? "observés" : "observed"} · ${unknown} ${fr ? "inconnus" : "unknown"} · ${excluded} ${fr ? "non applicables" : "not applicable"}`;
+  const c = v2Counts(report);
+  if (!c.total) return fr ? "Visibilité IA : collecte indisponible" : "AI visibility: evidence collection unavailable";
+  return fr
+    ? `Visibilité IA · 42 contrôles — ${c.done}/${c.total} contrôles faits · ${c.pass} conformes · ${c.review} à corriger · ${c.unknown} à vérifier · ${c.excluded} non applicables`
+    : `AI visibility · 42 checks — ${c.done}/${c.total} checks done · ${c.pass} passed · ${c.review} to fix · ${c.unknown} to verify · ${c.excluded} not applicable`;
 }
+
+/** Plain-language status of the score out of 100 (never published in a public export). */
+function v2ScoreNote(report: FreeReport360, language: ReportLanguage): string {
+  const fr = language === "fr";
+  const c = v2Counts(report);
+  if (!c.total) return fr ? "Note de visibilité IA sur 100 : pas encore calculée, les contrôles n'ont pas pu être lus." : "AI visibility score out of 100: not calculated yet, the checks could not be read.";
+  if (c.unknown === 0) return fr
+    ? "Les 42 contrôles sont faits : la note de visibilité IA sur 100 s'affiche dans votre espace, avec l'accord du propriétaire du site."
+    : "All 42 checks are done: the AI visibility score out of 100 is shown in your workspace, with the site owner's consent.";
+  return fr
+    ? `Note de visibilité IA sur 100 : pas encore calculée. Pour ne jamais afficher une note fausse, elle n'est calculée que lorsque les 42 contrôles sont faits. Ici, ${c.done} contrôles sur 42 sont faits et ${c.unknown} restent à vérifier. Un contrôle à vérifier ne compte jamais comme un échec.`
+    : `AI visibility score out of 100: not calculated yet. To never show a misleading score, it is only calculated once all 42 checks are done. Here, ${c.done} of 42 checks are done and ${c.unknown} still need verifying. A check still to verify never counts as a failure.`;
+}
+
+const methodLabel = (method: string, language: ReportLanguage): string => method === "geo-v2-public-evidence"
+  ? (language === "fr" ? "Lecture publique · 42 contrôles de visibilité IA" : "Public read · 42 AI visibility checks")
+  : method;
+
+const v2Method = (report: FreeReport360, language: ReportLanguage): string =>
+  `${language === "fr" ? "Référentiel de contrôle GEO" : "GEO check framework"} ${report.geoV2?.gridVersion || "v2.0.0"}`;
 
 const V2_CATEGORY_NAMES: Record<string, [string, string]> = {
   robots: ["Accès des robots", "Crawler access"], llms: ["Documentation IA", "AI documentation"],
@@ -80,7 +106,7 @@ const V2_CATEGORY_NAMES: Record<string, [string, string]> = {
   content: ["Contenu", "Content"], brand: ["Identité de marque", "Brand identity"],
   discovery: ["Découverte IA", "AI discovery"], rendering: ["Rendu du navigateur", "Browser rendering"],
 };
-const V2_TITLES_FR: Record<string, string> = {
+export const V2_TITLES_FR: Record<string, string> = {
   R01: "Accès au fichier robots.txt", R02: "Autorisation des robots des moteurs IA", R03: "Absence de blocage contradictoire", R04: "Sitemap déclaré et accessible", R05: "Cohérence des règles par robot",
   L01: "Accès au fichier llms.txt", L02: "Identification de l'activité", L03: "Résumé clair pour les IA", L04: "Structure et liens de documentation", L05: "Documentation de plus de 1 000 mots", L06: "Documentation approfondie et structurée",
   J01: "JSON-LD lisible", J02: "Entité entreprise déclarée", J03: "Identifiants des entités cohérents", J04: "Liens entre site et pages", J05: "Données adaptées au contenu", J06: "Cohérence entre texte et données structurées",
@@ -92,17 +118,25 @@ const V2_TITLES_FR: Record<string, string> = {
 };
 const v2Title = (id: string, original: string, language: ReportLanguage): string => language === "fr" ? V2_TITLES_FR[id] || original : original;
 
-function v2Status(status: string, language: ReportLanguage): string {
+function v2Status(control: { status: string; outcome?: string }, language: ReportLanguage): string {
   const fr = language === "fr";
-  return status === "measured" ? (fr ? "Observé" : "Observed") :
-    status === "not_applicable" ? (fr ? "Non applicable" : "Not applicable") :
-    (fr ? "Inconnu · preuve requise" : "Unknown · evidence needed");
+  if (control.status === "not_applicable") return fr ? "Non applicable" : "Not applicable";
+  if (control.status === "measured") return control.outcome === "review" ? (fr ? "À corriger" : "To fix") : (fr ? "Conforme" : "Passed");
+  return fr ? "À vérifier · preuve requise" : "To verify · evidence needed";
+}
+
+/** Evidence label shown to readers: GEO checks get their localized title. */
+function proofLabel(action: ReportAction, language: ReportLanguage): string {
+  const label = action.proof?.label ?? "";
+  return action.code === "geo_v2_check" && action.checkId
+    ? `${action.checkId} · ${v2Title(action.checkId, action.title || action.checkId, language)}`
+    : label;
 }
 
 export function actionGuide(action: ReportAction, lang: ReportLanguage): { title: string; why: string; steps: [string, string, string]; verify: string } {
   const fr = lang === "fr";
   const title = action.code === "geo_v2_check" && action.checkId
-    ? `GEO v2 ${clean(action.checkId, 8)} · ${clean(v2Title(action.checkId, action.title || action.checkId, lang), 130)}`
+    ? `${clean(action.checkId, 8)} · ${clean(v2Title(action.checkId, action.title || action.checkId, lang), 130)}`
     : ACTION_TITLES[action.code] ? at(ACTION_TITLES[action.code], lang)
       : (fr ? `Examiner le contrôle ${clean(action.checkId, 80)}` : `Review control ${clean(action.checkId, 80)}`);
   if (action.code === "geo_v2_check" && action.checkId) {
@@ -111,7 +145,7 @@ export function actionGuide(action: ReportAction, lang: ReportLanguage): { title
       title,
       why: action.proof ? `${fr ? "Constat vérifié" : "Observed finding"}: ${clean(action.proof.value, 200)}` : (fr ? "Preuve à compléter." : "Further evidence required."),
       steps,
-      verify: fr ? "Relancez le même contrôle v2 sur cette URL et comparez les preuves datées." : "Run the same v2 check on this URL again and compare dated evidence.",
+      verify: fr ? "Relancez le même contrôle de visibilité IA sur cette URL et comparez les preuves datées." : "Run the same AI visibility check on this URL again and compare dated evidence.",
     };
   }
   if (action.kind === "next_step") {
@@ -126,7 +160,7 @@ export function actionGuide(action: ReportAction, lang: ReportLanguage): { title
   const proof = action.proof;
   return {
     title,
-    why: proof ? `${fr ? "Constat" : "Observation"}: ${clean(proof.label, 80)} - ${clean(proof.value, 140)}${proof.note ? `. ${clean(proof.note, 190)}` : ""}` : (fr ? "Prochaine vérification proposée." : "Proposed follow-up review."),
+    why: proof ? `${fr ? "Constat" : "Observation"}: ${clean(proofLabel(action, lang), 80)} - ${clean(proof.value, 140)}${proof.note ? `. ${clean(proof.note, 190)}` : ""}` : (fr ? "Prochaine vérification proposée." : "Proposed follow-up review."),
     steps: [
       fr ? "Examinez le constat et confirmez l'objectif de cette page." : "Review the observation and confirm this page's goal.",
       fr ? `Préparez une correction ciblée avec ${at(OWNERS[action.owner] || OWNERS.technical, lang)} ; faites-la approuver avant publication.` : `Prepare a focused fix with the ${at(OWNERS[action.owner] || OWNERS.technical, lang)}; obtain approval before publishing.`,
@@ -147,7 +181,7 @@ export function renderReportMarkdown(report: FreeReport360, language: ReportLang
     `- ${fr ? "Page analysée" : "Analysed page"}: ${markdownUrl(report.sourceUrl)}`,
     `- ${fr ? "Relevé" : "Observed"}: ${date(report.observedAt, language)}`,
     `- ${fr ? "Périmètre" : "Scope"}: ${fr ? "une seule URL publique" : "one public URL"}`,
-    `- ${fr ? "Méthode" : "Method"}: ${report.method}`,
+    `- ${fr ? "Méthode" : "Method"}: ${methodLabel(report.method, language)}`,
     "",
     `## ${fr ? "Les cinq leviers" : "Five channels"}`,
     "",
@@ -168,21 +202,22 @@ export function renderReportMarkdown(report: FreeReport360, language: ReportLang
     for (const h2 of preview.subheadings) out.push(`  - H2: ${markdownClean(h2)}`);
     out.push(`- ${fr ? "Source originale" : "Original source"}: ${markdownUrl(report.sourceUrl)}`, "");
   } else out.push(fr ? "Aucune reconstruction HTML disponible." : "No HTML reconstruction available.", "");
-  out.push(`## ${fr ? "Grille GEO v2 — 42 contrôles" : "GEO v2 — 42-control evidence ledger"}`, "");
+  out.push(`## ${fr ? "Visibilité IA — 42 contrôles" : "AI visibility — 42 checks"}`, "");
   out.push(`**${markdownClean(v2Summary(report, language))}**`, "");
-  out.push(fr ? "Aucun score v2 n'est publié sans preuves complètes et consentement du propriétaire. Un contrôle inconnu n'est pas un échec." : "No v2 score is published without complete evidence and owner consent. Unknown is not a failure.", "");
+  out.push(markdownClean(v2ScoreNote(report, language), 600), "");
   for (const [category, labels] of Object.entries(V2_CATEGORY_NAMES)) {
     const controls = report.geoV2?.controls.filter(control => control.category === category) ?? [];
     if (!controls.length) continue;
     out.push(`### ${at(labels, language)}`, "");
     for (const c of controls) {
-      out.push(`- **${markdownClean(c.controlId)} — ${markdownClean(v2Title(c.controlId, c.title, language), 160)}**: ${v2Status(c.status, language)}.`);
+      out.push(`- **${markdownClean(c.controlId)} — ${markdownClean(v2Title(c.controlId, c.title, language), 160)}**: ${v2Status(c, language)}.`);
       if (c.status === "measured" && c.proof) {
         out.push(`  - ${fr ? "Constat" : "Observation"}: ${markdownClean(c.proof.value, 260)} · ${fr ? "source" : "source"}: ${markdownUrl(c.proof.url)}`);
       } else if (c.reason) out.push(`  - ${fr ? "Motif" : "Reason"}: ${markdownClean(c.reason, 260)}`);
     }
     out.push("");
   }
+  if (report.geoV2?.controls.length) out.push(`_${markdownClean(v2Method(report, language), 80)}_`, "");
   out.push("", `## ${fr ? "Plan d'action" : "Action plan"}`, "");
   let i = 0;
   for (const action of report.actions) {
@@ -192,7 +227,7 @@ export function renderReportMarkdown(report: FreeReport360, language: ReportLang
     out.push(`- ${fr ? "Priorité" : "Priority"}: ${at(PRIORITIES[action.priority] || PRIORITIES.medium, language)}; ${fr ? "effort" : "effort"}: ${action.effort}; ${fr ? "risque" : "change risk"}: ${action.risk}; ${fr ? "responsable" : "owner"}: ${at(OWNERS[action.owner] || OWNERS.technical, language)}`);
     out.push(`- ${fr ? "Pourquoi" : "Why"}: ${markdownClean(guide.why)}`);
     if (action.proof) {
-      out.push(`- ${fr ? "Preuve" : "Evidence"}: ${markdownClean(action.proof.label, 100)} - ${markdownClean(action.proof.value)} (${date(action.proof.observedAt, language)})`);
+      out.push(`- ${fr ? "Preuve" : "Evidence"}: ${markdownClean(proofLabel(action, language), 100)} - ${markdownClean(action.proof.value)} (${date(action.proof.observedAt, language)})`);
       out.push(`- ${fr ? "Source" : "Source"}: ${markdownUrl(action.proof.sourceUrl)}`);
     } else out.push(`- ${fr ? "Preuve" : "Evidence"}: ${fr ? "aucun échec observé; connexion à autoriser" : "no measured failure; optional connection"}`);
     out.push("", ...guide.steps.map((step, index) => `${index + 1}. ${markdownClean(step, 400)}`));
@@ -235,7 +270,7 @@ export async function renderReportPdf(report: FreeReport360, language: ReportLan
     pdf.roundedRect(x, y, w, 80, 9).fill(PALETTE.soft);
     pdf.rect(x, y + 5, 4, 68).fill(PILLAR_COLORS[p.id]);
     pdf.fillColor(PALETTE.ink).font("Helvetica-Bold").fontSize(11).text(at(NAMES[p.id], language), x + 13, y + 10, { width: w - 24 });
-    const value = p.id === "geo" ? `${p.observedChecks ?? 0}/42 ${fr ? "observés" : "observed"}` : p.id === "seo" ? `${p.observedChecks ?? "-"} ${fr ? "contrôles" : "checks"}` : p.id === "social" ? `${p.observedCount ?? "-"} ${fr ? "liens sortants" : "outbound links"}` : (fr ? "Non mesuré" : "Not measured");
+    const value = p.id === "geo" ? (report.geoV2?.controls.length ? `${v2Counts(report).done}/42 ${fr ? "contrôles faits" : "checks done"}` : `${p.observedChecks ?? 0}/42 ${fr ? "contrôles observés" : "checks observed"}`) : p.id === "seo" ? `${p.observedChecks ?? "-"} ${fr ? "contrôles" : "checks"}` : p.id === "social" ? `${p.observedCount ?? "-"} ${fr ? "liens sortants" : "outbound links"}` : (fr ? "Non mesuré" : "Not measured");
     pdf.fillColor(PALETTE.accent).font("Helvetica-Bold").fontSize(11).text(value, x + 13, y + 34, { width: w - 24 });
     pdf.fillColor(PALETTE.muted).font("Helvetica").fontSize(8).text(p.coverage, x + 13, y + 57, { width: w - 24 });
   }
@@ -247,7 +282,7 @@ export async function renderReportPdf(report: FreeReport360, language: ReportLan
     pdf.fillColor(PILLAR_COLORS[action.pillar]).font("Helvetica-Bold").fontSize(10).text(`${index + 1}. ${at(NAMES[action.pillar], language)} - ${text(g.title, 95)}`, left, y, { width: usable });
     y += 26;
   }
-  pdf.fillColor(PALETTE.muted).font("Helvetica").fontSize(8).text(fr ? "Les inconnues ne sont pas des scores à zéro. Les corrections restent des propositions à valider." : "Unknown metrics are not zero scores. Every change requires review.", left, 721, { width: usable });
+  pdf.fillColor(PALETTE.muted).font("Helvetica").fontSize(8).text(fr ? "Une mesure à vérifier ne compte jamais comme un zéro. Les corrections restent des propositions à valider." : "A measurement still to verify never counts as zero. Every change requires review.", left, 721, { width: usable });
 
   // Source-linked editorial reconstruction: deliberately NO fabricated screenshot.
   pdf.addPage();
@@ -286,16 +321,16 @@ export async function renderReportPdf(report: FreeReport360, language: ReportLan
   pdf.fillColor(PALETTE.muted).font("Helvetica").fontSize(9)
     .text(fr ? "Capture Playwright authentique : domaine vérifié et autorisation du propriétaire requis." : "Authentic Playwright screenshot requires verified domain ownership and approval.", left, 689, { width: usable });
 
-  // All 42 GEO v2 checks: visible coverage, explicit unknowns, no private points.
+  // All 42 AI visibility (GEO v2) checks: visible coverage, explicit unknowns, no private points.
   pdf.addPage();
   let ledgerY = 56;
   pdf.fillColor(PALETTE.ink).font("Helvetica-Bold").fontSize(16)
-    .text(fr ? "GEO v2 — 42 contrôles et preuves" : "GEO v2 — 42 checks and evidence", left, ledgerY, { width: usable });
+    .text(fr ? "Visibilité IA — 42 contrôles et preuves" : "AI visibility — 42 checks and evidence", left, ledgerY, { width: usable });
   pdf.fillColor(PALETTE.accent).font("Helvetica-Bold").fontSize(10)
     .text(v2Summary(report, language), left, ledgerY + 30, { width: usable });
   pdf.fillColor(PALETTE.muted).font("Helvetica").fontSize(8.5)
-    .text(fr ? "Score non publié. Inconnu ne signifie pas échec. Vérifier chaque preuve avant toute décision." : "Score unpublished. Unknown does not mean failure. Review each proof before acting.", left, ledgerY + 48, { width: usable });
-  ledgerY += 82;
+    .text(`${v2ScoreNote(report, language)} ${fr ? "Vérifiez chaque preuve avant toute décision." : "Review each proof before acting."}`, left, pdf.y + 6, { width: usable });
+  ledgerY = pdf.y + 16;
   for (const [category, names] of Object.entries(V2_CATEGORY_NAMES)) {
     const controls = report.geoV2?.controls.filter(control => control.category === category) ?? [];
     if (!controls.length) continue;
@@ -311,14 +346,18 @@ export async function renderReportPdf(report: FreeReport360, language: ReportLan
         .text(control.controlId, left + 8, ledgerY + 5, { width: 31 });
       pdf.fillColor(PALETTE.ink).font("Helvetica-Bold").fontSize(8.5)
         .text(text(v2Title(control.controlId, control.title, language), 70), left + 43, ledgerY + 5, { width: usable - 170, height: 11, ellipsis: true });
-      pdf.fillColor(observed ? "#176450" : PALETTE.muted).font("Helvetica").fontSize(8)
-        .text(v2Status(control.status, language), left + usable - 120, ledgerY + 5, { width: 112, align: "right", ellipsis: true });
+      pdf.fillColor(control.outcome === "review" ? "#B57C1A" : observed ? "#176450" : PALETTE.muted).font("Helvetica").fontSize(8)
+        .text(v2Status(control, language), left + usable - 120, ledgerY + 5, { width: 112, align: "right", ellipsis: true });
       pdf.fillColor(PALETTE.muted).font("Helvetica").fontSize(7.5)
         .text(text(observed ? control.proof?.value : control.reason || (fr ? "Preuve requise" : "Evidence required"), 150), left + 43, ledgerY + 19,
           { width: usable - 55, height: 11, ellipsis: true });
       ledgerY += 37;
     }
     ledgerY += 6;
+  }
+  if (report.geoV2?.controls.length) {
+    if (ledgerY + 14 > 743) { pdf.addPage(); ledgerY = 56; }
+    pdf.fillColor(PALETTE.muted).font("Helvetica").fontSize(7.5).text(v2Method(report, language), left, ledgerY, { width: usable });
   }
 
   // Each action receives a readable proof/steps card. New page, no clipped rows.
@@ -350,15 +389,15 @@ export async function renderReportPdf(report: FreeReport360, language: ReportLan
   if (y > 688) { pdf.addPage(); y = 65; }
   pdf.fillColor(PALETTE.ink).font("Helvetica-Bold").fontSize(13).text(fr ? "Méthode et limites" : "Method and limitations", left, y + 12);
   pdf.fillColor(PALETTE.muted).font("Helvetica").fontSize(9).text(fr
-    ? "Source : lecture HTTP d'une page et grille GEO v2 de 42 contrôles avec inconnues distinctes. L'aperçu est reconstitué, sans capture d'écran réelle. Aucune citation IA, conversion CRM, backlink entrant ni amélioration avant/après n'est déduite. La publication d'un score exige l'accord du propriétaire."
-    : "Source: one HTTP page read and the 42-control GEO v2 grid with explicit unknowns. The preview is reconstructed, not an actual screenshot. No AI citation, CRM conversion, inbound backlink or before/after improvement is inferred. Publishing a score requires owner consent.", left, y + 40, { width: usable, lineGap: 3 });
+    ? "Source : lecture HTTP d'une page et 42 contrôles de visibilité IA, les contrôles à vérifier étant distingués. L'aperçu est reconstitué, sans capture d'écran réelle. Aucune citation IA, conversion CRM, backlink entrant ni amélioration avant/après n'est déduite. La note sur 100 n'est calculée qu'une fois les 42 contrôles faits, avec l'accord du propriétaire du site."
+    : "Source: one HTTP page read and 42 AI visibility checks, with checks still to verify kept separate. The preview is reconstructed, not an actual screenshot. No AI citation, CRM conversion, inbound backlink or before/after improvement is inferred. The score out of 100 is only calculated once all 42 checks are done, with the site owner's consent.", left, y + 40, { width: usable, lineGap: 3 });
 
   const pages = pdf.bufferedPageRange();
   for (let i = 0; i < pages.count; i++) {
     pdf.switchToPage(i);
     pdf.strokeColor(PALETTE.line).lineWidth(0.7).moveTo(left, 776).lineTo(width - left, 776).stroke();
     pdf.fillColor(PALETTE.muted).font("Helvetica").fontSize(7.5)
-      .text(`${name} | ${report.method}`, left, 784, { height: 11, lineBreak: false });
+      .text(`${name} | ${methodLabel(report.method, language)}`, left, 784, { height: 11, lineBreak: false });
     pdf.text(`${i + 1} / ${pages.count}`, width - 85, 784, { width: 42, height: 11, align: "right", lineBreak: false });
   }
   pdf.end();

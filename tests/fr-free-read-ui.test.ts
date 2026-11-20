@@ -78,7 +78,7 @@ describe("French free read user flow", () => {
     expect(fetchMock).toHaveBeenCalledWith("/api/free-read", expect.objectContaining({ method: "POST" }));
   });
 
-  it("displays measured GEO v2 coverage without substituting a legacy v1 score", async () => {
+  it("displays AI visibility checks done without substituting a legacy v1 score", async () => {
     vi.stubGlobal("fetch", vi.fn(async () => ({
       ok: true,
       json: async () => ({ score: 71, projectedScore: 100, durationMs: 125,
@@ -89,8 +89,14 @@ describe("French free read user flow", () => {
       ] }),
     })));
     submit("example.com");
-    await vi.waitFor(() => expect(nodes["read-result"].textContent).toContain("GEO v2 · 19/42 contrôles observés"));
-    expect(nodes["read-result"].textContent).toContain("23 contrôles restent inconnus");
+    await vi.waitFor(() => expect(nodes["read-result"].textContent).toContain("Visibilité IA · 42 contrôles — 19/42 contrôles faits"));
+    expect(nodes["read-result"].textContent).toContain("23 contrôles à vérifier. La note sur 100 est calculée quand les 42 le sont");
+    expect(nodes["read-result"].textContent).toContain("M01 · Titre descriptif");
+    expect(nodes["read-result"].textContent).not.toContain("Descriptive title");
+    expect(nodes["read-result"].textContent).toMatch(/Vérification de l’adresse \(\d+ points\)/);
+    expect(nodes["read-result"].textContent).toContain("Ils sont distincts des 42 contrôles de visibilité IA");
+    expect(nodes["read-result"].textContent).not.toContain("Ces 10 contrôles");
+    expect(nodes["read-result"].textContent).not.toMatch(/score v2|v2 score|GEO v2|inconnu/i);
     expect(nodes["read-result"].textContent).not.toContain("71/100");
     expect(nodes["read-result"].textContent).toContain("SEO — métadonnées");
     expect(nodes["read-result"].textContent).toContain("48 caractères");
