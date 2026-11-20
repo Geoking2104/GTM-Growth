@@ -52,6 +52,9 @@ export const DECISION_VIEWS = {
       item('#gtm','tag','Examiner les changements GTM','Review GTM changes','Les confirmations natives restent nécessaires avant publication.','Native confirmations remain required before publishing.','gtm'),
       item('#crm','crm','Vérifier les identités CRM','Verify CRM identities','Reliez uniquement les identités confirmées dans le parcours.','Link only confirmed identities in the journey.'),
     ] },
+    { id: 'campaigns', icon: 'workflow', fr: 'Scénarios de campagne', en: 'Campaign scenarios', items: [
+      item('#studio/campaigns','workflow','Construire un scénario visuel','Build a visual scenario','Transformez les analyses en actions, dates et responsabilités par canal.','Turn analysis findings into actions, dates and owners by channel.'),
+    ] },
     { id: 'content', icon: 'pen', fr: 'Contenus & Métadonnées', en: 'Content & Metadata', items: [
       item('#generators','generators','Préparer les métadonnées','Prepare metadata','Travaillez les titres, descriptions et plans avec le contexte client.','Work on titles, descriptions and outlines using customer context.'),
       item('#ops/articles','page','Préparer un article','Prepare an article','Construisez un brief, relisez le brouillon puis confirmez son transfert.','Build a brief, review the draft, then confirm its transfer.'),
@@ -116,6 +119,7 @@ export function decisionLocation(section, tab = '') {
   if (section === 'overview') return { area: 'overview', view: ['scenarios', 'reports'].includes(tab) ? tab : 'board' };
   if (['diagnose','impact','settings'].includes(section)) return { area: section, view: tab || DECISION_VIEWS[section][0].id };
   if (section === 'portfolio') return { area: 'portfolio', view: 'workspaces' };
+  if (section === 'studio') return { area: 'ops', view: 'campaigns' };
   if (section === 'ops' && DECISION_VIEWS.ops.some(v => v.id === tab || (!tab && v.id === 'inbox'))) return { area: 'ops', view: tab || 'inbox' };
   const overrides = {
     'local_seo/website': ['diagnose','technical'], 'gsc/sitemaps': ['diagnose','technical'],

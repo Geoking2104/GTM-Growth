@@ -30,6 +30,7 @@ Thumbs.db
 # Test
 coverage/
 .nyc_output/
+qa-scenarios/
 
 # Misc
 *.tgz

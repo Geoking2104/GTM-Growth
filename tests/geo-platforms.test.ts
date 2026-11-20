@@ -11,6 +11,8 @@ const ALL_BOTS = [
   "Bingbot",
   "GPTBot",
   "ClaudeBot",
+  "Claude-SearchBot",
+  "xAI-Bot",
   "Applebot",
 ];
 
@@ -54,7 +56,7 @@ function auditWith(overrides: { allowed?: string[] } = {}): GeoAuditResult {
 }
 
 describe("platform readiness", () => {
-  it("scores all five platforms ready when every signal passes", () => {
+  it("scores all seven platforms ready when every signal passes", () => {
     const platforms = buildPlatformReadiness(auditWith());
     expect(platforms.map((platform) => platform.id)).toEqual([
       "google_aio",
@@ -62,6 +64,8 @@ describe("platform readiness", () => {
       "perplexity",
       "gemini",
       "copilot",
+      "claude",
+      "grok",
     ]);
     for (const platform of platforms) {
       expect(platform.score).toBe(100);
@@ -77,6 +81,17 @@ describe("platform readiness", () => {
     expect(chatgpt?.band).toBe("partial");
     expect(chatgpt?.mainGap).toMatch(/OAI-SearchBot/);
     expect(chatgpt?.signals.find((signal) => signal.id === "oai_search")?.fix).toMatch(/robots/);
+  });
+
+  it("reflects blocked Claude and Grok crawlers without inventing visibility", () => {
+    const platforms = buildPlatformReadiness(auditWith({
+      allowed: ALL_BOTS.filter(bot => bot !== "Claude-SearchBot" && bot !== "xAI-Bot"),
+    }));
+    for (const id of ["claude", "grok"] as const) {
+      const result = platforms.find(p => p.id === id);
+      expect(result?.score).toBe(75);
+      expect(result?.mainGap).toMatch(id === "claude" ? /Claude-SearchBot/ : /xAI-Bot/);
+    }
   });
 
   it("keeps each platform's weights at 100", () => {

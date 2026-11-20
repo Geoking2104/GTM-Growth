@@ -73,6 +73,33 @@ release. A static GTM audit is not proof of runtime consent or causal revenue
 attribution. Browser regression uses synthetic fixtures; live integrations still
 require each client's configured credentials and permissions.
 
+## Visual marketing campaigns — Campaign Studio
+
+**Studio & Approvals → Campaign scenarios** turns stored analysis findings into
+an editable cross-channel plan. Use the JointJS visual graph, channel schedule or
+keyboard-accessible table to organise actions, dates, responsible roles,
+dependencies, effort, costs, checklists and sourced KPIs. The cockpit links its
+audit priorities directly to the studio; each action can retain the findings
+that explain it.
+
+Create a plan manually, use the local guided generator, or request a proposal
+from a configured **OpenAI, Claude, Mistral or Grok** account. Review its changes
+before applying them. Selected-step revisions preserve protected work. Draft
+saves, conflict handling, undo/redo, comments, immutable versions, restoration,
+duplication and JSON/CSV/Markdown/print exports support ongoing adaptation.
+
+The same workflow is available in FR/EN, with the table as the mobile default.
+State lives in `data/scenarios.sqlite3` by default (`SCENARIOS_PATH` override), on
+the existing persistent data volume. JointJS Community is pinned and served
+locally; no commercial editor package or CDN is required. AI requests require
+explicit account use and have bounded call/token limits. Saving or accepting a
+scenario only updates the plan; delivery continues through native module approvals.
+
+See the [user workflow, permissions, limits and operating guide](docs/product/CAMPAIGN-STUDIO.md)
+and [target specification](docs/product/CAMPAIGN-STUDIO-JOINTJS-SPEC-2026-11-20.md).
+Run `pnpm run vendor:check` and `pnpm run qa:scenarios` alongside the normal
+validation suite. Source delivery does not activate a production deployment.
+
 ## Consistent forms, sign-in and dashboard visuals
 
 The public contact form uses labelled, 52px controls, Inter, rounded borders and

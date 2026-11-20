@@ -39,6 +39,7 @@ beside them provide exact mappings and limitations; the diagrams do not imply ne
 | Understand | [Console readiness](product/CONSOLE-READINESS.md) | Navigation, scoped data loading and visual catalog |
 | Prepare | [Apply architecture](architecture/APPLY-MODE-MVP.md), [owner scope](specs/APPLY-MODE-v1-2026-11-09.md) | Preview/foundation versus target execution scope |
 | Prepare | [Social review](product/SOCIAL-TOOLKIT-SPEC-REVIEW.md) | Adapted implementation contract; governs reading of the original supplied spec |
+| Prepare / Coordinate | [Campaign Studio](product/CAMPAIGN-STUDIO.md), [target specification](product/CAMPAIGN-STUDIO-JOINTJS-SPEC-2026-11-20.md) | Visual cross-channel planning, dates, owners, sourced actions and reviewable AI proposals |
 | Measure | [AI provider setup](product/AI-VISIBILITY-PROVIDERS.md) | Account selection, encrypted keys, collection and imports |
 | Measure | [Commerce specification](specs/ECOMMERCE-CONNECTORS-v1-2026-11-13.md) | Functional/technical intent; use current register and audit for gaps |
 | Measure | [CRM specification](product/CRM-CUSTOMER-JOURNEY-SPEC.md) | Native/external modes, identity and event contracts |

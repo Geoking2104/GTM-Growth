@@ -335,6 +335,8 @@ describe("Cloud subscriptions / Mollie (no live charges)", () => {
     const { service, mollie, store, config } = harness();
     expect(() => service.access.authorize("acme", "/overview")).toThrow("cloud_subscription_required");
     expect(() => service.access.authorize("acme", "/local-seo/export")).not.toThrow();
+    for (const route of ["/scenarios/list", "/scenarios/get", "/scenarios/history", "/scenarios/export"]) expect(() => service.access.authorize("acme", route)).not.toThrow();
+    expect(() => service.access.authorize("acme", "/scenarios/update-draft", { consume: false })).toThrow("cloud_subscription_required");
     expect(() => service.access.authorize("selfhost", "/overview")).not.toThrow();
     await initial(service, mollie);
     expect(() => service.access.authorize("acme", "/overview", { domainCount: 2 })).toThrow("cloud_domain_limit");
