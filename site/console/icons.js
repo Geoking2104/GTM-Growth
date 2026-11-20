@@ -69,6 +69,10 @@ const P = {
   google: '<rect x="3" y="3" width="18" height="13" rx="2"/><path d="M8 21h8M12 16v5M6 12l4-4 3 3 5-5"/>',
   ga4: '<rect x="4" y="12" width="4" height="8" rx="1"/><rect x="10" y="8" width="4" height="12" rx="1"/><rect x="16" y="4" width="4" height="16" rx="1"/>',
   bing: '<path d="M6 3l4 1.5v11l5-2.8-2.4-1.1-1.4-3.4L18 11v4.5L10 20l-4-2.2z"/>',
+  book: '<path d="M3 5h6a3 3 0 0 1 3 3v13a2 2 0 0 0-2-2H3zM21 5h-6a3 3 0 0 0-3 3v13a2 2 0 0 1 2-2h7z"/><path d="M6 9h3M15 9h3M6 13h3M15 13h3"/>',
+  braces: '<path d="M8 3H7a2 2 0 0 0-2 2v5l-2 2 2 2v5a2 2 0 0 0 2 2h1M16 3h1a2 2 0 0 1 2 2v5l2 2-2 2v5a2 2 0 0 1-2 2h-1"/><circle cx="12" cy="12" r="1"/>',
+  badge: '<circle cx="12" cy="9" r="6"/><path d="M9.5 9l1.8 1.8L14.8 7.3M8.5 14L7 22l5-3 5 3-1.5-8"/>',
+  compass: '<circle cx="12" cy="12" r="9"/><path d="M15.5 8.5l-2 5-5 2 2-5z"/>',
   chev: '<path d="M9 6l6 6-6 6"/>',
 };
 export const icon = (name, cls = "") => `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"${cls ? ` class="${cls}"` : ""}>${P[name] ?? P.report}</svg>`;
