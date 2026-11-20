@@ -16,6 +16,9 @@
 
 ### Fixed
 
+- Serve the unchanged local JointJS bundle as `joint.js`, using standard
+  JavaScript MIME handling so Campaign Studio loads on existing Nginx hosts
+  without a live proxy configuration change.
 - Include Claude and Grok in the seven-engine readiness table and use the xAI
   provider mark for Grok. Missing evidence remains unknown.
 

@@ -215,6 +215,7 @@ only a live database while omitting its WAL. Tenant erasure must include all
 | Reproducible dependency assets | `scripts/vendor-joint.mjs`, `site/assets/vendor/joint-core/` |
 | Behavior and security tests | `tests/scenarios-*.test.ts` |
 | Real browser flow and CSP | `scripts/qa-scenarios.mjs` |
+| Public delivery after production deployment | `scripts/check-campaign-studio.mjs` |
 
 Run `pnpm run vendor:check`, `pnpm run typecheck`, `pnpm run lint`, `pnpm test`,
 `pnpm run build`, `pnpm run docs:check`, `pnpm run site:check` and
@@ -223,12 +224,20 @@ and the real planning handlers. It exercises both languages, desktop/mobile,
 JointJS editing, autosaves, channel schedule, proposal review, locked steps and
 comments without paid calls or external campaign writes. CI retains screenshots.
 
+The VPS deployment also checks the public editor, stylesheet, FR/EN shells and
+xAI mark. It verifies that JointJS has a JavaScript MIME type, retains `nosniff`
+and exactly matches the bundle in the deployed checkout. An HTTP 200 response
+containing an HTML fallback or an `application/octet-stream` download fails this
+check; a successful container rebuild alone is not sufficient.
+
 The repository pins `@joint/core` and esbuild; regenerate the vendored ESM using
 `pnpm run vendor:joint` after an intentional dependency update. The local
 [notice](../../site/assets/vendor/joint-core/NOTICE.md) includes the MPL-2.0 license
-and exact upstream source archive. The OVH nginx configuration explicitly serves
-the ESM file as JavaScript, including on nginx installations whose MIME table
-does not recognise `.mjs`.
+and exact upstream source archive. The local ESM bundle is named `joint.js` so
+existing web servers serve it using their standard JavaScript MIME mapping. This
+packaging works with the console's strict module loading and `nosniff` policy
+without changing the live Nginx configuration; the upstream input remains
+`@joint/core/joint.mjs`.
 
 ## Scope beyond this increment
 
