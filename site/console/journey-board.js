@@ -23,7 +23,7 @@ export function renderJourneyBoard({ overview, status, search, ga4, bing, langua
   ];
   const list = el('ol', 'journey-board-path');
   for (const [index, item] of steps.entries()) {
-    const li = el('li', 'journey-board-step'); li.dataset.tone = item.tone; li.dataset.coachSection = item.section; li.dataset.coachLabel = item.title;
+    const li = el('li', 'journey-board-step'); li.dataset.tone = item.tone; li.dataset.coachSection = item.section; li.dataset.coachTab = item.href.split('/')[1] || ''; li.dataset.coachLabel = item.title;
     const visual = el('div', 'journey-board-visual'), img = el('img'); img.src = `/assets/coach/${item.image}.svg`; img.alt = ''; img.width = 180; img.height = 84; img.loading = 'lazy';
     visual.append(img, el('span', 'journey-board-number', String(index + 1).padStart(2, '0')));
     const a = el('a', '', item.title); a.href = item.href;

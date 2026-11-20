@@ -22,13 +22,27 @@ function cardLabel(node) {
   }
   return '';
 }
+function chartLabel(node) {
+  for (const candidate of [node, ...node.querySelectorAll('svg[role="img"][aria-label]')]) {
+    const label = clean(candidate.getAttribute('aria-label')); if (label) return label;
+  }
+  for (const heading of node.querySelectorAll('h2,h3,h4')) {
+    const label = labelText(heading); if (label) return label;
+  }
+  // Empty charts have no SVG. Their captions still contain a series legend,
+  // which must not turn a chart explanation into a single metric explanation.
+  const caption = node.querySelector('figcaption')?.cloneNode(true);
+  if (!caption) return '';
+  for (const extra of caption.querySelectorAll('.c-legend,.c-legend-item,button,a,input,textarea,select,summary,[role="button"],[data-coach-help]')) extra.remove();
+  return clean(caption.textContent);
+}
 function labelFor(node, kind) {
   if (node.dataset.coachLabel) return clean(node.dataset.coachLabel);
   if (kind === 'field') {
     const label = node.id ? [...node.ownerDocument.querySelectorAll('label[for]')].find(label => label.getAttribute('for') === node.id) : null;
     return clean(node.getAttribute('aria-label') || labelText(label) || labelText(node.closest('label')) || node.getAttribute('placeholder') || node.name);
   }
-  if (kind === 'chart') return clean(node.getAttribute('aria-label') || node.querySelector('figcaption,h2,h3,h4,title')?.textContent);
+  if (kind === 'chart') return chartLabel(node);
   if (kind === 'card') return cardLabel(node);
   return clean(node.getAttribute('aria-label') || node.getAttribute('title') || node.textContent);
 }
@@ -67,9 +81,14 @@ export function attachContextualHelp(root, { getContext, onExplain, language = '
         frame.append(help);
       } else node.after(help);
     } else if (node.matches('a,button,summary')) {
-      const wrapper = node.ownerDocument.createElement(kind === 'card' ? 'div' : 'span');
-      wrapper.className = kind === 'card' ? 'context-card-wrap' : 'context-control-wrap';
-      node.before(wrapper); wrapper.append(node, help);
+      const wrapperClass = kind === 'card' ? 'context-card-wrap' : 'context-control-wrap';
+      let wrapper = node.parentElement;
+      if (!wrapper?.classList.contains(wrapperClass)) {
+        wrapper = node.ownerDocument.createElement(kind === 'card' ? 'div' : 'span');
+        wrapper.className = wrapperClass;
+        node.before(wrapper); wrapper.append(node);
+      }
+      wrapper.append(help);
     } else {
       node.classList.add('context-help-host');
       node.append(help);
@@ -84,6 +103,9 @@ export function attachContextualHelp(root, { getContext, onExplain, language = '
     for (const node of root.querySelectorAll('thead th,.app-table > tr:first-child th')) add(node, 'column');
     for (const node of root.querySelectorAll('button:not([data-coach-help]),a[href^="#"]')) {
       if (node.matches(cardSelector) || node.closest('label')) continue;
+      // The journey heading and its card describe the same destination.
+      // Keep other controls in the card independently explainable.
+      if (node.matches('.journey-board-step h3 a') && tracked.has(node.closest('.journey-board-step'))) continue;
       add(node, node.matches('.app-tab,.app-nav a') ? 'navigation' : 'action');
     }
     for (const node of root.querySelectorAll('h1,h2,h3')) {

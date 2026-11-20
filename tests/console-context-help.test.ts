@@ -1,6 +1,7 @@
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import { parseHTML } from 'linkedom';
 import { attachContextualHelp } from '../site/console/context-help.js';
+import { getElementGuide } from '../site/console/coach-model.js';
 
 const disposers: Array<() => void> = [];
 afterEach(() => { for (const dispose of disposers.splice(0)) dispose(); vi.unstubAllGlobals(); });
@@ -106,6 +107,51 @@ describe('contextual element help', () => {
     expect(labels).toEqual(['Understand: Search opportunities', 'Understand: Organic clicks', 'Understand: Review page titles']);
   });
 
+  it.each([
+    ['fr', 'Performance quotidienne (Google Search)', 'Comprendre : '],
+    ['en', 'Daily performance (Google Search)', 'Understand: '],
+  ])('uses the accessible chart title without concatenating its metric legend (%s)', (language, title, prefix) => {
+    const { root, explain } = fixture(`<figure class="app-chart"><figcaption>${title}<span class="c-legend"><span class="c-legend-item">Clics</span><span class="c-legend-item">Impressions</span><span class="c-legend-item">CTR</span><span class="c-legend-item">Position</span></span></figcaption><svg role="img" aria-label="${title}"><circle><title>Position: 5</title></circle></svg></figure>`, { language, context: () => ({ section: 'gsc', tab: '' }) });
+    const help = root.querySelector<HTMLButtonElement>('[data-coach-help=chart]')!;
+    expect(help.getAttribute('aria-label')).toBe(`${prefix}${title}`);
+    help.click();
+    const context = explain.mock.calls[0][0];
+    expect(context).toMatchObject({ section: 'gsc', label: title, kind: 'chart' });
+    expect(getElementGuide(context, language).elementId).not.toBe('position');
+    expect(root.querySelector('.c-legend')?.textContent).toBe('ClicsImpressionsCTRPosition');
+  });
+
+  it('prefers a chart aria-label, then a heading, and cleans the caption of an empty chart without changing its content', () => {
+    const { root, explain } = fixture('<figure id="labelled" aria-label="Figure title"><figcaption>Caption<span class="c-legend">Position</span></figcaption><h2>Heading title</h2><svg role="img" aria-label="SVG title"></svg></figure><figure id="headed"><figcaption>Caption<span class="c-legend">Position</span></figcaption><h3>Heading title</h3></figure><figure id="empty"><figcaption>Daily performance (Google Search)<span class="c-legend"><span class="c-legend-item">Clicks</span><span class="c-legend-item">Position</span></span><button id="chart-refresh">Refresh</button><input value="private-value"></figcaption><p>No data for this period.</p></figure>');
+    const labels = [...root.querySelectorAll('[data-coach-help=chart]')].map(help => help.getAttribute('aria-label'));
+    expect(labels).toEqual(['Understand: Figure title', 'Understand: Heading title', 'Understand: Daily performance (Google Search)']);
+    root.querySelector<HTMLButtonElement>('#empty > [data-coach-help=chart]')!.click();
+    expect(explain.mock.calls[0][0].label).toBe('Daily performance (Google Search)');
+    expect(root.querySelector('#empty .c-legend')?.textContent).toBe('ClicksPosition');
+    const action = root.querySelector<HTMLButtonElement>('#chart-refresh')!, handler = vi.fn(); action.onclick = handler;
+    action.click(); expect(handler).toHaveBeenCalledTimes(1);
+    expect(action.parentElement?.querySelector('[data-coach-help=action]')).not.toBeNull();
+    expect(root.querySelector('#empty input')?.getAttribute('value')).toBe('private-value');
+  });
+
+  it('keeps one journey card explanation for its heading link while preserving other actions and the exact destination', () => {
+    const { root, helper, explain } = fixture('<ol><li class="journey-board-step" data-coach-section="studio" data-coach-tab="campaigns"><h3><a id="journey-heading" href="#studio/campaigns">Build the plan</a></h3><button id="journey-action">Generate a draft</button><a id="journey-detail" href="#studio">Review details</a></li></ol><h3><a id="other-heading" href="#impact/visibility">Measure results</a></h3>');
+    helper.refresh();
+    const step = root.querySelector('.journey-board-step')!, link = root.querySelector<HTMLAnchorElement>('#journey-heading')!, handler = vi.fn(); link.onclick = handler;
+    expect(step.querySelectorAll('[data-coach-help=card]')).toHaveLength(1);
+    expect(link.parentElement?.tagName).toBe('H3');
+    expect(link.parentElement?.querySelector('[data-coach-help]')).toBeNull();
+    const cardHelp = step.querySelector<HTMLButtonElement>('[data-coach-help=card]')!;
+    cardHelp.click();
+    expect(explain.mock.calls[0][0]).toMatchObject({ label: 'Build the plan', section: 'studio', tab: 'campaigns', kind: 'card' });
+    expect(handler).not.toHaveBeenCalled();
+    link.click(); expect(handler).toHaveBeenCalledTimes(1);
+    expect(link.getAttribute('href')).toBe('#studio/campaigns');
+    for (const id of ['journey-action', 'journey-detail', 'other-heading']) {
+      expect(root.querySelector(`#${id}`)?.parentElement?.querySelector('[data-coach-help=action]')).not.toBeNull();
+    }
+  });
+
   it('explains navigation and link card destinations while explicit source context wins and page anchors stay local', () => {
     const { root, explain } = fixture('<nav class="app-nav"><a href="#settings/sources">Sources</a></nav><a class="decision-card" href="#studio/campaigns"><h3>Visual plan</h3></a><a href="#ga4/realtime" data-coach-section="geo" data-coach-tab="schema">Linked finding</a><a href="#c-login-form">Continue below</a>');
     const activate = (label: string) => { root.querySelector<HTMLButtonElement>(`[aria-label="Understand: ${label}"]`)!.click(); return explain.mock.calls.at(-1)![0]; };
@@ -157,6 +203,32 @@ describe('contextual element help', () => {
     await tick(); helper.refresh();
     expect(root.querySelectorAll('[data-coach-help]')).toHaveLength(0);
     action.click(); expect(handler).toHaveBeenCalledTimes(1);
+  });
+
+  it('reuses action and card wrappers after disposal and a new attachment without replacing the original controls', () => {
+    const { root, helper } = fixture('<button id="workspace">Choose workspace</button><a id="logout" href="#login">Sign out</a><a id="persistent-card" class="decision-card" href="#settings/sources"><h3>Connect sources</h3></a>');
+    const controls = ['workspace', 'logout', 'persistent-card'].map(id => {
+      const node = root.querySelector<HTMLButtonElement>(`#${id}`)!, handler = vi.fn(); node.onclick = handler;
+      return { node, wrapper: node.parentElement, handler };
+    });
+    helper.dispose();
+    expect(root.querySelectorAll('[data-coach-help]')).toHaveLength(0);
+    const explain = vi.fn();
+    const remounted = attachContextualHelp(root, { getContext: () => ({ section: 'overview', tab: 'board' }), onExplain: explain });
+    disposers.push(remounted.dispose); remounted.refresh();
+    expect(root.querySelectorAll('.context-control-wrap')).toHaveLength(2);
+    expect(root.querySelectorAll('.context-card-wrap')).toHaveLength(1);
+    expect(root.querySelectorAll('.context-control-wrap .context-control-wrap,.context-card-wrap .context-card-wrap')).toHaveLength(0);
+    expect(root.querySelectorAll('[data-coach-help]')).toHaveLength(3);
+    for (const { node, wrapper, handler } of controls) {
+      expect(root.querySelector(`#${node.id}`)).toBe(node);
+      expect(node.parentElement).toBe(wrapper);
+      expect(wrapper?.querySelectorAll('[data-coach-help]')).toHaveLength(1);
+      wrapper!.querySelector<HTMLButtonElement>('[data-coach-help]')!.click();
+      expect(handler).not.toHaveBeenCalled();
+      node.click(); expect(handler).toHaveBeenCalledTimes(1);
+    }
+    expect(explain).toHaveBeenCalledTimes(3);
   });
 
   it('provides French button names and bounds explicit labels without injecting markup', () => {

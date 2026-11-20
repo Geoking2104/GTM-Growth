@@ -167,6 +167,7 @@ try {
     await inspectHelp(page, page.locator('[data-coach-help="navigation"]:visible').first(), language);
     if (width < 640) await page.locator('#c-nav-toggle').click();
     await page.locator('[data-coach-help="chart"]:visible').first().click(); await inspector(page).waitFor({ state: 'visible' });
+    assert.equal(await page.locator('[data-coach="help-title"]').innerText(), language === 'fr' ? 'Performance quotidienne (Google Search)' : 'Daily performance (Google Search)', 'Chart help uses the chart title without concatenating metric legends');
     await screenshot(page, language, width, 'provenance'); await closeHelp(page);
 
     // A manual live refresh is an inventory read. It must not start a collection or write.

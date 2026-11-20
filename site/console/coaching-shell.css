@@ -29,6 +29,7 @@
 .c-app .decision-priorities { border:1px solid #e1d6f5; border-radius:16px; background:#fbf9ff; padding:24px; margin:22px 0; }
 .c-app .decision-priority-grid { gap:14px; }
 .c-app .decision-priority { border-top:3px solid #9774d6; background:#fff; }
+.c-app .decision-priorities a.btn { color:#fff; }
 .c-app .decision-card { background:#fff; border-radius:14px; box-shadow:0 3px 14px #293c4b05; }
 .c-app .decision-card:hover { border-color:var(--journey-area,#6d45c7); box-shadow:0 5px 18px #293c4b0d; }
 .c-app .decision-mark { background:var(--journey-tint,#f4efff); color:var(--journey-area,#6d45c7); }
@@ -102,6 +103,7 @@
 .c-app button.context-help { flex:0 0 26px; width:26px; height:26px; min-height:26px; padding:0; border:1px solid #c9d2df; background:#fff; color:#53677e; border-radius:50%; font:650 11px/24px system-ui,sans-serif; cursor:pointer; box-shadow:none; text-align:center; }
 .c-app button.context-help:hover,.c-app button.context-help:focus-visible { border-color:#6d45c7; color:#5938a8; background:#f5f0ff; outline:2px solid #b8a5e2; outline-offset:2px; }
 .context-help-host > .context-help,.context-card-wrap > .context-help { position:absolute; top:10px; right:10px; }
+.c-app .app-chart.context-help-host > figcaption,.c-app .audience-card.context-help-host > h4 { padding-right:26px; }
 .context-help-host:is(h1,h2,h3,th) > .context-help { position:static; margin-left:8px; vertical-align:middle; }
 .c-app .app-nav .context-control-wrap { display:flex; width:100%; gap:2px; }
 .c-app .app-nav .context-control-wrap > a { flex:1; min-width:0; }
@@ -117,7 +119,8 @@
 @media(max-width:800px){.c-app .app-main{padding:18px}.journey-board-heading{display:block}.journey-board-note{max-width:none;margin-top:10px}.console-live-head{align-items:flex-start;flex-wrap:wrap}}
 @media(max-width:640px){
   .c-app .app-side{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:10px;padding:12px}
-  .c-app .app-side > .context-control-wrap:first-child{min-width:0}.c-app .app-switch{width:100%;min-width:0}
+  .c-app .app-side > .context-control-wrap:first-child{min-width:0;flex-wrap:nowrap}.c-app .app-switch{flex:1 1 0;width:auto;min-width:0}
+  .c-app .app-switch > :is(img,svg){flex-shrink:0}
   .c-app #c-switch-label{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
   #c-nav-toggle{display:block;border:1px solid #dce2ed;border-radius:9px;padding:9px 10px;background:#f7f8fc;color:#4b5f7a;font:650 11px system-ui;min-height:38px}
   .c-app .app-side > :not(:first-child):not(#c-nav-toggle){grid-column:1/-1}
