@@ -9,9 +9,9 @@ const UI = {
     url: "Page source", date: "Relevé le", scope: "Périmètre : cette URL, pas l'ensemble du site",
     coverage: "Couverture", measured: "Contrôles effectués", partial: "Partiellement observé", unknown: "Non mesuré",
     checks: "contrôles vérifiés", attention: "à examiner", profiles: "liens de profils repérés",
-    score: "Grille GEO v2 · 42 contrôles", scoreMissing: "Score v2 non publié · preuves incomplètes",
+    score: "Visibilité IA · 42 contrôles", scoreMissing: "Note sur 100 pas encore calculée · contrôles à compléter",
     seoNote: "Contrôles HTML de cette page ; aucun score SEO global calculé.",
-    geoNote: "42 contrôles GEO v2 ; seuls les constats sourcés sont évalués. Aucun score public sans couverture complète et accord du propriétaire.",
+    geoNote: "42 contrôles de visibilité IA ; seuls les constats prouvés comptent. La note sur 100 est calculée quand les 42 contrôles sont faits, puis affichée dans votre espace.",
     aiNote: "Préparation de la page seulement ; aucun moteur IA interrogé.",
     crmNote: "Conversions et revenus non observables sans connexion autorisée.",
     socialNote: "Liens sortants/identités déclarées seulement ; pas de liens entrants mesurés.",
@@ -30,10 +30,15 @@ const UI = {
     critical: "Critique", high: "Haute", medium: "Moyenne", low: "Basse",
     generalVerify: "Relancez le même diagnostic sur la même URL et comparez le contrôle ; conservez la date et la méthode.",
     generalApprove: "Faites relire le changement par le responsable du site avant publication.",
-    v2Checks: "contrôles observés / 42", v2Grid: "Grille GEO v2 · preuves et applicabilité",
-    v2Intro: "Chaque contrôle est soit observé, soit inconnu, soit non applicable avec justification. Un inconnu ne vaut jamais zéro.",
-    v2Measured: "Observé", v2Unknown: "Inconnu", v2Excluded: "Non applicable", v2Status: "Statut",
-    v2Summary: "Contrôles GEO v2", v2Completion: "Contrôles observés", v2NoScore: "Aucun score v2 publiable à ce stade",
+    v2Checks: "contrôles observés / 42", v2Grid: "Visibilité IA de la page · 42 contrôles prouvés", v2Eyebrow: "VISIBILITÉ IA (GEO)",
+    v2Intro: "Chaque contrôle est soit observé (conforme ou à corriger), soit à vérifier faute de preuve, soit non applicable avec justification. Un contrôle à vérifier ne compte jamais comme un échec.",
+    v2Measured: "Observé", v2Unknown: "À vérifier", v2Excluded: "Non applicable", v2Status: "Statut", v2Pass: "Conformes", v2Review: "À corriger", v2Category: "Catégorie", v2ObservedCol: "Contrôles observés",
+    v2Summary: "Contrôles de visibilité IA", v2Completion: "Contrôles observés", v2Method: "Référentiel de contrôle GEO",
+    v2ScoreTitle: "Note de visibilité IA sur 100 : pas encore calculée", v2ScoreDoneTitle: "Les 42 contrôles sont faits", v2ScoreFailedTitle: "Analyse incomplète : aucune note calculée",
+    v2ScoreWhy: (done, todo) => `Pour ne jamais afficher une note fausse, la note sur 100 n’est calculée que lorsque les 42 contrôles sont faits. Ici, ${done} contrôles sur 42 sont faits et ${todo} restent à vérifier.`,
+    v2ScoreMissing: "Restent à vérifier :", v2ScoreHow: "Ces contrôles demandent des éléments qu’une lecture publique ne voit pas, par exemple le rendu complet de la page, qui nécessite de prouver que vous êtes propriétaire du site. Complétez-les dans votre espace : la note sur 100 s’y affichera.",
+    v2ScoreDone: "La note sur 100 s’affiche dans votre espace, une fois que vous avez confirmé être propriétaire du site. Elle n’apparaît jamais dans un rapport public sans votre accord.",
+    v2ScoreFailed: "La page n’a pas pu être lue entièrement. Relancez l’analyse ; aucune note n’est calculée sur des preuves partielles.", v2ScoreCta: "Compléter l’analyse dans mon espace",
     visualTitle: "La page, illustrée à partir des éléments lus", visualLabel: "APERÇU RECONSTITUÉ · PAS UNE CAPTURE D’ÉCRAN",
     visualNote: "Titre, description et titres de section proviennent de la réponse HTML. La mise en page d'origine n'a pas été capturée. Pour une capture authentique, vérifiez la propriété du domaine et autorisez un rendu isolé.",
     visualSnippet: "Aperçu du résultat de recherche", visualOutline: "Titres observés sur la page", visualMissing: "Non trouvé dans le HTML",
@@ -49,9 +54,9 @@ const UI = {
     url: "Source page", date: "Observed on", scope: "Scope: this URL, not the entire website",
     coverage: "Coverage", measured: "Checks performed", partial: "Partially observed", unknown: "Not measured",
     checks: "checks reviewed", attention: "to review", profiles: "profile links found",
-    score: "GEO v2 · 42-control grid", scoreMissing: "V2 score unpublished · incomplete evidence",
+    score: "AI visibility · 42 checks", scoreMissing: "Score out of 100 not calculated yet · checks to complete",
     seoNote: "HTML checks on this page; no overall SEO score is calculated.",
-    geoNote: "42 GEO v2 controls; only source-backed findings are evaluated. No public score without full coverage and owner consent.",
+    geoNote: "42 AI visibility checks; only proven findings count. The score out of 100 is calculated once all 42 checks are done, then shown in your workspace.",
     aiNote: "Page readiness only; no AI engine was queried.",
     crmNote: "Conversions and revenue require an authorised connection.",
     socialNote: "Outbound/declared profile links only; inbound links not measured.",
@@ -70,10 +75,15 @@ const UI = {
     critical: "Critical", high: "High", medium: "Medium", low: "Low",
     generalVerify: "Run the same diagnostic on the same URL again and compare the check, keeping the date and method.",
     generalApprove: "Have the website owner review the change before it is published.",
-    v2Checks: "observed / 42 controls", v2Grid: "GEO v2 grid · proof and applicability",
-    v2Intro: "Every check is observed, unknown or not applicable with evidence. Unknown never means zero.",
-    v2Measured: "Observed", v2Unknown: "Unknown", v2Excluded: "Not applicable", v2Status: "Status",
-    v2Summary: "GEO v2 controls", v2Completion: "Checks observed", v2NoScore: "No publishable v2 score yet",
+    v2Checks: "observed / 42 controls", v2Grid: "AI visibility of this page · 42 proven checks", v2Eyebrow: "AI VISIBILITY (GEO)",
+    v2Intro: "Every check is either observed (passed or to fix), still to verify for lack of proof, or not applicable with a reason. A check still to verify never counts as a failure.",
+    v2Measured: "Observed", v2Unknown: "To verify", v2Excluded: "Not applicable", v2Status: "Status", v2Pass: "Passed", v2Review: "To fix", v2Category: "Category", v2ObservedCol: "Checks observed",
+    v2Summary: "AI visibility checks", v2Completion: "Checks observed", v2Method: "GEO check framework",
+    v2ScoreTitle: "AI visibility score out of 100: not calculated yet", v2ScoreDoneTitle: "All 42 checks are done", v2ScoreFailedTitle: "Incomplete analysis: no score calculated",
+    v2ScoreWhy: (done, todo) => `To never show a misleading score, the score out of 100 is only calculated once all 42 checks are done. Here, ${done} of 42 checks are done and ${todo} still need verifying.`,
+    v2ScoreMissing: "Still to verify:", v2ScoreHow: "These checks need evidence a public read cannot see, for example the fully rendered page, which requires proving you own the site. Complete them in your workspace, where the score out of 100 will appear.",
+    v2ScoreDone: "The score out of 100 appears in your workspace once you confirm you own the site. It is never shown in a public report without your consent.",
+    v2ScoreFailed: "The page could not be read completely. Run the analysis again; no score is calculated from partial evidence.", v2ScoreCta: "Complete the analysis in my workspace",
     visualTitle: "Your page, illustrated using observed HTML", visualLabel: "RECONSTRUCTED PREVIEW · NOT A SCREENSHOT",
     visualNote: "The title, description and headings come from the HTML response. The original visual layout was not captured. Verify domain ownership and authorise isolated rendering for an authentic screenshot.",
     visualSnippet: "Search-result preview", visualOutline: "Headings observed on the page", visualMissing: "Not found in HTML",
@@ -181,8 +191,8 @@ const GUIDES = {
     en: ["Declare verifiable entities", "No schema type was detected within this page's scope.", "Identify organisations, products or articles actually described.", "Verify official identities and reference URLs.", "Add only supported, approved entities.", "Validate markup and source links."],
   },
   ai_measurement: {
-    fr: ["Mesurer les réponses des moteurs IA", "La grille GEO v2 mesure une préparation, pas des citations réellement observées dans ChatGPT, Claude, Gemini, Mistral ou Grok.", "Choisissez des questions clients représentatives.", "Connectez ou autorisez explicitement les moteurs et les comptes utiles.", "Enregistrez dates, requêtes, réponses et preuves sans extrapoler.", "Comparez les résultats à périmètre identique, avec attribution claire."],
-    en: ["Measure actual AI engine answers", "GEO v2 readiness is not a record of actual citations in ChatGPT, Claude, Gemini, Mistral or Grok.", "Choose representative customer questions.", "Explicitly authorise the relevant engines and accounts.", "Record queries, answers, dates and evidence without extrapolating.", "Compare like-for-like observations with clear attribution."],
+    fr: ["Mesurer les réponses des moteurs IA", "Les 42 contrôles de visibilité IA mesurent une préparation, pas des citations réellement observées dans ChatGPT, Claude, Gemini, Mistral ou Grok.", "Choisissez des questions clients représentatives.", "Connectez ou autorisez explicitement les moteurs et les comptes utiles.", "Enregistrez dates, requêtes, réponses et preuves sans extrapoler.", "Comparez les résultats à périmètre identique, avec attribution claire."],
+    en: ["Measure actual AI engine answers", "The 42 AI visibility checks measure readiness, not a record of actual citations in ChatGPT, Claude, Gemini, Mistral or Grok.", "Choose representative customer questions.", "Explicitly authorise the relevant engines and accounts.", "Record queries, answers, dates and evidence without extrapolating.", "Compare like-for-like observations with clear attribution."],
   },
   crm_measurement: {
     fr: ["Relier les actions aux conversions", "Une lecture HTML publique ne donne ni prospects, ni ventes, ni revenus fiables.", "Définissez ce qu'est une conversion ou un contact utile.", "Connectez une propriété GA4/CRM avec consentement et droits adaptés.", "Vérifiez les événements et leur provenance sans exposer de données personnelles.", "Contrôlez le rapprochement dans un rapport tenant isolé."],
@@ -217,7 +227,7 @@ function guide(action, lang) {
     const title = v2Title(action.checkId, action.title, lang);
     const steps = V2_GUIDES[action.checkId[0]]?.[lang] || [copy.generalVerify, copy.generalApprove, copy.generalVerify];
     return {
-      title: `GEO v2 ${action.checkId} · ${title}`,
+      title: `${action.checkId} · ${title}`,
       why: action.proof ? `${copy.proof} : ${action.proof.value}` : copy.noProof,
       steps, verify: copy.generalVerify,
     };
@@ -344,21 +354,26 @@ function renderV2Grid(report, lang, copy) {
   const v2 = report.geoV2;
   if (!v2 || !Array.isArray(v2.controls)) return null;
   const section = el("section", "report360-v2-grid"); section.id = "c-report360-v2-grid";
-  section.append(el("p", "report360-eyebrow", `GEO ${v2.gridVersion || "v2"}`), el("h2", "", copy.v2Grid), el("p", "report360-subtitle", copy.v2Intro));
+  section.append(el("p", "report360-eyebrow", copy.v2Eyebrow), el("h2", "", copy.v2Grid), el("p", "report360-subtitle", copy.v2Intro));
   const measured = v2.controls.filter(c => c.status === "measured").length;
+  const passed = v2.controls.filter(c => c.status === "measured" && c.outcome === "pass").length;
+  const review = measured - passed;
   const unknown = v2.controls.filter(c => c.status === "unknown").length;
   const excluded = v2.controls.filter(c => c.status === "not_applicable").length;
   const summary = el("div", "report360-v2-summary");
   const overall = el("div", "report360-v2-stat report360-v2-overall");
   overall.append(renderCompletionDonut(completionStats(v2.controls), lang, { size: "lg" }), el("span", "", copy.v2Completion));
   summary.append(overall);
-  for (const [value, label, key] of [[measured, copy.v2Measured, "measured"], [unknown, copy.v2Unknown, "unknown"], [excluded, copy.v2Excluded, "not_applicable"]]) {
+  for (const [value, label, key] of [[passed, copy.v2Pass, "pass"], [review, copy.v2Review, "review"], [unknown, copy.v2Unknown, "unknown"], [excluded, copy.v2Excluded, "not_applicable"]]) {
     const tile = el("div", `report360-v2-stat report360-v2-stat-${key}`);
     const swatch = span("report360-v2-swatch"); swatch.setAttribute("aria-hidden", "true");
     tile.append(swatch, el("strong", "", value), el("span", "", label)); summary.append(tile);
   }
-  section.append(summary, el("p", "report360-v2-no-score", copy.v2NoScore));
-  const buckets = el("div", "report360-v2-buckets");
+  section.append(summary, renderScoreStatus(v2, lang, copy, { measured, excluded, unknown }));
+  const buckets = el("div", "report360-v2-buckets"); buckets.setAttribute("role", "list");
+  const head = el("div", "report360-v2-head"); head.setAttribute("aria-hidden", "true");
+  for (const label of [copy.v2Category, copy.v2ObservedCol, copy.v2Pass, copy.v2Review, copy.v2Unknown]) head.append(span("", label));
+  buckets.append(head);
   // Known categories keep their editorial order; any other key returned by the
   // API is still shown (with the fallback pictogram) instead of being dropped.
   const extraCategories = [...new Set(v2.controls.map(c => c.category))].filter(k => typeof k === "string" && k && !Object.hasOwn(V2_CATEGORY, k));
@@ -371,8 +386,17 @@ function renderV2Grid(report, lang, copy) {
     const name = span("report360-v2-category-name");
     name.append(renderCategoryIcon(category), span("", labels[lang === "fr" ? 0 : 1]));
     const progress = span("report360-v2-category-progress");
-    progress.append(renderCompletionDonut(stats, lang), span("report360-v2-category-count", `${stats.observed}/${stats.total} ${copy.v2Measured.toLowerCase()}`));
-    summaryLine.append(name, progress);
+    progress.append(renderCompletionDonut(stats, lang), span("report360-v2-category-count", `${stats.observed}/${stats.total} ${lang === "fr" ? "observés" : "observed"}`));
+    const results = span("report360-v2-results");
+    const groupPass = group.filter(c => c.status === "measured" && c.outcome === "pass").length;
+    const groupReview = group.filter(c => c.status === "measured" && c.outcome !== "pass").length;
+    for (const [value, label, key] of [[groupPass, copy.v2Pass, "pass"], [groupReview, copy.v2Review, "review"], [stats.unknown, copy.v2Unknown, "unknown"]]) {
+      const cell = span(`report360-v2-cell report360-v2-cell-${key}${value ? "" : " is-zero"}`);
+      cell.dataset.label = label; cell.setAttribute("aria-label", `${label} : ${value}`);
+      cell.append(span("report360-v2-cell-value", String(value)), span("report360-v2-cell-label", label));
+      results.append(cell);
+    }
+    summaryLine.append(name, progress, results);
     detail.append(summaryLine);
     const list = el("ol", "report360-v2-list");
     for (const control of group) {
@@ -392,9 +416,39 @@ function renderV2Grid(report, lang, copy) {
       } else if (control.reason) item.append(el("p", "report360-v2-extract", control.reason));
       list.append(item);
     }
+    detail.setAttribute("role", "listitem");
     detail.append(list); buckets.append(detail);
   }
-  section.append(buckets); return section;
+  section.append(buckets);
+  if (v2.gridVersion) section.append(el("p", "report360-v2-method", `${copy.v2Method} ${v2.gridVersion}`));
+  return section;
+}
+
+/** Plain-language status of the score out of 100 (withheld from public reads by design). */
+function renderScoreStatus(v2, lang, copy, { measured, excluded, unknown }) {
+  const box = el("div", `report360-v2-score report360-v2-score-${v2.status === "failed" ? "failed" : v2.status === "complete" ? "complete" : "incomplete"}`);
+  box.setAttribute("role", "note");
+  if (v2.status === "failed") {
+    box.append(el("strong", "", copy.v2ScoreFailedTitle), el("p", "", copy.v2ScoreFailed));
+    return box;
+  }
+  if (v2.status === "complete" || unknown === 0) {
+    box.append(el("strong", "", copy.v2ScoreDoneTitle), el("p", "", copy.v2ScoreDone));
+  } else {
+    box.append(el("strong", "", copy.v2ScoreTitle), el("p", "", copy.v2ScoreWhy(measured + excluded, unknown)));
+    const missing = el("ul", "report360-v2-missing");
+    const keys = [...Object.keys(V2_CATEGORY), ...new Set(v2.controls.map(c => c.category).filter(k => typeof k === "string" && !Object.hasOwn(V2_CATEGORY, k)))];
+    for (const key of keys) {
+      const count = v2.controls.filter(c => c.category === key && c.status === "unknown").length;
+      if (!count) continue;
+      const item = el("li");
+      item.append(renderCategoryIcon(key), span("", `${(V2_CATEGORY[key] || [key, key])[lang === "fr" ? 0 : 1]} (${count})`));
+      missing.append(item);
+    }
+    box.append(el("p", "report360-v2-missing-title", copy.v2ScoreMissing), missing, el("p", "", copy.v2ScoreHow));
+  }
+  const cta = el("a", "report360-workspace", copy.v2ScoreCta); cta.href = "#c-login-form"; box.append(cta);
+  return box;
 }
 
 function renderConnections(lang, copy) {

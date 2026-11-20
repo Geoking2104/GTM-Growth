@@ -489,11 +489,32 @@ body.console-page:has(.public-console:not([hidden])) { --pc-bg:#06060f; --pc-pan
 .report360-outline-h2 { border-color:#78b6d3; margin-left:1rem; }
 .report360-outline-tag { border-radius:5px; padding:.1rem .36rem; background:#f0e9ff; font-size:.65rem; color:#6c42b1; font-weight:800; flex:none; }
 .report360-visual-disclaimer { font-size:.72rem; line-height:1.5; color:#665d80; margin:0; }
-.report360-v2-summary { display:grid; grid-template-columns:repeat(4,minmax(0,1fr)); gap:.6rem; }
+.report360-v2-summary { display:grid; grid-template-columns:repeat(5,minmax(0,1fr)); gap:.6rem; }
 .report360-v2-stat { background:#f7f2ff; border-radius:10px; padding:.75rem; display:flex; gap:.6rem; align-items:baseline; color:#645583; }
 .report360-v2-stat strong { font-size:1.5rem; color:#4b2887; font-variant-numeric:tabular-nums; white-space:nowrap; }
 .report360-v2-stat span { font-size:.73rem; font-weight:700; }
-.report360-v2-no-score { margin:0; padding:.7rem .85rem; border-radius:8px; background:#fff6e7; color:#725016; font-size:.76rem; font-weight:700; }
+.report360-v2-score { display:grid; gap:.45rem; margin:0; padding:.9rem 1rem; border-radius:12px; border:1px solid #e6dcf7; background:#faf7ff; color:#4b4163; font-size:.8rem; line-height:1.55; }
+.report360-v2-score strong { color:#2d1f4f; font-size:.92rem; }
+.report360-v2-score p { margin:0; }
+.report360-v2-score-failed { background:#fff4f2; border-color:#f6d3cc; }
+.report360-v2-score .report360-workspace { justify-self:start; display:inline-flex; align-items:center; min-height:44px; padding:.55rem 1rem; border-radius:10px; background:#2563eb; color:#fff; font-weight:750; text-decoration:none; }
+.report360-v2-missing-title { font-weight:750; color:#3b2d5c; }
+.report360-v2-missing { display:flex; flex-wrap:wrap; gap:.4rem; margin:0; padding:0; list-style:none; }
+.report360-v2-missing li { display:inline-flex; align-items:center; gap:.4rem; padding:.25rem .6rem .25rem .3rem; border-radius:999px; background:#fff; border:1px solid #e3d9f4; font-weight:700; font-size:.74rem; color:#4b2887; }
+.report360-v2-missing .gg-category-icon { width:1.5rem; height:1.5rem; }
+.report360-v2-method { margin:0; font-size:.68rem; color:#8a7fa3; }
+.report360-v2-head { display:grid; grid-template-columns:minmax(0,1fr) 11rem repeat(3,5.5rem); gap:.5rem; padding:0 1rem; font-size:.66rem; font-weight:800; text-transform:uppercase; letter-spacing:.04em; color:#7b6f95; }
+.report360-v2-head span:nth-child(n+3) { text-align:center; }
+.report360-v2-results { display:grid; grid-template-columns:repeat(3,5.5rem); gap:.5rem; }
+.report360-v2-cell { display:flex; flex-direction:column; align-items:center; gap:.1rem; font-variant-numeric:tabular-nums; }
+.report360-v2-cell-value { font-size:.95rem; font-weight:850; }
+.report360-v2-cell-label { display:none; font-size:.62rem; font-weight:700; color:#7b6f95; }
+.report360-v2-cell-pass .report360-v2-cell-value { color:#0f6b4a; }
+.report360-v2-cell-review .report360-v2-cell-value { color:#b25c00; }
+.report360-v2-cell-unknown .report360-v2-cell-value { color:#6a41b9; }
+.report360-v2-cell.is-zero .report360-v2-cell-value { color:#b9b0cb; }
+.report360-v2-stat-pass .report360-v2-swatch { background:#16a36f; border-color:transparent; }
+.report360-v2-stat-review .report360-v2-swatch { background:#f59e0b; border-color:transparent; }
 /* Shared completion donut (completion-donut.js): observed = brand gradient, n/a = grey, unknown = empty track. */
 .gg-donut { --gg-size:26px; --gg-thick:5px; display:inline-flex; align-items:center; gap:.45rem; flex:none; font-variant-numeric:tabular-nums; }
 .gg-donut-ring { width:var(--gg-size); height:var(--gg-size); border-radius:50%; flex:none; background:conic-gradient(var(--gg-accent,#7c3aed) 0, var(--gg-pink,#ec4899) var(--gg-done,0%), #b8aecb var(--gg-done,0%) var(--gg-na,0%), #e9e2f5 var(--gg-na,0%) 100%); -webkit-mask:radial-gradient(farthest-side,transparent calc(100% - var(--gg-thick)),#000 calc(100% - var(--gg-thick) + .5px)); mask:radial-gradient(farthest-side,transparent calc(100% - var(--gg-thick)),#000 calc(100% - var(--gg-thick) + .5px)); }
@@ -515,7 +536,9 @@ body.console-page:has(.public-console:not([hidden])) { --pc-bg:#06060f; --pc-pan
 .report360-v2-category-progress { display:inline-flex; align-items:center; gap:.6rem; flex:none; }
 .report360-v2-buckets { display:grid; gap:.55rem; }
 .report360-v2-category { border:1px solid #e0d7f0; border-radius:10px; background:#faf9fd; min-width:0; }
-.report360-v2-category summary { cursor:pointer; color:#372857; padding:.8rem 1rem; display:flex; justify-content:space-between; gap:.5rem; align-items:center; font-weight:800; font-size:.82rem; }
+.report360-v2-category summary { cursor:pointer; color:#372857; padding:.8rem 1rem; display:grid; grid-template-columns:minmax(0,1fr) 11rem 17.5rem; gap:.5rem; align-items:center; font-weight:800; font-size:.82rem; }
+.report360-v2-category summary::-webkit-details-marker { display:none; }
+.report360-v2-category summary { list-style:none; }
 .report360-v2-category summary:hover { background:#f0eafa; }
 .report360-v2-category-count { font-size:.68rem; font-weight:600; color:#786b93; }
 .report360-v2-list { margin:0; padding:.35rem .85rem .85rem; list-style:none; display:grid; gap:.4rem; }
@@ -607,3 +630,7 @@ body.console-page:has(.public-console:not([hidden])) { --pc-bg:#06060f; --pc-pan
 .c-source-progress-details > summary { cursor: pointer; font-weight: 600; color: #3b3561; }
 .c-source-progress-details .c-source-progress { margin-top: 10px; }
 @media (max-width: 600px) { .c-source-progress { padding: 12px; } .c-source-list { grid-template-columns: 1fr; } .c-source-overall { flex-wrap: wrap; } }
+
+@media(max-width:900px) { .report360-v2-summary { grid-template-columns:repeat(2,minmax(0,1fr)); } .report360-v2-summary .report360-v2-overall { grid-column:1/-1; } .report360-v2-head { display:none; }
+  .report360-v2-category summary { grid-template-columns:minmax(0,1fr) auto; } .report360-v2-results { grid-column:1/-1; grid-template-columns:repeat(3,minmax(0,1fr)); padding-top:.35rem; border-top:1px dashed #e3d9f4; }
+  .report360-v2-cell { flex-direction:row; justify-content:center; gap:.35rem; } .report360-v2-cell-label { display:inline; } }
