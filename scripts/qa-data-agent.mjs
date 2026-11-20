@@ -18,7 +18,7 @@ for(const lang of ['fr','en']) for(const width of [390,1440]) {
  let profile={role:'marketer',goal:'leads',stage:'grow',audience:lang==='fr'?'Dirigeants de PME (exemple de test)':'SME owners (test fixture)',target:{metric:'sessions',value:500}};
  await page.route('**/api/**',async r=>{
  const url=new URL(r.request().url()); const body=r.request().postDataJSON(); let data, status=200;
- if(url.pathname.endsWith('/me')) data={tenant:{id:'acme',name:lang==='fr'?'Exemple de test · Acme':'Test fixture · Acme',domains:['example.com'],gscProperties:[],ga4Properties:[],bingSites:[],gtmContainers:[],branding:{}},memberships:[{id:'acme',role:'tenant-admin'}],role:'tenant-admin'};
+ if(url.pathname.endsWith('/me')) data={tenant:{id:'acme',status:'active',name:lang==='fr'?'Exemple de test · Acme':'Test fixture · Acme',domains:['example.com'],gscProperties:[],ga4Properties:[],bingSites:[],gtmContainers:[],branding:{}},memberships:[{id:'acme',role:'tenant-admin'}],role:'tenant-admin'};
  else if(url.pathname.endsWith('/data-agent/context')) data={profile,slack:'not-configured',actions:[{href:'#ga4',title:lang==='fr'?'Valider les événements clés':'Validate key events',reason:'Test fixture'},{href:'#journey',title:lang==='fr'?'Relier contenus et audience':'Connect content and audience',reason:'Test fixture'}]};
  else if(url.pathname.endsWith('/data-agent/profile')) {profile=body; data={profile};}
  else if(url.pathname.endsWith('/data-agent/query')) data={state:'ready',summary:lang==='fr'?'Mesures de test sur la période indiquée.':'Test measurements for the stated period.',source:'GA4 · Test fixture',readAt:'2026-11-13T12:00:00Z',period:{start:'2026-10-16',end:'2026-11-12'},metrics:[{id:'sessions',label:'Sessions',value:420,unit:'count'},{id:'keyEvents',label:lang==='fr'?'Événements clés':'Key events',value:12,unit:'count'}],caveats:[lang==='fr'?'Données fictives pour la recette. Les événements clés ne sont pas nécessairement des prospects ou des ventes.':'Synthetic QA data. Key events are not necessarily leads or sales.'],href:'#ga4'};
@@ -26,7 +26,7 @@ for(const lang of ['fr','en']) for(const width of [390,1440]) {
  await r.fulfill({status,contentType:'application/json',body:JSON.stringify(data)});
  });
  await page.goto(base+'/console/?lang='+lang+'#ga4');
- await page.locator('#c-data-agent > details > summary').click();
+ await page.locator('[data-coach="data-assistant"] > summary').click();
  await page.locator('.c-agent-grid').last().getByRole('button').click();
  await page.locator('.c-agent-answer').getByText('420 / 500',{exact:false}).waitFor();
  if(await page.locator('.c-agent-answer a').getAttribute('href') !== '#ga4') throw new Error('Missing source analysis handoff');

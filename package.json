@@ -52,7 +52,8 @@
     "start:audit-worker": "node dist/audit-jobs/worker.js",
     "vendor:joint": "node scripts/vendor-joint.mjs",
     "vendor:check": "node scripts/vendor-joint.mjs --check",
-    "qa:scenarios": "node --import tsx scripts/qa-scenarios.mjs"
+    "qa:scenarios": "node --import tsx scripts/qa-scenarios.mjs",
+    "qa:console-coach": "node scripts/qa-console-coach.mjs"
   },
   "keywords": [
     "mcp",

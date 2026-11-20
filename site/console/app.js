@@ -41,7 +41,10 @@ import { renderCustomerJourneyWorkspace } from "./customer-journey-workspace.js"
 import { renderCatalog } from "./catalog.js";
 import { renderCommerce } from "./commerce.js";
 import { clearVisualEntities, setVisualEntities, visualBrief, sectionHeading } from "./visuals.js";
-import { createDataAgent } from "./data-agent.js";
+import { createConsoleCoach } from './coach.js';
+import { attachContextualHelp } from './context-help.js';
+import { createOperationsFeed, createRealtimeView } from './console-live.js';
+import { renderJourneyBoard } from './journey-board.js';
 import { renderFeatureGuide, renderFeatureEntry } from "./feature-guide.js";
 import { consoleFeature } from "../journey-content.js";
 
@@ -50,6 +53,17 @@ const selectedTenant = () => sessionStorage.getItem("gtm-console-selected") || c
 const headers = (token) => ({ Authorization: `Bearer ${token}`, ...(selectedTenant() ? { "X-Tenant": selectedTenant() } : {}) });
 const ls = (k) => localStorage.getItem(`gtm-console-${k}`) || "";
 const state = { url: ls("url"), property: ls("property"), ga4Property: ls("ga4Property"), bingSite: ls("bingSite"), days: Number(ls("days")) || 28, searchType: ls("searchType") || "web", overview: null, overviewFor: "", me: null };
+let consoleCoach = null, contextualHelp = null;
+const coachScope = () => JSON.stringify([selectedTenant() || state.me?.tenant?.id || '', state.url, state.property, state.ga4Property, state.bingSite, state.days]);
+function observeRead(route, data, requestedScope) {
+  if (requestedScope !== coachScope() || data?.problem) return;
+  if (route === '/overview' && data?.geo) { state.overview = data; state.overviewFor = state.url; consoleCoach?.setContext({ overview: data }); }
+  if (route === '/tracking/status') { state.sourceStatus = data; consoleCoach?.setContext({ status: data }); }
+  if (automaticRoutes.has(route) || route === '/data-agent/query' || route === '/ga4/realtime') {
+    const live = $('#c-live');
+    if (live) { live.dataset.freshness = 'received'; live.textContent = `${LANG === 'fr' ? 'Dernière réponse' : 'Last response'} · ${new Date().toLocaleTimeString(LANG, { hour: '2-digit', minute: '2-digit' })}`; }
+  }
+}
 /** Corps commun des requêtes Track : domaine, propriétés, période. */
 const scope = (extra = {}) => ({ url: state.url || undefined, property: state.property || undefined, ga4Property: state.ga4Property || undefined, bingSite: state.bingSite || undefined, days: state.days, searchType: state.searchType, ...extra });
 const rerender = () => show(current.section, current.tab);
@@ -98,12 +112,15 @@ function scenarioView() {
 }
 
 async function fetchApi(route, body, { binary = false } = {}) {
+  const requestedScope = coachScope();
   const token = await accessToken();
   if (!token) { await login(); throw new Error("Session expirée"); }
-  const res = await fetch(`${API_BASE}${route}`, { method: "POST", headers: { "Content-Type": "application/json", ...headers(token) }, body: JSON.stringify(body), ...(automaticRoutes.has(route) ? { signal: AbortSignal.timeout(90000) } : {}) });
+  const readTimeout = automaticRoutes.has(route) ? 90000 : ['/data-agent/query', '/data-agent/context', '/ga4/realtime'].includes(route) ? 30000 : 0;
+  const res = await fetch(`${API_BASE}${route}`, { method: "POST", headers: { "Content-Type": "application/json", ...headers(token) }, body: JSON.stringify(body), ...(readTimeout ? { signal: AbortSignal.timeout(readTimeout) } : {}) });
   if (res.status === 401) { await login(); throw new Error("Session expirée"); }
   if (!res.ok) { const e = await res.json().catch(() => ({})); const error = new Error(e.error || `HTTP ${res.status}`); error.status = res.status; throw error; }
-  return binary ? res.blob() : res.json();
+  if (binary) return res.blob();
+  const data = await res.json(); observeRead(route, data, requestedScope); return data;
 }
 
 
@@ -124,6 +141,7 @@ async function portfolioRequest(tenant, route, body) {
   return res.json();
 }
 function renderBackground(jobs) {
+  consoleCoach?.setContext({ jobs });
   const box = $("#c-background"), summary = $("#c-background-summary"), list = $("#c-background-jobs");
   if (!box || !summary || !list) return;
   box.hidden = jobs.length === 0;
@@ -134,7 +152,7 @@ function renderBackground(jobs) {
   list.replaceChildren(...jobs.map((job) => { const item = el("li", `c-background-${job.state}`); item.append(el("strong", "", job.label), document.createTextNode(` — ${labels[job.state]}${job.detail ? ` : ${job.detail}` : ""}`)); return item; }));
 }
 function startBackground() {
-  background.reset(); state.overview = null; state.overviewFor = ""; startVisualContext();
+  background.reset(); state.overview = null; state.overviewFor = ""; state.sourceStatus = null; consoleCoach?.setContext({ overview: null, status: null, jobs: [] }); startVisualContext();
   if (!state.me?.tenant) return;
   const base = scope(); const actionBody = { url: state.url, property: state.property || undefined };
   const missing = LANG === "fr" ? "Renseignez les paramètres dans Tracking." : "Configure the connection in Tracking.";
@@ -227,15 +245,16 @@ const fromTool = (id, filter = () => true, intro) => () => { const x = tool(id);
 const SECTIONS = {
   track: [
     { id: "overview", icon: "overview", build: () => custom("overview", [
-      { id: "board", label: t("s_overview"), progress: true, async: async (host) => {
+      { id: "board", label: t("s_overview"), needsDomain: false, progress: true, async: async (host) => {
         // Sources load in order, two at a time, with their real state shown
         // (queued / running / done / error / not connected) instead of a spinner.
         const copy = sourceProgressCopy(["geo", "status", "gsc", "ga4", "bing", "ai", "reports"]);
+        const startedScope = coachScope();
         let jobs = [];
-        const draw = (next) => { jobs = next; if (host) host.replaceChildren(renderSourceProgress(next, copy)); };
+        const draw = (next) => { jobs = next; if (startedScope === coachScope()) consoleCoach?.setContext({ jobs: next }); if (host) host.replaceChildren(renderSourceProgress(next, copy)); };
         const connected = (key) => (results) => results.status?.[key]?.hasAccess === true ? false : t("progNoAccess");
         const r = await runSources([
-          { id: "geo", run: () => overview() },
+          { id: "geo", skip: () => state.url ? false : (LANG === 'fr' ? 'Choisissez un site pour analyser sa page.' : 'Choose a website to analyse its page.'), run: () => overview() },
           { id: "status", run: () => api("/tracking/status", scope()) },
           { id: "gsc", after: ["status"], skip: connected("gsc"), run: () => api("/search/performance", scope()) },
           { id: "ga4", after: ["status"], skip: connected("ga4"), run: () => api("/ga4/overview", scope()) },
@@ -246,11 +265,16 @@ const SECTIONS = {
         const ov = r.geo ?? null; const status = r.status?.loadError ? null : r.status ?? null; const reports = Array.isArray(r.reports) ? r.reports : []; const ai = r.ai ?? null;
         const measured = (value) => value?.loadError ? { problem: true } : value ?? null;
         const search = measured(r.gsc), ga4 = measured(r.ga4), bing = measured(r.bing);
+        if (startedScope === coachScope()) consoleCoach?.setContext({ overview: ov?.loadError ? null : ov, status, jobs });
         const setup = el('details', 'decision-setup');
         setup.append(el('summary', '', LANG === 'fr' ? 'Configurer mon espace et mes sources' : 'Set up my workspace and sources'), renderOnboarding({ status, tenant: state.me?.tenant, overview: ov?.loadError ? null : ov, reports }), wizardButton(), renderAgentHelp());
         const loaded = el('details', 'c-source-progress-details');
         loaded.append(el('summary', '', `${t("progDetails")} · ${copy.overall(jobs.filter((j) => !["queued", "running"].includes(j.state)).length, jobs.length)}`), renderSourceProgress(jobs, copy));
-        return [renderDecisionPriorities(ov?.loadError ? null : ov), renderAudienceOverview({ search, ga4, bing, status, state, rerender, ai, progressive: true }), ...(ov?.loadError ? [renderDataGuide("geo", { error: ov.loadError, retry: rerender })] : ov ? renderOverview(ov) : []), setup, loaded];
+        const technical = el('details', 'journey-technical-details'); technical.append(el('summary', '', LANG === 'fr' ? 'Approfondir le diagnostic technique et ses hypothèses' : 'Explore the technical diagnosis and its assumptions'));
+        if (ov?.loadError) technical.append(renderDataGuide('geo', { error: ov.loadError, retry: rerender }));
+        else if (ov) technical.append(...renderOverview(ov));
+        const feed = createOperationsFeed({ api, language: LANG, getScope: coachScope });
+        return [renderJourneyBoard({ overview: ov?.loadError ? null : ov, status, search, ga4, bing, language: LANG }), renderDecisionPriorities(ov?.loadError ? null : ov), feed, renderAudienceOverview({ search, ga4, bing, status, state, rerender, ai, progressive: true }), ...(ov ? [technical] : []), setup, loaded];
       } },
       { id: "plan", label: t("t_plan"), async: async () => renderPlan(await overview()) }]) },
     { id: "local_seo", icon: "local_seo", build: () => custom("local_seo", [{ id: "website", label: LANG === "fr" ? "SEO du site" : "Website SEO", needsDomain: false, async: async () => renderGlobalSeo({ state, api, scope }) }, { id: "network", label: "Google Business Profile", needsDomain: false, async: async () => renderLocalSeo({ api, me: state.me }) }, { id: "planning", label: LANG === "fr" ? "Préparer mon établissement" : "Plan my business", needsDomain: false, async: async () => renderLocalSeoWorkspace({ state }) }]) },
@@ -266,7 +290,7 @@ const SECTIONS = {
       { id: "overview", label: t("t_ga4"), ...live("/ga4/overview", renderGa4) },
       { id: "ecommerce", label: t("t_ecommerce"), ...live("/ga4/ecommerce", renderEcommerce) },
       { id: "technology", label: t("t_technology"), ...live("/ga4/technology", renderTechnology) },
-      { id: "realtime", label: t("t_realtime"), needsDomain: false, async: async () => renderRealtime(await api("/ga4/realtime", scope())) }]) },
+      { id: "realtime", label: t("t_realtime"), needsDomain: false, async: async () => createRealtimeView({ api, scope, render: renderRealtime, language: LANG, getScope: coachScope }) }]) },
     { id: "bing", icon: "bing", build: () => custom("bing", [{ id: "performance", label: t("t_bing"), ...live("/bing/performance", renderBing) }]) },
     { id: "geo", icon: "geo", build: fromTool("geo", (a) => a.id !== "citability") },
     { id: "citability", icon: "citability", build: fromTool("geo", (a) => a.id === "citability", t("citIntro")) },
@@ -337,7 +361,6 @@ function launchWizard() {
 }
 let started = false;
 let current = { section: "overview", tab: "" };
-let dataAgent = null;
 let mountedEditor = null;
 let viewEpoch = 0;
 async function saveSettings(body) {
@@ -346,9 +369,13 @@ async function saveSettings(body) {
   const data = await res.json().catch(() => ({}));
   if (!res.ok) throw new Error(data.error || `Erreur ${res.status}`);
   state.me = { ...state.me, tenant: data.tenant };
-  if (!state.property && data.tenant.gscProperties[0]) state.property = data.tenant.gscProperties[0];
-  if (!state.ga4Property && data.tenant.ga4Properties?.[0]) state.ga4Property = data.tenant.ga4Properties[0];
-  if (!state.bingSite && data.tenant.bingSites?.[0]) state.bingSite = data.tenant.bingSites[0];
+  if (!data.tenant.gscProperties?.includes(state.property)) state.property = data.tenant.gscProperties?.[0] || '';
+  if (!data.tenant.ga4Properties?.includes(state.ga4Property)) state.ga4Property = data.tenant.ga4Properties?.[0] || '';
+  if (!data.tenant.bingSites?.includes(state.bingSite)) state.bingSite = data.tenant.bingSites?.[0] || '';
+  let selectedHost = ''; try { selectedHost = new URL(state.url).hostname.toLowerCase().replace(/^www\./, ''); } catch { /* no selected site */ }
+  if (!(data.tenant.domains || []).some(domain => selectedHost === domain || selectedHost.endsWith(`.${domain}`))) state.url = data.tenant.domains?.[0] ? `https://${data.tenant.domains[0]}` : '';
+  for (const [id, value] of [['#c-url', state.url], ['#c-property', state.property], ['#c-ga4', state.ga4Property], ['#c-bing', state.bingSite]]) $(id).value = value;
+  refreshSite();
   startBackground();
   return data;
 }
@@ -367,9 +394,15 @@ async function show(sectionId, tabId) {
   const tab = def.tabs.find((x) => x.id === requestedTab) ?? def.tabs[0];
   current = { section: section.id, tab: tab.id };
   const decision = decisionLocation(section.id, tab.id);
+  $('#c-app').dataset.area = decision.area;
+  $('.app-side').classList.remove('is-nav-open'); $('#c-nav-toggle').setAttribute('aria-expanded', 'false');
   if (state.me?.tenant) {
-    if (!dataAgent) { dataAgent = createDataAgent({ api, language: LANG, workspaceName: state.me.tenant.name }); $("#c-data-agent").replaceChildren(dataAgent.element); }
-    dataAgent.setSection(section.id);
+    if (!consoleCoach) {
+      consoleCoach = createConsoleCoach({ api, language: LANG, workspaceName: state.me.tenant.name, me: state.me, state, onNavigate: href => { const [section, tab] = href.slice(1).split('/'); void show(section, tab); } });
+      $('#c-data-agent').replaceChildren(consoleCoach.element);
+      contextualHelp = attachContextualHelp($('#c-app'), { getContext: () => ({ ...current }), onExplain: value => consoleCoach?.explain(value), language: LANG });
+    }
+    consoleCoach.setContext({ section: section.id, tab: tab.id, overview: state.overview, status: state.sourceStatus });
   }
   history.replaceState(null, "", `#${section.id}${tab.id !== def.tabs[0].id ? `/${tab.id}` : ""}`);
   document.querySelectorAll(".app-nav a").forEach((a) => { const on = a.dataset.section === decision.area; a.classList.toggle("is-active", on); if (on) a.setAttribute("aria-current", "true"); else a.removeAttribute("aria-current"); });
@@ -379,6 +412,7 @@ async function show(sectionId, tabId) {
   for (const x of def.tabs.filter(x => !x.hiddenInNav)) {
     const active = x.id === tab.id || (tab.hiddenInNav && x.id === decision.view);
     const b = el("button", `app-tab${active ? " is-active" : ""}`); b.type = "button"; b.setAttribute("role", "tab"); b.setAttribute("aria-selected", String(active));
+    b.dataset.coachSection = section.id; b.dataset.coachTab = x.id;
     const ic = el("span", "app-tab-icon"); ic.innerHTML = icon(x.icon || tabIcon(section.id, x.id)); b.dataset.icon = x.icon || tabIcon(section.id, x.id); b.append(ic, x.label);
     b.onclick = () => show(section.id, x.id); tabs.append(b);
   }
@@ -414,6 +448,9 @@ async function show(sectionId, tabId) {
 }
 
 function mountNav() {
+  const navToggle = $('#c-nav-toggle');
+  navToggle.textContent = LANG === 'fr' ? '☰ Parcours' : '☰ Navigation';
+  navToggle.onclick = () => { const open = $('.app-side').classList.toggle('is-nav-open'); navToggle.setAttribute('aria-expanded', String(open)); };
   $('#c-nav-track').replaceChildren(); $('#c-nav-act').replaceChildren();
   $('#c-journey-label').textContent = LANG === 'fr' ? 'Votre parcours' : 'Your journey';
   $('#c-workspace-label').textContent = LANG === 'fr' ? 'Votre espace' : 'Your workspace';
@@ -438,7 +475,7 @@ function mountNav() {
     if (!results.children.length) results.append(el('li', 'c-note', LANG === 'fr' ? 'Aucun outil trouvé.' : 'No matching tool.'));
   };
   search.onkeydown = e => { if (e.key === 'Enter') results.querySelector('a')?.click(); if (e.key === 'Escape') { search.value = ''; results.replaceChildren(); } };
-  document.addEventListener('keydown', e => { if ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === 'k') { e.preventDefault(); search.focus(); } });
+  document.addEventListener('keydown', e => { if ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === 'k') { e.preventDefault(); $('.app-side').classList.add('is-nav-open'); navToggle.setAttribute('aria-expanded', 'true'); search.focus(); } });
 }
 
 function i18nStatic() {
@@ -451,7 +488,8 @@ function i18nStatic() {
 
 function refreshSite() {
   $("#c-switch-label").textContent = host(state.url); $("#c-crumb-site").textContent = host(state.url);
-  $("#c-live").textContent = `${t("live")} · ${new Date().toLocaleDateString(LANG === "en" ? "en-GB" : "fr-FR", { day: "numeric", month: "short", year: "numeric" })}`;
+  $('#c-live').dataset.freshness = 'waiting';
+  $('#c-live').textContent = LANG === 'fr' ? 'En attente de données' : 'Waiting for data';
 }
 
 function applyBranding(branding) {
@@ -518,7 +556,7 @@ async function start() {
   try { tokens = await handleRedirect(); } catch (error) { console.error(error); $("#c-login-error").textContent = error.message; }
   if (!tokens) return loginScreen();
   $("#c-app").hidden = false; i18nStatic();
-  $("#c-logout").onclick = () => { setTenant(null); sessionStorage.removeItem("gtm-console-selected"); sessionStorage.removeItem("gtm-console-handoff"); logout(); };
+  $("#c-logout").onclick = () => { mountedEditor?.dispose?.(); consoleCoach?.dispose(); contextualHelp?.dispose(); setTenant(null); sessionStorage.removeItem("gtm-console-selected"); sessionStorage.removeItem("gtm-console-handoff"); logout(); };
   $("#c-account").href = accountConsoleUrl();
   $("#c-account svg").outerHTML = icon("account");
   const picker = $("#c-picker"); const sw = $("#c-switch");
@@ -596,7 +634,9 @@ async function start() {
   startBackground();
   started = true;
   show(s || (state.me?.tenant?.usageType === "agency" && state.me?.memberships?.length > 1 ? "portfolio" : "overview"), tb);
-  if (state.me?.tenant && !state.requestedDomainUnavailable && (state.openRequestedWizard || !localStorage.getItem(`gtm-console-wizard-v1:${state.me.tenant.id}:${state.me.email || state.me.username || "user"}`))) launchWizard();
+  // The coach is the default welcome. The setup wizard remains available when
+  // explicitly requested, including the public website onboarding handoff.
+  if (state.me?.tenant && !state.requestedDomainUnavailable && state.openRequestedWizard) launchWizard();
 }
 window.addEventListener("hashchange", () => { const [a, b] = location.hash.slice(1).split("/"); if (a && ALL.some((x) => x.id === a)) show(a, b); });
 start().catch((error) => { console.error(error); loginScreen(); $("#c-login-error").textContent = error.message; });

@@ -216,6 +216,10 @@ jobs:
           cache: pnpm
       - run: pnpm install --frozen-lockfile
       - run: pnpm exec playwright-core install --with-deps chromium
+      - name: Console coach, contextual help and live status FR/EN
+        env:
+          CONSOLE_COACH_QA_OUTPUT_DIR: qa-brand/coach
+        run: pnpm run qa:console-coach
       - run: node scripts/qa-brand.mjs
       - run: node scripts/qa-decision-console.mjs
       - run: node scripts/qa-decision-workflows.mjs
