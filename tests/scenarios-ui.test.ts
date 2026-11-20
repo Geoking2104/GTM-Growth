@@ -55,6 +55,6 @@ describe('shared scenario view model',()=>{
     const {createHistory,clone,dayIndex,addDays,summarize}=await import('../site/console/scenarios-model.js');const history=createHistory(),initial=fixturePlan(),changed=clone(initial);changed.nodes[0].endDate='2026-12-08';changed.nodes[0].budgetCents=20000;history.push(initial);const undo=history.undo(changed);expect(undo.nodes[0].endDate).toBe('2026-12-04');expect(history.redo(undo).nodes[0].budgetCents).toBe(20000);expect(summarize({summary:{count:4,done:1,assigned:3,hours:6,budget:5000}})).toEqual({count:4,done:1,assigned:3,hours:6,budget:5000});expect(addDays('2026-03-28',2)).toBe('2026-03-30');expect(dayIndex('2026-03-30')-dayIndex('2026-03-28')).toBe(2);
   });
   it('uses a local JointJS module without injecting a stylesheet blocked by console CSP',()=>{
-    const source=readFileSync('site/console/scenarios.js','utf8'),css=readFileSync('site/console/scenarios.css','utf8');expect(source).toContain("'/assets/vendor/joint-core/joint.mjs'");expect(source).toContain("joint.dia.Paper.extend({stylesheet:''})");expect(css).toContain('vector-effect:non-scaling-stroke');expect(source).not.toContain('innerHTML');
+    const source=readFileSync('site/console/scenarios.js','utf8'),css=readFileSync('site/console/scenarios.css','utf8');expect(source).toContain("'/assets/vendor/joint-core/joint.js'");expect(source).toContain("joint.dia.Paper.extend({stylesheet:''})");expect(css).toContain('vector-effect:non-scaling-stroke');expect(source).not.toContain('innerHTML');
   });
 });
