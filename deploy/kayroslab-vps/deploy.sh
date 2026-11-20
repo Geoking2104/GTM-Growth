@@ -54,6 +54,12 @@ for attempt in $(seq 1 36); do
   sleep 5
 done
 docker compose --env-file "${ENV_FILE}" -f "${COMPOSE_FILE}" exec -T gtm-growth node --input-type=module < scripts/check-keycloak-brand.mjs
+# Browser modules require a JavaScript MIME type; HTTP 200 alone can be a SPA
+# fallback or an octet-stream download. Match the public bundle to this checkout.
+STUDIO_JOINT_SHA256="$(sha256sum site/assets/vendor/joint-core/joint.js | cut -d ' ' -f 1)"
+docker compose --env-file "${ENV_FILE}" -f "${COMPOSE_FILE}" exec -T \
+  -e "STUDIO_JOINT_SHA256=${STUDIO_JOINT_SHA256}" gtm-growth \
+  node --input-type=module < scripts/check-campaign-studio.mjs
 docker compose --env-file "${ENV_FILE}" -f "${COMPOSE_FILE}" ps
 
 echo "GTM Growth containers updated. Verify: curl -fsS http://127.0.0.1:4300/health"
