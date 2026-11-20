@@ -1,5 +1,5 @@
 ﻿/**
- * PrestaShop connector â€” webservice /api/ (JSON via output_format=JSON, Basic
+ * PrestaShop connector — webservice /api/ (JSON via output_format=JSON, Basic
  * auth with the key as user and an empty password). Covers 1.7, 8.x and 9.x;
  * the new Admin API (9+, OAuth2) is a later addition. One concurrent request
  * per shop, incremental sync through date_upd filters.
@@ -35,8 +35,8 @@ export class PrestaShopProvider implements EcommerceProvider {
 
   constructor(options: PrestaShopClientOptions) {
     const url = new URL(/^https?:\/\//.test(options.shopUrl) ? options.shopUrl : `https://${options.shopUrl}`);
-    if (url.protocol !== "https:" && process.env.PRESTASHOP_ALLOW_HTTP !== "true") throw new Error("Lâ€™URL PrestaShop doit Ãªtre en https.");
-    if (!/^[A-Za-z0-9]{16,64}$/.test(options.apiKey)) throw new Error("ClÃ© webservice PrestaShop invalide.");
+    if (url.protocol !== "https:" && process.env.PRESTASHOP_ALLOW_HTTP !== "true") throw new Error("L’URL PrestaShop doit être en https.");
+    if (!/^[A-Za-z0-9]{16,64}$/.test(options.apiKey)) throw new Error("Clé webservice PrestaShop invalide.");
     url.hash = ""; url.search = "";
     this.options = { ...options, shopUrl: url.origin + url.pathname.replace(/\/$/, "") };
     this.transport = options.fetch ?? providerFetch as unknown as typeof fetch;
@@ -51,17 +51,17 @@ export class PrestaShopProvider implements EcommerceProvider {
   }
 
   private async request<T>(resource: string, params: Record<string, string> = {}): Promise<T> {
-    // Basic auth with the key as user and an empty password â€” never the key in the URL.
+    // Basic auth with the key as user and an empty password — never the key in the URL.
     const basic = Buffer.from(`${this.options.apiKey}:`, "utf8").toString("base64");
     const response = await this.transport(this.apiUrl(resource, params), {
       headers: { Authorization: `Basic ${basic}`, Accept: "application/json", "User-Agent": USER_AGENT },
     });
     if (!response.ok) {
-      if (response.status === 401 || response.status === 403) throw new Error(`PrestaShop ${response.status} : clÃ© sans droit sur Â« ${resource} Â».`);
+      if (response.status === 401 || response.status === 403) throw new Error(`PrestaShop ${response.status} : clé sans droit sur « ${resource} ».`);
       throw new Error(`PrestaShop HTTP ${response.status} sur ${resource}.`);
     }
     const text = await response.text();
-    try { return JSON.parse(text) as T; } catch { throw new Error(`PrestaShop a renvoyÃ© du XML sur ${resource} (output_format=JSON attendu).`); }
+    try { return JSON.parse(text) as T; } catch { throw new Error(`PrestaShop a renvoyé du XML sur ${resource} (output_format=JSON attendu).`); }
   }
 
   private async loadOrderStates(): Promise<void> {
@@ -83,8 +83,8 @@ export class PrestaShopProvider implements EcommerceProvider {
     const base = new URL(`${this.options.shopUrl}/api/`);
     base.searchParams.set("output_format", "JSON");
     const response = await this.transport(base.toString(), { headers: { Authorization: `Basic ${basic}`, Accept: "application/json", "User-Agent": USER_AGENT } });
-    if (response.status === 401) throw new Error("ClÃ© webservice refusÃ©e (401).");
-    if (response.status === 403) throw new Error("ClÃ© webservice sans accÃ¨s (403) : vÃ©rifiez les permissions de la clÃ©.");
+    if (response.status === 401) throw new Error("Clé webservice refusée (401).");
+    if (response.status === 403) throw new Error("Clé webservice sans accès (403) : vérifiez les permissions de la clé.");
     if (!response.ok) throw new Error(`PrestaShop HTTP ${response.status} sur /api/.`);
     const text = await response.text();
     let resources: string[] = [];

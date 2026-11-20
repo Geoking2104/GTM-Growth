@@ -9,10 +9,10 @@ import { noSupplierError, rankBoard, runRankCheck, supplierFromEnv } from "./ran
 import { buildBrief, produceDraft, publishToWordPress, wpConfigFromEnv, articleAlert, type DraftMode } from "./content-ops.js";
 import { tenantOwnsUrl } from "../tenants/store.js";
 
-const tenantId = (ctx: { tenancy?: { tenant: { id: string } | null } }) => { if (!ctx.tenancy?.tenant) throw new Error("SÃ©lectionnez un tenant."); return ctx.tenancy.tenant.id; };
+const tenantId = (ctx: { tenancy?: { tenant: { id: string } | null } }) => { if (!ctx.tenancy?.tenant) throw new Error("Sélectionnez un tenant."); return ctx.tenancy.tenant.id; };
 const tenantHost = (ctx: { tenancy?: { tenant: { domains: string[] } | null } }) => {
   const t = ctx.tenancy?.tenant;
-  if (!t?.domains?.length) throw new Error("Le tenant n'a aucun domaine configurÃ©.");
+  if (!t?.domains?.length) throw new Error("Le tenant n'a aucun domaine configuré.");
   return t.domains[0].replace(/^https?:\/\//, "").replace(/\/$/, "");
 };
 
@@ -41,7 +41,7 @@ export const visibilityRoutes: ConsoleRoute[] = [
     const brandsRaw = ctx.body.brands;
     const brands = Array.isArray(brandsRaw) ? brandsRaw.map((b) => (typeof b === "string" ? { name: b } : b as { name: string; aliases?: string[] })).slice(0, 10) : [];
     const { run, results } = await runVisibilityCheck(tenantId(ctx), { engines, brands });
-    return { run, results, note: "Chaque exÃ©cution crÃ©e un jeu de donnÃ©es Concurrence Ã  vÃ©rifier (confirmer/rejeter les mentions)." };
+    return { run, results, note: "Chaque exécution crée un jeu de données Concurrence à vérifier (confirmer/rejeter les mentions)." };
   } },
   { path: "/visibility/runs", needsUrl: false, handler: async (ctx) => ({ runs: listVisibilityRuns(tenantId(ctx), 50) }) },
 ];
@@ -51,11 +51,11 @@ export const visibilityRoutes: ConsoleRoute[] = [
 export const rankRoutes: ConsoleRoute[] = [
   { path: "/rank/keywords", needsUrl: false, handler: async (ctx) => ({ board: rankBoard(tenantId(ctx)), supplier: supplierFromEnv()?.config ?? null }) },
   { path: "/rank/keywords/add", needsUrl: false, adminOnly: true, handler: async (ctx) => {
-    const keyword = str(ctx.body.keyword); if (!keyword) throw new Error("Mot-clÃ© requis.");
+    const keyword = str(ctx.body.keyword); if (!keyword) throw new Error("Mot-clé requis.");
     const { addRankKeyword } = await import("./ops-store.js");
     return { keyword: addRankKeyword(tenantId(ctx), keyword, str(ctx.body.locale) ?? "fr-fr") };
   } },
-  { path: "/rank/keywords/remove", needsUrl: false, adminOnly: true, handler: async (ctx) => { const id = str(ctx.body.id); if (!id) throw new Error("id requis."); if (!removeRankKeyword(tenantId(ctx), id)) throw new Error("Mot-clÃ© introuvable."); return { removed: true }; } },
+  { path: "/rank/keywords/remove", needsUrl: false, adminOnly: true, handler: async (ctx) => { const id = str(ctx.body.id); if (!id) throw new Error("id requis."); if (!removeRankKeyword(tenantId(ctx), id)) throw new Error("Mot-clé introuvable."); return { removed: true }; } },
   { path: "/rank/check", needsUrl: false, adminOnly: true, handler: async (ctx) => {
     const supplier = supplierFromEnv();
     if (!supplier) throw new Error(noSupplierError());
@@ -69,17 +69,17 @@ export const rankRoutes: ConsoleRoute[] = [
 
 export const contentRoutes: ConsoleRoute[] = [
   { path: "/content/brief", needsUrl: false, handler: async (ctx) => {
-    const keyword = str(ctx.body.keyword); if (!keyword) throw new Error("Mot-clÃ© requis.");
+    const keyword = str(ctx.body.keyword); if (!keyword) throw new Error("Mot-clé requis.");
     return { brief: buildBrief({ keyword, audience: str(ctx.body.audience), brand: str(ctx.body.brand), existingHeadings: Array.isArray(ctx.body.existingHeadings) ? (ctx.body.existingHeadings as unknown[]).filter((h): h is string => typeof h === "string") : undefined }) };
   } },
   { path: "/content/draft", needsUrl: false, adminOnly: true, handler: async (ctx) => {
-    const keyword = str(ctx.body.keyword); if (!keyword) throw new Error("Mot-clÃ© requis.");
+    const keyword = str(ctx.body.keyword); if (!keyword) throw new Error("Mot-clé requis.");
     const brief = buildBrief({ keyword, audience: str(ctx.body.audience), brand: str(ctx.body.brand) });
     const mode: DraftMode = ctx.body.mode === "ollama" ? "ollama" : "deterministic";
     const ollama = mode === "ollama" ? (process.env.OLLAMA_URL ? { url: process.env.OLLAMA_URL, model: process.env.OLLAMA_MODEL || "mistral" } : null) : null;
-    if (mode === "ollama" && !ollama) throw new Error("Mode Ollama demandÃ© mais OLLAMA_URL n'est pas configurÃ©.");
+    if (mode === "ollama" && !ollama) throw new Error("Mode Ollama demandé mais OLLAMA_URL n'est pas configuré.");
     const draft = await produceDraft(brief, mode, { ollama });
-    articleAlert(tenantId(ctx), draft, "Brouillon gÃ©nÃ©rÃ©");
+    articleAlert(tenantId(ctx), draft, "Brouillon généré");
     return { draft };
   } },
   { path: "/content/publish", needsUrl: false, adminOnly: true, handler: async (ctx) => {
@@ -87,9 +87,9 @@ export const contentRoutes: ConsoleRoute[] = [
     if (!draft || typeof draft.title !== "string" || typeof draft.slug !== "string" || typeof draft.body !== "string") throw new Error("Draft requis (title, slug, body).");
     if (draft.approved !== true) throw new Error("Le brouillon doit être confirmé explicitement avant son enregistrement dans WordPress.");
     const failed = (draft.gates ?? []).filter((g) => !g.passed);
-    if (failed.length) throw new Error(`Quality gates non passÃ©s : ${failed.map((g) => (g as { check?: string }).check ?? "?").join(", ")}. Corrigez le brouillon avant publication.`);
+    if (failed.length) throw new Error(`Quality gates non passés : ${failed.map((g) => (g as { check?: string }).check ?? "?").join(", ")}. Corrigez le brouillon avant publication.`);
     const config = wpConfigFromEnv(tenantId(ctx));
-    if (!config) throw new Error("WordPress non configurÃ© pour ce client (WP_SITE_URL_<TENANT>, WP_USERNAME_<TENANT>, WP_APP_PASSWORD_<TENANT>).");
+    if (!config) throw new Error("WordPress non configuré pour ce client (WP_SITE_URL_<TENANT>, WP_USERNAME_<TENANT>, WP_APP_PASSWORD_<TENANT>).");
     const result = await publishToWordPress(config, { title: draft.title, slug: draft.slug, body: draft.body });
     if (!result.ok) { articleAlert(tenantId(ctx), draft, "Échec de création du brouillon WordPress"); throw new Error(result.error); }
     // The WordPress adapter always creates status=draft: never announce its URL to IndexNow.

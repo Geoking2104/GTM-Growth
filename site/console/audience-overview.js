@@ -6,16 +6,17 @@ import { metricIcon, visibilityChart } from "./visuals.js";
 import { providerMark } from "./provider-marks.js";
 const L = (fr, en) => LANG === "fr" ? fr : en;
 const fmt = (value) => Number(value).toLocaleString(L("fr-FR", "en-GB"));
-export function renderAudienceOverview({ search, ga4, status, state, rerender, ai: aiData, progressive = false }) {
+export function renderAudienceOverview({ search, ga4, bing, status, state, rerender, ai: aiData, progressive = false }) {
   const section = el("section", "audience-overview");
   const drawer = el('details', 'decision-enrich'); drawer.append(el('summary', '', L('+ Enrichir mes preuves', '+ Enrich my evidence')));
   const missing = el('div', 'audience-grid'); drawer.append(missing);
-  const hasSources = status?.gsc?.hasAccess === true || status?.ga4?.hasAccess === true;
+  const hasSources = status?.gsc?.hasAccess === true || status?.ga4?.hasAccess === true || status?.bing?.hasAccess === true;
   if (!progressive || hasSources) section.append(el("h3", "", L("Votre audience dans le temps", "Your audience over time")), el("p", "c-note", L("Données observées sur les propriétés connectées. Chaque graphique utilise sa propre échelle et les dates fournies par la source.", "Observed data from connected properties. Each chart uses its own scale and source dates.")), toolbar(state, rerender));
   const grid = el("div", "audience-grid");
   for (const item of [
     { data: search, label: L("Clics Google Search", "Google Search clicks"), key: "clicks", color: "#4f5bd5", link: "#gsc", name: "Search Console", source: 'gsc' },
     { data: ga4, label: L("Sessions GA4", "GA4 sessions"), key: "sessions", color: "#008373", link: "#ga4", name: "GA4", source: 'ga4' },
+    { data: bing, label: L("Clics Bing", "Bing clicks"), key: "clicks", color: "#0f6cbd", link: "#bing", name: "Bing Webmaster", source: 'bing' },
   ]) {
     const card = el("section", "audience-card"), heading = el("h4"); heading.append(providerMark(item.name), el('span', 'v-source-caption', item.label)); card.append(heading);
     if (item.data?.trend?.length && !item.data.problem) {

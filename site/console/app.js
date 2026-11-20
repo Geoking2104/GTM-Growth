@@ -23,6 +23,7 @@ import { renderOverview, renderPlan, renderIndexNow } from "./overview.js";
 import { renderOnboarding } from "./onboarding.js";
 import { renderAccessManagement } from "./access-management.js";
 import { createBackgroundLoader } from "./background.js";
+import { runSources, renderSourceProgress } from "./source-progress.js";
 import { renderPlatformDashboard } from "./platform-dashboard.js";
 import { renderPlatformSetup } from "./platform-setup.js";
 import { renderTrackedQueries } from "./tracked-queries.js";
@@ -177,6 +178,16 @@ async function overview() {
   const url = state.url; const data = await api("/overview", { url }); if (state.url === url) { state.overview = data; state.overviewFor = url; } return data;
 }
 
+/** Localised copy for the per-source progress panel (console i18n.js). */
+function sourceProgressCopy(ids) {
+  return {
+    title: t("progTitle"), intro: t("progIntro"),
+    overall: (done, total) => t("progOverall").replace("{done}", String(done)).replace("{total}", String(total)),
+    states: { queued: t("progQueued"), running: t("progRunning"), done: t("progDone"), error: t("progError"), skipped: t("progSkipped") },
+    sources: Object.fromEntries(ids.map((id) => [id, { label: t(`prog_${id}`), explain: t(`prog_${id}_x`) }])),
+  };
+}
+
 async function reportsList() {
   try { const token = await accessToken(); const r = await fetch(`${API_BASE}/reports`, { headers: headers(token) }); return r.ok ? (await r.json()).reports ?? [] : []; } catch { return []; }
 }
@@ -188,21 +199,36 @@ async function latestAiReport() {
   } catch { return { unavailable: true }; }
 }
 
-/* â”€â”€ Sections de la barre latérale : Track / Act, comme la démo publique â”€â”€ */
+/* ── Sections de la barre latérale : Track / Act, comme la démo publique ── */
 const custom = (id, tabs) => ({ id, tabs });
 const fromTool = (id, filter = () => true, intro) => () => { const x = tool(id); return { intro: intro ?? tr(x.intro), tabs: x.actions.filter(filter).map((a) => ({ id: a.id, label: actionLabel(a), action: a })) }; };
 const SECTIONS = {
   track: [
     { id: "overview", icon: "overview", build: () => custom("overview", [
-      { id: "board", label: t("s_overview"), async: async () => {
-        const [ov, status, reports, ai] = await Promise.all([overview().catch(error => ({ loadError: error })), api("/tracking/status", scope()).catch(() => null), reportsList(), latestAiReport()]);
-        const [search, ga4] = await Promise.all([
-          status?.gsc?.hasAccess === true ? api("/search/performance", scope()).catch(() => ({ problem: true })) : null,
-          status?.ga4?.hasAccess === true ? api("/ga4/overview", scope()).catch(() => ({ problem: true })) : null,
-        ]);
+      { id: "board", label: t("s_overview"), progress: true, async: async (host) => {
+        // Sources load in order, two at a time, with their real state shown
+        // (queued / running / done / error / not connected) instead of a spinner.
+        const copy = sourceProgressCopy(["geo", "status", "gsc", "ga4", "bing", "ai", "reports"]);
+        let jobs = [];
+        const draw = (next) => { jobs = next; if (host) host.replaceChildren(renderSourceProgress(next, copy)); };
+        const connected = (key) => (results) => results.status?.[key]?.hasAccess === true ? false : t("progNoAccess");
+        const r = await runSources([
+          { id: "geo", run: () => overview() },
+          { id: "status", run: () => api("/tracking/status", scope()) },
+          { id: "gsc", after: ["status"], skip: connected("gsc"), run: () => api("/search/performance", scope()) },
+          { id: "ga4", after: ["status"], skip: connected("ga4"), run: () => api("/ga4/overview", scope()) },
+          { id: "bing", after: ["status"], skip: connected("bing"), run: () => api("/bing/performance", scope()) },
+          { id: "ai", run: () => latestAiReport() },
+          { id: "reports", run: () => reportsList() },
+        ], { concurrency: 2, onChange: draw });
+        const ov = r.geo ?? null; const status = r.status?.loadError ? null : r.status ?? null; const reports = Array.isArray(r.reports) ? r.reports : []; const ai = r.ai ?? null;
+        const measured = (value) => value?.loadError ? { problem: true } : value ?? null;
+        const search = measured(r.gsc), ga4 = measured(r.ga4), bing = measured(r.bing);
         const setup = el('details', 'decision-setup');
         setup.append(el('summary', '', LANG === 'fr' ? 'Configurer mon espace et mes sources' : 'Set up my workspace and sources'), renderOnboarding({ status, tenant: state.me?.tenant, overview: ov?.loadError ? null : ov, reports }), wizardButton(), renderAgentHelp());
-        return [renderDecisionPriorities(ov?.loadError ? null : ov), renderAudienceOverview({ search, ga4, status, state, rerender, ai, progressive: true }), ...(ov?.loadError ? [renderDataGuide("geo", { error: ov.loadError, retry: rerender })] : ov ? renderOverview(ov) : []), setup];
+        const loaded = el('details', 'c-source-progress-details');
+        loaded.append(el('summary', '', `${t("progDetails")} · ${copy.overall(jobs.filter((j) => !["queued", "running"].includes(j.state)).length, jobs.length)}`), renderSourceProgress(jobs, copy));
+        return [renderDecisionPriorities(ov?.loadError ? null : ov), renderAudienceOverview({ search, ga4, bing, status, state, rerender, ai, progressive: true }), ...(ov?.loadError ? [renderDataGuide("geo", { error: ov.loadError, retry: rerender })] : ov ? renderOverview(ov) : []), setup, loaded];
       } },
       { id: "plan", label: t("t_plan"), async: async () => renderPlan(await overview()) }]) },
     { id: "local_seo", icon: "local_seo", build: () => custom("local_seo", [{ id: "website", label: LANG === "fr" ? "SEO du site" : "Website SEO", needsDomain: false, async: async () => renderGlobalSeo({ state, api, scope }) }, { id: "network", label: "Google Business Profile", needsDomain: false, async: async () => renderLocalSeo({ api, me: state.me }) }, { id: "planning", label: LANG === "fr" ? "Préparer mon établissement" : "Plan my business", needsDomain: false, async: async () => renderLocalSeoWorkspace({ state }) }]) },
@@ -344,8 +370,8 @@ async function show(sectionId, tabId) {
   if (state.me?.tenant && ['ga4','crm'].includes(section.id)) panel.append(renderMeasurementBanner({ api, state }));
   if (tab.action) { panel.append(renderAction(tab.action, { state, api, automaticRoutes })); return; }
   if (!state.url && tab.needsDomain !== false) { panel.append(renderDataGuide("domain")); return; }
-  const loading = el("p", "c-loading", t("loadingOverview")); panel.append(loading);
-  try { const nodes = await tab.async(); if (current.section === section.id && current.tab === tab.id) loading.replaceWith(...[nodes].flat()); }
+  const loading = tab.progress ? el("div", "c-source-progress-host") : el("p", "c-loading", t("loadingOverview")); panel.append(loading);
+  try { const nodes = await tab.async(loading); if (current.section === section.id && current.tab === tab.id) loading.replaceWith(...[nodes].flat()); }
   catch (error) { if (panel.isConnected) loading.replaceWith(renderDataGuide(section.id, { error, retry: rerender })); }
 }
 

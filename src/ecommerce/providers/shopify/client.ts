@@ -1,5 +1,5 @@
 ﻿/**
- * Shopify connector â€” GraphQL Admin API (pinned version), HMAC webhooks,
+ * Shopify connector — GraphQL Admin API (pinned version), HMAC webhooks,
  * cursor pagination, cost-aware throttling. v1 targets a custom app installed
  * by the merchant (no App Store review); the OAuth flow is structured so a
  * public app can reuse it later.

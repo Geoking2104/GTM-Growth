@@ -1,4 +1,4 @@
-/* Checklist Â« DÃ©marrage Â» : calcul pur (sans DOM) Ã  partir du statut rÃ©el des accÃ¨s
+/* Checklist « Démarrage » : calcul pur (sans DOM) à partir du statut réel des accès
  * (/tracking/status), du tenant (/me) et du premier audit (/overview ou /reports). */
 export function onboardingSteps({ status, tenant, overview, reports } = {}) {
   const s = status ?? {};

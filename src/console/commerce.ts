@@ -22,7 +22,7 @@ const PROVIDERS: ProviderId[] = ["shopify", "prestashop"];
 const nowIso = () => new Date().toISOString();
 
 function tenantOf(ctx: HandlerContext): string {
-  if (!ctx.tenancy?.tenant) throw new Error("SÃ©lectionnez un tenant.");
+  if (!ctx.tenancy?.tenant) throw new Error("Sélectionnez un tenant.");
   return ctx.tenancy.tenant.id;
 }
 
@@ -52,8 +52,8 @@ export const commerceConnectionRoutes: ConsoleRoute[] = [
       const accessToken = str(ctx.body.accessToken);
       const apiKey = str(ctx.body.apiKey);
       const webhookSecret = str(ctx.body.webhookSecret);
-      if (provider === "shopify" && !accessToken) throw new Error("Jeton dâ€™accÃ¨s Admin API requis (custom app).");
-      if (provider === "prestashop" && !apiKey) throw new Error("ClÃ© webservice requise.");
+      if (provider === "shopify" && !accessToken) throw new Error("Jeton d’accès Admin API requis (custom app).");
+      if (provider === "prestashop" && !apiKey) throw new Error("Clé webservice requise.");
       const credential = provider === "shopify" ? accessToken! : apiKey!;
       const key = dataKey();
       const storeId = provider === "shopify" ? domain : new URL(`https://${domain}`).hostname;
@@ -71,7 +71,7 @@ export const commerceConnectionRoutes: ConsoleRoute[] = [
         webhookSecretSealed: webhookSecret ? JSON.stringify(sealSecret(key, `${tenantId}:${storeId}:webhook`, webhookSecret)) : null,
       };
       saveConnection(tenantId, connection);
-      return { store: publicStore(connection), note: identity.status === "insufficient_scopes" ? "ConnectÃ©, mais des droits sont manquants (read_products / read_orders, ou ressources webservice products/orders)." : undefined };
+      return { store: publicStore(connection), note: identity.status === "insufficient_scopes" ? "Connecté, mais des droits sont manquants (read_products / read_orders, ou ressources webservice products/orders)." : undefined };
     },
   },
   {
@@ -183,7 +183,7 @@ export const commerceDashboardRoutes: ConsoleRoute[] = [
         revenueByChannel: byChannel,
         aiRevenueShare: aiRevenueShare(byChannel),
         attributedShare: allOrders.length ? Math.round((attributed / allOrders.length) * 100) : 0,
-        note: "Attribution dÃ©terministe et affichÃ©e : UTM, puis referrer, puis jointure GA4. Jamais de reclassement silencieux des commandes inconnues.",
+        note: "Attribution déterministe et affichée : UTM, puis referrer, puis jointure GA4. Jamais de reclassement silencieux des commandes inconnues.",
       };
     },
   },

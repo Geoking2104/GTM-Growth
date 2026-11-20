@@ -150,5 +150,5 @@ function followUpReaderFromEnv(): FollowUpReader {
 export function alertOnVisibilityLoss(tenantId: string, latest: { count: number }, previous: { count: number } | null): void {
   if (!previous || latest.count >= previous.count) return;
   const lost = previous.count - latest.count;
-  void insertAlert(tenantId, { kind: "visibility-loss", severity: lost >= 3 ? "critical" : "warn", title: `${lost} mention(s) IA perdue(s)`, detail: `Le dernier contrÃ´le de visibilitÃ© montre ${latest.count} mentions contre ${previous.count} prÃ©cÃ©demment.`, payload: { previous: previous.count, current: latest.count } });
+  void insertAlert(tenantId, { kind: "visibility-loss", severity: lost >= 3 ? "critical" : "warn", title: `${lost} mention(s) IA perdue(s)`, detail: `Le dernier contrôle de visibilité montre ${latest.count} mentions contre ${previous.count} précédemment.`, payload: { previous: previous.count, current: latest.count } });
 }
