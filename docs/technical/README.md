@@ -7,6 +7,16 @@ and verification. For source/activation/release distinctions, use the
 [capability register](../journey/CAPABILITIES.md). Package version is 0.22.0;
 the source baseline for this review is `353e658`.
 
+## Campaign Studio planning module
+
+[Campaign Studio](../product/CAMPAIGN-STUDIO.md) adds scoped `/scenarios/*` routes,
+validated semantic graphs, SQLite revisions and immutable proposal acceptance.
+The console serves pinned JointJS Community assets locally under the existing
+CSP. Evidence comes from server-captured audit conclusions and scoped observations;
+AI requests reuse encrypted tenant account resolution. Keep `SCENARIOS_PATH` on
+the persistent data volume. See the guide for storage/call limits, roles,
+calendar-day semantics and `pnpm run qa:scenarios` validation.
+
 ## Runtime and responsibility map
 
 The [durable audit pipeline](AUDIT-PIPELINE.md) adds dedicated PostgreSQL request

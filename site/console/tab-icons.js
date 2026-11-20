@@ -12,6 +12,7 @@ export const TAB_ICONS = {
   performance: { psi: 'performance', crux: 'tracking', weight: 'weight' },
   journey: { map: 'journey', prompts: 'message' }, crm: { timeline: 'timeline', connections: 'plug' },
   social: { campaigns: 'megaphone', posts: 'pen', calendar: 'calendar', approvals: 'approved', analytics: 'ga4', creators: 'audience', connections: 'plug', runs: 'workflow' },
+  studio: { campaigns: 'workflow' },
   apply_mode: { preview: 'fixes' }, search: { queries: 'search', trends: 'overview', losing: 'downtrend', inspect: 'scan' },
   keywords: { opps: 'keywords', tracked: 'target' },
   tracking: { status: 'tracking', tags: 'tag', settings: 'settings', access: 'key' },

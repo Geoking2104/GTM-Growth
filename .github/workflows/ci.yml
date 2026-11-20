@@ -69,6 +69,9 @@ jobs:
       - name: Documentation links
         run: pnpm run docs:check
 
+      - name: Verify pinned JointJS browser assets
+        run: pnpm run vendor:check
+
       - name: Release readiness
         run: pnpm run release:check
 
@@ -166,6 +169,11 @@ jobs:
         env:
           SOCIAL_QA_OUTPUT_DIR: qa-landing/social
         run: node scripts/qa-social.mjs
+
+      - name: Campaign Studio strict-CSP FR/EN browser QA
+        env:
+          SCENARIOS_QA_OUTPUT_DIR: qa-landing/scenarios
+        run: pnpm run qa:scenarios
 
       - name: CRM console and global journey browser QA
         env:

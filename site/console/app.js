@@ -3,6 +3,7 @@ import { renderBilling } from "./billing.js";
 import { renderConnectedAgents } from "./connected-agents.js";
 import { renderCrm } from './crm.js';
 import { renderSocial } from './social.js';
+import { renderScenarios } from './scenarios.js';
 import { renderLocalSeo } from "./local-seo-network.js";
 import { renderLocalSeoWorkspace } from "./local-seo.js";
 /* Console authentifiée : même design que la section #console du site (coque .app),
@@ -73,6 +74,27 @@ function billingView() {
     return data;
   };
   return renderBilling({ me, request, fr: LANG === "fr" });
+}
+
+/** Pin every studio request to the workspace that opened the editor. */
+function scenarioView() {
+  const tenant = selectedTenant() || state.me?.tenant?.id || '';
+  const me = state.me;
+  const unchanged = () => tenant && (selectedTenant() || state.me?.tenant?.id || '') === tenant;
+  const request = async (route, body = {}) => {
+    if (!route.startsWith('/scenarios/') || !unchanged()) throw new Error(LANG === 'fr' ? 'Espace modifié. Rouvrez le scénario.' : 'Workspace changed. Reopen the scenario.');
+    const token = await accessToken();
+    if (!token || !unchanged()) throw new Error(LANG === 'fr' ? 'Session modifiée. Rouvrez le scénario.' : 'Session changed. Reopen the scenario.');
+    const res = await fetch(`${API_BASE}${route}`, {
+      method: 'POST', headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}`, 'X-Tenant': tenant },
+      body: JSON.stringify(body), cache: 'no-store', signal: AbortSignal.timeout(75000),
+    });
+    const data = await res.json();
+    if (!res.ok) { const error = new Error(data.error || `HTTP ${res.status}`); error.status = res.status; throw error; }
+    if (!unchanged()) throw new Error(LANG === 'fr' ? 'Espace modifié. Rouvrez le scénario.' : 'Workspace changed. Reopen the scenario.');
+    return data;
+  };
+  return renderScenarios({ api: request, state: { ...state }, me });
 }
 
 async function fetchApi(route, body, { binary = false } = {}) {
@@ -253,6 +275,7 @@ const SECTIONS = {
     { id: "performance", icon: "performance", build: fromTool("performance") },
   ],
   act: [
+    { id: 'studio', icon: 'workflow', build: () => custom('studio', [{ id: 'campaigns', label: LANG === 'fr' ? 'Scénarios de campagne' : 'Campaign scenarios', icon: 'workflow', needsDomain: false, decision: true, async: scenarioView }]) },
     { id: "journey", icon: "journey", build: () => custom("journey", [
       { id: "map", label: LANG === "fr" ? "Mon parcours client" : "My customer journey", needsDomain: false, async: async () => renderCustomerJourneyWorkspace({ state, api }) },
       { id: "prompts", label: LANG === "fr" ? "Questions suivies" : "Tracked questions", needsDomain: false, async: async () => renderOpsPrompts({ api, me: state.me }) },
@@ -285,7 +308,7 @@ const SECTIONS = {
 };
 const ALL = [...SECTIONS.track, ...SECTIONS.act];
 ALL.push({ id: 'portfolio', icon: 'building', decision: true, build: () => custom('portfolio', [{ id: 'workspaces', label: 'Portfolio', icon: 'building', decision: true, needsDomain: false, async: async () => renderPortfolio({ me: state.me, request: portfolioRequest }) }]) });
-const decisionTab = (area, view) => ({ id: view.id, label: LANG === 'fr' ? view.fr : view.en, icon: view.icon, needsDomain: false, decision: true, async: async () => renderDecisionHub(area, view.id, { state, api, scope }) });
+const decisionTab = (area, view) => ({ id: view.id, label: LANG === 'fr' ? view.fr : view.en, icon: view.icon, needsDomain: false, decision: true, async: area === 'ops' && view.id === 'campaigns' ? scenarioView : async () => renderDecisionHub(area, view.id, { state, api, scope }) });
 for (const area of ['diagnose', 'impact', 'settings']) ALL.push({ id: area, icon: DECISION_AREAS.find(a => a.id === area).icon, decision: true, build: () => custom(area, DECISION_VIEWS[area].map(view => decisionTab(area, view))) });
 for (const area of ['overview', 'ops']) {
   const section = ALL.find(s => s.id === area), original = section.build;
@@ -315,6 +338,8 @@ function launchWizard() {
 let started = false;
 let current = { section: "overview", tab: "" };
 let dataAgent = null;
+let mountedEditor = null;
+let viewEpoch = 0;
 async function saveSettings(body) {
   const token = await accessToken();
   const res = await fetch(`${API_BASE}/tenant/settings`, { method: "PUT", headers: { "Content-Type": "application/json", ...headers(token) }, body: JSON.stringify(body) });
@@ -329,6 +354,13 @@ async function saveSettings(body) {
 }
 async function show(sectionId, tabId) {
   if (!started) return;
+  const epoch = ++viewEpoch;
+  if (mountedEditor?.beforeLeave && !(await mountedEditor.beforeLeave())) {
+    history.replaceState(null, '', `#${current.section}/${current.tab}`);
+    return;
+  }
+  if (epoch !== viewEpoch) return;
+  mountedEditor?.dispose?.(); mountedEditor = null;
   const section = ALL.find((s) => s.id === sectionId) ?? ALL[0];
   const def = section.build();
   const requestedTab = !state.me?.tenant && state.me?.platformAdmin && section.id === 'settings' && !tabId ? 'access' : tabId;
@@ -371,7 +403,13 @@ async function show(sectionId, tabId) {
   if (tab.action) { panel.append(renderAction(tab.action, { state, api, automaticRoutes })); return; }
   if (!state.url && tab.needsDomain !== false) { panel.append(renderDataGuide("domain")); return; }
   const loading = tab.progress ? el("div", "c-source-progress-host") : el("p", "c-loading", t("loadingOverview")); panel.append(loading);
-  try { const nodes = await tab.async(loading); if (current.section === section.id && current.tab === tab.id) loading.replaceWith(...[nodes].flat()); }
+  try {
+    const nodes = await tab.async(loading);
+    if (epoch === viewEpoch && panel.isConnected) {
+      loading.replaceWith(...[nodes].flat());
+      mountedEditor = [nodes].flat().find(node => typeof node?.dispose === 'function') || null;
+    } else for (const node of [nodes].flat()) node?.dispose?.();
+  }
   catch (error) { if (panel.isConnected) loading.replaceWith(renderDataGuide(section.id, { error, retry: rerender })); }
 }
 

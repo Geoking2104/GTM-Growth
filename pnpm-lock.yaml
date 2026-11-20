@@ -8,6 +8,9 @@ importers:
 
   .:
     dependencies:
+      '@joint/core':
+        specifier: 4.3.4
+        version: 4.3.4
       '@modelcontextprotocol/sdk':
         specifier: ^1.12.0
         version: 1.30.0(supports-color@10.2.2)(zod@3.25.76)
@@ -87,6 +90,9 @@ importers:
       '@typescript-eslint/parser':
         specifier: ^8.18.0
         version: 8.68.0(eslint@9.39.5(supports-color@10.2.2))(supports-color@10.2.2)(typescript@5.9.3)
+      esbuild:
+        specifier: 0.28.2
+        version: 0.28.2
       eslint:
         specifier: ^9.16.0
         version: 9.39.5(supports-color@10.2.2)
@@ -683,6 +689,9 @@ packages:
 
   '@ioredis/commands@1.10.0':
     resolution: {integrity: sha512-UmeW7z4LfctwoQ5wkhVzgq8tXkreED2xZGpX+Bg+zA+WJFZCT6c062AfCK/Dfk81xZnnwdhJCUMkitihRaoC2Q==}
+
+  '@joint/core@4.3.4':
+    resolution: {integrity: sha512-dgfrGuOa2AhBwpaB+xuhkb8PyxWeFfaAydhjuaDQNo0P9pQC0fQC+AeiES5XsNtmR5+7fCOoq6H5iSH5F23vyA==}
 
   '@jridgewell/resolve-uri@3.1.2':
     resolution: {integrity: sha512-bRISgCIjP20/tbWSPWMEi54QVPRZExkuD9lJL+UIxUKtwVJA8wW1Trb1jMs1RFXo1CBTNZ/5hpC9QvmKWdopKw==}
@@ -2853,6 +2862,8 @@ snapshots:
     optional: true
 
   '@ioredis/commands@1.10.0': {}
+
+  '@joint/core@4.3.4': {}
 
   '@jridgewell/resolve-uri@3.1.2': {}
 

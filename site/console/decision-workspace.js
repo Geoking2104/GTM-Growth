@@ -91,5 +91,7 @@ export function renderDecisionPriorities(overview) {
     const card = el('article', 'decision-priority'); card.append(el('span', 'decision-number', String(i + 1)), el('h3', '', r.action), el('p', 'c-note', L(`Potentiel de préparation : +${r.points} points, à vérifier après correction.`, `Readiness potential: +${r.points} points, to verify after correction.`)));
     const a = el('a', '', L('Examiner les preuves →', 'Inspect evidence →')); a.href = '#diagnose/technical'; card.append(a); cards.append(card);
   }
-  box.append(cards, el('p', 'c-note', L('Priorisation issue de l’audit. Ce potentiel n’est ni une prévision de trafic ni un revenu garanti.', 'Prioritisation comes from the audit. This potential is neither a traffic forecast nor guaranteed revenue.'))); return box;
+  const scenario = el('a', 'btn btn-small', L('Créer un scénario à partir de ces analyses', 'Create a scenario from these findings'));
+  scenario.href = '#studio/campaigns';
+  box.append(cards, el('p', 'c-note', L('Priorisation issue de l’audit. Ce potentiel n’est ni une prévision de trafic ni un revenu garanti.', 'Prioritisation comes from the audit. This potential is neither a traffic forecast nor guaranteed revenue.')), scenario); return box;
 }

@@ -2,7 +2,7 @@
  * Per-platform readiness.
  *
  * The 8-category GEO score says whether a page is well-formed. This maps the
- * same audit evidence onto the five engines buyers actually ask about, so a
+ * same audit evidence onto the seven engines buyers actually ask about, so a
  * report can say "ChatGPT 40/100 — llms.txt missing" instead of one number.
  *
  * Derived, not re-crawled: every signal comes from an existing GeoAuditResult.
@@ -10,7 +10,7 @@
 
 import type { GeoAuditResult } from "./types.js";
 
-export type PlatformId = "google_aio" | "chatgpt" | "perplexity" | "gemini" | "copilot";
+export type PlatformId = "google_aio" | "chatgpt" | "perplexity" | "gemini" | "copilot" | "claude" | "grok";
 
 export interface PlatformSignal {
   id: string;
@@ -36,6 +36,8 @@ export const PLATFORM_LABEL: Record<PlatformId, string> = {
   perplexity: "Perplexity",
   gemini: "Gemini",
   copilot: "Microsoft Copilot",
+  claude: "Claude",
+  grok: "Grok",
 };
 
 function band(score: number): PlatformReadiness["band"] {
@@ -298,6 +300,36 @@ export function buildPlatformReadiness(audit: GeoAuditResult): PlatformReadiness
         signals.freshnessDate ?? "No dateModified",
         "Publish dateModified.",
       ],
+    ]),
+
+    build("claude", [
+      ["claude_search", "Claude-SearchBot allowed", 25, allows("Claude-SearchBot"),
+        allows("Claude-SearchBot") ? "Allowed" : "Blocked or missing",
+        "Allow Claude-SearchBot in robots.txt for search discovery."],
+      ["llms", "llms.txt published", 20, llms.found,
+        llms.found ? "Present" : "Missing", "Publish a navigable /llms.txt."],
+      ["schema_core", "Organization schema", 20, schema.hasOrganization,
+        schema.hasOrganization ? "Present" : "Missing", "Add Organization JSON-LD."],
+      ["answer_first", "Answer-first content", 20, answerFirst,
+        answerFirst ? "Present" : "Missing quantified answer up front",
+        "Place a concise, evidenced answer near the start of the page."],
+      ["structure", "Extractable headings and lists", 15, structure,
+        structure ? "Present" : "Missing", "Structure content with headings and lists."],
+    ]),
+
+    build("grok", [
+      ["xai_bot", "xAI-Bot allowed", 25, allows("xAI-Bot"),
+        allows("xAI-Bot") ? "Allowed" : "Blocked or missing",
+        "Allow xAI-Bot in robots.txt for discovery."],
+      ["llms", "llms.txt published", 15, llms.found,
+        llms.found ? "Present" : "Missing", "Publish a navigable /llms.txt."],
+      ["schema_core", "Organization + WebSite schema", 20, structured,
+        structured ? "Both present" : "Missing one or both",
+        "Add Organization and WebSite JSON-LD."],
+      ["structure", "Extractable headings and lists", 20, structure,
+        structure ? "Present" : "Missing", "Use headings and structured lists."],
+      ["freshness", "Freshness date", 20, freshness,
+        signals.freshnessDate ?? "No dateModified", "Publish a reliable dateModified."],
     ]),
   ];
 }
