@@ -28,7 +28,7 @@ Optional services have separate activation and acceptance steps: Node-RED for lo
 
 Apply Mode currently provides previews. It does not apply arbitrary remote changes or provide operational rollback. WordPress drafts, supported GBP updates and Social scheduling use their own approval and execution contracts. Social publication requires setup, independent approval and explicit scheduling. No automatic outreach is implied.
 
-Live public GEO v2 browser rendering and named vendor CRM adapters remain future work. Self-hosted software is free; hosting and optional provider/model usage may cost money. Solo €39/month and Agency €149/month are pilot pricing hypotheses. Mollie checkout and subscription entitlements are inactive.
+The 42 AI visibility checks run live in the public read; the 4 browser-rendering checks need proof of site ownership, and the isolated renderer is not yet a public service. Named vendor CRM adapters remain future work. Self-hosted software is free; hosting and optional provider/model usage may cost money. Solo €39/month and Agency €149/month are pilot pricing hypotheses. Mollie checkout and subscription entitlements are inactive.
 
 ## Reading and operations
 

@@ -1,6 +1,7 @@
 /** Five-pillar public report. All target-originated text is inserted as textContent. */
 import { explainRecommendation, normalisePublicUrl } from "./public-read-model.js";
 import { completionStats, renderCategoryIcon, renderCompletionDonut } from "./completion-donut.js";
+import { geoCheckTitle } from "../geo-check-titles.js";
 
 const UI = {
   fr: {
@@ -109,16 +110,6 @@ const V2_CATEGORY = {
   content: ["Contenu", "Content"], brand: ["Identité de marque", "Brand identity"],
   discovery: ["Découverte IA", "AI discovery"], rendering: ["Rendu du navigateur", "Browser rendering"],
 };
-const V2_TITLES_FR = {
-  R01: "Accès au fichier robots.txt", R02: "Autorisation des robots des moteurs IA", R03: "Absence de blocage contradictoire", R04: "Sitemap déclaré et accessible", R05: "Cohérence des règles par robot",
-  L01: "Accès au fichier llms.txt", L02: "Identification de l'activité", L03: "Résumé clair pour les IA", L04: "Structure et liens de documentation", L05: "Documentation de plus de 1 000 mots", L06: "Documentation approfondie et structurée",
-  J01: "JSON-LD lisible", J02: "Entité entreprise déclarée", J03: "Identifiants des entités cohérents", J04: "Liens entre site et pages", J05: "Données adaptées au contenu", J06: "Cohérence entre texte et données structurées",
-  M01: "Titre descriptif", M02: "Description utile", M03: "Adresse canonique cohérente", M04: "Aperçu Open Graph", M05: "Directives d'indexation cohérentes",
-  C01: "Proposition de valeur identifiable", C02: "Réponses directes aux questions", C03: "Titres de page structurés", C04: "Faits vérifiables", C05: "Sources pertinentes", C06: "Passages faciles à extraire", C07: "Dates de mise à jour vérifiables", C08: "Liens internes contextualisés",
-  B01: "Identité de marque cohérente", B02: "Entreprise et coordonnées identifiables", B03: "Profils sociaux déclarés cohérents", B04: "Références externes vérifiées", B05: "Expertise et autorité documentées",
-  D01: "Ressources de découverte IA accessibles", D02: "Pages importantes présentes dans le sitemap", D03: "Documentation facilement accessible",
-  P01: "Contenu essentiel présent dans le HTML", P02: "Cohérence entre HTML et rendu", P03: "Accès au contenu pour un crawler", P04: "Rendu stable sans blocage",
-};
 const V2_GUIDES = {
   R: { fr: ["Contrôlez la règle de crawl pour cette URL et chaque robot concerné.", "Corrigez le fichier robots.txt ou la directive uniquement après accord du propriétaire.", "Relancez la lecture des mêmes ressources et vérifiez les statuts HTTP."], en: ["Inspect crawler rules for this exact URL and the relevant agents.", "Change robots.txt or page directives only with owner approval.", "Fetch the same resources again and verify HTTP statuses."] },
   L: { fr: ["Relisez llms.txt et les pages de documentation réellement accessibles.", "Ajoutez des titres, descriptions et liens fidèles au contenu existant.", "Vérifiez les réponses HTTP et les extraits du nouveau fichier."], en: ["Review llms.txt and the documentation pages actually available.", "Add headings, summaries and links that match existing content.", "Verify HTTP responses and excerpts from the updated file."] },
@@ -130,7 +121,7 @@ const V2_GUIDES = {
   P: { fr: ["Vérifiez d'abord la propriété du domaine (DNS TXT ou fichier HTTPS).", "Autorisez un rendu Playwright isolé avec limites de ressources.", "Comparez le HTML, le DOM et les journaux du même instantané."], en: ["First verify domain ownership (DNS TXT or HTTPS file).", "Authorise resource-limited isolated Playwright rendering.", "Compare HTML, DOM and logs from the same snapshot."] },
 };
 
-const v2Title = (id, fallback, lang) => lang === "fr" ? V2_TITLES_FR[id] || fallback || id : fallback || id;
+const v2Title = geoCheckTitle;
 
 /* Editorial instructions are reviewed suggestions, never mutations. */
 const GUIDES = {
