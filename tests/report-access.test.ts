@@ -135,6 +135,8 @@ describe("report downloads", () => {
     expect(md).toContain(language === "fr" ? "Note de visibilité IA sur 100 : pas encore calculée" : "AI visibility score out of 100: not calculated yet");
     expect(md).toContain(language === "fr" ? "Référentiel de contrôle GEO v2\\.0\\.0" : "GEO check framework v2\\.0\\.0");
     expect(md).toContain(language === "fr" ? "À vérifier · preuve requise" : "To verify · evidence needed");
+    expect(md).toContain(language === "fr" ? "M01 · Titre descriptif" : "M01 · Descriptive title");
+    if (language === "fr") expect(md).not.toContain("Descriptive title");
     expect(md).toContain("M01");
     expect(md).toContain(language === "fr" ? "APERÇU RECONSTITUÉ" : "RECONSTRUCTED FROM HTML");
     expect(md).not.toContain("53/100");

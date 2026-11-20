@@ -125,6 +125,14 @@ function v2Status(control: { status: string; outcome?: string }, language: Repor
   return fr ? "À vérifier · preuve requise" : "To verify · evidence needed";
 }
 
+/** Evidence label shown to readers: GEO checks get their localized title. */
+function proofLabel(action: ReportAction, language: ReportLanguage): string {
+  const label = action.proof?.label ?? "";
+  return action.code === "geo_v2_check" && action.checkId
+    ? `${action.checkId} · ${v2Title(action.checkId, action.title || action.checkId, language)}`
+    : label;
+}
+
 export function actionGuide(action: ReportAction, lang: ReportLanguage): { title: string; why: string; steps: [string, string, string]; verify: string } {
   const fr = lang === "fr";
   const title = action.code === "geo_v2_check" && action.checkId
@@ -137,7 +145,7 @@ export function actionGuide(action: ReportAction, lang: ReportLanguage): { title
       title,
       why: action.proof ? `${fr ? "Constat vérifié" : "Observed finding"}: ${clean(action.proof.value, 200)}` : (fr ? "Preuve à compléter." : "Further evidence required."),
       steps,
-      verify: fr ? "Relancez le même contrôle v2 sur cette URL et comparez les preuves datées." : "Run the same v2 check on this URL again and compare dated evidence.",
+      verify: fr ? "Relancez le même contrôle de visibilité IA sur cette URL et comparez les preuves datées." : "Run the same AI visibility check on this URL again and compare dated evidence.",
     };
   }
   if (action.kind === "next_step") {
@@ -152,7 +160,7 @@ export function actionGuide(action: ReportAction, lang: ReportLanguage): { title
   const proof = action.proof;
   return {
     title,
-    why: proof ? `${fr ? "Constat" : "Observation"}: ${clean(proof.label, 80)} - ${clean(proof.value, 140)}${proof.note ? `. ${clean(proof.note, 190)}` : ""}` : (fr ? "Prochaine vérification proposée." : "Proposed follow-up review."),
+    why: proof ? `${fr ? "Constat" : "Observation"}: ${clean(proofLabel(action, lang), 80)} - ${clean(proof.value, 140)}${proof.note ? `. ${clean(proof.note, 190)}` : ""}` : (fr ? "Prochaine vérification proposée." : "Proposed follow-up review."),
     steps: [
       fr ? "Examinez le constat et confirmez l'objectif de cette page." : "Review the observation and confirm this page's goal.",
       fr ? `Préparez une correction ciblée avec ${at(OWNERS[action.owner] || OWNERS.technical, lang)} ; faites-la approuver avant publication.` : `Prepare a focused fix with the ${at(OWNERS[action.owner] || OWNERS.technical, lang)}; obtain approval before publishing.`,
@@ -219,7 +227,7 @@ export function renderReportMarkdown(report: FreeReport360, language: ReportLang
     out.push(`- ${fr ? "Priorité" : "Priority"}: ${at(PRIORITIES[action.priority] || PRIORITIES.medium, language)}; ${fr ? "effort" : "effort"}: ${action.effort}; ${fr ? "risque" : "change risk"}: ${action.risk}; ${fr ? "responsable" : "owner"}: ${at(OWNERS[action.owner] || OWNERS.technical, language)}`);
     out.push(`- ${fr ? "Pourquoi" : "Why"}: ${markdownClean(guide.why)}`);
     if (action.proof) {
-      out.push(`- ${fr ? "Preuve" : "Evidence"}: ${markdownClean(action.proof.label, 100)} - ${markdownClean(action.proof.value)} (${date(action.proof.observedAt, language)})`);
+      out.push(`- ${fr ? "Preuve" : "Evidence"}: ${markdownClean(proofLabel(action, language), 100)} - ${markdownClean(action.proof.value)} (${date(action.proof.observedAt, language)})`);
       out.push(`- ${fr ? "Source" : "Source"}: ${markdownUrl(action.proof.sourceUrl)}`);
     } else out.push(`- ${fr ? "Preuve" : "Evidence"}: ${fr ? "aucun échec observé; connexion à autoriser" : "no measured failure; optional connection"}`);
     out.push("", ...guide.steps.map((step, index) => `${index + 1}. ${markdownClean(step, 400)}`));
