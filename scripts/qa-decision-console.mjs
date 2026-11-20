@@ -20,7 +20,7 @@ try {
     await page.route('**/api/**', async r => {
       const path = new URL(r.request().url()).pathname; calls.push({ path, tenant: r.request().headers()['x-tenant'] });
       let data, status = 200;
-      if (path.endsWith('/me')) data = { tenant: platformOnly ? null : { id: 'acme', name: lang === 'fr' ? 'Espace de test · Acme' : 'Test workspace · Acme', domains: ['example.com'], gscProperties: [], ga4Properties: ['123'], bingSites: [], gtmContainers: [] }, memberships: platformOnly ? [] : [{ id: 'acme', role: 'tenant-admin' }], role: 'tenant-admin', platformAdmin: platformOnly };
+      if (path.endsWith('/me')) data = { tenant: platformOnly ? null : { id: 'acme', status: 'active', name: lang === 'fr' ? 'Espace de test · Acme' : 'Test workspace · Acme', domains: ['example.com'], gscProperties: [], ga4Properties: ['123'], bingSites: [], gtmContainers: [] }, memberships: platformOnly ? [] : [{ id: 'acme', role: 'tenant-admin' }], role: 'tenant-admin', platformAdmin: platformOnly };
       else if (path.endsWith('/overview')) data = { geo: { score: 42, projectedScore: 100, breakdown: { meta: 10 }, max: { meta: 14 }, recommendations: [{ action: lang === 'fr' ? 'Corriger la balise title de la page test' : 'Fix the test page title', points: 8 }, { action: lang === 'fr' ? 'Clarifier les titres de section de la page test' : 'Clarify test page headings', points: 5 }, { action: lang === 'fr' ? 'Vérifier les liens de la page test' : 'Check test page links', points: 3 }] }, citability: { score: 42 }, indexnow: { score: 35 }, platforms: [{ label: 'ChatGPT', score: 25 }] };
       else if (path.endsWith('/tracking/status')) data = { serviceAccount: { installed: connected }, ga4: { hasAccess: connected, configured: '123' }, gsc: {}, bing: {}, tags: {} };
       else if (path.endsWith('/reports')) data = { reports: [] };
@@ -37,6 +37,7 @@ try {
     assert.equal(await page.locator('.app-nav a').count(), 5);
     await page.screenshot({ path: `${output}/${lang}-${width}-cockpit.png`, fullPage: true });
     for (const area of ['diagnose', 'ops', 'impact', 'settings']) {
+      if (!(await page.locator(`.app-nav a[href="#${area}"]`).isVisible())) await page.locator('#c-nav-toggle').click();
       await page.locator(`.app-nav a[href="#${area}"]`).click();
       await page.locator('.decision-hub, .decision-flow').first().waitFor();
       assert.equal(await page.locator('.app-nav [aria-current="true"]').count(), 1);
@@ -48,10 +49,11 @@ try {
     await page.goto(`${origin}/console/?lang=${lang}#impact/analytics`);
     await page.locator('.decision-enrich').waitFor();
     assert.equal(await page.locator('.decision-enrich').getAttribute('open'), null);
-    assert.equal(await page.locator('.decision-hub > .decision-grid > a').count(), 0);
+    assert.equal(await page.locator('.decision-hub > .decision-grid .decision-card').count(), 0);
     await page.locator('.decision-enrich > summary').click();
     assert.equal(await page.locator('.decision-enrich a[href="#ga4"]').count(), 1);
     assert.match(await page.locator('.decision-measurement').innerText(), lang === 'fr' ? /Non évalué/ : /Not assessed/);
+    if (!(await page.locator('#c-search').isVisible())) await page.locator('#c-nav-toggle').click();
     await page.locator('#c-search').fill('ga4');
     await page.locator('#c-tool-search a').first().click();
     await page.locator('.v-section-heading h1').getByText('Google Analytics 4').waitFor();
@@ -59,8 +61,8 @@ try {
     connected = true;
     await page.goto(`${origin}/console/?lang=${lang}#impact/analytics`);
     await page.reload(); // A changed fixture represents a new connection/session.
-    await page.locator('.decision-hub > .decision-grid > a[href="#ga4"]').waitFor();
-    assert.equal(await page.locator('.decision-hub > .decision-grid > a').count(), 2);
+    await page.locator('.decision-hub > .decision-grid .decision-card[href="#ga4"]').waitFor();
+    assert.equal(await page.locator('.decision-hub > .decision-grid .decision-card').count(), 2);
     assert.ok(calls.filter(c => !c.path.endsWith('/me')).every(c => c.tenant === 'acme'));
     assert.ok(!calls.some(c => /\/(publish|write|approve|decide|execute|grant|add|save)$/.test(c.path)), 'Navigation never mutates provider state');
     platformOnly = true;

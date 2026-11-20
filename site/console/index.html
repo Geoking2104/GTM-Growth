@@ -18,6 +18,8 @@
 <link rel="stylesheet" href="decision.css">
 <link rel="stylesheet" href="scenarios.css">
 <link rel="stylesheet" href="connected-agents.css">
+<link rel="stylesheet" href="coach.css">
+<link rel="stylesheet" href="coaching-shell.css">
 </head>
 <body class="console-page">
 <!-- Connexion : même coque .app que la console publique -->
@@ -68,6 +70,7 @@
         <span id="c-switch-label">—</span>
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" class="chev"><path d="M9 6l6 6-6 6"/></svg>
       </button>
+      <button type="button" id="c-nav-toggle" data-coach-ignore aria-expanded="false" aria-controls="c-nav-track c-nav-act">☰ Parcours</button>
       <form id="c-picker" class="c-picker" hidden>
         <label class="c-field" id="c-tenant-wrap" hidden><span data-i18n="client">Client</span><select id="c-tenant"></select></label>
         <label class="c-field"><span data-i18n="domain">Domaine analysé</span><input id="c-url" placeholder="https://www.exemple.fr"></label>
@@ -94,8 +97,8 @@
           <button class="app-pill" id="c-logout" type="button" data-i18n="logout">Déconnexion</button>
         </div>
       </div>
-      <div id="c-visual-context"></div>
       <div id="c-data-agent"></div>
+      <div id="c-visual-context"></div>
       <div class="app-tabs" id="c-tabs" role="tablist"></div>
       <details class="c-background" id="c-background" hidden>
         <summary id="c-background-summary"></summary>

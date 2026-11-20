@@ -4,6 +4,14 @@
 
 ### Added
 
+- On-entry bilingual GTM coach, goal-based next actions, illustrated customer
+  journey and distinct colours for the five console areas.
+- Contextual explanations for cards, fields, charts, columns and actions, showing
+  origin, related workflows, effects and freshness without reading field values.
+- Bounded live operations and GA4 realtime reads, with visibility/offline pause,
+  stale-scope protection and explicit last-successful-read timestamps.
+- Strict-CSP console-coach browser QA in FR/EN on desktop and mobile.
+
 - Campaign Studio: evidence-backed, editable JointJS scenarios with synchronized
   graph, schedule and table views; dates, responsible roles, channel actions,
   dependencies, locks, checklists, budgets and sourced KPIs in FR/EN.
@@ -15,6 +23,11 @@
   browser QA against the real planning handlers with synthetic data.
 
 ### Fixed
+
+- Replace the generic automatic setup modal with the nonblocking coach welcome;
+  retain the setup wizard for explicit onboarding requests.
+- Replace the static "Live" date with the time of a successful response, and
+  retain source-specific observation dates and reporting delays.
 
 - Serve the unchanged local JointJS bundle as `joint.js`, using standard
   JavaScript MIME handling so Campaign Studio loads on existing Nginx hosts

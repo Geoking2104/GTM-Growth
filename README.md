@@ -33,6 +33,29 @@ OVH deployment; Cloud merchant activation remains a separate operation.
 
 ## Console organised around customer decisions
 
+An **on-entry GTM coach** now helps each signed-in customer choose a goal and a
+next action using their actual workspace, source access and available findings.
+The welcome is nonblocking and can be collapsed or reopened. Goal changes reuse
+the personal profile; they do not change provider permissions or workspace roles.
+
+An illustrated **Sources → Diagnosis → Plan → Results** path, five colour families
+and observed-data charts make the console easier to navigate. Contextual **?**
+controls beside cards, charts, table columns, fields and actions explain their
+**origin, relationships, consequences and freshness**, with links to the related
+screens. Missing data remains unknown, and an available prerequisite is not a
+completed marketing action.
+
+The operations panel refreshes saved status every 30 seconds while visible. The
+dedicated GA4 realtime screen refreshes its actual 30-minute reporting window.
+Both pause when hidden/offline, preserve the last successful read after an error
+and discard responses from obsolete scopes. Historical charts retain their own
+source periods. Opening help never calls an LLM, launches a collection, approves
+work or publishes content. Explicit data questions remain available in the coach.
+
+Read the [console coach guide](docs/product/CONSOLE-COACH.md) for the customer
+journey, benchmark references, implementation and validation. Run
+`pnpm run qa:console-coach` for strict-CSP FR/EN desktop/mobile browser QA.
+
 The console now groups the existing tools into **Cockpit & Priorities**,
 **Diagnosis & Opportunities**, **Studio & Approvals**, **Impact & Revenue** and
 **Sources & Workspace**. All 30 specialist screens and existing deep links remain
