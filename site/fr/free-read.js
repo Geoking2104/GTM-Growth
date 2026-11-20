@@ -65,13 +65,15 @@ async function loadLiveRead(url, host, view, requestId) {
     if (requestId !== generation) return;
 
     if (Array.isArray(payload.geoV2?.controls)) {
-      const observed = payload.geoV2.controls.filter(c => c.status === "measured").length;
       const unknown = payload.geoV2.controls.filter(c => c.status === "unknown").length;
-      view.score.textContent = `GEO v2 · ${observed}/42 contrôles observés`;
-      view.verdictText.textContent = `Audit de la page ${host} · ${unknown} contrôles encore inconnus. Score non publié sans preuve complète et consentement.`;
+      const done = payload.geoV2.controls.length - unknown;
+      view.score.textContent = `Visibilité IA · 42 contrôles — ${done}/42 contrôles faits`;
+      view.verdictText.textContent = unknown > 0
+        ? `Audit de la page ${host} · ${unknown} contrôles à vérifier. La note sur 100 est calculée quand les 42 le sont, dans votre espace.`
+        : `Audit de la page ${host} · les 42 contrôles sont faits. La note sur 100 s'affiche dans votre espace.`;
     } else {
-      view.score.textContent = "GEO v2 : lecture indisponible";
-      view.verdictText.textContent = "Les mesures historiques v1 ne constituent pas un score GEO v2.";
+      view.score.textContent = "Visibilité IA : lecture indisponible";
+      view.verdictText.textContent = "Les 42 contrôles de visibilité IA n'ont pas pu être lus pour cette page. Les anciennes mesures ne remplacent pas cette note.";
     }
     renderTables(view.tables, translateLiveTables(payload.tables ?? []), dict);
     view.note.textContent = dict.tables.serverNote({

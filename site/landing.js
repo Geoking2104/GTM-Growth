@@ -68,13 +68,15 @@ async function loadLiveRead(url, host, view, requestId) {
     if (requestId !== generation) return;
 
     if (Array.isArray(payload.geoV2?.controls)) {
-      const observed = payload.geoV2.controls.filter(c => c.status === "measured").length;
       const unknown = payload.geoV2.controls.filter(c => c.status === "unknown").length;
-      view.score.textContent = `GEO v2 · ${observed}/42 ${L("contrôles observés", "controls observed")}`;
-      view.verdictText.textContent = `${L("Audit de la page", "Page audit for")} ${host} · ${unknown} ${L("contrôles restent inconnus. Aucun score v2 publié sans preuve complète et consentement.", "controls remain unknown. No v2 score is published without complete evidence and consent.")}`;
+      const done = payload.geoV2.controls.length - unknown;
+      view.score.textContent = `${L("Visibilité IA · 42 contrôles", "AI visibility · 42 checks")} — ${done}/42 ${L("contrôles faits", "checks done")}`;
+      view.verdictText.textContent = unknown > 0
+        ? `${L("Audit de la page", "Page audit for")} ${host} · ${unknown} ${L("contrôles à vérifier. La note sur 100 est calculée quand les 42 le sont, dans votre espace.", "checks to verify. The score out of 100 is calculated once all 42 are done, in your workspace.")}`
+        : `${L("Audit de la page", "Page audit for")} ${host} · ${L("les 42 contrôles sont faits. La note sur 100 s'affiche dans votre espace.", "all 42 checks are done. The score out of 100 is shown in your workspace.")}`;
     } else {
-      view.score.textContent = L("GEO v2 : lecture indisponible", "GEO v2: read unavailable");
-      view.verdictText.textContent = L("Les mesures historiques v1 ne constituent pas un score GEO v2.", "Historical v1 measurements are not a GEO v2 score.");
+      view.score.textContent = L("Visibilité IA : lecture indisponible", "AI visibility: read unavailable");
+      view.verdictText.textContent = L("Les 42 contrôles de visibilité IA n'ont pas pu être lus pour cette page. Les anciennes mesures ne remplacent pas cette note.", "The 42 AI visibility checks could not be read for this page. Older measurements do not replace this score.");
     }
     renderTables(view.tables, language === "fr" ? translateLiveTables(payload.tables ?? []) : (payload.tables ?? []), dict);
     const fixes = (payload.report360?.actions ?? []).filter(a => a.kind === "observed_fix" && a.pillar === "geo").slice(0, 3);
@@ -83,7 +85,7 @@ async function loadLiveRead(url, host, view, requestId) {
     const list = element("ol");
     for (const fix of fixes) {
       const item = element("li"), evidence = element("details");
-      item.append(element("strong", "", `GEO v2 ${fix.checkId}: ${fix.title || fix.checkId}`), element("p", "", L("Consultez le rapport 360° pour les étapes et la source du constat.", "Open the 360° report for the steps and the finding's source.")));
+      item.append(element("strong", "", `${fix.checkId} · ${fix.title || fix.checkId}`), element("p", "", L("Consultez le rapport 360° pour les étapes et la source du constat.", "Open the 360° report for the steps and the finding's source.")));
       evidence.append(element("summary", "", L("Voir le constat", "View the finding")), element("p", "", fix.proof?.value || L("Preuve indisponible", "Evidence unavailable")));
       item.append(evidence); list.append(item);
     }

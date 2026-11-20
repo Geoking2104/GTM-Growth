@@ -128,8 +128,13 @@ describe("report downloads", () => {
   it.each(["fr", "en"] as const)("generates a bilingual Markdown report with all five pillars and dated facts (%s)", (language) => {
     const md = renderReportMarkdown(report, language);
     expect(md).toContain(language === "fr" ? "Réseaux sociaux" : "Social");
-    expect(md).toContain("GEO v2");
-    expect(md).toContain("1/42");
+    expect(md).not.toMatch(/score v2|v2 score|GEO v2(?!\\?\.\d)|Grille GEO v2|inconnu|unknown/i);
+    expect(md).toContain(language === "fr" ? "Visibilité IA — 42 contrôles" : "AI visibility — 42 checks");
+    expect(md).toContain(language === "fr" ? "1/42 contrôles faits" : "1/42 checks done");
+    expect(md).toContain(language === "fr" ? "41 à vérifier" : "41 to verify");
+    expect(md).toContain(language === "fr" ? "Note de visibilité IA sur 100 : pas encore calculée" : "AI visibility score out of 100: not calculated yet");
+    expect(md).toContain(language === "fr" ? "Référentiel de contrôle GEO v2\\.0\\.0" : "GEO check framework v2\\.0\\.0");
+    expect(md).toContain(language === "fr" ? "À vérifier · preuve requise" : "To verify · evidence needed");
     expect(md).toContain("M01");
     expect(md).toContain(language === "fr" ? "APERÇU RECONSTITUÉ" : "RECONSTRUCTED FROM HTML");
     expect(md).not.toContain("53/100");
