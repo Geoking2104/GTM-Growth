@@ -4,6 +4,7 @@ const assets = {
   bing: '/assets/ai-engines/bing.svg', copilot: '/assets/ai-engines/copilot.svg',
   chatgpt: '/assets/ai-engines/openai.svg', gemini: '/assets/ai-engines/gemini.svg',
   claude: '/assets/ai-engines/claude.svg', perplexity: '/assets/ai-engines/perplexity.png',
+  grok: '/assets/ai-engines/xai.svg', xai: '/assets/ai-engines/xai.svg',
 };
 const aliases = {
   gsc: 'google', search: 'google', keywords: 'google', gtm: 'google',

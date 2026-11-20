@@ -20,6 +20,16 @@ GTM Growth helps a team move from a finding to a reviewed action and a sourced
 follow-up. Start with one page and one business decision. Add sources as the
 question requires them; a connected workspace is not a promise of complete data.
 
+## Turn analysis into an adaptable campaign
+
+[Campaign Studio](../product/CAMPAIGN-STUDIO.md) connects findings to a visual plan
+with actions, dates and responsible roles by channel. Create it manually, start
+from the local guided plan, or review a proposal from a configured AI account.
+The graph, schedule and table share one campaign. Protected steps, comments and
+versions help teams adapt their work without losing earlier decisions. Native
+modules retain their own review and delivery requirements; planned dates and
+budgets are not delivery or performance receipts.
+
 ## Who it serves
 
 | User | First useful result | Typical next connection | Responsibility |

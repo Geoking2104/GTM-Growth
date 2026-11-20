@@ -243,7 +243,7 @@ export const geoTools = [
   {
     name: "geo_platform_readiness",
     description:
-      "Per-platform readiness for Google AI Overviews, ChatGPT, Perplexity, Gemini and Microsoft Copilot, derived from the GEO audit: score, band, the signals behind it and each engine's main gap.",
+      "Per-platform readiness for Google AI Overviews, ChatGPT, Perplexity, Gemini, Microsoft Copilot, Claude and Grok, derived from the GEO audit: score, band, the signals behind it and each engine's main gap.",
     schema: strict({ url: z.string() }),
     handler: async (args: any) => {
       try {

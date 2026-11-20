@@ -22,6 +22,16 @@ Release review **0.23.0** · **2026-11-19**. The pnpm migration, CLI bootstrap,
 `doctor` and release checks are available in source. Publication and runtime
 activation require their own evidence. [Upgrade guide](../UPGRADING.md)
 
+Increment of **20 November 2026 (Europe/Paris)**: [Campaign Studio](../product/CAMPAIGN-STUDIO.md)
+is implemented in source: JointJS graph, channel schedule and table; durable
+workspace campaigns, evidence snapshots, dates, responsible roles, dependencies,
+locks, checklists, budgets, sourced KPIs, comments and version history. Local
+rules and explicit configured AI accounts produce reviewable draft changes.
+Native module approvals and external execution remain separate. Full directory
+assignment, timed automation and realtime coediting are outside this increment.
+Source validation and CI receipts belong to the implementation PR; this entry
+is not a production activation receipt.
+
 Increment of 18 November 2026: [durable public audit pilot](../technical/AUDIT-PIPELINE.md)
 is implemented in source with PostgreSQL admission/outbox, bounded BullMQ workers,
 resumable browser progress, snapshot-based invitations and protected metrics.

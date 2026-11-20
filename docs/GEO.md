@@ -52,7 +52,7 @@ page that needs JavaScript to render, and JSON-LD that fails to parse.
 | `geo_llms_drift` | Compares the deployed `/llms.txt` with the sitemap: stale links, missing pages, coverage percentage. | ✅ |
 | `geo_content_risks` | Defensive scan for hidden text, LLM instructions in copy or comments, invisible Unicode, CTA overload, thin copy, keyword stuffing. | ✅ |
 | `geo_positioning` | On-page positioning against 1–5 competitor URLs: shared vocabulary, themes unique to you, themes only they use, overlap score. | ✅ |
-| `geo_platform_readiness` | Per-platform readiness for Google AI Overviews, ChatGPT, Perplexity, Gemini and Copilot: score, band, signals and each engine's main gap. | ✅ |
+| `geo_platform_readiness` | Per-platform readiness for Google AI Overviews, ChatGPT, Perplexity, Gemini, Copilot, Claude and Grok: score, band, signals and each engine's main gap. | ✅ |
 
 Every tool is a read of public URLs plus a local computation. Nothing is written
 to the site, to GA4, or to GTM, so no write flag and no `confirm=true` is needed.
@@ -78,7 +78,7 @@ Five smaller tools answer questions the rubric cannot:
 - **llms.txt drift** (`geo_llms_drift`) — stale links and missing pages, with coverage. No per-link fetches, so it is cheap enough to gate a deploy.
 - **Content risks** (`geo_content_risks`) — hidden text, prompt-like instructions, invisible Unicode, CTA overload, thin copy, keyword stuffing. Defensive only; nothing is executed.
 - **Positioning** (`geo_positioning`) — vocabulary overlap with competitors: what you all say, what only you say, what only they say. Public copy only, no rankings or traffic.
-- **Platform readiness** (`geo_platform_readiness`) — the same evidence mapped to Google AI Overviews, ChatGPT, Perplexity, Gemini and Copilot, with each engine's main gap.
+- **Platform readiness** (`geo_platform_readiness`) — the same evidence mapped to Google AI Overviews, ChatGPT, Perplexity, Gemini, Copilot, Claude and Grok, with each engine's main gap.
 
 ---
 

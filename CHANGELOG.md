@@ -2,6 +2,23 @@
 
 ## [Unreleased]
 
+### Added
+
+- Campaign Studio: evidence-backed, editable JointJS scenarios with synchronized
+  graph, schedule and table views; dates, responsible roles, channel actions,
+  dependencies, locks, checklists, budgets and sourced KPIs in FR/EN.
+- Tenant-scoped durable drafts, optimistic version checks, immutable revisions,
+  discussion, dependency rescheduling previews, reviewable restoration and exports.
+- Local guided plans and explicit BYOK AI proposals through OpenAI, Claude,
+  Mistral and Grok, with server validation, preserved human work and bounded usage.
+- Pinned local JointJS assets, reproducible vendor validation and strict-CSP
+  browser QA against the real planning handlers with synthetic data.
+
+### Fixed
+
+- Include Claude and Grok in the seven-engine readiness table and use the xAI
+  provider mark for Grok. Missing evidence remains unknown.
+
 ## [0.23.0] - 2026-11-19
 
 ### Added

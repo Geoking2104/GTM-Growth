@@ -49,7 +49,10 @@
     "site:render": "node scripts/render-landing.mjs",
     "site:check": "node scripts/check-site.mjs",
     "docs:check": "node scripts/check-docs.mjs",
-    "start:audit-worker": "node dist/audit-jobs/worker.js"
+    "start:audit-worker": "node dist/audit-jobs/worker.js",
+    "vendor:joint": "node scripts/vendor-joint.mjs",
+    "vendor:check": "node scripts/vendor-joint.mjs --check",
+    "qa:scenarios": "node --import tsx scripts/qa-scenarios.mjs"
   },
   "keywords": [
     "mcp",
@@ -85,6 +88,7 @@
     "node": ">=24"
   },
   "dependencies": {
+    "@joint/core": "4.3.4",
     "@modelcontextprotocol/sdk": "^1.12.0",
     "@prometheus-io/client": "^0.16.1",
     "better-sqlite3": "^11.10.0",
@@ -113,6 +117,7 @@
     "@types/pg": "^8.23.1",
     "@typescript-eslint/eslint-plugin": "^8.18.0",
     "@typescript-eslint/parser": "^8.18.0",
+    "esbuild": "0.28.2",
     "eslint": "^9.16.0",
     "linkedom": "^0.18.12",
     "tsx": "^4.19.2",
