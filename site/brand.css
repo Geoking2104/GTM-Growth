@@ -238,3 +238,15 @@ html[lang="fr"] .foot-links .privacy-settings { color: var(--gg-muted); font-siz
   html[lang="fr"] .logo { font-size: 14px; }
   html[lang="fr"] .gg-free-result .gg-checks { grid-template-columns: 1fr; }
 }
+
+/* 404: same tokens, font and blue CTA as the rest of the site (no inline styles, CSP style-src 'self'). */
+.error-page {
+  margin: 0; min-height: 100vh; display: grid; place-items: center; padding: 2rem; text-align: center;
+  font-family: Inter, ui-sans-serif, system-ui, sans-serif; color: var(--gg-white);
+  background: radial-gradient(700px 320px at 20% 0%, rgba(124, 58, 237, .45), transparent 60%), radial-gradient(600px 300px at 90% 100%, rgba(236, 72, 153, .25), transparent 60%), var(--gg-night);
+}
+.error-page img { display: block; width: 64px; height: 64px; margin: 0 auto 1.5rem; }
+.error-page h1 { font-size: clamp(2rem, 6vw, 3rem); letter-spacing: -.02em; margin: 0 0 .75rem; color: var(--gg-white); }
+.error-page p { color: var(--gg-muted); max-width: 34rem; margin: 0 auto .6rem; }
+.error-page .error-actions { display: flex; flex-wrap: wrap; justify-content: center; align-items: stretch; gap: .75rem; margin-top: 1.4rem; }
+body.error-page .error-actions .btn { display: inline-flex; align-items: center; justify-content: center; min-height: 48px; background: #2563eb; color: #fff; }
