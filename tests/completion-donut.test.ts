@@ -43,7 +43,7 @@ describe("donut and pictograms", () => {
     expect(donut.getAttribute("role")).toBe("img");
     expect(donut.getAttribute("aria-label")).toBe("1 of 2 observed, 50% (1 unknown)");
     expect(donut.textContent).toBe("50%");
-    expect(donut.getAttribute("style")).toContain("--gg-done:50.00%");
+    expect(donut.style.getPropertyValue("--gg-done")).toBe("50.00%");
   });
   it("renders 0/0 as neutral, not as 0 %", () => {
     dom();
@@ -89,5 +89,17 @@ describe("v2 grid integration", () => {
     expect(tree.querySelector('[data-category="llms"] .gg-donut')?.className).toContain("gg-donut-empty");
     expect(tree.querySelector('[data-category="future_category"] .gg-category-icon')?.getAttribute("data-icon")).toBe(FALLBACK_CATEGORY_ICON);
     expect(tree.querySelector(".report360-v2-overall .gg-donut")?.getAttribute("aria-label")).toContain(lang === "fr" ? "2 sur 3 observés, 67" : "2 of 3 observed, 67");
+  });
+});
+
+describe("content security policy", () => {
+  it("never writes inline style attributes from site scripts (CSP style-src 'self')", async () => {
+    const { readdirSync, readFileSync } = await import("node:fs");
+    const path = await import("node:path");
+    const root = path.resolve(import.meta.dirname, "../site");
+    const offenders: string[] = [];
+    const walk = (dir: string) => { for (const entry of readdirSync(dir, { withFileTypes: true })) { const full = path.join(dir, entry.name); if (entry.isDirectory()) walk(full); else if (entry.name.endsWith(".js") && /setAttribute\(\s*["']style["']/.test(readFileSync(full, "utf8"))) offenders.push(path.relative(root, full)); } };
+    walk(root);
+    expect(offenders).toEqual([]);
   });
 });
