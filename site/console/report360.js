@@ -1,5 +1,6 @@
 /** Five-pillar public report. All target-originated text is inserted as textContent. */
 import { explainRecommendation, normalisePublicUrl } from "./public-read-model.js";
+import { completionStats, renderCategoryIcon, renderCompletionDonut } from "./completion-donut.js";
 
 const UI = {
   fr: {
@@ -32,7 +33,7 @@ const UI = {
     v2Checks: "contrôles observés / 42", v2Grid: "Grille GEO v2 · preuves et applicabilité",
     v2Intro: "Chaque contrôle est soit observé, soit inconnu, soit non applicable avec justification. Un inconnu ne vaut jamais zéro.",
     v2Measured: "Observé", v2Unknown: "Inconnu", v2Excluded: "Non applicable", v2Status: "Statut",
-    v2Summary: "Contrôles GEO v2", v2NoScore: "Aucun score v2 publiable à ce stade",
+    v2Summary: "Contrôles GEO v2", v2Completion: "Contrôles observés", v2NoScore: "Aucun score v2 publiable à ce stade",
     visualTitle: "La page, illustrée à partir des éléments lus", visualLabel: "APERÇU RECONSTITUÉ · PAS UNE CAPTURE D’ÉCRAN",
     visualNote: "Titre, description et titres de section proviennent de la réponse HTML. La mise en page d'origine n'a pas été capturée. Pour une capture authentique, vérifiez la propriété du domaine et autorisez un rendu isolé.",
     visualSnippet: "Aperçu du résultat de recherche", visualOutline: "Titres observés sur la page", visualMissing: "Non trouvé dans le HTML",
@@ -72,7 +73,7 @@ const UI = {
     v2Checks: "observed / 42 controls", v2Grid: "GEO v2 grid · proof and applicability",
     v2Intro: "Every check is observed, unknown or not applicable with evidence. Unknown never means zero.",
     v2Measured: "Observed", v2Unknown: "Unknown", v2Excluded: "Not applicable", v2Status: "Status",
-    v2Summary: "GEO v2 controls", v2NoScore: "No publishable v2 score yet",
+    v2Summary: "GEO v2 controls", v2Completion: "Checks observed", v2NoScore: "No publishable v2 score yet",
     visualTitle: "Your page, illustrated using observed HTML", visualLabel: "RECONSTRUCTED PREVIEW · NOT A SCREENSHOT",
     visualNote: "The title, description and headings come from the HTML response. The original visual layout was not captured. Verify domain ownership and authorise isolated rendering for an authentic screenshot.",
     visualSnippet: "Search-result preview", visualOutline: "Headings observed on the page", visualMissing: "Not found in HTML",
@@ -348,17 +349,30 @@ function renderV2Grid(report, lang, copy) {
   const unknown = v2.controls.filter(c => c.status === "unknown").length;
   const excluded = v2.controls.filter(c => c.status === "not_applicable").length;
   const summary = el("div", "report360-v2-summary");
-  for (const [value, label] of [[measured, copy.v2Measured], [unknown, copy.v2Unknown], [excluded, copy.v2Excluded]]) {
-    const tile = el("div", "report360-v2-stat"); tile.append(el("strong", "", value), el("span", "", label)); summary.append(tile);
+  const overall = el("div", "report360-v2-stat report360-v2-overall");
+  overall.append(renderCompletionDonut(completionStats(v2.controls), lang, { size: "lg" }), el("span", "", copy.v2Completion));
+  summary.append(overall);
+  for (const [value, label, key] of [[measured, copy.v2Measured, "measured"], [unknown, copy.v2Unknown, "unknown"], [excluded, copy.v2Excluded, "not_applicable"]]) {
+    const tile = el("div", `report360-v2-stat report360-v2-stat-${key}`);
+    const swatch = span("report360-v2-swatch"); swatch.setAttribute("aria-hidden", "true");
+    tile.append(swatch, el("strong", "", value), el("span", "", label)); summary.append(tile);
   }
   section.append(summary, el("p", "report360-v2-no-score", copy.v2NoScore));
   const buckets = el("div", "report360-v2-buckets");
-  for (const [category, labels] of Object.entries(V2_CATEGORY)) {
+  // Known categories keep their editorial order; any other key returned by the
+  // API is still shown (with the fallback pictogram) instead of being dropped.
+  const extraCategories = [...new Set(v2.controls.map(c => c.category))].filter(k => typeof k === "string" && k && !Object.hasOwn(V2_CATEGORY, k));
+  for (const category of [...Object.keys(V2_CATEGORY), ...extraCategories]) {
+    const labels = V2_CATEGORY[category] || [category, category];
     const group = v2.controls.filter(c => c.category === category);
-    const detail = el("details", "report360-v2-category");
+    const stats = completionStats(group);
+    const detail = el("details", "report360-v2-category"); detail.dataset.category = category;
     const summaryLine = el("summary");
-    summaryLine.append(span("report360-v2-category-name", labels[lang === "fr" ? 0 : 1]));
-    summaryLine.append(span("report360-v2-category-count", `${group.filter(c => c.status === "measured").length}/${group.length} ${copy.v2Measured.toLowerCase()}`));
+    const name = span("report360-v2-category-name");
+    name.append(renderCategoryIcon(category), span("", labels[lang === "fr" ? 0 : 1]));
+    const progress = span("report360-v2-category-progress");
+    progress.append(renderCompletionDonut(stats, lang), span("report360-v2-category-count", `${stats.observed}/${stats.total} ${copy.v2Measured.toLowerCase()}`));
+    summaryLine.append(name, progress);
     detail.append(summaryLine);
     const list = el("ol", "report360-v2-list");
     for (const control of group) {
