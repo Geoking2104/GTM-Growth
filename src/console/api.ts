@@ -382,7 +382,8 @@ export function buildConsoleRouter(routes: ConsoleRoute[], options: ConsoleOptio
         return res.json(data);
       } catch (error) {
         logger.info(`[console] ${route.path} failed: ${(error as Error).message}`);
-        return fail(res, error instanceof TenantAccessError || error instanceof CloudAccessError || error instanceof ScenarioError ? error.status : error instanceof ZodError ? 400 : /^(DECISION_CHANGED|DECISION_EVIDENCE_EXPIRED|MEASUREMENT_ALREADY_RUNNING)$/.test((error as Error).message) ? 409 : 502, (error as Error).message);
+        if (error instanceof ScenarioError) return res.status(error.status).json({ error: error.message, code: error.code });
+        return fail(res, error instanceof TenantAccessError || error instanceof CloudAccessError ? error.status : error instanceof ZodError ? 400 : /^(DECISION_CHANGED|DECISION_EVIDENCE_EXPIRED|MEASUREMENT_ALREADY_RUNNING)$/.test((error as Error).message) ? 409 : 502, (error as Error).message);
       }
     });
   }

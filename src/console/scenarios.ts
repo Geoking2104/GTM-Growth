@@ -139,11 +139,11 @@ export const scenarioRoutes: ConsoleRoute[] = [
     return { issues: validatePlan(draft) };
   } },
   { path: '/scenarios/generate-preview', needsUrl: false, handler: async ctx => {
-    const who = scenarioPrincipal(ctx), input = versioned.merge(generationInputSchema).extend({ evidenceIds }).strict().parse(ctx.body), before = scopedPlan(who, input.id); requireEdit(who, before);
+    const who = scenarioPrincipal(ctx), input = versioned.merge(generationInputSchema).strict().parse(ctx.body), before = scopedPlan(who, input.id); requireEdit(who, before);
     if (before.version !== input.version) throw new ScenarioError(409, 'SCENARIO_CHANGED', 'Reload the current campaign before generating a proposal.');
     if (input.mode === 'ai' && !who.admin) throw new ScenarioError(403, 'SCENARIO_AI_ACCESS', 'Only workspace administrators may use the shared metered AI account.');
     if (input.evidenceIds?.some(id => !before.evidence.some(item => item.id === id))) throw new ScenarioError(409, 'SCENARIO_EVIDENCE_UNSAVED', 'Save selected evidence in the campaign before generating.');
-    const { id: _id, version: _version, evidenceIds: _evidenceIds, ...request } = input;
+    const { id: _id, version: _version, ...request } = input;
     const result = await generateScenarioDraft(who.tenant.id, draftOf(before), request);
     const proposal = plans.createProposal(who.tenant.id, who.actor, before.id, input.version, result.draft, { kind: result.kind, provider: result.provider, summary: result.summary, nodeIds: result.nodeIds });
     return { proposal };

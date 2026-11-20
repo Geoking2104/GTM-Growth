@@ -66,7 +66,7 @@ const server = createServer(async (req, res) => {
 });
 await new Promise(resolve => server.listen(0, '127.0.0.1', resolve));
 const origin = `http://127.0.0.1:${server.address().port}`;
-let browser;
+let browser, activePage, activeCase;
 const results = [];
 try {
   browser = await chromium.launch({ headless: true, executablePath: process.env.CHROMIUM_BIN || (existsSync(chromium.executablePath()) ? chromium.executablePath() : '/usr/bin/chromium'), args: ['--no-sandbox', '--disable-dev-shm-usage'] });
@@ -86,6 +86,7 @@ try {
     } })).plan;
     const page = await browser.newPage({ viewport: { width, height: 1000 }, timezoneId: 'America/Los_Angeles', reducedMotion: 'reduce' });
     const errors = []; page.on('pageerror', error => errors.push(error.message));
+    activePage = page; activeCase = { language, width, errors };
     await page.addInitScript(() => { window.cspViolations = []; document.addEventListener('securitypolicyviolation', event => window.cspViolations.push(`${event.violatedDirective}: ${event.blockedURI}`)); });
     await page.route('**/*', route => new URL(route.request().url()).origin === origin ? route.continue() : route.abort());
     await page.goto(`${origin}/scenario-fixture?lang=${language}`);
@@ -131,7 +132,9 @@ try {
     await proposal.getByRole('button', { name: L('Appliquer au planning', 'Apply to plan'), exact: true }).click();
     await proposal.waitFor({ state: 'hidden' });
     const updated = getPlan(id, initial.id);
-    assert.ok(updated.nodes.length > 6);
+    assert.ok(updated.version > initial.version);
+    assert.equal(updated.nodes.length, 6, 'Guided revision preserves existing steps');
+    assert.notEqual(updated.nodes.find(n => n.id === 'step0').description, initial.nodes.find(n => n.id === 'step0').description, 'The reviewed suggestion must be applied');
     assert.deepEqual(updated.nodes.find(n => n.id === 'step5'), initial.nodes.find(n => n.id === 'step5'), 'Locked action must survive generation');
     await page.getByRole('button', { name: L('Versions & échanges', 'Versions & discussion'), exact: true }).click();
     await page.getByLabel(L('Ajouter une note', 'Add a note'), { exact: true }).fill(L('Relecture des dates effectuée.', 'Campaign dates reviewed.'));
@@ -148,6 +151,13 @@ try {
   }
   await writeFile(path.join(output, 'results.json'), JSON.stringify({ results, policy, checks: ['real JointJS canvas', 'real tenant-scoped planning handlers', 'edit and autosave', 'calendar channel lanes', 'review before apply', 'locked node preservation', 'comments', 'strict CSP', 'FR/EN', 'mobile', 'no provider writes'] }, null, 2));
   console.log(JSON.stringify({ output, results }, null, 2));
+} catch (error) {
+  if (activePage && !activePage.isClosed()) {
+    await activePage.screenshot({ path: path.join(output, 'failure.png'), fullPage: true }).catch(() => {});
+    const state = await activePage.evaluate(() => ({ saveState: document.querySelector('.scenario-save-state')?.textContent, violations: window.cspViolations, text: document.body.innerText.slice(0, 12000) })).catch(() => null);
+    await writeFile(path.join(output, 'failure.json'), JSON.stringify({ ...activeCase, message: error.message, state }, null, 2));
+  }
+  throw error;
 } finally {
   await browser?.close(); await new Promise(resolve => server.close(resolve));
   closeScenarioStores(); closeDecisionStores();

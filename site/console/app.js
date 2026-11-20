@@ -90,7 +90,7 @@ function scenarioView() {
       body: JSON.stringify(body), cache: 'no-store', signal: AbortSignal.timeout(75000),
     });
     const data = await res.json();
-    if (!res.ok) { const error = new Error(data.error || `HTTP ${res.status}`); error.status = res.status; throw error; }
+    if (!res.ok) { const error = new Error(data.error || `HTTP ${res.status}`); error.status = res.status; error.code = data.code; throw error; }
     if (!unchanged()) throw new Error(LANG === 'fr' ? 'Espace modifié. Rouvrez le scénario.' : 'Workspace changed. Reopen the scenario.');
     return data;
   };

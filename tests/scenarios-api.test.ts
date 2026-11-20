@@ -136,3 +136,17 @@ it('paginates safe summaries without returning full graphs or evidence in the li
   const next = await call('list', { limit: 2, offset: page.nextOffset });
   expect(next.plans).toHaveLength(1); expect(next.nextOffset).toBeNull();
 });
+
+it('honours finding selection through preview creation and acceptance without deleting retained evidence', async () => {
+  const at = '2026-11-20T00:00:00Z';
+  const evidence = ['selected', 'excluded'].map(id => ({ id, source: 'manual', sourceId: '', title: `${id} title`, detail: `${id} detail`, observedAt: at, kind: 'declared' }));
+  const { plan } = await call('create', { draft: { ...draft(), evidence } });
+  const { proposal } = await call('generate-preview', { id: plan.id, version: plan.version, mode: 'template', evidenceIds: ['selected'] });
+  expect(proposal.draft.evidence).toEqual(plan.evidence);
+  expect(proposal.draft.nodes.every((node: any) => node.evidenceIds.join() === 'selected' && !node.description.includes('excluded detail'))).toBe(true);
+  const accepted = await call('accept-revision', { id: plan.id, version: plan.version, proposalId: proposal.id });
+  expect(accepted.plan.evidence).toEqual(plan.evidence);
+  const emptyPlan = (await call('create', { draft: { ...draft(), evidence } })).plan;
+  const emptyPreview = await call('generate-preview', { id: emptyPlan.id, version: emptyPlan.version, mode: 'template', evidenceIds: [] });
+  expect(emptyPreview.proposal.draft.nodes.every((node: any) => node.evidenceIds.length === 0)).toBe(true);
+});

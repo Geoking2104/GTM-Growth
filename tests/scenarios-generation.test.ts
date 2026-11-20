@@ -97,3 +97,52 @@ it('rejects response overflow, concurrent calls and durable per-workspace rate o
   await expect(generateScenarioDraft('workspace-two', base(), request(), { transport: blocked, resolveAccount })).rejects.toMatchObject({ status: 409 });
   release(new Response(JSON.stringify(providerResponse('openai')))); await first;
 });
+
+it('transmits only selected findings and retains the complete immutable history in its proposal', async () => {
+  const draft = base();
+  draft.evidence.push({ ...draft.evidence[0], id: 'excluded', title: 'UNSELECTED_SOURCE_TITLE', detail: 'UNSELECTED_SOURCE_DETAIL' });
+  const transport = vi.fn(async () => new Response(JSON.stringify(providerResponse('openai')))) as unknown as typeof fetch;
+  const result = await generateScenarioDraft('workspace-one', draft, { ...request(), evidenceIds: ['proof'] }, { transport, resolveAccount: () => ({ key: 'secret' }) });
+  const payload = JSON.parse(vi.mocked(transport).mock.calls[0][1]!.body as string);
+  const prompt = JSON.parse(payload.messages[1].content);
+  expect(prompt.evidence.map((item: { id: string }) => item.id)).toEqual(['proof']);
+  expect(JSON.stringify(payload)).toContain('Review mobile checkout');
+  expect(JSON.stringify(payload)).not.toContain('UNSELECTED_SOURCE_TITLE');
+  expect(JSON.stringify(payload)).not.toContain('UNSELECTED_SOURCE_DETAIL');
+  expect(result.draft.evidence).toEqual(draft.evidence);
+  expect(result.draft.nodes[0].evidenceIds).toEqual(['proof']);
+  expect(() => applyGeneratedNodes(draft, generationInputSchema.parse({ ...request(), evidenceIds: ['proof'] }), output({ evidenceIds: ['excluded'] }))).toThrow('unavailable');
+});
+
+it('treats an explicitly empty selection as no findings for AI and local generation', async () => {
+  const transport = vi.fn(async () => new Response(JSON.stringify(providerResponse('openai', output({ evidenceIds: [] }))))) as unknown as typeof fetch;
+  const draft = base();
+  const result = await generateScenarioDraft('workspace-one', draft, { ...request(), evidenceIds: [] }, { transport, resolveAccount: () => ({ key: 'secret' }) });
+  const payload = JSON.parse(vi.mocked(transport).mock.calls[0][1]!.body as string);
+  expect(JSON.parse(payload.messages[1].content).evidence).toEqual([]);
+  expect(JSON.stringify(payload)).not.toContain('A hypothesis, not an observed conversion uplift');
+  expect(result.draft.nodes[0].evidenceIds).toEqual([]);
+  expect(result.draft.evidence).toEqual(draft.evidence);
+  const local = generateTemplate(draft, generationInputSchema.parse({ mode: 'template', evidenceIds: [] }));
+  expect(local.nodes.every(node => node.evidenceIds.length === 0 && node.description.includes('Planning hypothesis'))).toBe(true);
+  expect(local.evidence).toEqual(draft.evidence);
+  expect(() => applyGeneratedNodes(draft, generationInputSchema.parse({ ...request(), evidenceIds: [] }), output())).toThrow('unavailable');
+});
+
+it('preserves existing node provenance while preventing new unchecked associations', () => {
+  const draft = base();
+  draft.evidence.push({ ...draft.evidence[0], id: 'excluded', title: 'Retained historical source' });
+  draft.nodes = parseDraft({ ...draft, nodes: [{ id: 'existing', title: 'Human action', startDate: draft.startDate, endDate: draft.endDate, evidenceIds: ['excluded'] }] }).nodes;
+  const input = generationInputSchema.parse({ ...request(), evidenceIds: ['proof'] });
+  const result = applyGeneratedNodes(draft, input, output({ id: 'existing', evidenceIds: ['proof'] }));
+  expect(result.draft.nodes[0].evidenceIds).toEqual(['excluded', 'proof']);
+  expect(result.draft.evidence).toEqual(draft.evidence);
+  expect(() => applyGeneratedNodes(draft, input, output({ evidenceIds: ['excluded'] }))).toThrow('unavailable');
+});
+
+it('rejects unknown or repeated findings before starting a provider request', async () => {
+  const transport = vi.fn() as unknown as typeof fetch, resolveAccount = vi.fn(() => ({ key: 'secret' }));
+  await expect(generateScenarioDraft('workspace-one', base(), { ...request(), evidenceIds: ['missing'] }, { transport, resolveAccount })).rejects.toMatchObject({ status: 400 });
+  await expect(generateScenarioDraft('workspace-one', base(), { ...request(), evidenceIds: ['proof', 'proof'] }, { transport, resolveAccount })).rejects.toMatchObject({ status: 400 });
+  expect(transport).not.toHaveBeenCalled(); expect(resolveAccount).not.toHaveBeenCalled();
+});

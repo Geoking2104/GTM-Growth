@@ -118,6 +118,17 @@ tenant account resolver documented in [AI provider setup](AI-VISIBILITY-PROVIDER
 Grok uses the local xAI mark. The model name is shown in the account selector.
 Gemini generation is not exposed by Campaign Studio.
 
+Only checked findings are included in the generation request. Clearing the
+selection sends no findings; it does not erase immutable source snapshots or
+existing action provenance. The campaign brief and action context described in
+the confirmation are still included. New evidence associations must use the
+selected findings.
+
+For an empty campaign, the guided mode creates preparation and verification
+steps per channel. For an existing campaign, it adds a verification reminder to
+editable steps and supplies missing responsibility labels. A natural-language
+revision uses the AI copilot.
+
 Provider endpoints are fixed. Requests have no browser fetch tools, publishing
 tools, arbitrary webhooks or shell commands. Findings and user text are untrusted
 data. Structured output is validated again on the server; IDs are assigned by the
