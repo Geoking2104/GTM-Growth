@@ -18,7 +18,7 @@ export function matchSearchRows(prompt, rows) {
   const a = tokens(prompt);
   return rows.map((row) => { const b = tokens(row.query); const intersection = [...a].filter((x) => b.has(x)).length; return { ...row, match: a.size && b.size ? intersection / Math.max(a.size, b.size) : 0 }; }).filter((r) => r.match >= 0.25).sort((x, y) => y.match - x.match || y.impressions - x.impressions).slice(0, 3);
 }
-export function renderCompetition({ api, me, property, days }) {
+export function renderCompetition({ api, me, property, days, onOpenCitations }) {
 
   const root = el("section", "ai-vis"), controls = el("div", "ai-controls"), output = el("div"), status = el("p", "c-note"); status.setAttribute("role", "status");
 
@@ -64,6 +64,9 @@ export function renderCompetition({ api, me, property, days }) {
     const groups = (state.groups || []).filter((g) => g.datasetId === current); field(L("Groupe de questions", "Prompt group"), [["", L("Toutes", "All")], ...groups.map((g) => [g.id, g.name])], groupId, (v) => { groupId = v; selection = null; draw(); });
     if (admin) { const groupEditor = el("details", "ai-import"); groupEditor.append(el("summary", "", L("Créer ou modifier un groupe", "Create or edit a group")), el("p", "c-note", L("Une question exacte par ligne. Les groupes sont propres au jeu sélectionné.", "One exact prompt per line. Groups belong to the selected dataset."))); const selectedGroup = groups.find((g) => g.id === groupId), groupName = el("input"), prompts = el("textarea"); groupName.placeholder = L("Nom du groupe", "Group name"); groupName.value = selectedGroup?.name || ""; prompts.rows = 5; prompts.value = selectedGroup ? selectedGroup.prompts.join("\n") : [...new Set(report.responses.map((r) => r.prompt))].join("\n"); groupEditor.append(groupName, prompts, button(L("Enregistrer le groupe", "Save group"), async () => { try { state = await api("/competition/group", { id: selectedGroup?.id || "", datasetId: current, name: groupName.value, prompts: prompts.value.split("\n").map((p) => p.trim()).filter(Boolean) }); draw(); } catch (e) { status.textContent = e.message; } })); controls.append(groupEditor); }
     const groupPrompts = groups.find((g) => g.id === groupId)?.prompts;
+    if (onOpenCitations) controls.append(button(L("Voir les sources citées", "View cited sources"), () => {
+      onOpenCitations({ datasetId: current, brand: own, source, groupId, from, to, focusCitations: true });
+    }));
     const rows = report.responses.filter((r) => (!groupPrompts || groupPrompts.includes(r.prompt)) && (!source || r.source === source) && (!from || r.observedAt.slice(0, 10) >= from) && (!to || r.observedAt.slice(0, 10) <= to));
 
     if (!rows.length) {

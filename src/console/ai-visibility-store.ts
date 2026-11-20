@@ -18,6 +18,7 @@ function database(): Database.Database {
   db.pragma("busy_timeout = 10000"); db.pragma("journal_mode = DELETE"); db.pragma("synchronous = FULL");
   db.exec(`CREATE TABLE IF NOT EXISTS ai_accounts (tenant_id TEXT NOT NULL, id TEXT NOT NULL, payload TEXT NOT NULL, PRIMARY KEY (tenant_id, id));
            CREATE TABLE IF NOT EXISTS datasets (tenant_id TEXT NOT NULL, id TEXT NOT NULL, created_at TEXT NOT NULL, payload TEXT NOT NULL, PRIMARY KEY (tenant_id, id));
+           CREATE TABLE IF NOT EXISTS dataset_imports (tenant_id TEXT NOT NULL, fingerprint TEXT NOT NULL, dataset_id TEXT NOT NULL, PRIMARY KEY (tenant_id, fingerprint));
            CREATE TABLE IF NOT EXISTS legacy_imports (tenant_id TEXT PRIMARY KEY, imported_at TEXT NOT NULL);
            CREATE TABLE IF NOT EXISTS competition_state (tenant_id TEXT PRIMARY KEY, payload TEXT NOT NULL);
            CREATE TABLE IF NOT EXISTS visual_catalog (tenant_id TEXT NOT NULL, origin TEXT NOT NULL, payload TEXT NOT NULL, PRIMARY KEY (tenant_id, origin));`);
@@ -79,13 +80,23 @@ export function latestDataset<T extends StoredDataset>(tenantId: string): T | un
   const row = db.prepare("SELECT payload FROM datasets WHERE tenant_id = ? ORDER BY created_at DESC, id DESC LIMIT 1").get(tenantId) as Row | undefined;
   return row ? parse<T>(row) : undefined;
 }
-export function insertDataset<T extends StoredDataset>(tenantId: string, data: T) {
+export function findDatasetImport(tenantId: string, fingerprint: string): string | null {
+  validateTenant(tenantId);
+  const row = database().prepare("SELECT dataset_id AS id FROM dataset_imports WHERE tenant_id = ? AND fingerprint = ?").get(tenantId, fingerprint) as { id: string } | undefined;
+  return row?.id ?? null;
+}
+
+export function insertDataset<T extends StoredDataset>(tenantId: string, data: T, fingerprint?: string) {
   validateTenant(tenantId); const db = database(); migrateLegacy(db, tenantId);
   const insert = db.transaction(() => {
+    const existing = fingerprint && findDatasetImport(tenantId, fingerprint);
+    if (existing) return { id: existing, reused: true };
     const count = db.prepare("SELECT COUNT(*) AS n FROM datasets WHERE tenant_id = ?").get(tenantId) as { n: number };
     if (count.n >= 100) throw new Error("Dataset limit reached");
     db.prepare("INSERT INTO datasets (tenant_id, id, created_at, payload) VALUES (?, ?, ?, ?)").run(tenantId, data.id, data.createdAt, JSON.stringify(data));
-  }); insert.immediate();
+    if (fingerprint) db.prepare("INSERT INTO dataset_imports (tenant_id, fingerprint, dataset_id) VALUES (?, ?, ?)").run(tenantId, fingerprint, data.id);
+    return { id: data.id, reused: false };
+  }); return insert.immediate();
 }
 export function updateDataset<T extends StoredDataset>(tenantId: string, id: string, update: (dataset: T) => void) {
   validateTenant(tenantId); const db = database(); migrateLegacy(db, tenantId);

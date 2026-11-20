@@ -21,7 +21,7 @@ export function renderOpsPrompts({ api, me }) {
   };
   const draw = () => {
     const wrap = el("div");
-    const engines = (data?.engines ?? []).map((e) => `${e.label} — ${e.configured ? L("clé configurée", "key configured") : L("clé absente", "no key")} (${e.model})`);
+    const engines = (data?.engines ?? []).map((e) => `${e.label} — ${e.enabled === false ? L("collecte désactivée", "collection disabled") : e.configured ? L("clé configurée", "key configured") : L("clé absente", "no key")} (${e.model})`);
     wrap.append(el("p", "c-note", engines.join(" · ") || L("Aucun moteur configuré.", "No engine configured.")));
     const list = el("ul", "tracked-list");
     for (const p of data?.prompts ?? []) {

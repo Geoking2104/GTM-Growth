@@ -208,8 +208,8 @@ const SECTIONS = {
     { id: "local_seo", icon: "local_seo", build: () => custom("local_seo", [{ id: "website", label: LANG === "fr" ? "SEO du site" : "Website SEO", needsDomain: false, async: async () => renderGlobalSeo({ state, api, scope }) }, { id: "network", label: "Google Business Profile", needsDomain: false, async: async () => renderLocalSeo({ api, me: state.me }) }, { id: "planning", label: LANG === "fr" ? "Préparer mon établissement" : "Plan my business", needsDomain: false, async: async () => renderLocalSeoWorkspace({ state }) }]) },
     { id: "catalog", icon: "products", build: () => custom("catalog", [{ id: "library", label: LANG === "fr" ? "Catalogue visuel" : "Visual catalogue", needsDomain: false, async: async () => catalogWorkspace() }]) },
     { id: "commerce", icon: "commerce", build: () => custom("commerce", [{ id: "connect", label: LANG === "fr" ? "Boutiques et revenus" : "Stores and revenue", needsDomain: false, async: async () => renderCommerce({ api, me: state.me }) }]) },
-    { id: "competition", icon: "competition", build: () => custom("competition", [{ id: "board", label: LANG === "fr" ? "Concurrence" : "Competition", needsDomain: false, async: async () => renderCompetition({ api, me: state.me, property: state.property, days: state.days }) }]) },
-    { id: "ai_visibility", icon: "eye", build: () => custom("ai_visibility", [{ id: "board", label: LANG === "fr" ? "Réponses IA" : "AI answers", needsDomain: false, async: async () => renderAiVisibility({ api, me: state.me }) }]) },
+    { id: "competition", icon: "competition", build: () => custom("competition", [{ id: "board", label: LANG === "fr" ? "Concurrence" : "Competition", needsDomain: false, async: async () => renderCompetition({ api, me: state.me, property: state.property, days: state.days, onOpenCitations: (filters) => show("ai_visibility", undefined, filters) }) }]) },
+    { id: "ai_visibility", icon: "eye", build: () => custom("ai_visibility", [{ id: "board", label: LANG === "fr" ? "Réponses IA" : "AI answers", needsDomain: false, async: async (initialFilters) => renderAiVisibility({ api, me: state.me, initialFilters }) }]) },
     { id: "gsc", icon: "google", build: () => custom("gsc", [
       { id: "performance", label: t("t_gscPerf"), ...live("/search/performance", renderSearchPerformance, { searchType: true }) },
       { id: "query-pages", label: t("t_queryPages"), ...live("/search/query-pages", renderQueryPages) },
@@ -301,7 +301,7 @@ async function saveSettings(body) {
   startBackground();
   return data;
 }
-async function show(sectionId, tabId) {
+async function show(sectionId, tabId, initialFilters) {
   if (!started) return;
   const section = ALL.find((s) => s.id === sectionId) ?? ALL[0];
   const def = section.build();
@@ -345,7 +345,7 @@ async function show(sectionId, tabId) {
   if (tab.action) { panel.append(renderAction(tab.action, { state, api, automaticRoutes })); return; }
   if (!state.url && tab.needsDomain !== false) { panel.append(renderDataGuide("domain")); return; }
   const loading = el("p", "c-loading", t("loadingOverview")); panel.append(loading);
-  try { const nodes = await tab.async(); if (current.section === section.id && current.tab === tab.id) loading.replaceWith(...[nodes].flat()); }
+  try { const nodes = await tab.async(initialFilters); if (current.section === section.id && current.tab === tab.id) loading.replaceWith(...[nodes].flat()); }
   catch (error) { if (panel.isConnected) loading.replaceWith(renderDataGuide(section.id, { error, retry: rerender })); }
 }
 
