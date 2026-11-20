@@ -29,6 +29,20 @@ html[lang="en"] {
   --night-muted: var(--gg-muted);
   --night-accent: #c084fc;
 }
+/* Console: FR and EN share exactly the same identity tokens (no blue FR fallback). */
+body.console-page {
+  --brand: #7c3aed;
+  --brand-2: #ec4899;
+  --brand-soft: #f2eaff;
+  --night: var(--gg-night);
+  --night-2: #0d0d1f;
+  --night-3: var(--gg-panel);
+  --night-line: rgba(255, 255, 255, .13);
+  --night-ink: var(--gg-white);
+  --night-muted: var(--gg-muted);
+  --night-accent: #c084fc;
+}
+body.console-page :focus-visible { outline-color: var(--gg-pink); }
 html[lang="en"] .site-header {
   background: rgba(6, 6, 15, .9);
   border-bottom: 1px solid rgba(255, 255, 255, .12);

@@ -1,8 +1,8 @@
 ﻿/** Article pipeline (T-9) and CMS publishing (T-10).
- * T-9: opportunity â†’ brief â†’ outline â†’ draft, with deterministic quality
+ * T-9: opportunity → brief → outline → draft, with deterministic quality
  *      gates: every draft is scored against the GEO rubric (geo_audit) and
  *      citability before it can be approved for publishing. LLM text
- *      generation is optional (Ollama self-hosted or BYOK), never required â€”
+ *      generation is optional (Ollama self-hosted or BYOK), never required —
  *      the brief and outline are deterministic like the existing generators.
  * T-10: WordPress REST publishing via per-tenant connection (site URL +
  *      application password), stored server-side like the Bing key. On
@@ -12,7 +12,7 @@ import { generateOutline, type GenInput } from "./generators.js";
 import { insertAlert } from "./ops-store.js";
 
 /* ------------------------------------------------------------------ */
-/* T-9 â€” article pipeline                                              */
+/* T-9 — article pipeline                                              */
 /* ------------------------------------------------------------------ */
 
 export interface ArticleBrief { id: string; createdAt: string; keyword: string; intent: "informational" | "commercial" | "transactional" | "navigational"; audience: string; brand: string; angles: string[]; entities: string[]; faq: string[]; existingHeadings: string[] }
@@ -23,23 +23,23 @@ export type DraftMode = "deterministic" | "ollama";
 /** Deterministic brief from a keyword + tenant site profile. */
 export function buildBrief(input: { keyword: string; audience?: string; brand?: string; intent?: ArticleBrief["intent"]; existingHeadings?: string[] }): ArticleBrief {
   const keyword = input.keyword.trim();
-  if (!keyword || keyword.length > 200) throw new Error("Mot-clÃ© invalide.");
-  const intent = input.intent ?? (/\b( prix |tarif|coÃ»t|achat|acheter|devis|login|connexion)\b/i.test(` ${keyword} `) ? "transactional" : /\b(vs|comparatif|meilleur|alternative|logiciel|outil)\b/i.test(keyword) ? "commercial" : /\b(comment|guide|Ã©tapes|tutorial|qu'est-ce|what is|how to)\b/i.test(keyword) ? "informational" : "informational");
+  if (!keyword || keyword.length > 200) throw new Error("Mot-clé invalide.");
+  const intent = input.intent ?? (/\b( prix |tarif|coût|achat|acheter|devis|login|connexion)\b/i.test(` ${keyword} `) ? "transactional" : /\b(vs|comparatif|meilleur|alternative|logiciel|outil)\b/i.test(keyword) ? "commercial" : /\b(comment|guide|étapes|tutorial|qu'est-ce|what is|how to)\b/i.test(keyword) ? "informational" : "informational");
   const angles = [
-    `DÃ©finition claire : Â« ${keyword} Â», rÃ©ponse directe dÃ¨s les 60 premiers mots`,
-    `Chiffres et sources nommÃ©es sur Â« ${keyword} Â» (statistiques datÃ©es, Ã©tudes)`,
-    `Comparatif ou liste structurÃ©e pour Â« ${keyword} Â» (format citable par les IA)`,
-    `Erreurs frÃ©quentes et comment les Ã©viter autour de Â« ${keyword} Â»`,
-    `Ã‰tude de courte durÃ©e : comment ${input.brand ?? "votre marque"} rÃ©sout Â« ${keyword} Â»`,
+    `Définition claire : « ${keyword} », réponse directe dès les 60 premiers mots`,
+    `Chiffres et sources nommées sur « ${keyword} » (statistiques datées, études)`,
+    `Comparatif ou liste structurée pour « ${keyword} » (format citable par les IA)`,
+    `Erreurs fréquentes et comment les éviter autour de « ${keyword} »`,
+    `Étude de courte durée : comment ${input.brand ?? "votre marque"} résout « ${keyword} »`,
   ];
   const entities = [keyword, input.brand ?? "", "Google Search Console", "GA4", "Core Web Vitals"].filter(Boolean);
   const faq = [
     `Qu'est-ce que ${keyword} ?`,
-    `Combien coÃ»te ${keyword} en 2026 ?`,
-    `Quels sont les critÃ¨res pour rÃ©ussir ${keyword} ?`,
-    `${keyword} : par oÃ¹ commencer ?`,
+    `Combien coûte ${keyword} en 2026 ?`,
+    `Quels sont les critères pour réussir ${keyword} ?`,
+    `${keyword} : par où commencer ?`,
   ];
-  return { id: randomUUID(), createdAt: new Date().toISOString(), keyword, intent, audience: (input.audience ?? "DÃ©cideurs et Ã©quipes marketing").slice(0, 120), brand: (input.brand ?? "").slice(0, 100), angles, entities, faq, existingHeadings: (input.existingHeadings ?? []).slice(0, 30) };
+  return { id: randomUUID(), createdAt: new Date().toISOString(), keyword, intent, audience: (input.audience ?? "Décideurs et équipes marketing").slice(0, 120), brand: (input.brand ?? "").slice(0, 100), angles, entities, faq, existingHeadings: (input.existingHeadings ?? []).slice(0, 30) };
 }
 
 /** Deterministic draft skeleton from a brief, reusing the existing outline
@@ -49,7 +49,7 @@ export function buildDraftSkeleton(brief: ArticleBrief): { title: string; slug: 
   const plan = generateOutline({ ...genInput, existingHeadings: brief.existingHeadings });
   const title = `${brief.keyword.charAt(0).toUpperCase() + brief.keyword.slice(1)} : le guide complet (2026)`;
   const slug = brief.keyword.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "").replace(/[^a-z0-9]+/g, "-").replace(/^-+|-+$/g, "").slice(0, 80);
-  const metaDescription = `${brief.keyword} : mÃ©thode complÃ¨te, chiffres 2026 et erreurs Ã  Ã©viter. Guide pratique pour ${brief.audience.toLowerCase()}.`.slice(0, 158);
+  const metaDescription = `${brief.keyword} : méthode complète, chiffres 2026 et erreurs à éviter. Guide pratique pour ${brief.audience.toLowerCase()}.`.slice(0, 158);
   const outline = plan.sections.map((s: { h2: string; h3: string[] }) => ({ h2: s.h2, bullets: s.h3 }));
   const faqQuestions = (plan.faq?.length ? plan.faq : brief.faq).slice(0, 6);
   outline.push({ h2: "FAQ", bullets: faqQuestions });
@@ -61,18 +61,18 @@ export function qualityGates(draft: { title: string; metaDescription: string; ou
   const words = draft.body ? draft.body.trim().split(/\s+/).filter(Boolean) : [];
   const wordCount = words.length;
   const firstBlock = draft.outline[0];
-  const answerFirst = Boolean(firstBlock && /^(Qu'est-ce|DÃ©finition|Comprendre|Introduction|Le guide|Understand|What is|Definition|Answer)/i.test(firstBlock.h2));
+  const answerFirst = Boolean(firstBlock && /^(Qu'est-ce|Définition|Comprendre|Introduction|Le guide|Understand|What is|Definition|Answer)/i.test(firstBlock.h2));
   const faqSection = draft.outline.some((s) => /faq|questions/i.test(s.h2));
   const listsUsed = draft.outline.some((s) => s.bullets.length >= 3);
   const titleLen = draft.title.length;
   const metaLen = draft.metaDescription.length;
   return [
-    { check: "title.length", passed: titleLen >= 30 && titleLen <= 65, detail: `${titleLen} caractÃ¨res (cible 30â€“65)` },
-    { check: "meta.length", passed: metaLen >= 120 && metaLen <= 158, detail: `${metaLen} caractÃ¨res (cible 120â€“158)` },
-    { check: "answer-first", passed: answerFirst, detail: answerFirst ? "PremiÃ¨re section = rÃ©ponse directe" : "Ouvrir par une section rÃ©ponse directe (dÃ©finition)" },
-    { check: "faq-section", passed: faqSection, detail: faqSection ? "Section FAQ prÃ©sente" : "Ajouter une section FAQ (FAQPage schema)" },
+    { check: "title.length", passed: titleLen >= 30 && titleLen <= 65, detail: `${titleLen} caractères (cible 30–65)` },
+    { check: "meta.length", passed: metaLen >= 120 && metaLen <= 158, detail: `${metaLen} caractères (cible 120–158)` },
+    { check: "answer-first", passed: answerFirst, detail: answerFirst ? "Première section = réponse directe" : "Ouvrir par une section réponse directe (définition)" },
+    { check: "faq-section", passed: faqSection, detail: faqSection ? "Section FAQ présente" : "Ajouter une section FAQ (FAQPage schema)" },
     { check: "word-count", passed: wordCount >= 800, detail: `${wordCount} mots (minimum 800 pour un guide)` },
-    { check: "lists", passed: listsUsed, detail: listsUsed ? "Listes Ã  puces prÃ©sentes" : "Structurer au moins une section en liste (citabilitÃ© IA)" },
+    { check: "lists", passed: listsUsed, detail: listsUsed ? "Listes à puces présentes" : "Structurer au moins une section en liste (citabilité IA)" },
     { check: "entities", passed: (draft.entities?.length ? draft.entities : draft.title.split(/\s+/).filter(w => w.length > 4)).some(entity => draft.body.toLocaleLowerCase().includes(entity.toLocaleLowerCase())), detail: "Product or subject terms appear in the body" },
   ].filter((g) => Boolean(g && g.check)) as QualityGate[];
 }
@@ -86,11 +86,11 @@ export async function produceDraft(brief: ArticleBrief, mode: DraftMode, options
   if (mode === "ollama" && options.ollama) {
     generatedBy = "ollama";
     const prompt = [
-      `RÃ©dige un article de blog en franÃ§ais de 1800 Ã  2500 mots sur Â« ${brief.keyword} Â».`,
+      `Rédige un article de blog en français de 1800 à 2500 mots sur « ${brief.keyword} ».`,
       `Public : ${brief.audience}. Marque : ${brief.brand || "neutre"}. Ton : expert, factuel, sans remplissage.`,
       `Structure H2 obligatoire : ${skeleton.outline.map((s) => s.h2).join(" | ")}.`,
-      `Contraintes : rÃ©ponse directe dans les 60 premiers mots, chiffres datÃ©s et sources nommÃ©es, listes Ã  puces, FAQ finale en 4 questions.`,
-      `Interdits : phrases creuses, superlatifs non sourcÃ©s, mentions de concurrents.`,
+      `Contraintes : réponse directe dans les 60 premiers mots, chiffres datés et sources nommées, listes à puces, FAQ finale en 4 questions.`,
+      `Interdits : phrases creuses, superlatifs non sourcés, mentions de concurrents.`,
       `Sortie : markdown, H2 en ##, H3 en ###.`,
     ].join("\n");
     const res = await (options.transport ?? fetch)(`${options.ollama.url.replace(/\/$/, "")}/api/generate`, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ model: options.ollama.model, prompt, stream: false, options: { temperature: 0.6 } }), signal: AbortSignal.timeout(180_000) });
@@ -98,23 +98,23 @@ export async function produceDraft(brief: ArticleBrief, mode: DraftMode, options
     body = ((await res.json()) as { response?: string }).response?.trim() ?? "";
     if (!body) throw new Error("Ollama n'a rien produit");
   } else {
-    // Deterministic scaffold: section skeletons with guidance â€” the editor
+    // Deterministic scaffold: section skeletons with guidance — the editor
     // writes the prose, the pipeline guarantees the structure.
     body = [`# ${skeleton.title}`, "", `> ${skeleton.metaDescription}`, ""].join("\n");
     for (const section of skeleton.outline) {
       body += `\n## ${section.h2}\n\n`;
       for (const bullet of section.bullets) body += `- ${bullet}\n`;
-      body += `\n<!-- Ã€ rÃ©diger : 200â€“400 mots, rÃ©ponse directe, 2â€“3 chiffres datÃ©s, 1 liste -->\n`;
+      body += `\n<!-- À rédiger : 200–400 mots, réponse directe, 2–3 chiffres datés, 1 liste -->\n`;
     }
     body += `\n## FAQ\n\n`;
-    for (const q of brief.faq) body += `### ${q}\n\n<!-- RÃ©ponse : 40â€“80 mots, autonome -->\n`;
+    for (const q of brief.faq) body += `### ${q}\n\n<!-- Réponse : 40–80 mots, autonome -->\n`;
   }
   const gates = qualityGates({ title: skeleton.title, metaDescription: skeleton.metaDescription, outline: skeleton.outline, body });
   return { id: randomUUID(), briefId: brief.id, createdAt: new Date().toISOString(), title: skeleton.title, slug: skeleton.slug, metaDescription: skeleton.metaDescription, outline: skeleton.outline, body, wordCount: body.split(/\s+/).filter(Boolean).length, gates, approved: false, generatedBy };
 }
 
 /* ------------------------------------------------------------------ */
-/* T-10 â€” WordPress publishing                                         */
+/* T-10 — WordPress publishing                                         */
 /* ------------------------------------------------------------------ */
 
 export interface WordPressConfig { siteUrl: string; username: string; appPassword: string }
@@ -162,5 +162,5 @@ export async function announceViaIndexNow(host: string, url: string, key: string
 }
 
 export function articleAlert(tenantId: string, draft: { title?: string }, event: string): void {
-  void insertAlert(tenantId, { kind: "article", severity: "info", title: `${event} : ${(draft.title ?? "brouillon").slice(0, 120)}`, detail: `Pipeline article â€” ${event.toLowerCase()}.`, payload: { event } });
+  void insertAlert(tenantId, { kind: "article", severity: "info", title: `${event} : ${(draft.title ?? "brouillon").slice(0, 120)}`, detail: `Pipeline article — ${event.toLowerCase()}.`, payload: { event } });
 }
