@@ -51,7 +51,8 @@ export function renderCompletionDonut(stats, lang, { size = "sm" } = {}) {
   wrap.setAttribute("role", "img");
   wrap.setAttribute("aria-label", completionLabel(stats, lang));
   const a = stats.observedShare.toFixed(2), b = (stats.observedShare + stats.notApplicableShare).toFixed(2);
-  wrap.setAttribute("style", `--gg-done:${a}%;--gg-na:${b}%`);
+  // CSSOM, not a style attribute: the console CSP (style-src 'self') blocks the latter.
+  wrap.style.setProperty("--gg-done", `${a}%`); wrap.style.setProperty("--gg-na", `${b}%`);
   const ring = document.createElement("span"); ring.className = "gg-donut-ring"; ring.setAttribute("aria-hidden", "true");
   const value = document.createElement("span"); value.className = "gg-donut-value"; value.setAttribute("aria-hidden", "true");
   value.textContent = fmtPercent(stats.percent, lang);
