@@ -107,13 +107,15 @@ try {
       const nav = document.createElement('nav'); nav.className = 'app-tabs';
       for (const [key, symbol] of Object.entries(TAB_ICONS.ga4)) { const b = document.createElement('button'); b.className = 'app-tab'; const span = document.createElement('span'); span.className = 'app-tab-icon'; span.innerHTML = icon(symbol); b.append(span, ({overview: lang === 'fr' ? 'Audience' : 'Audience', ecommerce: 'E-commerce', technology: lang === 'fr' ? 'Appareils' : 'Devices', realtime: lang === 'fr' ? 'Temps réel' : 'Realtime'})[key]); nav.append(b); }
       host.append(nav, sectionHeading('Google Analytics 4', '', 'ga4'));
-      host.append(...renderOverview({ geo: { score: 42, projectedScore: 100, recommendations: [{ points: 20 }, { points: 38 }], breakdown: { robots: 12, meta: 14 }, max: { robots: 18, meta: 14 } }, citability: { score: 42 }, indexnow: { score: 35 }, platforms: [{ label: 'Perplexity', score: 45 }, { label: 'Google AI Overviews', score: 25 }, { label: 'ChatGPT', score: 25 }, { label: 'Gemini', score: 25 }, { label: 'Microsoft Copilot', score: 0 }] }));
+      host.append(...renderOverview({ geo: { score: 42, projectedScore: 100, recommendations: [{ points: 20 }, { points: 38 }], breakdown: { robots: 12, meta: 14 }, max: { robots: 18, meta: 14 } }, citability: { score: 42 }, indexnow: { score: 35 }, platforms: [{ label: 'Perplexity', score: 45 }, { label: 'Google AI Overviews', score: 25 }, { label: 'ChatGPT', score: 25 }, { label: 'Gemini', score: 25 }, { label: 'Microsoft Copilot', score: 0 }, { label: 'Claude', score: null }, { label: 'Grok', score: null }] }));
       host.append(lineChart([{ date: '2026-11-01', sessions: 0 }, { date: '2026-11-02', sessions: 40 }, { date: '2026-11-03', sessions: null }, { date: '2026-11-04', sessions: 20 }], [{ key: 'sessions', label: 'Sessions', color: '#6935dc' }], 'GA4 · Sessions'));
       host.append(renderDataGuide('ga4'));
     }, lang);
     await page.waitForFunction(() => [...document.querySelectorAll('.v-provider img')].every(img => img.complete && img.naturalWidth > 0));
-    assert.equal(await page.locator('.v-engine-rank').count(), 5);
+    assert.equal(await page.locator('.v-engine-rank').count(), 7);
     assert.equal(await page.locator('.v-section-heading img').count(), 1);
+    assert.match(await page.locator('.rank-list').innerText(), /Claude/);
+    assert.match(await page.locator('.rank-list').innerText(), /Grok/);
     assert.doesNotMatch(await page.locator('body').innerText(), /Ã|Â/);
     assert.equal(await page.locator('.v-source-pending').count(), 1);
     assert.ok(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth + 1));
