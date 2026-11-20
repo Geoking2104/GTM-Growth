@@ -93,6 +93,10 @@ function v2ScoreNote(report: FreeReport360, language: ReportLanguage): string {
     : `AI visibility score out of 100: not calculated yet. To never show a misleading score, it is only calculated once all 42 checks are done. Here, ${c.done} of 42 checks are done and ${c.unknown} still need verifying. A check still to verify never counts as a failure.`;
 }
 
+const methodLabel = (method: string, language: ReportLanguage): string => method === "geo-v2-public-evidence"
+  ? (language === "fr" ? "Lecture publique · 42 contrôles de visibilité IA" : "Public read · 42 AI visibility checks")
+  : method;
+
 const v2Method = (report: FreeReport360, language: ReportLanguage): string =>
   `${language === "fr" ? "Référentiel de contrôle GEO" : "GEO check framework"} ${report.geoV2?.gridVersion || "v2.0.0"}`;
 
@@ -169,7 +173,7 @@ export function renderReportMarkdown(report: FreeReport360, language: ReportLang
     `- ${fr ? "Page analysée" : "Analysed page"}: ${markdownUrl(report.sourceUrl)}`,
     `- ${fr ? "Relevé" : "Observed"}: ${date(report.observedAt, language)}`,
     `- ${fr ? "Périmètre" : "Scope"}: ${fr ? "une seule URL publique" : "one public URL"}`,
-    `- ${fr ? "Méthode" : "Method"}: ${report.method}`,
+    `- ${fr ? "Méthode" : "Method"}: ${methodLabel(report.method, language)}`,
     "",
     `## ${fr ? "Les cinq leviers" : "Five channels"}`,
     "",
@@ -270,7 +274,7 @@ export async function renderReportPdf(report: FreeReport360, language: ReportLan
     pdf.fillColor(PILLAR_COLORS[action.pillar]).font("Helvetica-Bold").fontSize(10).text(`${index + 1}. ${at(NAMES[action.pillar], language)} - ${text(g.title, 95)}`, left, y, { width: usable });
     y += 26;
   }
-  pdf.fillColor(PALETTE.muted).font("Helvetica").fontSize(8).text(fr ? "Les inconnues ne sont pas des scores à zéro. Les corrections restent des propositions à valider." : "Unknown metrics are not zero scores. Every change requires review.", left, 721, { width: usable });
+  pdf.fillColor(PALETTE.muted).font("Helvetica").fontSize(8).text(fr ? "Une mesure à vérifier ne compte jamais comme un zéro. Les corrections restent des propositions à valider." : "A measurement still to verify never counts as zero. Every change requires review.", left, 721, { width: usable });
 
   // Source-linked editorial reconstruction: deliberately NO fabricated screenshot.
   pdf.addPage();
@@ -317,7 +321,7 @@ export async function renderReportPdf(report: FreeReport360, language: ReportLan
   pdf.fillColor(PALETTE.accent).font("Helvetica-Bold").fontSize(10)
     .text(v2Summary(report, language), left, ledgerY + 30, { width: usable });
   pdf.fillColor(PALETTE.muted).font("Helvetica").fontSize(8.5)
-    .text(`${v2ScoreNote(report, language)} ${fr ? "Vérifiez chaque preuve avant toute décision." : "Review each proof before acting."}`, left, ledgerY + 48, { width: usable });
+    .text(`${v2ScoreNote(report, language)} ${fr ? "Vérifiez chaque preuve avant toute décision." : "Review each proof before acting."}`, left, pdf.y + 6, { width: usable });
   ledgerY = pdf.y + 16;
   for (const [category, names] of Object.entries(V2_CATEGORY_NAMES)) {
     const controls = report.geoV2?.controls.filter(control => control.category === category) ?? [];
@@ -334,7 +338,7 @@ export async function renderReportPdf(report: FreeReport360, language: ReportLan
         .text(control.controlId, left + 8, ledgerY + 5, { width: 31 });
       pdf.fillColor(PALETTE.ink).font("Helvetica-Bold").fontSize(8.5)
         .text(text(v2Title(control.controlId, control.title, language), 70), left + 43, ledgerY + 5, { width: usable - 170, height: 11, ellipsis: true });
-      pdf.fillColor(observed ? "#176450" : PALETTE.muted).font("Helvetica").fontSize(8)
+      pdf.fillColor(control.outcome === "review" ? "#B57C1A" : observed ? "#176450" : PALETTE.muted).font("Helvetica").fontSize(8)
         .text(v2Status(control, language), left + usable - 120, ledgerY + 5, { width: 112, align: "right", ellipsis: true });
       pdf.fillColor(PALETTE.muted).font("Helvetica").fontSize(7.5)
         .text(text(observed ? control.proof?.value : control.reason || (fr ? "Preuve requise" : "Evidence required"), 150), left + 43, ledgerY + 19,
@@ -385,7 +389,7 @@ export async function renderReportPdf(report: FreeReport360, language: ReportLan
     pdf.switchToPage(i);
     pdf.strokeColor(PALETTE.line).lineWidth(0.7).moveTo(left, 776).lineTo(width - left, 776).stroke();
     pdf.fillColor(PALETTE.muted).font("Helvetica").fontSize(7.5)
-      .text(`${name} | ${report.method}`, left, 784, { height: 11, lineBreak: false });
+      .text(`${name} | ${methodLabel(report.method, language)}`, left, 784, { height: 11, lineBreak: false });
     pdf.text(`${i + 1} / ${pages.count}`, width - 85, 784, { width: 42, height: 11, align: "right", lineBreak: false });
   }
   pdf.end();
