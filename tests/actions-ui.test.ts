@@ -68,7 +68,8 @@ it.each(["fr", "en"])("renders the catalog, the exclusions and the operations ta
   expect(headings).toContain(lang === "fr" ? "Proposer une opération" : "Propose an operation");
   expect(headings).toContain(lang === "fr" ? "Opérations du client" : "Tenant operations");
   expect(root!.textContent).toContain("indexnow.submit");
-  expect(root!.textContent).toContain(lang === "fr" ? "proposée" : "proposed");
+  /* The operations ledger renders after the catalog: wait for its state label. */
+  await vi.waitFor(() => expect(root!.textContent).toContain(lang === "fr" ? "proposée" : "proposed"));
   expect(root!.textContent).toContain(lang === "fr" ? "console" : "console");
 });
 
@@ -85,7 +86,7 @@ it("proposes a strict-catalog operation and refreshes the ledger", async () => {
   propose.click();
   await vi.waitFor(() => expect(api.mock.calls.some((call: any[]) => call[0] === "/actions/propose" && call[1].action === "indexnow.submit" && call[1].terms.host === "exemple.fr")).toBe(true));
   await vi.waitFor(() => expect(api.mock.calls.filter((call: any[]) => call[0] === "/actions/operations").length).toBeGreaterThanOrEqual(2));
-  expect(root!.textContent).toContain("Operation proposed");
+  await vi.waitFor(() => expect(root!.textContent).toContain("Operation proposed"));
 });
 
 it("refuses malformed terms JSON locally without any call", async () => {
@@ -162,7 +163,8 @@ it("keeps every gesture read-only for a member: catalog and ledger only", async 
   expect(root!.querySelector("select")).toBeNull();
   const buttons = [...root!.querySelectorAll<HTMLButtonElement>("button")];
   expect(buttons.length).toBe(0);
-  expect(api.mock.calls.map((call: any[]) => call[0]).sort()).toEqual(["/actions/catalog", "/actions/operations"]);
+  /* The ledger fetch may still be in flight when the catalog is rendered. */
+  await vi.waitFor(() => expect(api.mock.calls.map((call: any[]) => call[0]).sort()).toEqual(["/actions/catalog", "/actions/operations"]));
   expect(root!.textContent).toContain("proposed");
   expect(root!.textContent).toContain("Attempts");
 });
