@@ -64,7 +64,7 @@ const detailOf = (text: unknown): string => String(text ?? "").replace(/\s+/g, "
 export class ActionLedger {
   readonly db: Database.Database;
 
-  constructor(path: string, options: { now?: () => number } = {}) {
+  constructor(path: string) {
     if (path !== ":memory:") mkdirSync(dirname(path), { recursive: true });
     this.db = new Database(path);
     this.db.pragma("journal_mode = DELETE");

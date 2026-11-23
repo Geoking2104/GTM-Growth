@@ -148,19 +148,22 @@ describe("PAP operations propose (R11 L2, fail-closed)", () => {
 
   it("refuses out-of-catalog actions and malformed terms with invalid_request", async () => {
     const { raw } = access(true);
+    const before = ledger.list("acme", 100).length;
     const excluded = await propose(raw, { action: "wordpress.publish", terms: {} });
     expect(excluded.status).toBe(400);
     expect((await excluded.json()).error).toBe("invalid_request");
     const malformed = await propose(raw, { action: "indexnow.submit", terms: { host: "acme.example", key: "bad key!", urls: [] } });
     expect(malformed.status).toBe(400);
     expect((await malformed.json()).error).toBe("invalid_request");
+    expect(ledger.list("acme", 100).length).toBe(before);
   });
 
   it("refuses IndexNow proposals outside the consented tenant domains (resource_denied)", async () => {
     const { raw } = access(true);
+    const before = ledger.list("acme", 100).length;
     const r = await propose(raw, { action: "indexnow.submit", terms: { host: "evil.example", key: "acme-indexnow-key-1", urls: ["https://evil.example/x"] } });
     expect(r.status).toBe(403);
     expect((await r.json()).error).toBe("resource_denied");
-    expect(ledger.list("acme", 10)).toHaveLength(0);
+    expect(ledger.list("acme", 100).length).toBe(before);
   });
 });
