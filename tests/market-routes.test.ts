@@ -84,3 +84,52 @@ describe("market-data console routes (R4)", () => {
     expect(clamped).toHaveProperty("results");
   });
 });
+
+describe("market backlinks console routes (R5)", () => {
+  it("keeps the partner calls tenant-admin only and refuses them when the bridge is off", async () => {
+    for (const path of ["/market/backlinks/overview", "/market/backlinks/gap"]) {
+      const partner = route(path);
+      expect(partner.adminOnly).toBe(true);
+      await expect(partner.handler(ctx({ domain: "exemple.fr", competitors: ["comp.fr"] }))).rejects.toThrow("Aucun pont données de marché activé");
+    }
+    await expect(route("/market/backlinks/overview", config).handler(ctx({}))).rejects.toThrow("Nom de domaine requis.");
+  });
+
+  it("maps the backlink overview with a bounded referrer list and full provenance", async () => {
+    const calls = stubPartner({
+      observedAt: "2026-11-23T12:00:00Z", costUsd: 0.03, backlinks: 900, ref_domains: 120,
+      referrers: [{ domain: "site-a.fr", backlinks: 7 }, { domain: "site-b.fr" }],
+    });
+    const result = await route("/market/backlinks/overview", config).handler(ctx({ domain: "https://www.exemple.fr", referrersLimit: 99 })) as Record<string, unknown>;
+    expect(calls[0]).toMatchObject({ url: "https://bridge.example/backlinks/overview", authorization: "Basic bG9naW5AZXhhbXBsZTpzZWNyZXQ=", body: { domain: "exemple.fr", locale: "FR", limit: 50 } });
+    expect(result).toMatchObject({ provider: "market-data", provenance: "partner-api", locale: "FR", observedAt: "2026-11-23T12:00:00Z", costUsd: 0.03 });
+    expect(result.profile).toEqual({ domain: "exemple.fr", backlinks: 900, refDomains: 120 });
+    expect(result.referrers).toEqual([{ domain: "site-a.fr", backlinks: 7 }, { domain: "site-b.fr", backlinks: null }]);
+  });
+
+  it("bounds the link-gap competitors and dedupes them before the partner call", async () => {
+    const calls = stubPartner({ observedAt: "2026-11-23T12:00:00Z", costUsd: 0.04, profiles: [{ domain: "comp1.fr", backlinks: 10, ref_domains: 3 }], gaps: [{ domain: "cible.fr", links_to: ["comp1.fr"], backlinks: 2 }] });
+    const gap = route("/market/backlinks/gap", config);
+    await expect(gap.handler(ctx({ domain: "exemple.fr" }))).rejects.toThrow("Au moins un concurrent est requis.");
+    await expect(gap.handler(ctx({ domain: "exemple.fr", competitors: ["comp1.fr", "comp1.fr ", "comp2.fr", "comp3.fr", "comp4.fr", "comp5.fr", "comp6.fr"] }))).rejects.toThrow("5 concurrents maximum par appel.");
+    await expect(gap.handler(ctx({ domain: "exemple.fr", competitors: ["exemple.fr"] }))).rejects.toThrow("propre concurrent.");
+    const result = await gap.handler(ctx({ domain: "exemple.fr", competitors: ["www.comp1.fr", "COMP1.fr"] })) as Record<string, unknown>;
+    expect(calls).toHaveLength(1);
+    expect(calls[0]!.body).toMatchObject({ domain: "exemple.fr", competitors: ["comp1.fr"], locale: "FR" });
+    expect(result.profiles).toEqual([{ domain: "comp1.fr", backlinks: 10, refDomains: 3 }]);
+    expect(result.gaps).toEqual([{ domain: "cible.fr", citedBy: ["comp1.fr"], backlinks: 2 }]);
+  });
+
+  it("generates the disavow file with the bridge off: a pure tenant selection", async () => {
+    const partner = route("/market/backlinks/disavow");
+    expect(partner.adminOnly).toBe(true);
+    const result = await partner.handler(ctx({ domains: ["www.spam1.fr", "spam1.fr", "spam2.fr"] })) as Record<string, unknown>;
+    expect(result.provenance).toBe("tenant-selection");
+    expect(/^disavow-\d{4}-\d{2}-\d{2}\.txt$/.test(String(result.filename))).toBe(true);
+    expect(result.count).toBe(2);
+    expect(String(result.content)).toContain("domain: spam1.fr");
+    expect(String(result.note)).toContain("sans appel partenaire");
+    await expect(partner.handler(ctx({}))).rejects.toThrow("Au moins un domaine est requis.");
+    await expect(partner.handler(ctx({ domains: ["pas-un-domaine"] }))).rejects.toThrow("Nom de domaine invalide.");
+  });
+});

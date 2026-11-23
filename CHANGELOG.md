@@ -53,6 +53,29 @@
 
 Release reference is available after the signed tag exists. [v0.23.0](https://github.com/Geoking2104/GTM-Growth/releases/tag/v0.23.0)
 
+### Backlink intelligence (R5)
+
+- Domain netlinking overview on the operator's partner bridge: backlinks and
+  referring-domain counts plus a bounded referring-domain list (1..50 shown,
+  default 20) for any normalised tenant-supplied domain (scheme tolerated,
+  `www.` stripped, strict hostname rules). Unknown counts stay `null`, never
+  zero; the answer keeps the full partner provenance (`partner-api`,
+  observation date, locale, partner cost). Tenant-admin only, like every
+  partner call; call costs stay with the operator.
+- Link gap versus up to five named competitors: the bridge lists the domains
+  citing a declared competitor without citing the tenant domain, capped at 50
+  and sorted by competitor coverage; only declared competitors appear in the
+  citation columns. The tenant domain as its own competitor is refused.
+- Google disavow export from a tenant-supplied selection: pure text
+  generation, ≤200 validated domains, deduplicated, French header carrying
+  the `sélection client` provenance and the manual-review warning. No partner
+  call, nothing stored, works with the bridge off; the Search Console import
+  stays a manual operator act, and the file is never pushed anywhere.
+- The bilingual Operations market panel gains the backlink overview, the link
+  gap and the disavow boxes: every partner answer keeps its provenance line,
+  member accounts stay gated, and the disavow export remains available to
+  tenant administrators even while the bridge is off.
+
 ### AI-crawler analytics and access drafts (R6)
 
 - AI-crawler log analytics: tenant-supplied server/CDN access logs (nginx

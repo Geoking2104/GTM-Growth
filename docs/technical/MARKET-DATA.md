@@ -1,11 +1,12 @@
-# Partner market-data bridge (R4)
+# Partner market-data bridge (R4/R5)
 
 This document covers the operator-owned market-data bridge: keyword search
-volumes, Google SERP positions and GBP local rank grids from an external
-partner API. Google.fr ships first; every other locale is delivered behind the
-same operator flag. The platform itself stays free: the operator owns the
-partner account, the API keys and every data cost. Nothing is billed to
-tenants, and no figure is ever invented when the bridge is off.
+volumes, Google SERP positions, GBP local rank grids and backlink intelligence
+(overview, competitor link gap, disavow export) from an external partner API.
+Google.fr ships first; every other locale is delivered behind the same operator
+flag. The platform itself stays free: the operator owns the partner account,
+the API keys and every data cost. Nothing is billed to tenants, and no figure
+is ever invented when the bridge is off.
 
 ## Activation
 
@@ -40,6 +41,9 @@ allowlist, the provider name and the grid depth.
 | `POST /market/volumes` | `{ keywords[≤20, ≤200 chars], locale?, device? }` → partner volumes, `null` when unknown, never zero |
 | `POST /market/serp` | `{ keyword, locale?, device?, depth 1..100 (default 20) }` → organic rows with a URL, AI Overview citation subset |
 | `POST /market/local-grid` | `{ keyword, latitude, longitude, columns, rows, distanceKm, device? (default mobile) }` → grid points with found/not-found ranks |
+| `POST /market/backlinks/overview` | `{ domain, referrersLimit? (1..50, default 20), locale? }` → backlink profile (backlinks, referring domains) plus the top referring domains; admin-only partner call |
+| `POST /market/backlinks/gap` | `{ domain, competitors[1..5], locale? }` → compared profiles plus the gap domains that cite a named competitor without citing the tenant domain; admin-only partner call |
+| `POST /market/backlinks/disavow` | `{ domains[≤200] }` → a Google disavow text file from the tenant selection; admin-only, **no partner call**, works with the bridge off |
 
 Rows without a URL are dropped from SERP results; ranks beyond
 `LOCAL_GRID_DEPTH` (20) are reported as `not-found` with a `null` rank, never
@@ -94,18 +98,50 @@ out after 30 seconds.
   mapping.
 - `tests/market-ui.test.ts`: linkedom UI coverage of the panel states, gates,
   bounded requests and the provenance line in FR/EN.
-- CI runs both suites with the full toolchain (`pnpm test`).
+- `tests/market-backlinks.test.ts`: domain normalisation, overview/gap
+  partner contracts and mapping, competitor bounds and dedupe, disavow file
+  format and refusal paths.
+- `tests/market-backlinks-ui.test.ts`: linkedom UI coverage of the backlinks
+  boxes, the disavow export with the bridge off and the per-language gating
+  note.
+- CI runs every suite with the full toolchain (`pnpm test`).
 
 ## Console panel
 
 The bilingual FR/EN Operations panel `site/console/market.js` renders the
-status line (enabled flag, locales, grid depth), the three partner forms and
+status line (enabled flag, locales, grid depth), the partner forms (volumes,
+SERP, local grid, backlink overview, link gap), the disavow export and
 every answer with its provenance line. Partner buttons are disabled for
-members and while the bridge is off. Unknown values render "—", never zero.
+members and while the bridge is off; the disavow export stays available to
+tenant administrators even with the bridge off because it makes no partner
+call. Unknown values render "—", never zero.
+
+## Backlink intelligence (R5)
+
+The same bridge serves the netlinking module. `marketBacklinkOverview` asks
+`POST {base}/backlinks/overview` with `{ domain, locale, limit }` and maps the
+answer into a profile (`backlinks`, `refDomains`, both `null` when unknown)
+plus a bounded referring-domain list. `marketBacklinkGap` asks
+`POST {base}/backlinks/gap` with `{ domain, competitors, locale }` after
+normalising every domain through `normaliseMarketDomain` (schemes tolerated,
+`www.` stripped, strict hostname label rules): one to five named competitors,
+deduplicated, the tenant domain refused as its own competitor. Gap domains
+are limited to those citing at least one declared competitor and not the
+tenant domain, capped at 50 and sorted by competitor coverage; each row
+carries only the citations that belong to the declared competitor list. Both
+answers keep the full partner provenance (`partner-api`, observation date,
+locale, device, partner cost).
+
+`backlinkDisavowFile` is the exception to the partner rule: a **pure, free**
+generation from a tenant-supplied selection of domains (one per line,
+≤200 after deduplication, every domain validated the same way). The file
+carries a French header stating the provenance `sélection client` and warning
+that Google recommends disavowing only what cannot be removed by hand; the
+route answers provenance `tenant-selection`. No partner call, nothing stored,
+no automatic import: pushing the file to Search Console remains a manual
+operator act, and the console panel says so on every render.
 
 ## Not in this increment
 
 - No caching tier and no scheduled collection of market data: each call is a
   live, bounded, operator-costed request.
-- R5 (backlinks on the same partner) is a later increment; this bridge only
-  covers volumes, SERP and the local rank grid.

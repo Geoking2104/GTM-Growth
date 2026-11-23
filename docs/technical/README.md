@@ -24,11 +24,13 @@ storage, a BullMQ outbox dispatcher and separate Redis workers for public reads.
 API and worker images now use Node 24. Other module stores remain on SQLite/files;
 only audit workers are ready for independent replication in this increment.
 
-The optional [partner market-data bridge](MARKET-DATA.md) (R4) exposes operator-owned
-keyword volumes, Google SERP positions and GBP local rank grids behind
+The optional [partner market-data bridge](MARKET-DATA.md) (R4/R5) exposes
+operator-owned keyword volumes, Google SERP positions, GBP local rank grids
+and backlink intelligence (overview, competitor link gap) behind
 `MARKET_DATA_ENABLED=false`: a fail-closed DataForSEO-compatible gateway where
 the operator pays the partner costs and every answer keeps provenance
-`partner-api`.
+`partner-api`. The disavow export is the partner-free exception: a pure
+tenant selection, available with the bridge off.
 
 The [AI-crawler analytics](AI-CRAWLERS.md) (R6) parse tenant-supplied access logs
 into per-crawler and per-section crawl coverage, and produce Apply-Mode dry-run

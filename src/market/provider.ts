@@ -222,3 +222,111 @@ export async function marketGrid(
   });
   return { ...meta(config, locale, device, observedAt, costUsd, now), results };
 }
+
+const DOMAIN_LABEL = /^[a-z0-9]([a-z0-9-]{0,61}[a-z0-9])?$/;
+
+/** Hostname normalisation: scheme tolerated, `www.` stripped, strict label rules. */
+export function normaliseMarketDomain(raw: string): string {
+  const candidate = raw.trim().toLowerCase();
+  if (!candidate) throw new Error("Nom de domaine requis.");
+  let host: string;
+  try { host = new URL(/^https?:\/\//.test(candidate) ? candidate : `https://${candidate}`).hostname; }
+  catch { throw new Error("Nom de domaine invalide."); }
+  const bare = host.replace(/^www\./, "");
+  if (bare.length > 253 || !bare.includes(".") || bare.split(".").length < 2 || bare.split(".").some((label) => !DOMAIN_LABEL.test(label)))
+    throw new Error("Nom de domaine invalide.");
+  return bare;
+}
+
+export interface MarketBacklinkProfile { domain: string; backlinks: number | null; refDomains: number | null; }
+export interface MarketReferrerRow { domain: string; backlinks: number | null; }
+export interface MarketBacklinkGapRow { domain: string; citedBy: string[]; backlinks: number | null; }
+
+const countOr = (value: unknown): number | null => typeof value === "number" && Number.isFinite(value) && value >= 0 ? Math.trunc(value) : null;
+
+/**
+ * Domain backlink overview. Partner contract: `POST {base}/backlinks/overview`
+ * with `{ domain, locale, limit }` returns `{ observedAt?, costUsd?, backlinks,
+ * ref_domains, referrers: [{ domain, backlinks }] }`. Unknown values stay
+ * null, never zero; the referrer list stays tenant-bounded.
+ */
+export async function marketBacklinkOverview(
+  config: MarketDataConfig,
+  input: { domain: string; referrersLimit?: number; locale?: string },
+  transport: typeof fetch = fetch,
+  now: () => string = () => new Date().toISOString(),
+): Promise<MarketMeta & { profile: MarketBacklinkProfile; referrers: MarketReferrerRow[] }> {
+  const domain = normaliseMarketDomain(input.domain);
+  const locale = normaliseLocale(input.locale, config);
+  const limit = Math.min(Math.max(Math.trunc(input.referrersLimit ?? 20), 1), 50);
+  const { observedAt, costUsd, data } = await callPartner(config, "/backlinks/overview", { domain, locale, limit }, transport);
+  const referrers = (Array.isArray(data.referrers) ? data.referrers : []).slice(0, limit).map((raw) => {
+    const row = raw as Record<string, unknown>;
+    return { domain: typeof row.domain === "string" ? row.domain.toLowerCase() : "", backlinks: countOr(row.backlinks) };
+  }).filter((row) => row.domain);
+  return {
+    ...meta(config, locale, "desktop", observedAt, costUsd, now),
+    profile: { domain, backlinks: countOr(data.backlinks), refDomains: countOr(data.ref_domains) },
+    referrers,
+  };
+}
+
+/**
+ * Link gap versus named competitors (French netlinking use case). Partner
+ * contract: `POST {base}/backlinks/gap` with `{ domain, competitors, locale }`
+ * returns `{ observedAt?, costUsd?, profiles: [{ domain, backlinks,
+ * ref_domains }], gaps: [{ domain, links_to, backlinks? }] }` where each gap
+ * domain cites at least one named competitor and not the tenant domain.
+ */
+export async function marketBacklinkGap(
+  config: MarketDataConfig,
+  input: { domain: string; competitors: string[]; locale?: string },
+  transport: typeof fetch = fetch,
+  now: () => string = () => new Date().toISOString(),
+): Promise<MarketMeta & { profiles: MarketBacklinkProfile[]; gaps: MarketBacklinkGapRow[] }> {
+  const domain = normaliseMarketDomain(input.domain);
+  if (!Array.isArray(input.competitors) || !input.competitors.length) throw new Error("Au moins un concurrent est requis pour l'écart de netlinking.");
+  const competitors = [...new Set(input.competitors.map((raw) => {
+    const candidate = normaliseMarketDomain(String(raw));
+    if (candidate === domain) throw new Error("Le domaine du client ne peut pas être son propre concurrent.");
+    return candidate;
+  }))];
+  if (competitors.length > 5) throw new Error("5 concurrents maximum par écart de netlinking.");
+  const locale = normaliseLocale(input.locale, config);
+  const { observedAt, costUsd, data } = await callPartner(config, "/backlinks/gap", { domain, competitors, locale }, transport);
+  const profiles = (Array.isArray(data.profiles) ? data.profiles : []).map((raw) => {
+    const row = raw as Record<string, unknown>;
+    return { domain: typeof row.domain === "string" ? row.domain.toLowerCase() : "", backlinks: countOr(row.backlinks), refDomains: countOr(row.ref_domains) };
+  }).filter((row) => row.domain);
+  const gaps = (Array.isArray(data.gaps) ? data.gaps : []).slice(0, 50).map((raw) => {
+    const row = raw as Record<string, unknown>;
+    return {
+      domain: typeof row.domain === "string" ? row.domain.toLowerCase() : "",
+      citedBy: Array.isArray(row.links_to) ? row.links_to.filter((item): item is string => typeof item === "string" && competitors.includes(item.toLowerCase())) : [],
+      backlinks: countOr(row.backlinks),
+    };
+  }).filter((row) => row.domain && row.citedBy.length)
+    .sort((a, b) => b.citedBy.length - a.citedBy.length || a.domain.localeCompare(b.domain));
+  return { ...meta(config, locale, "desktop", observedAt, costUsd, now), profiles, gaps };
+}
+
+/**
+ * Google disavow file from a tenant-supplied selection. Pure text generation:
+ * no partner call, nothing stored; the operator stays responsible for the
+ * review before importing (the header says so).
+ */
+export function backlinkDisavowFile(input: { domains: string[]; now?: Date }): { filename: string; content: string; count: number } {
+  if (!Array.isArray(input.domains) || !input.domains.length) throw new Error("Au moins un domaine est requis pour le fichier disavow.");
+  if (input.domains.length > 200) throw new Error("200 domaines maximum par fichier disavow.");
+  const domains = [...new Set(input.domains.map((raw) => normaliseMarketDomain(String(raw))))];
+  const date = (input.now ?? new Date()).toISOString().slice(0, 10);
+  const content = [
+    "# Fichier disavow généré par gtm-growth — sélection de domaines fournie par le client (provenance : sélection client).",
+    "# Relisez chaque domaine avant import : Google recommande de ne désavouer que ce que vous ne pouvez pas faire retirer à la main.",
+    `# Généré le ${date}. Le fichier n'a été transmis à aucun moteur ; l'import dans Search Console reste un acte manuel de l'exploitant.`,
+    "",
+    ...domains.map((domain) => `domain: ${domain}`),
+    "",
+  ].join("\n");
+  return { filename: `disavow-${date}.txt`, content, count: domains.length };
+}
