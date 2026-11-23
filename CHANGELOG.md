@@ -53,6 +53,22 @@
 
 Release reference is available after the signed tag exists. [v0.23.0](https://github.com/Geoking2104/GTM-Growth/releases/tag/v0.23.0)
 
+### Trust pack: GDPR, DPA, hosting, security, status, Mollie runbooks (R10, first increment)
+
+- New trust documentation set (`docs/trust/`): GDPR posture with a per-module
+  data map, retention and sub-processor list; the customer DPA template;
+  the OVH hosting page (isolation, TLS, secrets, backups); the public
+  security-page content with the responsible-disclosure policy; the
+  status-page policy (components, incident posting, measured-availability-only
+  claims); and the Mollie activation runbook with the final-quota gates.
+- The runbook documents the fail-closed activation the code already enforces
+  (`src/billing/config.ts`): test→live gates (owner approval, prices approved,
+  tax-inclusive amounts, terms URLs, `BILLING_LIMITS_JSON` quotas,
+  reconciliation token). Live activation, TLS/SMTP enablement and publishing
+  the security/status pages stay explicit operator acts.
+- Honest scope: partner-cost metering into the billing ledger is stated as
+  the remaining R10 code item, not claimed as delivered by this increment.
+
 ### Answer-grounded AEO Writer (R8)
 
 - New answer-grounded content scoring: a tenant-supplied content (page or
