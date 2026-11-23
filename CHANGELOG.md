@@ -71,6 +71,28 @@ Release reference is available after the signed tag exists. [v0.23.0](https://gi
   the timeline API is unavailable, the panel disappears without breaking the
   read.
 
+### Partner market-data bridge (R4)
+
+- Keyword volumes, Google SERP positions and local (GBP) rank grids come from
+  an operator-configured, DataForSEO-compatible partner bridge. The bridge is
+  fail-closed: it activates only with `MARKET_DATA_ENABLED=true` plus
+  `MARKET_DATA_API_URL`, `MARKET_DATA_API_LOGIN` and `MARKET_DATA_API_PASSWORD`,
+  never from the mere presence of a key. Partner credits and data costs stay
+  the operator's; nothing is billed to tenants. Google.fr is the first locale;
+  every other locale is an explicit `MARKET_DATA_LOCALES` opt-in, and a locale
+  outside the list is refused rather than silently substituted.
+- Every volume, SERP and grid result displays its provider, observation date,
+  locale, device and `partner-api` provenance; unknown values stay `null`
+  (rendered as unknown), never zero. `/market/config` is a free console badge
+  for every reader; the three partner calls are administrator-only because
+  each request spends operator credits.
+- Local rank grids are bounded (7 x 7 points, 0.1 to 20 km), aligned in the
+  requested point order, with ranks capped at the grid depth: deeper or
+  missing ranks are not-found, never zero. A grid result can propose (never
+  import) a Global & local SEO observation: the agency stays the importer of
+  record and the existing import route re-validates site, country, duplicates
+  and fingerprint before anything is stored.
+
 ### Visibility evidence, durable collections, matched-cohort comparison and editorial impact
 
 - Answer evidence now records an explicit measurement context — engine, model,
