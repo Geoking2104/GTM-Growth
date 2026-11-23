@@ -10,7 +10,7 @@
 import type { ConsoleRoute } from "./util.js";
 import { str, num } from "./util.js";
 import { tenantOwnsUrl } from "../tenants/store.js";
-import { TenantAccessError } from "../tenants/context.js";
+import { TenantAccessError, type TenantContext } from "../tenants/context.js";
 import { ACTION_CATALOG, ACTION_CATALOG_VERSION, CATALOG_EXCLUDED_WRITES, catalogEntry, normaliseTerms } from "../actions/catalog.js";
 import { ActionLedger } from "../actions/ledger.js";
 import { runCatalogAction, type ActionAdapterDeps } from "../actions/adapters.js";
@@ -29,7 +29,7 @@ const ledgerOf = (deps: ActionRouteDeps): ActionLedger => {
   return defaultLedger;
 };
 
-const tenantOf = (ctx: { tenancy?: { tenant: { id: string; status: string; domains: string[] } | null } }) => {
+const tenantOf = (ctx: { tenancy?: TenantContext }) => {
   const tenant = ctx.tenancy?.tenant;
   if (!tenant || tenant.status !== "active") throw new TenantAccessError("Un tenant actif est requis pour le catalogue d'actions.");
   return tenant;
