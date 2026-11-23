@@ -53,6 +53,20 @@
 
 Release reference is available after the signed tag exists. [v0.23.0](https://github.com/Geoking2104/GTM-Growth/releases/tag/v0.23.0)
 
+### Partner market-data console panel (R4 follow-up)
+
+- A bilingual FR/EN "Market data" panel in Operations surfaces the bridge: search
+  volumes, Google SERP positions and a GBP local rank grid in the same tab. The
+  status line shows whether the operator enabled the bridge and its locale
+  allowlist; when it is off, the partner buttons stay disabled and the panel
+  states that no data is invented in the meantime.
+- Partner calls remain tenant-admin only and every answer renders its origin
+  (`provenance partner-api`), observation date, locale, device and the
+  partner-reported cost. Unknown values render "—", never zero; grid points
+  beyond the depth stay "not found", never padded.
+- Linkedom UI tests cover the disabled/enabled states, the admin gate, the
+  three bounded partner requests and the provenance line in both languages.
+
 ### Partner market-data bridge (R4)
 
 - Operator-configured partner API (DataForSEO-compatible) for keyword search
