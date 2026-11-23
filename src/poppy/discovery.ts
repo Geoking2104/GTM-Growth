@@ -1,11 +1,16 @@
 import { catalog } from "../data-agent/service.js";
-import { scopes, type PapConfig } from "./types.js";
+import { proposeScope, scopes, type PapConfig } from "./types.js";
+/** R11 L2 advertisement rule: the propose scope only appears once the pilot
+ *  operator sets PAP_OPERATIONS_ENABLED=true (fail-closed, off by default).
+ *  Acceptance-conditional advertising is a PAP specification requirement. */
+const proposeDescription = "Propose a pre-approved catalog operation; proposals await explicit human approval, never execute anything, and follow the exact governed terms (T21/T22).";
+export const advertisedScopes = (c: PapConfig) => c.operations === true ? [...scopes, proposeScope] : scopes;
 export const metadataPath = (issuer: string) => { const u = new URL(issuer); return `${u.origin}/.well-known/oauth-authorization-server${u.pathname === "/" ? "" : u.pathname}`; };
 export function discovery(c: PapConfig) {
-    return { protocol_version: "1.0", organization: { name: "GTM Growth", domain: new URL(c.origin).host }, auth: { issuer: c.issuer, scopes: Object.fromEntries(catalog.map(m => [`gtm:${m.id}:read`, m.description])) }, apis: [{ type: "openapi", url: `${c.origin}/api/poppy/openapi.json`, description: "Read-only, consent-bound aggregate workspace data. Allowlisted staging pilot; no writes or CRM identity resolution." }] };
+    return { protocol_version: "1.0", organization: { name: "GTM Growth", domain: new URL(c.origin).host }, auth: { issuer: c.issuer, scopes: { ...Object.fromEntries(catalog.map(m => [`gtm:${m.id}:read`, m.description])), ...(c.operations === true ? { [proposeScope]: proposeDescription } : {}) } }, apis: [{ type: "openapi", url: `${c.origin}/api/poppy/openapi.json`, description: "Read-only, consent-bound aggregate workspace data. Allowlisted staging pilot; no writes or CRM identity resolution." }] };
 }
 export function authorizationMetadata(c: PapConfig) {
-    return { issuer: c.issuer, protected_resources: [c.origin], authorization_endpoint: `${c.issuer}/authorize`, token_endpoint: `${c.issuer}/token`, revocation_endpoint: `${c.issuer}/revoke`, response_types_supported: ["code"], grant_types_supported: ["authorization_code", "refresh_token"], code_challenge_methods_supported: ["S256"], token_endpoint_auth_methods_supported: ["private_key_jwt"], token_endpoint_auth_signing_alg_values_supported: ["ES256", "PS384"], revocation_endpoint_auth_methods_supported: ["private_key_jwt"], revocation_endpoint_auth_signing_alg_values_supported: ["ES256", "PS384"], authorization_response_iss_parameter_supported: true, client_id_metadata_document_supported: true, scopes_supported: scopes };
+    return { issuer: c.issuer, protected_resources: [c.origin], authorization_endpoint: `${c.issuer}/authorize`, token_endpoint: `${c.issuer}/token`, revocation_endpoint: `${c.issuer}/revoke`, response_types_supported: ["code"], grant_types_supported: ["authorization_code", "refresh_token"], code_challenge_methods_supported: ["S256"], token_endpoint_auth_methods_supported: ["private_key_jwt"], token_endpoint_auth_signing_alg_values_supported: ["ES256", "PS384"], revocation_endpoint_auth_methods_supported: ["private_key_jwt"], revocation_endpoint_auth_signing_alg_values_supported: ["ES256", "PS384"], authorization_response_iss_parameter_supported: true, client_id_metadata_document_supported: true, scopes_supported: advertisedScopes(c) };
 }
 export function openapi(c: PapConfig) {
     const errors: Record<string, string> = { "400": "invalid_request, version_unsupported, invalid_session, session_ended", "401": "invalid_token; WWW-Authenticate includes resource_metadata", "403": "insufficient_scope or resource_denied", "413": "input_too_large", "429": "rate_limited; Retry-After", "503": "identity_unavailable or service_unavailable", "504": "read_timeout" };
@@ -40,7 +45,20 @@ export function openapi(c: PapConfig) {
                         ...Object.fromEntries(Object.entries(errors).map(([status, description]) => [status, { description }])),
                     },
                 } },
+            ...(c.operations === true ? { "/api/poppy/operations/propose": { post: {
+                    operationId: "proposeCatalogOperation", security: [{ oauth: [proposeScope] }],
+                    summary: "R11 L2: propose a pre-approved catalog operation. The proposal awaits tenant approval; nothing executes without it.",
+                    parameters: [
+                        { in: "header", name: "Poppy-Version", required: true, schema: { const: "1.0" } },
+                        { in: "header", name: "Poppy-Session", required: true, schema: { type: "string" }, description: "Fresh ES256 JWT with a verified delegation; ath binds the bearer token" },
+                    ],
+                    requestBody: { required: true, content: { "application/json": { schema: { type: "object", additionalProperties: false, required: ["action"], properties: { action: { type: "string", maxLength: 64 }, terms: { type: "object", description: "Exact action terms; validated by the catalog entry rules" } } } } } },
+                    responses: {
+                        "200": { description: "schemaVersion, requestId, workspaceId and data { proposed, operationId, state, proposalExpiresAt, next }." },
+                        ...Object.fromEntries(Object.entries(errors).map(([status, description]) => [status, { description }])),
+                    },
+                } } } : {}),
         },
-        components: { securitySchemes: { oauth: { type: "oauth2", flows: { authorizationCode: { authorizationUrl: `${c.issuer}/authorize`, tokenUrl: `${c.issuer}/token`, scopes: Object.fromEntries(catalog.map(x => [`gtm:${x.id}:read`, x.description])) } } } } },
+        components: { securitySchemes: { oauth: { type: "oauth2", flows: { authorizationCode: { authorizationUrl: `${c.issuer}/authorize`, tokenUrl: `${c.issuer}/token`, scopes: { ...Object.fromEntries(catalog.map(x => [`gtm:${x.id}:read`, x.description])), ...(c.operations === true ? { [proposeScope]: proposeDescription } : {}) } } } } } },
     };
 }

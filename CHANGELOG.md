@@ -53,6 +53,27 @@
 
 Release reference is available after the signed tag exists. [v0.23.0](https://github.com/Geoking2104/GTM-Growth/releases/tag/v0.23.0)
 
+### Pre-approved action catalog (R11, second increment)
+
+- PAP L2 propose surface behind `PAP_OPERATIONS_ENABLED` (fail-closed, off by
+  default): the `gtm:operations:propose` scope and
+  `POST /api/poppy/operations/propose` let a delegated agent *propose* a
+  catalog operation for the exact token tenant; approval and execution stay
+  human console acts. The proposal runs the same strict entry rules
+  (`normaliseTerms`), IndexNow proposals must target a tenant-owned domain,
+  and the operation is journalled in both audit trails with the actor
+  `agent:<client_id>` in the governed ledger (origin `pap`).
+- Honesty in advertising is enforced in code: while the flag is off the
+  propose scope is refused at consent, absent from `/.well-known/poppy.json`,
+  the OAuth protected-resource metadata and the OpenAPI facade, and the route
+  answers 503. Consent now accepts up to six scopes (five reads + propose).
+- Stable MCP tool contracts: docs/mcp/TOOLS.md documents all 100 server tools
+  (GA4, GTM read/audit/write, Search Console, sGTM, Measurement Protocol
+  secrets, Indexing API, IndexNow, CrUX/PageSpeed, commerce, GEO suite, PAP
+  discovery, custom events) with their read/write classification,
+  confirmation gates and bounds, generated from the tool sources so the two
+  cannot drift.
+
 ### Pre-approved action catalog (R11, first increment)
 
 - Versioned catalog of three pre-approved actions (`indexnow.submit`, bounded

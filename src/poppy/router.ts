@@ -4,15 +4,20 @@ import { z, ZodError } from "zod";
 import { requireOidc, oidcConfigFromEnv, type OidcConfig, type JwksLoader, type TokenClaims } from "../console/auth.js";
 import { withTrust } from "../console/api.js";
 import { resolveTenant } from "../tenants/context.js";
-import { TenantStore } from "../tenants/store.js";
+import { tenantOwnsUrl, TenantStore } from "../tenants/store.js";
 import { catalog, readModel, querySchema } from "../data-agent/service.js";
 import { PapStore } from "./store.js";
 import { clientLoader, redirectAllowed } from "./client.js";
 import { verifyAssertion, verifySession } from "./crypto.js";
 import { membershipReader, type MemberReader } from "./membership.js";
 import { authorized, availableResources, resourceSubset, type Policy } from "./policy.js";
-import { authorizationMetadata, discovery, metadataPath, openapi } from "./discovery.js";
-import { configFromEnv, demand, hash, now, PapError, random, resourcesSchema, scopes, type Code, type Grant, type PapConfig, type Pending, type Principal, type Token } from "./types.js";
+import { authorizationMetadata, advertisedScopes, discovery, metadataPath, openapi } from "./discovery.js";
+import { configFromEnv, demand, hash, now, PapError, proposeScope, random, resourcesSchema, scopes, type Code, type Grant, type PapConfig, type Pending, type Principal, type Token } from "./types.js";
+import { isCatalogAction, normaliseTerms } from "../actions/catalog.js";
+import { ActionLedger } from "../actions/ledger.js";
+/** R11 L2: a PAP agent may only *propose* a catalog operation. Returns the
+ *  durable proposal; execution stays a human console act (approve/execute). */
+export type PapPropose = (tenant: { id: string; domains: string[] }, actor: string, action: string, terms: unknown, at: number) => { id: string; state: string; action: string; proposalExpiresAt: number };
 export interface PapOptions {
     cloud?: import("../billing/access.js").CloudAccess;
     config?: PapConfig | null;
@@ -21,12 +26,14 @@ export interface PapOptions {
     member?: MemberReader;
     client?: ReturnType<typeof clientLoader>;
     read?: typeof readModel;
+    /** Test seam: injected catalog writer (default: ActionLedger propose). */
+    propose?: PapPropose;
     oidc?: OidcConfig | null;
     jwks?: JwksLoader;
     readTimeoutMs?: number;
 }
 const id = z.string().min(1).max(2048);
-const listScopes = (raw: string) => { const s = raw.split(" "); demand(s.length && s.every(x => scopes.includes(x)) && new Set(s).size === s.length, "invalid_scope"); return s; };
+const listScopes = (raw: string, allowed: string[] = scopes) => { const s = raw.split(" "); demand(s.length && s.every(x => allowed.includes(x)) && new Set(s).size === s.length, "invalid_scope"); return s; };
 const principal = (claims: TokenClaims): Principal => { demand(claims.iss && claims.sub && typeof claims.sid === "string", "login_required", 401); return { issuer: claims.iss, user: claims.sub, session: claims.sid }; };
 const same = (a: Principal, b: Principal) => a.issuer === b.issuer && a.user === b.user;
 const browserCookie = (req: Request) => /(?:^|;\s*)__Host-pap-consent=([A-Za-z0-9_-]+)/.exec(req.headers.cookie ?? "")?.[1] ?? "";
@@ -41,6 +48,17 @@ export function mountPoppy(app: Express, options: PapOptions = {}): PapStore | n
     const store = options.store ?? new PapStore(config.path), tenants = options.tenants ?? new TenantStore();
     const member = options.member ?? membershipReader(), loadClient = options.client ?? clientLoader(config.clients);
     const oidc = withTrust(options.oidc === undefined ? oidcConfigFromEnv() : options.oidc, tenants);
+    // R11 L2, fail-closed: PAP_OPERATIONS_ENABLED gates the propose scope in
+    // consent and the /operations/propose route. Never advertised when off.
+    const operationsEnabled = config.operations === true;
+    const advertised = operationsEnabled ? [...scopes, proposeScope] : scopes;
+    /* The default proposal writer is the same governed SQLite ledger as the
+     * console routes: origin "pap", actor "agent:<client>". Tests inject their own. */
+    let operationLedger: ActionLedger | null = null;
+    const proposeOperation: PapPropose = options.propose ?? ((tenant, actor, action, terms, at) => {
+        operationLedger ??= new ActionLedger(process.env.ACTIONS_DB_PATH || "data/actions.sqlite3");
+        return operationLedger.propose({ tenantId: tenant.id, action, terms, origin: "pap", actor, now: at });
+    });
     const router = express.Router({ caseSensitive: true, strict: true });
     // Nginx forwards the actual Host. Forwarded host/proto headers never choose Company identity.
     const canonical: RequestHandler = (req, res, next) => { if (req.get("host")?.toLowerCase() !== new URL(config.origin).host.toLowerCase()) {
@@ -92,7 +110,7 @@ export function mountPoppy(app: Express, options: PapOptions = {}): PapStore | n
         return { access_token: access, refresh_token: refresh, token_type: "Bearer", expires_in: 300, scope: selectedScopes.join(" ") };
     }
     app.get("/.well-known/poppy.json", canonical, (_req, res) => res.json(discovery(config)));
-    app.get("/.well-known/oauth-protected-resource", canonical, (_req, res) => res.json({ resource: config.origin, authorization_servers: [config.issuer], scopes_supported: scopes, bearer_methods_supported: ["header"] }));
+    app.get("/.well-known/oauth-protected-resource", canonical, (_req, res) => res.json({ resource: config.origin, authorization_servers: [config.issuer], scopes_supported: advertisedScopes(config), bearer_methods_supported: ["header"] }));
     app.get(new URL(metadataPath(config.issuer)).pathname, canonical, (_req, res) => res.json(authorizationMetadata(config)));
     router.get("/openapi.json", (_req, res) => res.json(openapi(config)));
     router.get("/capabilities", (_req, res) => res.json({ protocolVersion: "1.0", status: "allowlisted-pilot", models: catalog, writes: false, providerCompatibility: "Requires a successful test of the actual agent version and access mode" }));
@@ -103,7 +121,7 @@ export function mountPoppy(app: Express, options: PapOptions = {}): PapStore | n
         demand(client.redirect_uris.some(r => redirectAllowed(address.redirect_uri, r)), "invalid_redirect_uri");
         try {
             const q = z.object({ client_id: id, redirect_uri: id, response_type: z.literal("code"), scope: id, state: z.string().max(2048).optional(), code_challenge: z.string().regex(/^[A-Za-z0-9_-]{43}$/), code_challenge_method: z.literal("S256") }).strict().parse(req.query);
-            const requested = listScopes(q.scope);
+            const requested = listScopes(q.scope, advertised);
             const request = random(), browser = random();
             store.put("pending", request, { client: client.client_id, clientName: client.client_name, redirect: q.redirect_uri, state: q.state, challenge: q.code_challenge, scopes: requested, browser: hash(browser), expires: now() + 600 } satisfies Pending, now() + 600);
             res.cookie("__Host-pap-consent", browser, { httpOnly: true, secure: true, sameSite: "lax", path: "/", maxAge: 600000 });
@@ -143,11 +161,11 @@ export function mountPoppy(app: Express, options: PapOptions = {}): PapStore | n
         const tenantId = q.tenant ?? (workspaces.length === 1 ? workspaces[0].id : undefined);
         const pendingRequest = q.request ? pending(req, q.request) : undefined;
         if (!tenantId)
-            return res.json({ workspaces, scopes, request: pendingRequest ? { client: pendingRequest.client, clientName: pendingRequest.clientName, scopes: pendingRequest.scopes } : null });
+            return res.json({ workspaces, scopes: advertised, request: pendingRequest ? { client: pendingRequest.client, clientName: pendingRequest.clientName, scopes: pendingRequest.scopes } : null });
         const ctx = await consoleMember(req, res, tenantId);
         const policy = store.get<Policy>("policy", tenantId) ?? { enabled: false, clients: [] };
         const grants = store.all<Grant>("grant").filter(g => g.tenant === tenantId && (ctx.role === "tenant-admin" || same(g, p)));
-        return res.json({ workspaces, tenant: { id: ctx.tenant.id, name: ctx.tenant.name }, role: ctx.role, user: p.user, resources: availableResources(ctx.tenant), policy, allowedClients: config.clients, scopes, grants: grants.map(g => ({ ...g, session: undefined })), request: pendingRequest ? { client: pendingRequest.client, clientName: pendingRequest.clientName, scopes: pendingRequest.scopes, allowed: policy.enabled && policy.clients.includes(pendingRequest.client) } : null });
+        return res.json({ workspaces, tenant: { id: ctx.tenant.id, name: ctx.tenant.name }, role: ctx.role, user: p.user, resources: availableResources(ctx.tenant), policy, allowedClients: config.clients, scopes: advertised, grants: grants.map(g => ({ ...g, session: undefined })), request: pendingRequest ? { client: pendingRequest.client, clientName: pendingRequest.clientName, scopes: pendingRequest.scopes, allowed: policy.enabled && policy.clients.includes(pendingRequest.client) } : null });
     }));
     router.post("/console/policy", auth, wrap(async (req, res) => {
         checkOrigin(req);
@@ -169,7 +187,7 @@ export function mountPoppy(app: Express, options: PapOptions = {}): PapStore | n
     }));
     router.post("/console/consent", auth, wrap(async (req, res) => {
         checkOrigin(req);
-        const q = z.object({ request: id, tenant: id.optional(), approve: z.boolean(), scopes: z.array(id).max(5).default([]), resources: resourcesSchema.optional() }).strict().parse(req.body);
+        const q = z.object({ request: id, tenant: id.optional(), approve: z.boolean(), scopes: z.array(id).max(6).default([]), resources: resourcesSchema.optional() }).strict().parse(req.body);
         const p = pending(req, q.request);
         if (!q.approve) {
             store.remove("pending", q.request);
@@ -245,7 +263,7 @@ export function mountPoppy(app: Express, options: PapOptions = {}): PapStore | n
             throw e;
         }
         const previousScopes = bucket === "code" ? g.scopes : (previous as Token).scopes;
-        const wanted = q.scope ? listScopes(q.scope) : previousScopes;
+        const wanted = q.scope ? listScopes(q.scope, advertised) : previousScopes;
         demand(subset(wanted, previousScopes), "invalid_scope");
         return store.atomic(() => { demand(store.get(bucket, key), "invalid_grant"); store.active(g.id); store.remove(bucket, key); const issued = issue(g, wanted, q.resource ?? config.origin); store.audit(g.tenant, g.id, bucket === "code" ? "token" : "refresh", "ok"); return res.json(issued); });
     }));
@@ -297,6 +315,52 @@ export function mountPoppy(app: Express, options: PapOptions = {}): PapStore | n
             return store.atomic(() => { demand(!res.headersSent, "read_timeout", 504); const latest = store.active(g.id); latest.lastUsed = now(); store.saveGrant(latest); store.audit(g.tenant, g.id, "read", data.state, q.model, requestId, Date.now() - res.locals.papStarted); return res.json({ schemaVersion: "1.0", requestId, workspaceId: g.tenant, data: { ...data, href: `${config.origin}/console/${data.href}` } }); });
         }
     }, options.readTimeoutMs ?? 15000));
+    /* R11 L2: PAP agents propose pre-approved catalog operations; they can
+     * never approve or execute. The proposal lands in the same governed ledger
+     * as console proposals (origin "pap") and awaits a tenant administrator. */
+    router.post("/operations/propose", wrap(async (req, res) => {
+        demand(operationsEnabled, "service_unavailable", 503);
+        demand(Object.keys(req.query).length === 0 && !req.headers["x-tenant"] && req.is("application/json"));
+        demand(req.get("poppy-version") === "1.0", "version_unsupported");
+        demand(!req.get("poppy-extensions"), "extension_unsupported");
+        const q = z.object({ action: z.string().min(1).max(64), terms: z.unknown() }).strict().parse(req.body);
+        const raw = /^Bearer ([A-Za-z0-9_-]+)$/.exec(req.get("authorization") ?? "")?.[1];
+        demand(raw, "invalid_token", 401);
+        const token = store.get<Token>("access", hash(raw));
+        demand(token && token.resource === config.origin, "invalid_token", 401);
+        const g = store.active(token.grant);
+        res.locals.papGrant = g;
+        res.locals.papModel = "operations";
+        demand(token.scopes.includes(proposeScope) && g.scopes.includes(proposeScope), "insufficient_scope", 403);
+        store.rate(`grant:${g.id}`, 30);
+        store.rate(`tenant:${g.tenant}`, 120);
+        try {
+            const client = await loadClient(token.client);
+            verifySession(req.get("poppy-session") ?? "", client, config.issuer, req.method, `${config.origin}${req.originalUrl.split("?")[0]}`, raw, `${g.issuer}:${g.user}:${g.tenant}`, store);
+        }
+        catch (e) {
+            throw new PapError(400, e instanceof PapError && e.code === "session_ended" ? "session_ended" : "invalid_session");
+        }
+        const requestId = res.locals.papRequestId as string;
+        const current = await authorized(g.id, store, tenants, config, member);
+        let terms: unknown;
+        try {
+            terms = normaliseTerms(q.action, q.terms);
+        }
+        catch {
+            throw new PapError(400, "invalid_request");
+        }
+        if (!isCatalogAction(q.action))
+            throw new PapError(400, "invalid_request");
+        if (q.action === "indexnow.submit") {
+            const normalized = terms as { host?: unknown };
+            const host = typeof normalized.host === "string" ? normalized.host : "";
+            demand(host && tenantOwnsUrl(current.tenant, `https://${host}`), "resource_denied", 403);
+        }
+        const operation = proposeOperation(current.tenant, `agent:${g.client}`, q.action, terms, Date.now());
+        store.audit(g.tenant, g.id, "propose", operation.state, "operations", requestId, Date.now() - res.locals.papStarted);
+        return store.atomic(() => { const latest = store.active(g.id); latest.lastUsed = now(); store.saveGrant(latest); return res.json({ schemaVersion: "1.0", requestId, workspaceId: g.tenant, data: { proposed: true, operationId: operation.id, state: operation.state, action: operation.action, proposalExpiresAt: operation.proposalExpiresAt, next: "Awaiting explicit tenant approval in the GTM console; nothing executes before an administrator approves and executes (one-click) or resolves the operation.", href: `${config.origin}/console/#actions` } }); });
+    }));
     router.use((_req, res) => res.status(404).json({ error: "not_found" }));
     router.use((error: unknown, _req: Request, res: Response, _next: NextFunction) => {
         let e = error instanceof CloudAccessError ? new PapError(error.status, error.code) : error instanceof PapError ? error : error instanceof ZodError || (error as {

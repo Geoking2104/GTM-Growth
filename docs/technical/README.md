@@ -43,8 +43,16 @@ submissions to the exact tenant host, pure local drafting, dispatch of an
 already-due J+14/J+28 follow-up), explicit never-eligible exclusions, and a
 governed SQLite ledger whose approvals ride the exact approved terms, with
 atomic claims, replay-safe execution, `reconciling` instead of auto-retry, and
-a per-execution audit trail. Every write outside the catalog keeps its human
-confirmation; a console panel is a later increment, the routes come first.
+a per-execution audit trail. PAP agents may only *propose* operations into the
+same ledger behind `PAP_OPERATIONS_ENABLED` (off by default, unadvertised
+while off); approval and execution stay human. Every write outside the catalog
+keeps its human confirmation; a console panel is a later increment, the routes
+come first.
+
+The [MCP tool contracts](../mcp/TOOLS.md) (R11) are the stable reference for all
+100 server tools: name, schema and behaviour per tool, the `confirm=true` and
+env-flag gates on every write, bounded batches, and evidence on every audit
+answer, generated from the tool sources so the page cannot drift from the code.
 
 The [console decision refit](../journey/CONSOLE-DECISION-REFIT.md) includes five
 business areas plus a member Portfolio, a durable cross-module inbox, synchronized

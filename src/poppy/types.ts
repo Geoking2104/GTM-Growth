@@ -2,6 +2,10 @@ import { randomBytes, createHash } from "node:crypto";
 import { z } from "zod";
 export const models = ["workspace", "search", "analytics", "visibility", "operations"] as const;
 export const scopes = models.map(m => `gtm:${m}:read`);
+/** R11 L2: the only write-adjacent scope. Consentable solely when
+ *  PAP_OPERATIONS_ENABLED=true; proposal never executes, humans do. */
+export const proposeScope = "gtm:operations:propose";
+export const operationScopes = [...scopes, proposeScope];
 export const resourcesSchema = z.object({ domains: z.array(z.string().max(2048)).max(100), search: z.array(z.string().max(2048)).max(100), analytics: z.array(z.string().max(2048)).max(100) }).strict();
 export type Resources = z.infer<typeof resourcesSchema>;
 export type Principal = {
@@ -65,6 +69,9 @@ export type PapConfig = {
     issuer: string;
     clients: string[];
     path: string;
+    /** R11 L2: `gtm:operations:propose` consent and /operations/propose route.
+     *  Fail-closed: absent/false refuses the scope and the route (503). */
+    operations?: boolean;
 };
 export function configFromEnv(): PapConfig | null {
     if (process.env.PAP_ENABLED !== "true")
@@ -79,5 +86,5 @@ export function configFromEnv(): PapConfig | null {
     const clients = (process.env.PAP_ALLOWED_CLIENTS ?? "").split(",").map(s => s.trim()).filter(Boolean);
     if (!clients.length)
         throw new Error("PAP_ALLOWED_CLIENTS is required");
-    return { origin: raw, issuer: `${raw}/api/poppy/oauth`, clients, path: process.env.PAP_DB_PATH ?? "data/poppy.sqlite3" };
+    return { origin: raw, issuer: `${raw}/api/poppy/oauth`, clients, path: process.env.PAP_DB_PATH ?? "data/poppy.sqlite3", operations: process.env.PAP_OPERATIONS_ENABLED === "true" };
 }
