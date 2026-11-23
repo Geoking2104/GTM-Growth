@@ -53,6 +53,24 @@
 
 Release reference is available after the signed tag exists. [v0.23.0](https://github.com/Geoking2104/GTM-Growth/releases/tag/v0.23.0)
 
+### Public impact timeline panel (R9)
+
+- The public read page now renders the impact trajectory of the requestor's
+  own snapshots right after the report invitation, authorised by the run
+  token of the audit job. A timeline renders one block per consecutive
+  snapshot pair: both observation dates, the interval in days, the
+  deterministic confidence chip and its machine-checkable reasons, and the
+  seven outcome counters plus the resolved/new/unchanged action counts. The
+  counters stay per step; nothing is ever summed across steps, scopes or
+  clients, and points and scores remain withheld.
+- `insufficient_observations` renders the observation count recorded for the
+  requestor; `scope_mismatch` renders the refusal note only. The J+14/J+28
+  client follow-ups of the latest observation are displayed with their due or
+  upcoming status and the standing bilingual suggestion, and the timeline
+  and follow-up notes are displayed verbatim. Without a run token, or when
+  the timeline API is unavailable, the panel disappears without breaking the
+  read.
+
 ### Visibility evidence, durable collections, matched-cohort comparison and editorial impact
 
 - Answer evidence now records an explicit measurement context — engine, model,

@@ -7,6 +7,7 @@ import { translateLiveTables } from "../fr/server-tables.js";
 import { renderJourneyPreview } from "./customer-journey.js";
 import { renderFreeReport360 } from "./report360.js";
 import { renderReportInvitation } from "./report-invite.js";
+import { renderImpactTimeline } from "./impact-timeline.js";
 import { requestPublicRead, auditStatusText } from "../audit-client.js";
 
 const COPY = {
@@ -215,6 +216,10 @@ function renderResult(box, data, url, lang) {
   if (report) box.append(report);
   const invitation = renderReportInvitation(data.report360, lang, data.auditJob);
   if (invitation) box.append(invitation);
+  // The impact trajectory and the J+14/J+28 reminders of this requestor's own
+  // snapshots use the run token of the audit job; without a job nothing mounts.
+  const timeline = renderImpactTimeline(data.auditJob, lang);
+  if (timeline) box.append(timeline);
   box.append(renderPublicAgent(data, lang));
   box.append(el("p", "public-micro", `${copy.scoreNote} ${copy.gainsNote}`));
   box.append(renderPublicEvidence(data, lang));
