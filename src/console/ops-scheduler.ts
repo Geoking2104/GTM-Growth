@@ -52,11 +52,14 @@ export async function runDueJobs(options: SchedulerOptions = {}): Promise<{ tena
   for (const tenant of store.list().filter((t) => t.status === "active")) {
     const config = readAutomationConfig(tenant.id);
     // Prompt checks (T-1): due when enabled, prompts exist, engine key exists.
-    if (config.promptChecks?.enabled) {
+    // When durable scheduled visibility (visibility-jobs) is enabled, the legacy
+    // in-process prompt checks are skipped so each answer is collected only once.
+    if (config.promptChecks?.enabled && process.env.VISIBILITY_JOBS_ENABLED !== "true") {
       const due = !config.lastPromptRun || now().getTime() - Date.parse(config.lastPromptRun) >= config.promptChecks.intervalHours * 3600_000;
       if (due) {
         const prompts = listPrompts(tenant.id);
-        const engines = (config.promptChecks.engines ?? ["openai"]).filter((e) => engineStatuses(tenant.id).find((s) => s.id === e)?.configured);
+        const available = new Set(engineStatuses(tenant.id).filter((engine) => engine.enabled && engine.configured).map((engine) => engine.id));
+        const engines = (config.promptChecks.engines ?? ["openai"]).filter((engine) => available.has(engine as "openai" | "gemini"));
         if (prompts.length && engines.length) {
           jobs++;
           try {

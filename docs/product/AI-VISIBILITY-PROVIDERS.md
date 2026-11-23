@@ -148,8 +148,9 @@ no provider call and no sampling:
 - `POST /ai-visibility/import-tracker-preview` and
   `POST /ai-visibility/import-tracker` (tenant administrators) take
   `{ provider, format: "csv" | "json", payload, brands }`; the payload is the
-  exported text, `brands` is the tenant's own declaration (the export never
-  re-declares it).
+  exported text and `brands` is the tenant's own declaration. Use the
+  `generic` profile for the shared CSV/JSON schema. Named profiles match known
+  field aliases and should be checked against the customer's actual file.
 - Field aliases are documented per provider and matched case-, accent- and
   punctuation-insensitively (English and French headers). Required columns:
   prompt, answer, date. Optional: engine, citations. Unknown columns are
@@ -160,8 +161,11 @@ no provider call and no sampling:
   bounded answers and citations) and every observation is provenance
   `imported`.
 - The console panel surfaces both routes: the "Import a tracker export"
-  block (tenant administrators) previews the count, engines, ignored
-  columns and normalised dates before any commit, and a "Share of voice
+  block (tenant administrators) previews the count, engines, recognized
+  mappings, ignored columns, normalized dates and matching previously saved
+  imports before committing. The console passes the preview digest back when
+  saving. An exact replay of an import recorded with the digest reopens the
+  existing dataset, including its reviews. The "Share of voice
   per engine" section renders for every panel reader with `null` shares
   shown as `—`.
 
@@ -176,11 +180,13 @@ consumer sessions; an engine without mentions reports `null`, never zero.
 Every stored answer observation now carries a **provenance**:
 
 - `imported`: it entered through the tenant-reviewed JSON import.
-- `collected`: it came from an explicit, bounded provider API run (OpenAI, Claude, Mistral, Grok, or the scheduled visibility runner).
-- `unverified`: datasets stored before the field existed are reported as unverified in summaries; they are never silently relabeled. Re-importing stored observations preserves their original provenance.
+- `collected`: a provider API run attested by the server. Gemini Search remains disabled in both manual and scheduled collection.
+- `unverified`: older observations with missing provenance or a collection label without server attestation are counted as unverified. Workspace imports retain any declared provenance separately. Revising a stored panel in Competition preserves server attestation.
 
 The read-only workspace route **/ai-visibility/citation-gaps** analyses the citations of one
-stored panel (same `datasetId`, `source` and `brand` filters as the report):
+stored panel with the same `datasetId`, `source`, `brand`, `groupId`,
+`from` and `to` filters as the visibility and share-of-voice reports.
+Dates are inclusive UTC days and groups belong to the selected workspace panel.
 
 - classifies every cited URL as `own` (the tracked brand's declared website), `competitor`
   (another tracked brand's website), `reddit`, `youtube`, `linkedin`, `wikipedia` or `web`,
@@ -191,12 +197,76 @@ stored panel (same `datasetId`, `source` and `brand` filters as the report):
 The console panel renders this analysis as a "Citation gaps" section next to the
 cited-domains list: per-category bars (the own-site bar always shown, so an own
 zero stays a visible finding), top cited hosts with a clickable example link, and
-one evidence row per brand-mentioning answer that lacks an own-site citation. A
+one evidence row per brand-mentioning answer that lacks an own-site citation.
+Competition passes its active dataset and filters to this view. Each gap can
+open the full answer. Coverage includes explicitly empty citation lists and
+excludes observations whose citation metadata is missing. A
 brand without a declared website keeps the gaps unevaluated with the standing
 `—`-not-zero display.
 
 Evidence rules: a brand without a declared website leaves the own-source gap **unknown**
 (`evaluated: false`, never zero), and a response without any citation is absent evidence,
 not a gap. Cited URLs describe this stored panel only; they are not engine market share or
-consumer-session coverage. The console panel UI and scheduled reporting are outside this
-increment. See the [observation model specification](../specs/AI-VISIBILITY-OBSERVATION-MODEL-v1-2026-11-18.md).
+consumer-session coverage. See the [observation model specification](../specs/AI-VISIBILITY-OBSERVATION-MODEL-v1-2026-11-18.md).
+
+## Comparing periods in Competition
+
+Choose a start and end date in Competition. The API compares the selected UTC
+window to the immediately preceding window of equal length. Both windows must
+be closed. The optional history toggle finds compatible panels in the same
+workspace by tracked brands, aliases and declared websites. The selected
+panel takes precedence when a response appears in several panels. For a
+completed action, the console compares the 30 UTC days before and after its
+completion day. That day is excluded from both windows.
+
+The method `matched-cohorts-v1` gives equal weight to matching prompts,
+sources, provenance and available engine, model, capture mode, language and
+market. Older observations without detailed context are matched by their
+existing prompt, source and provenance only. The comparison counts matched
+and excluded answers separately. It requires five matched answers per window
+by default, or the workspace threshold configured for the same panel and
+brand. Share of voice also requires tracked-brand mentions in each cohort
+and window. The same cohort matching is used for visibility alerts.
+
+Generic CSV/JSON imports recognize optional columns `model_version`,
+`collection_mode`, `language` and `market`. Canonical JSON answers can supply
+`measurement: { engine, model, mode, language, market }`. The capture mode can
+be `api`, `consumer`, `tracker` or `manual`. Import context is declared by the
+source. API collection records its own engine and an exposed model when the
+response supplies one. Missing fields remain unknown.
+
+The comparison CSV is generated from the filtered report. The tenant-scoped
+read-only route `POST /competition/comparison` and MCP tool
+`competition_comparison` use the same calculations.
+
+## Scheduled collections
+
+Set `VISIBILITY_JOBS_ENABLED=true` on the console server to expose scheduled
+collections. The runtime reuses `AUDIT_DATABASE_URL` and `AUDIT_REDIS_URL`
+with separate PostgreSQL tables and a dedicated BullMQ queue. The setting
+disables the old visibility timer while leaving rank checks in place. For a
+return to the previous runtime, review the legacy prompt-check setting before
+turning the feature flag off.
+
+In **Tracked questions**, a workspace administrator selects a saved API
+account, an existing panel, a cadence, a daily UTC call ceiling and a daily
+estimated USD ceiling. Enter the estimated USD cost per call before confirming.
+The first slot becomes eligible in the current UTC hour. Each admitted run
+snapshots the tracked questions and reserves the whole estimated amount.
+The admission ledger is separate from the provider invoice. Administrators
+can record a billed amount for a finished run and see the difference.
+
+PostgreSQL holds the reservations, questions and results. Redis carries only
+unit identifiers. Each panel, slot, provider, account and prompt combination
+is unique within its workspace. A fresh lease can recover work interrupted
+before the call marker. An expired lease after that marker yields an uncertain
+outcome. A 429 closes that unit with a provider rate-limit status. Neither
+case automatically resends that unit. Missing a scheduling interval produces
+the latest due slot, so a restart does not backfill old billable runs.
+
+Pausing, changing schedules or removing the saved account stops future
+dispatches for affected runs. A call that already crossed the durable marker
+may still finish. Gemini is unavailable for scheduled collection.
+Successful answers are assembled into one reviewable Visibilité IA dataset
+per completed run. The durable run history is retained for 30 days. Saved
+datasets follow their existing workspace storage behavior.

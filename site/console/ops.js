@@ -4,6 +4,8 @@ import { briefKey } from './decision-flows.js';
 import { renderDataGuide } from "./data-guidance.js";
 import { el } from "./render.js";
 import { LANG } from "./i18n.js";
+import { renderVisibilitySchedule } from "./visibility-schedule.js";
+import { renderVisibilityEditorial } from "./editorial.js";
 const L = (fr, en) => LANG === "fr" ? fr : en;
 const button = (text, callback) => { const b = el("button", "btn btn-small", text); b.type = "button"; b.onclick = callback; return b; };
 
@@ -11,7 +13,7 @@ export function renderOpsPrompts({ api, me }) {
   const box = el("section", "app-strip ops-prompts");
   const admin = me?.platformAdmin || me?.role === "tenant-admin";
   const content = el("div"); const message = el("p", "c-note"); message.setAttribute("role", "status");
-  box.append(el("h3", "", L("Prompts suivis et visibilité IA en direct", "Tracked prompts and live AI visibility")), el("p", "c-note", L("Chaque exécution interroge les moteurs configurés (clés du client) et crée un jeu de données Concurrence à vérifier.", "Each run queries the configured engines (tenant keys) and creates a Competition dataset to review.")), content, message);
+  box.append(el("h3", "", L("Prompts suivis et visibilité IA en direct", "Tracked prompts and live AI visibility")), el("p", "c-note", L("Chaque exécution interroge les moteurs configurés (clés du client) et crée un jeu de données Concurrence à vérifier.", "Each run queries the configured engines (tenant keys) and creates a Competition dataset to review.")), content, message, renderVisibilitySchedule({ api, admin }));
   let data = null;
   const input = el("input"); input.placeholder = L("Prompt à suivre (ex. quel outil pour auditer GA4 ?)", "Prompt to track (e.g. best tool to audit GA4?)"); input.size = 60; input.disabled = !admin;
   const load = async () => {
@@ -21,7 +23,7 @@ export function renderOpsPrompts({ api, me }) {
   };
   const draw = () => {
     const wrap = el("div");
-    const engines = (data?.engines ?? []).map((e) => `${e.label} — ${e.configured ? L("clé configurée", "key configured") : L("clé absente", "no key")} (${e.model})`);
+    const engines = (data?.engines ?? []).map((e) => `${e.label} — ${e.enabled === false ? L("collecte désactivée", "collection disabled") : e.configured ? L("clé configurée", "key configured") : L("clé absente", "no key")} (${e.model})`);
     wrap.append(el("p", "c-note", engines.join(" · ") || L("Aucun moteur configuré.", "No engine configured.")));
     const list = el("ul", "tracked-list");
     for (const p of data?.prompts ?? []) {
@@ -40,6 +42,7 @@ export function renderOpsPrompts({ api, me }) {
       const enginesBox = el("p");
       const checkOpenai = el("input"); checkOpenai.type = "checkbox"; checkOpenai.checked = true;
       const checkGemini = el("input"); checkGemini.type = "checkbox";
+      checkGemini.disabled = data?.engines?.find((item) => item.id === "gemini")?.enabled === false;
       enginesBox.append(checkOpenai, document.createTextNode(" OpenAI "), checkGemini, document.createTextNode(" Gemini "), button(L("Lancer un contrôle maintenant", "Run a check now"), async () => {
         message.textContent = L("Contrôle en cours (borné à 10 prompts)…", "Running check (bounded to 10 prompts)…");
         try {
@@ -95,14 +98,18 @@ export function renderOpsRank({ api, me }) {
   return box;
 }
 
-export function renderOpsArticles({ api, me }) {
+export function renderOpsArticles({ api, me, pinId }) {
+  if (pinId) return renderVisibilityEditorial({ api, pinId, admin: me?.role === 'tenant-admin', onExit: () => { location.hash = '#diagnose/intent'; } });
+  const key = briefKey(me?.tenant?.id);
+  let savedContext = null;
+  try { savedContext = JSON.parse(sessionStorage.getItem(key) || 'null'); } catch {}
   const box = el("section", "app-strip ops-articles");
   const admin = me?.platformAdmin || me?.role === "tenant-admin";
   const content = el("div"); const message = el("p", "c-note"); message.setAttribute("role", "status");
   box.append(el("h3", "", L("Pipeline article avec quality gates", "Article pipeline with quality gates")), el("p", "c-note", L("Brief déterministe, brouillon structuré et contrôles GEO avant création d'un brouillon WordPress. Aucune publication ni annonce IndexNow.", "Deterministic brief, structured draft, and GEO checks before creating a WordPress draft. No publication or IndexNow announcement.")), content, message);
   const keywordInput = el("input"); keywordInput.placeholder = L("Mot-clé cible", "Target keyword"); keywordInput.size = 40;
   let draft = null, context = null;
-  try { const value = JSON.parse(sessionStorage.getItem(briefKey(me?.tenant?.id)) || 'null'); if (value && Date.now() - value.at < 3600000 && value.brand && value.product && value.audience && value.goal) context = value; } catch {}
+  if (savedContext && Date.now() - savedContext.at < 3600000 && savedContext.brand && savedContext.product && savedContext.audience && savedContext.goal) context = savedContext;
   if (context) {
     keywordInput.value = context.query;
     const sections = [{ h2: L('Comprendre le besoin', 'Understand the need'), bullets: [context.goal, context.audience, context.product] }, { h2: L('Preuves produit à vérifier', 'Product evidence to verify'), bullets: [context.targetUrl] }, { h2: 'FAQ', bullets: [context.query] }];

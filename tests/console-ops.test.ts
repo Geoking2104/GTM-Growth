@@ -80,11 +80,19 @@ describe("visibility runner (T-1)", () => {
     expect(datasets[0].observations).toHaveLength(1);
     closeVisibilityStores();
   });
-  it("reports unconfigured engines without failing the run", async () => {
+  it("blocks Gemini even with a configured key and never contacts the provider", async () => {
     process.env.OPS_STORE_PATH = dir();
+    vi.stubEnv("AI_VISIBILITY_GEMINI_KEY_ACME", "test-key");
     addPrompt("acme", "test prompt");
-    const { results } = await runVisibilityCheck("acme", { engines: ["gemini"], brands: [{ name: "Acme" }] });
-    expect(results[0].error).toMatch(/Clé API non configurée/);
+    const transport = vi.fn<typeof fetch>();
+    try {
+      const { results } = await runVisibilityCheck("acme", { engines: ["gemini"], brands: [{ name: "Acme" }], transport });
+      expect(results[0].error).toMatch(/Gemini Search is disabled/);
+      expect(engineStatuses("acme").find((e) => e.id === "gemini")).toMatchObject({ configured: true, enabled: false });
+      expect(transport).not.toHaveBeenCalled();
+    } finally {
+      vi.unstubAllEnvs();
+    }
   });
   it("lists engine statuses and computes dataset deltas", () => {
     expect(engineStatuses("acme").map((e) => e.id)).toEqual(["openai", "gemini"]);

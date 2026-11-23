@@ -48,7 +48,33 @@ async function loadReport() {
   const payload = await response.json();
   const report = renderFreeReport360(payload.report360, lang);
   if (!report) return false;
-  document.getElementById("c-public-read").replaceChildren(report);
+  const content = document.getElementById("c-public-read");
+  content.replaceChildren(report);
+  if (payload.visibilityEvidence?.length) {
+    const section = document.createElement('section'), heading = document.createElement('h2');
+    heading.textContent = L('Preuves de visibilité IA partagées', 'Shared AI visibility evidence');
+    const scope = document.createElement('p');
+    scope.textContent = L('Consultez ces preuves dans le rapport en ligne.', 'View this evidence in the online report.');
+    section.append(heading, scope);
+    for (const item of payload.visibilityEvidence) {
+      const entry = document.createElement('article'), source = document.createElement('h3');
+      source.textContent = `${item.source} · ${item.observedAt.slice(0, 10)}`;
+      entry.append(source);
+      if (item.excerpt) {
+        const text = document.createElement('p'); text.textContent = item.excerpt; entry.append(text);
+      }
+      const list = document.createElement('ul');
+      for (const url of item.citations) {
+        if (!/^https?:\/\//i.test(url)) continue;
+        const line = document.createElement('li'), link = document.createElement('a');
+        link.href = url; link.textContent = url; link.rel = 'noopener noreferrer'; link.target = '_blank';
+        line.append(link); list.append(line);
+      }
+      if (list.childElementCount) entry.append(list);
+      section.append(entry);
+    }
+    content.append(section);
+  }
   const uri = `${API}/download?id=${encodeURIComponent(id)}`;
   document.getElementById("report-download-pdf").href = `${uri}&format=pdf`;
   document.getElementById("report-download-md").href = `${uri}&format=md`;

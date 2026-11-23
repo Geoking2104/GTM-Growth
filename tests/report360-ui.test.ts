@@ -37,6 +37,9 @@ describe("bilingual free 360 report", () => {
   it.each(["fr", "en"] as const)("renders five distinct pillars, source, proof and an actionable plan in %s", (lang) => {
     const { document, tree } = render(lang);
     expect(tree.querySelectorAll(".report360-pillar")).toHaveLength(5);
+    expect([...tree.querySelectorAll(".report360-pillar a")].map((a) => a.getAttribute("href"))).toEqual(
+      ["audit", "geo", "ai_visibility", "crm/connections", "social/connections"].map((tab) => `/console/?lang=${lang}#${tab}`),
+    );
     expect(tree.querySelectorAll(".report360-action")).toHaveLength(4);
     expect(tree.querySelectorAll(".report360-steps li")).toHaveLength(12);
     expect(tree.querySelectorAll(".report360-proof code")).toHaveLength(1);

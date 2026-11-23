@@ -35,7 +35,7 @@ it.each(["fr", "en"])("renders the citation gaps section with evidence links in 
   const root = renderAiVisibility({ api, me: { role: "tenant-admin" } }); document.body.append(root);
   await vi.waitFor(() => expect([...root.querySelectorAll("h3")].some(h => h.textContent === (lang === "fr" ? "Écarts de citations" : "Citation gaps"))).toBe(true));
   const section = [...root.querySelectorAll<HTMLElement>("section")].find(s => s.querySelector("h3")?.textContent === (lang === "fr" ? "Écarts de citations" : "Citation gaps"))!;
-  expect(section.textContent).toContain("not engine market share");
+  expect(section.textContent).toContain(lang === "fr" ? "citations stockées" : "not engine market share");
   expect(section.textContent).toContain("3 ");
   expect(section.textContent).toContain(lang === "fr" ? "Site propre" : "Own site");
   expect(section.textContent).not.toContain(lang === "fr" ? "Concurrents" : "Competitors");
@@ -52,6 +52,8 @@ it.each(["fr", "en"])("renders the citation gaps section with evidence links in 
   expect(detail.textContent).toContain("Alpha helps teams.");
   const gapCite = [...detail.querySelectorAll("a")].find(a => a.textContent === "https://www.reddit.com/r/crm/")!;
   expect(gapCite.rel).toBe("noopener noreferrer"); expect(gapCite.target).toBe("_blank");
+  detail.querySelector("button")!.click();
+  expect(root.querySelector<HTMLDetailsElement>("[data-response-id=r1]")!.open).toBe(true);
   const call = api.mock.calls.find(([route]) => route === "/ai-visibility/citation-gaps");
   expect(call![1]).toMatchObject({ datasetId: "d1", source: "", brand: "" });
 });
@@ -59,12 +61,15 @@ it("keeps own-source gaps unevaluated when the brand declares no website", async
   const { document } = dom(); const { renderAiVisibility } = await import("../site/console/ai-visibility.js");
   const unevaluated = { ...gaps, evaluated: false, ownWebsite: null, note: "The tracked brand has no declared website in this panel: own-source citation gaps stay unknown, never zero. Declare the brand website before interpreting own-category numbers.", totals: { observations: 1, withCitations: 0, citations: 0, promptsMentioningBrand: 1, promptsMentioningBrandWithOwnCitation: 0 }, categories: gaps.categories.map(c => ({ ...c, citations: 0, citedPrompts: 0, shareOfCitations: null })), topHosts: [], gaps: [] };
   const api = vi.fn(async (route: string) => route === "/ai-visibility/datasets" ? { datasets: [{ id: "d1", createdAt: "2026-01-01", count: 1 }] } : route === "/ai-visibility/report" ? report : route === "/ai-visibility/share-of-voice" ? views : route === "/ai-visibility/citation-gaps" ? unevaluated : {});
-  const root = renderAiVisibility({ api, me: { role: "marketer" } }); document.body.append(root);
+  const initialFilters = { datasetId: "d1", brand: "Alpha", source: "ChatGPT", groupId: "g1", from: "2026-01-01", to: "2026-01-02", focusCitations: true };
+  const root = renderAiVisibility({ api, me: { role: "marketer" }, initialFilters }); document.body.append(root);
   await vi.waitFor(() => expect([...root.querySelectorAll("h3")].some(h => h.textContent === "Citation gaps")).toBe(true));
   const section = [...root.querySelectorAll<HTMLElement>("section")].find(s => s.querySelector("h3")?.textContent === "Citation gaps")!;
   expect(section.textContent).toContain("Declare the brand website");
   expect(section.querySelectorAll("details.ai-answer").length).toBe(0);
   expect([...section.querySelectorAll("strong")].every(s => s.textContent!.includes("—"))).toBe(true);
+  const { focusCitations: _focus, ...scope } = initialFilters;
+  for (const route of ["report", "share-of-voice", "citation-gaps"]) expect(api).toHaveBeenCalledWith(`/ai-visibility/${route}`, scope);
 });
 it("still renders the report when the citation-gaps view fails", async () => {
   const { document } = dom(); const { renderAiVisibility } = await import("../site/console/ai-visibility.js");

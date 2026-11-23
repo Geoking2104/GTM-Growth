@@ -104,14 +104,14 @@ export function mountReportAccessApi(app: Express, deps: ReportAccessDependencie
     } catch (error) { return apiError(res, error); }
   });
 
-  const authorised = (req: Request, res: Response) => {
+  const authorised = (req: Request, res: Response, includeEvidence = false) => {
     if (!available || !service) { res.status(503).json({ error: "mail_not_configured" }); return null; }
-    try { return service.authorisedReport(req.query.id, cookieToken(req)); }
+    try { return service.authorisedReport(req.query.id, cookieToken(req), includeEvidence); }
     catch (error) { apiError(res, error); return null; }
   };
   app.get("/api/report-access/report", (req, res) => {
-    const result = authorised(req, res);
-    if (result) res.json({ report360: result.report, language: result.language, brand: result.brand });
+    const result = authorised(req, res, true);
+    if (result) res.json({ report360: result.report, language: result.language, brand: result.brand, visibilityEvidence: result.visibilityEvidence });
   });
   // J+14/J+28 scheduled plan for a verified session: milestones and dispatch
   // state only; the recipient address itself never leaves the store.

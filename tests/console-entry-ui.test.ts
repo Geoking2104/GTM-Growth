@@ -103,7 +103,7 @@ describe.each(["fr", "en"])("first-click console entry (%s)", lang => {
     const me = { role: "tenant-admin" };
     const panels = [renderOpsPrompts({ api, me }), renderOpsRank({ api, me }), renderOpsAlerts({ api, me })];
     await vi.waitFor(() => expect(api).toHaveBeenCalledWith("/visibility/runs", {}));
-    expect(new Set(api.mock.calls.map(([route]) => route))).toEqual(new Set(["/visibility/prompts", "/visibility/runs", "/rank/keywords", "/ops/alerts"]));
+    expect(new Set(api.mock.calls.map(([route]) => route))).toEqual(new Set(["/visibility/prompts", "/visibility/runs", "/visibility/schedule", "/rank/keywords", "/ops/alerts"]));
     expect(panels.every(panel => panel.textContent.length > 100)).toBe(true);
   });
 

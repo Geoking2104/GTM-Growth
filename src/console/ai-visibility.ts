@@ -4,19 +4,27 @@ import { resolveAIAccount, accountHeaders, type AICredential } from "./ai-connec
 import { createHash, randomUUID } from "node:crypto";
 import { validTenantId } from "../tenants/store.js";
 import type { ConsoleRoute } from "./util.js";
-import { listDatasets, getDataset, insertDataset, updateDataset } from "./ai-visibility-store.js";
+import { listDatasets, findDatasetImport, insertDataset, updateDataset } from "./ai-visibility-store.js";
 import { visualUrl } from "./visual-catalog.js";
 import { citationGaps } from "./ai-citations.js";
 import { normalizeTrackerExport, TRACKER_IMPORT_WARNING } from "./ai-tracker-import.js";
 import { shareOfVoiceView } from "./ai-share-of-voice.js";
+import { readVisibilityScope } from "./visibility-scope.js";
+import { normalizeMeasurement, observationOrigin, type MeasurementContext } from "./visibility-measurement.js";
 
 export type Sentiment = "positive" | "neutral" | "negative" | "mixed" | "unknown";
 /** How an answer reached this workspace: a tenant-reviewed import or an explicit
  * bounded provider API run. Legacy datasets without the field stay "unverified". */
 export type Provenance = "imported" | "collected";
 interface Brand { name: string; aliases: string[]; website?: string; logoUrl?: string }
-interface InputResponse { prompt: string; answer: string; source: string; observedAt: string; citations?: string[]; citationSpans?: Array<{ start: number; end: number; url: string }>; provenance?: Provenance }
-interface Observation extends InputResponse { id: string; mentions: Array<{ brand: string; evidence: string; sentiment: Sentiment; method: string; status?: "confirmed" | "rejected" }> }
+interface InputResponse { prompt: string; answer: string; source: string; observedAt: string; citations?: string[]; citationSpans?: Array<{ start: number; end: number; url: string }>; provenance?: Provenance; measurement?: MeasurementContext }
+interface Observation extends InputResponse {
+  id: string;
+  declaredProvenance?: Provenance;
+  collectionVerified?: true;
+  citationMetadata?: "available" | "missing";
+  mentions: Array<{ brand: string; evidence: string; sentiment: Sentiment; method: string; status?: "confirmed" | "rejected" }>;
+}
 export interface Dataset { id: string; createdAt: string; brands: Brand[]; observations: Observation[]; audit?: Array<{ at: string; actor: string; responseId: string; brand: string; status: string; sentiment: string }> }
 const LIMIT = 1000;
 const clean = (v: unknown, max: number) => typeof v === "string" && v.trim().length > 0 && v.trim().length <= max ? v.trim() : "";
@@ -26,7 +34,7 @@ const positive = /\b(excellent|reliable|trusted|great|good|recommandé|fiable|ex
 const negative = /\b(poor|bad|unreliable|expensive|weak|médiocre|mauvais|coûteux|cher|lent|décevant)\b/iu;
 const ambiguous = /\b(not|no|never|isn't|isnt|pas|jamais|sans|aucun|aucune|ni)\b/iu;
 
-export function normalizeImport(input: unknown, provenance: Provenance = "imported"): Dataset {
+export function normalizeImport(input: unknown, origin: Provenance | "stored" = "imported"): Dataset {
   if (!input || typeof input !== "object" || Array.isArray(input)) throw new Error("Invalid import");
   const body = input as Record<string, unknown>;
   if (!Array.isArray(body.brands) || body.brands.length < 1 || body.brands.length > 10 || !Array.isArray(body.responses) || body.responses.length < 1 || body.responses.length > LIMIT) throw new Error("Import requires 1–10 brands and 1–1000 responses");
@@ -52,10 +60,18 @@ export function normalizeImport(input: unknown, provenance: Provenance = "import
     const rawSpans = r.citationSpans ?? []; if (!Array.isArray(rawSpans) || rawSpans.length > 100) throw new Error("Invalid citation spans");
     const citationSpans = rawSpans.map((v) => { if (!v || typeof v !== "object" || Array.isArray(v)) throw new Error("Invalid citation span"); const span = v as Record<string, unknown>; if (!Number.isInteger(span.start) || !Number.isInteger(span.end) || Number(span.start) < 0 || Number(span.end) <= Number(span.start) || Number(span.end) > answer.length || typeof span.url !== "string" || !citations.includes(span.url)) throw new Error("Invalid citation span"); return { start: Number(span.start), end: Number(span.end), url: span.url }; }).sort((a, b) => a.start - b.start);
     if (citationSpans.some((v, i) => i > 0 && v.start < citationSpans[i - 1].end)) throw new Error("Overlapping citation spans");
-    const normalizedDate = new Date(observedAt).toISOString(); const id = createHash("sha256").update(JSON.stringify([prompt, answer, source, normalizedDate])).digest("hex"); if (hashes.has(id)) throw new Error("Duplicate response in import"); hashes.add(id);
+    const normalizedDate = new Date(observedAt).toISOString();
+    const measurement = normalizeMeasurement(r.measurement);
+    const identity = [prompt, answer, source, normalizedDate, ...(measurement ? [measurement] : [])];
+    const id = createHash("sha256").update(JSON.stringify(identity)).digest("hex");
+    if (hashes.has(id)) throw new Error("Duplicate response in import");
+    hashes.add(id);
     const sentences = answer.split(/(?<=[.!?])\s+|\n+/u).filter(Boolean);
-    // An observation-level provenance survives re-imports; the route default applies otherwise.
-    const declaredProvenance: Provenance = r.provenance === "collected" || r.provenance === "imported" ? r.provenance : provenance;
+    const provenance = origin === "stored" ? readProvenance(r.provenance) : origin;
+    const declaredProvenance = readProvenance(r.declaredProvenance) ?? readProvenance(r.provenance);
+    const verified = origin === "collected" || (origin === "stored" && r.collectionVerified === true);
+    const storedMetadata = r.citationMetadata === "available" || r.citationMetadata === "missing" ? r.citationMetadata : undefined;
+    const citationMetadata = origin === "stored" ? storedMetadata : Array.isArray(r.citations) ? "available" : "missing";
     const mentions = brands.flatMap((brand) => {
       const found = sentences.filter((sentence) => brand.aliases.some((alias) => pattern(alias).test(sentence))); if (!found.length) return [];
       let pos = false, neg = false;
@@ -63,16 +79,32 @@ export function normalizeImport(input: unknown, provenance: Provenance = "import
       const sentiment: Sentiment = pos && neg ? "mixed" : pos ? "positive" : neg ? "negative" : "unknown";
       return [{ brand: brand.name, evidence: found[0].slice(0, 500), sentiment, method: "heuristic-v1-unvalidated" }];
     });
-    return { id, prompt, answer, source, observedAt: normalizedDate, citations, citationSpans, provenance: declaredProvenance, mentions };
+    return { id, prompt, answer, source, observedAt: normalizedDate, citations, citationSpans, provenance, declaredProvenance, citationMetadata, ...(measurement ? { measurement } : {}), ...(verified ? { collectionVerified: true as const } : {}), mentions };
   });
   return { id: randomUUID(), createdAt: new Date().toISOString(), brands, observations };
+}
+
+function readProvenance(value: unknown): Provenance | undefined {
+  return value === "imported" || value === "collected" ? value : undefined;
+}
+
+function importFingerprint(data: Dataset) {
+  const observations = [...data.observations].sort((a, b) => a.id.localeCompare(b.id))
+    .map(({ id, citations, citationSpans, citationMetadata, declaredProvenance }) => [id, citations, citationSpans, citationMetadata, declaredProvenance ?? "imported"]);
+  return createHash("sha256").update(JSON.stringify(["visibility-import-v1", data.brands, observations])).digest("hex");
+}
+
+function trackerImport(body: Record<string, unknown>) {
+  const { body: normalized, meta } = normalizeTrackerExport(body);
+  const data = normalizeImport(normalized);
+  return { data, meta, previewDigest: importFingerprint(data) };
 }
 
 export function summarize(dataset: Dataset, source = "", brand = "") {
   const activeBrand = dataset.brands.some((b) => b.name === brand) ? brand : dataset.brands[0].name;
   const observations = dataset.observations.filter((r) => !source || r.source === source);
   const provenance = { imported: 0, collected: 0, unverified: 0 };
-  for (const r of observations) { if (r.provenance === "collected") provenance.collected++; else if (r.provenance === "imported") provenance.imported++; else provenance.unverified++; }
+  for (const r of observations) provenance[observationOrigin(r)]++;
   const counts = dataset.brands.map((b) => ({ brand: b.name, count: observations.filter((r) => r.mentions.some((m) => m.brand === b.name && m.status !== "rejected")).length }));
   const count = counts.find((x) => x.brand === activeBrand)?.count ?? 0; const totalMentions = counts.reduce((n, c) => n + c.count, 0);
   const sentiment = { positive: 0, neutral: 0, negative: 0, mixed: 0, unknown: 0 };
@@ -118,7 +150,7 @@ export async function collectOpenAI(input: unknown, key: string, transport: type
     try {
       const response = await transport("https://api.openai.com/v1/responses", { method: "POST", headers: { "Content-Type": "application/json", ...accountHeaders("openai", account || { key }) }, body: JSON.stringify({ model: "gpt-4.1-mini", store: false, input: prompt, max_output_tokens: 1500, tools: [{ type: "web_search" }] }), signal: AbortSignal.timeout(25000), redirect: "error" });
       if (!response.ok) { failures.push({ prompt, reason: `HTTP ${response.status}` }); continue; }
-      const result = await response.json() as { status?: string; output?: Array<{ type?: string; content?: Array<{ type?: string; text?: string; annotations?: Array<{ type?: string; url?: string; start_index?: number; end_index?: number }> }> }> };
+      const result = await response.json() as { status?: string; model?: unknown; output?: Array<{ type?: string; content?: Array<{ type?: string; text?: string; annotations?: Array<{ type?: string; url?: string; start_index?: number; end_index?: number }> }> }> };
       if (result.status !== "completed") { failures.push({ prompt, reason: "Incomplete response" }); continue; }
       let answer = ""; const spans: Array<{ start: number; end: number; url: string }> = []; let invalid = false;
       for (const part of (result.output ?? []).filter((o) => o.type === "message").flatMap((o) => o.content ?? [])) {
@@ -139,29 +171,48 @@ export async function collectOpenAI(input: unknown, key: string, transport: type
       answer = trimmed;
       spans.sort((a, b) => a.start - b.start); if (spans.some((span, i) => i > 0 && span.start < spans[i - 1].end)) invalid = true;
       if (!answer.trim() || answer.length > 20000 || invalid) { failures.push({ prompt, reason: "No usable answer or citation metadata" }); continue; }
-      successes.push({ prompt, answer, source: "OpenAI API + web search (gpt-4.1-mini)", observedAt: new Date().toISOString(), citations: [...new Set(spans.map((span) => span.url))], citationSpans: spans });
+      const model = typeof result.model === "string" && /^[a-zA-Z0-9._:-]{1,100}$/.test(result.model) ? result.model : undefined;
+      successes.push({ prompt, answer, source: "OpenAI API + web search (gpt-4.1-mini)", observedAt: new Date().toISOString(), citations: [...new Set(spans.map((span) => span.url))], citationSpans: spans, measurement: { engine: "openai", mode: "api", ...(model ? { model } : {}) } });
     } catch { failures.push({ prompt, reason: "Request failed or timed out" }); }
   }
   return { successes, failures, brands: body.brands };
 }
 function openAIKey(tenantId: string) { if (!validTenantId(tenantId)) return ""; return process.env[`AI_VISIBILITY_OPENAI_KEY_${tenantId.toUpperCase().replace(/-/g, "_")}`] ?? ""; }
 function geminiKey(tenantId: string) { if (!validTenantId(tenantId)) return ""; return process.env[`AI_VISIBILITY_GEMINI_KEY_${tenantId.toUpperCase().replace(/-/g, "_")}`] ?? ""; }
+export const GEMINI_COLLECTION_BLOCKED = "Gemini Search is disabled pending compliant Search Suggestions display";
+export function geminiCollectionStatus(tenantId: string) {
+  return { configured: Boolean(geminiKey(tenantId)), enabled: false, model: "gemini-2.5-flash", maxCalls: 5 };
+}
 const tenant = (ctx: { tenancy?: { tenant: { id: string } | null } }) => { if (!ctx.tenancy?.tenant) throw new Error("Select a tenant"); return ctx.tenancy.tenant.id; };
 export const aiVisibilityRoutes: ConsoleRoute[] = [
-  { path: "/ai-visibility/gemini-status", needsUrl: false, adminOnly: true, handler: async (ctx) => ({ configured: Boolean(geminiKey(tenant(ctx))), enabled: false, model: "gemini-2.5-flash", maxCalls: 5 }) },
+  { path: "/ai-visibility/gemini-status", needsUrl: false, adminOnly: true, handler: async (ctx) => geminiCollectionStatus(tenant(ctx)) },
   // Fail closed until Search Suggestions can be safely displayed alongside the response.
-  { path: "/ai-visibility/gemini-run", needsUrl: false, adminOnly: true, handler: async () => { throw new Error("Gemini Search is disabled pending compliant Search Suggestions display"); } },
+  { path: "/ai-visibility/gemini-run", needsUrl: false, adminOnly: true, handler: async () => { throw new Error(GEMINI_COLLECTION_BLOCKED); } },
   { path: "/ai-visibility/openai-status", needsUrl: false, adminOnly: true, handler: async (ctx) => ({ configured: Boolean(openAIKey(tenant(ctx))), model: "gpt-4.1-mini", maxCalls: 5 }) },
   { path: "/ai-visibility/openai-run", needsUrl: false, adminOnly: true, handler: async (ctx) => { const tenantId = tenant(ctx), account = resolveAIAccount(tenantId, "openai", ctx.body.accountId), result = await collectOpenAI(ctx.body, account.key, fetch, account); if (!result.successes.length) return { id: null, succeeded: 0, failed: result.failures }; const dataset = normalizeImport({ brands: result.brands, responses: result.successes }, "collected"); insertDataset(tenantId, dataset); return { id: dataset.id, succeeded: result.successes.length, failed: result.failures }; } },
   { path: "/ai-visibility/import-preview", needsUrl: false, adminOnly: true, handler: async ({ body }) => { const data = normalizeImport(body); return { brands: data.brands, count: data.observations.length, sources: [...new Set(data.observations.map((r) => r.source))], warning: "Heuristic sentiment requires human review; no external calls." }; } },
-  { path: "/ai-visibility/import", needsUrl: false, adminOnly: true, handler: async (ctx) => { const data = normalizeImport(ctx.body); insertDataset(tenant(ctx), data); return { id: data.id, count: data.observations.length }; } },
+  { path: "/ai-visibility/import", needsUrl: false, adminOnly: true, handler: async (ctx) => {
+    const data = normalizeImport(ctx.body);
+    return { ...insertDataset(tenant(ctx), data, importFingerprint(data)), count: data.observations.length };
+  } },
   // Normalised tracker imports (R1): CSV/JSON exports the tenant already owns
   // (Meteoria, Peec AI, Qwairy, Profound), mapped onto the canonical model with
   // the brand declared in the request. Fail-closed per row, no provider call.
-  { path: "/ai-visibility/import-tracker-preview", needsUrl: false, adminOnly: true, handler: async (ctx) => { const parsed = normalizeTrackerExport(ctx.body); const data = normalizeImport(parsed.body); return { provider: parsed.meta.provider, format: parsed.meta.format, count: data.observations.length, engines: parsed.meta.engines, ignoredColumns: parsed.meta.ignoredColumns, normalisedDates: parsed.meta.normalisedDates, sources: [...new Set(data.observations.map((r) => r.source))], provenance: "imported", warning: TRACKER_IMPORT_WARNING }; } },
-  { path: "/ai-visibility/import-tracker", needsUrl: false, adminOnly: true, handler: async (ctx) => { const parsed = normalizeTrackerExport(ctx.body); const data = normalizeImport(parsed.body); insertDataset(tenant(ctx), data); return { id: data.id, count: data.observations.length, provider: parsed.meta.provider, engines: parsed.meta.engines, ignoredColumns: parsed.meta.ignoredColumns, normalisedDates: parsed.meta.normalisedDates, provenance: "imported" }; } },
+  { path: "/ai-visibility/import-tracker-preview", needsUrl: false, adminOnly: true, handler: async (ctx) => {
+    const { data, meta, previewDigest } = trackerImport(ctx.body);
+    const existingDatasetId = findDatasetImport(tenant(ctx), previewDigest);
+    return { ...meta, count: data.observations.length, previewDigest, existingDatasetId, sources: [...new Set(data.observations.map((r) => r.source))], warning: TRACKER_IMPORT_WARNING };
+  } },
+  { path: "/ai-visibility/import-tracker", needsUrl: false, adminOnly: true, handler: async (ctx) => {
+    const { data, meta, previewDigest } = trackerImport(ctx.body);
+    if (ctx.body.previewDigest !== undefined && ctx.body.previewDigest !== previewDigest) throw new Error("Review the current export before saving");
+    return { ...meta, ...insertDataset(tenant(ctx), data, previewDigest), count: data.observations.length };
+  } },
   // Share-of-voice view (R1): per-engine proportions over one stored panel.
-  { path: "/ai-visibility/share-of-voice", needsUrl: false, handler: async (ctx) => { const selected = typeof ctx.body.datasetId === "string" ? getDataset<Dataset>(tenant(ctx), ctx.body.datasetId) : undefined; if (!selected) throw new Error("Dataset not found"); return shareOfVoiceView(selected, typeof ctx.body.source === "string" ? ctx.body.source : "", typeof ctx.body.brand === "string" ? ctx.body.brand : ""); } },
+  { path: "/ai-visibility/share-of-voice", needsUrl: false, handler: async (ctx) => {
+    const { dataset, filters } = readVisibilityScope(tenant(ctx), ctx.body);
+    return shareOfVoiceView(dataset, filters.source, filters.brand);
+  } },
   { path: "/ai-visibility/datasets", needsUrl: false, handler: async (ctx) => ({ datasets: listDatasets<Dataset>(tenant(ctx)).map(({ id, createdAt, brands, observations }) => ({ id, createdAt, brands, count: observations.length })) }) },
   { path: "/ai-visibility/review", needsUrl: false, adminOnly: true, handler: async (ctx) => {
     const tenantId = tenant(ctx), status = ctx.body.status, sentiment = ctx.body.sentiment;
@@ -173,8 +224,14 @@ export const aiVisibilityRoutes: ConsoleRoute[] = [
       (data.audit ??= []).push({ at: new Date().toISOString(), actor: ctx.user?.sub ?? "unknown", responseId: response.id, brand: mention.brand, status, sentiment: String(sentiment) });
     }); return { ok: true };
   } },
-  { path: "/ai-visibility/report", needsUrl: false, handler: async (ctx) => { const selected = typeof ctx.body.datasetId === "string" ? getDataset<Dataset>(tenant(ctx), ctx.body.datasetId) : undefined; if (!selected) throw new Error("Dataset not found"); return summarize(selected, typeof ctx.body.source === "string" ? ctx.body.source : "", typeof ctx.body.brand === "string" ? ctx.body.brand : ""); } },
+  { path: "/ai-visibility/report", needsUrl: false, handler: async (ctx) => {
+    const { dataset, filters, sources, groups } = readVisibilityScope(tenant(ctx), ctx.body);
+    return { ...summarize(dataset, filters.source, filters.brand), sources, groups: groups.map(({ id, name }) => ({ id, name })), filters };
+  } },
   // Citation gap analysis (benchmark R2): which cited sources replace the brand's own
   // website within the same stored panel. Read-only, tenant-bounded, no provider call.
-  { path: "/ai-visibility/citation-gaps", needsUrl: false, handler: async (ctx) => { const selected = typeof ctx.body.datasetId === "string" ? getDataset<Dataset>(tenant(ctx), ctx.body.datasetId) : undefined; if (!selected) throw new Error("Dataset not found"); return citationGaps(selected, typeof ctx.body.source === "string" ? ctx.body.source : "", typeof ctx.body.brand === "string" ? ctx.body.brand : ""); } },
+  { path: "/ai-visibility/citation-gaps", needsUrl: false, handler: async (ctx) => {
+    const { dataset, filters } = readVisibilityScope(tenant(ctx), ctx.body);
+    return citationGaps(dataset, filters.source, filters.brand);
+  } },
 ];

@@ -3,6 +3,7 @@ import { el } from './render.js';
 import { LANG } from './i18n.js';
 import { providerMark } from './provider-marks.js';
 import { renderCustomerJourneyWorkspace } from './customer-journey-workspace.js';
+import { editorialEvidenceSharing, evidenceCitation } from './editorial.js';
 export const L = (fr, en) => LANG === 'fr' ? fr : en;
 const date = value => value ? new Date(value).toLocaleString(LANG === 'fr' ? 'fr-FR' : 'en-GB') : '—';
 const note = text => el('p', 'c-note', text);
@@ -65,15 +66,57 @@ export function renderInbox({ api }) {
 }
 const stages=[['unaware',L('1 · Besoin latent','1 · Unaware')],['problem-aware',L('2 · Problème identifié','2 · Problem aware')],['solution-aware',L('3 · Solutions','3 · Solution aware')],['product-aware',L('4 · Produit','4 · Product aware')],['most-aware',L('5 · Décision','5 · Most aware')]];
 export const briefKey = tenant => `gtm-intent-brief:${tenant}`;
+export const answerPinKey = tenant => `gtm-intent-answer:${tenant}`;
 export function renderIntent({ api, state }) {
   const root=el('section','decision-flow'), grid=el('div','decision-intent-grid'), left=el('div'), right=el('section','decision-evidence'), message=status(), results=el('div'), pinsView=el('div'), stage=select(stages), source=select([['',L('Toutes les sources','All sources')],['gsc','Google Search Console'],['bing','Bing'],['ai',L('Réponses IA collectées','Collected AI answers')]]), search=el('input');search.type='search';let observations=[],pins=[],version=0,journey=null;
   const target=el('input');target.type='url';target.value=state.url||'';
+  const pinnedPages = el('datalist');
+  pinnedPages.id = 'decision-intent-pinned-pages';
+  target.setAttribute('list', pinnedPages.id);
+  const admin = state.me?.role === 'tenant-admin', tenantId = state.me?.tenant?.id, pendingView = el('div');
+  let pending = null;
+  try { if (admin) pending = JSON.parse(sessionStorage.getItem(answerPinKey(tenantId)) || 'null'); } catch {}
+  function drawPending() {
+    pendingView.replaceChildren();
+    if (!pending) return;
+    pendingView.append(note(pending.prompt), button(L('Épingler à cette étape et cette page', 'Pin to this stage and page'), async () => {
+      if (!target.value || !target.reportValidity()) { message.textContent = L('Indiquez la page à relier.', 'Enter the page to link.'); return; }
+      try {
+        const { datasetId, responseId, brand } = pending;
+        await api('/decision/intent/ai-pin', { datasetId, responseId, brand, stage: stage.value, targetUrl: normalTarget() });
+        pending = null;
+        try { sessionStorage.removeItem(answerPinKey(tenantId)); } catch {}
+        drawPending();
+        await refreshPins();
+        message.textContent = L('Réponse et citations épinglées.', 'Answer and citations pinned.');
+      } catch (error) { message.textContent = error.message; }
+    }));
+  }
   const normalTarget=()=>{try{return new URL(target.value).href;}catch{return target.value;}};
   function selected() { left.querySelectorAll('[data-stage]').forEach(n=>n.classList.toggle('is-selected',n.dataset.stage===stage.value));draw(); }
   function brief(e) { if(!journey?.ready) {message.textContent=L('Confirmez d’abord la marque, le produit et le besoin dans le parcours.','First confirm brand, product and customer need in the planner.');return;} try{sessionStorage.setItem(briefKey(state.me.tenant.id),JSON.stringify({at:Date.now(),stage:stage.value,query:e.query,targetUrl:normalTarget(),source:e,brand:journey.brand,product:journey.product?.name,category:journey.category,audience:journey.audience,goal:journey.goal,language:LANG}));location.hash='#ops/articles';}catch(e){message.textContent=e.message;} }
   function draw() { results.replaceChildren();pinsView.replaceChildren(el('h3','',L('Preuves retenues pour cette étape','Evidence pinned to this stage')));const chosen=pins.filter(p=>p.stage===stage.value&&p.targetUrl===normalTarget());
+    pinnedPages.replaceChildren(...[...new Set(pins.filter(pin => pin.stage === stage.value).map(pin => pin.targetUrl))].sort().map(url => {
+      const option = el('option'); option.value = url; return option;
+    }));
     if(!chosen.length)pinsView.append(note(L('Aucune preuve reliée à cette étape et cette page.','No evidence linked to this stage and page.')));
-    for(const p of chosen){const row=el('article','decision-observation');row.append(el('strong','',p.evidence.query),note(`${p.evidence.source} · ${p.evidence.period}`),button(L('Préparer le brief','Prepare brief'),()=>brief(p.evidence),true));if(state.me?.role==='tenant-admin')row.append(button(L('Retirer','Remove'),async()=>{try{const d=await api('/decision/intent/remove',{id:p.id,version});pins=d.pins;version=d.version;draw();}catch(e){await refreshPins();message.textContent=e.message;}},true));pinsView.append(row);}
+    for (const p of chosen) {
+      const row = el('article', 'decision-observation'), ai = p.evidence.ai;
+      row.append(el('strong', '', p.evidence.query), note(`${ai ? `${ai.source} · ${ai.brand}` : p.evidence.source} · ${p.evidence.period}`));
+      if (ai) {
+        const proof = details(L('Réponse et citations épinglées', 'Pinned answer and citations'), ai.answer);
+        for (const url of ai.citations) proof.append(evidenceCitation(url), el('br'));
+        if (!ai.citations.length) proof.append(note(L('Aucune citation enregistrée.', 'No citations recorded.')));
+        row.append(proof, link(L('Ouvrir le brief lié', 'Open linked brief'), `#ops/articles/${p.id}`));
+      } else row.append(button(L('Préparer le brief', 'Prepare brief'), () => brief(p.evidence), true));
+      if (admin && ai) row.append(editorialEvidenceSharing({ api, pin: p }));
+      if (admin) row.append(button(L('Retirer', 'Remove'), async () => {
+        try { const d = await api('/decision/intent/remove', { id:p.id, version }); pins=d.pins; version=d.version; draw(); }
+        catch (error) { await refreshPins(); message.textContent = error.message === 'DECISION_CHANGED' && ai
+          ? L('Actualisez la vue. Une preuve liée à un brief enregistré reste dans l’historique.', 'Refresh the view. Evidence linked to a saved brief stays in history.') : error.message; }
+      }, true));
+      pinsView.append(row);
+    }
     const filtered=observations.filter(e=>(!source.value||e.source===source.value)&&e.query.toLocaleLowerCase().includes(search.value.toLocaleLowerCase()));if(!filtered.length)results.append(note(L('Aucune observation pour ces filtres. Collectez les preuves ou modifiez les filtres.','No observations for these filters. Load evidence or change filters.')));
     for(const e of filtered){const card=el('article','decision-observation');card.append(mark(e.source),el('h4','',e.query),note(e.period),note(e.page||L('Aucune page associée par cette source','This source does not provide a page association')));if(e.source!=='ai'){const bar=el('div','decision-demand-bar');const value=e.clicks!==null&&e.impressions>0?Math.min(100,100*e.clicks/e.impressions):null; if(value!==null){bar.style.setProperty('--value',`${value}%`);bar.setAttribute('role','img');bar.setAttribute('aria-label',`CTR ${value.toFixed(2)}%`);card.append(bar);}card.append(note(`${L('Clics','Clicks')} ${e.clicks??'—'} · ${L('Impressions','Impressions')} ${e.impressions??'—'} · ${L('Position','Position')} ${e.position??'—'}`));}else card.append(details(L('Réponse et mentions observées · pas un volume de recherche','Observed answer and mentions · not search volume'),e.detail));
       const pin=button(L('Relier à cette étape','Link to this stage'),async()=>{try{const d=await api('/decision/intent/pin',{evidenceId:e.id,stage:stage.value,targetUrl:normalTarget(),version});pins=d.pins;version=d.version;draw();message.textContent=L('Association éditoriale enregistrée. Elle ne prouve pas un parcours individuel.','Editorial association saved. It does not prove an individual journey.');}catch(e){await refreshPins();message.textContent=e.message;}});pin.disabled=state.me?.role!=='tenant-admin';card.append(pin,button(L('Préparer le brief','Prepare brief'),()=>brief(e),true));results.append(card);}
@@ -81,7 +124,9 @@ export function renderIntent({ api, state }) {
   async function refreshPins(){try{const d=await api('/decision/intent',{});pins=d.pins;version=d.version;draw();}catch(e){message.textContent=e.message;}}
   async function collect(){message.textContent=L('Lecture des preuves autorisées…','Reading authorised evidence…');try{const d=await api('/decision/intent/evidence',{property:state.property||undefined,bingSite:state.bingSite||undefined,days:Math.max(7,Math.min(90,state.days||28))});observations=d.evidence;version=d.version;await refreshPins();message.textContent=d.sources.map(s=>`${s.source}: ${sourceStatus(s.status)}`).join(' · ');}catch(e){message.textContent=e.message;}}
   stage.onchange=selected;source.onchange=draw;search.oninput=draw;target.onchange=draw;
-  right.append(el('h2','',L('Demande observée','Observed demand')),field(L('Étape synchronisée','Synchronised stage'),stage),field(L('Page cible de l’association','Target page for the association'),target),field(L('Source','Source'),source),field(L('Filtrer les requêtes','Filter queries'),search),button(L('Lire GSC, Bing et les observations IA','Read GSC, Bing and AI observations'),collect),message,pinsView,results);
+  right.append(el('h2','',L('Demande observée','Observed demand')),field(L('Étape synchronisée','Synchronised stage'),stage),field(L('Page cible de l’association','Target page for the association'),target),pinnedPages,pendingView,field(L('Source','Source'),source),field(L('Filtrer les requêtes','Filter queries'),search),button(L('Lire GSC, Bing et les observations IA','Read GSC, Bing and AI observations'),collect),message,pinsView,results);
+  if (admin) right.append(editorialEvidenceSharing({ api }));
+  drawPending();
   left.append(renderCustomerJourneyWorkspace({state,api,onJourneyChange:j=>{journey=j;if(j.ready)target.value=j.product?.url||j.url||state.url;draw();},onStageSelect:id=>{stage.value=id;selected();if(window.matchMedia?.('(max-width:1100px)').matches)right.scrollIntoView({behavior:'smooth',block:'start'});}}));
   root.append(note(L('À gauche : hypothèses contextualisées. À droite : observations datées. Choisissez une étape pour relier les deux ; aucune intention n’est déduite automatiquement d’un clic.','Left: contextual hypotheses. Right: dated observations. Choose a stage to link them; intent is never inferred automatically from a click.')));grid.append(left,right);root.append(grid);void refreshPins();return root;
 }

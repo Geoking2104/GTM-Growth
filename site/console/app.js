@@ -66,7 +66,7 @@ function observeRead(route, data, requestedScope) {
 }
 /** Corps commun des requêtes Track : domaine, propriétés, période. */
 const scope = (extra = {}) => ({ url: state.url || undefined, property: state.property || undefined, ga4Property: state.ga4Property || undefined, bingSite: state.bingSite || undefined, days: state.days, searchType: state.searchType, ...extra });
-const rerender = () => show(current.section, current.tab);
+const rerender = () => show(current.section, current.tab, current.pinId ? { pinId: current.pinId } : undefined);
 /** Vue de données : barre de période + rendu ; ne demande pas de domaine. */
 const live = (route, render, opts = {}) => ({ needsDomain: false, async: async () => [toolbar(state, rerender, opts), ...[render(await api(route, scope()))].flat()] });
 const tool = (id) => TABS.find((x) => x.id === id);
@@ -280,8 +280,8 @@ const SECTIONS = {
     { id: "local_seo", icon: "local_seo", build: () => custom("local_seo", [{ id: "website", label: LANG === "fr" ? "SEO du site" : "Website SEO", needsDomain: false, async: async () => renderGlobalSeo({ state, api, scope }) }, { id: "network", label: "Google Business Profile", needsDomain: false, async: async () => renderLocalSeo({ api, me: state.me }) }, { id: "planning", label: LANG === "fr" ? "Préparer mon établissement" : "Plan my business", needsDomain: false, async: async () => renderLocalSeoWorkspace({ state }) }]) },
     { id: "catalog", icon: "products", build: () => custom("catalog", [{ id: "library", label: LANG === "fr" ? "Catalogue visuel" : "Visual catalogue", needsDomain: false, async: async () => catalogWorkspace() }]) },
     { id: "commerce", icon: "commerce", build: () => custom("commerce", [{ id: "connect", label: LANG === "fr" ? "Boutiques et revenus" : "Stores and revenue", needsDomain: false, async: async () => renderCommerce({ api, me: state.me }) }]) },
-    { id: "competition", icon: "competition", build: () => custom("competition", [{ id: "board", label: LANG === "fr" ? "Concurrence" : "Competition", needsDomain: false, async: async () => renderCompetition({ api, me: state.me, property: state.property, days: state.days }) }]) },
-    { id: "ai_visibility", icon: "eye", build: () => custom("ai_visibility", [{ id: "board", label: LANG === "fr" ? "Réponses IA" : "AI answers", needsDomain: false, async: async () => renderAiVisibility({ api, me: state.me }) }]) },
+    { id: "competition", icon: "competition", build: () => custom("competition", [{ id: "board", label: LANG === "fr" ? "Concurrence" : "Competition", needsDomain: false, async: async () => renderCompetition({ api, me: state.me, property: state.property, days: state.days, onOpenCitations: (filters) => show("ai_visibility", undefined, filters) }) }]) },
+    { id: "ai_visibility", icon: "eye", build: () => custom("ai_visibility", [{ id: "board", label: LANG === "fr" ? "Réponses IA" : "AI answers", needsDomain: false, async: async (initialFilters) => renderAiVisibility({ api, me: state.me, initialFilters }) }]) },
     { id: "gsc", icon: "google", build: () => custom("gsc", [
       { id: "performance", label: t("t_gscPerf"), ...live("/search/performance", renderSearchPerformance, { searchType: true }) },
       { id: "query-pages", label: t("t_queryPages"), ...live("/search/query-pages", renderQueryPages) },
@@ -326,7 +326,7 @@ const SECTIONS = {
     { id: "ops", icon: "operations", build: () => custom("ops", [
       { id: "prompts", label: LANG === "fr" ? "Visibilité IA en direct" : "Live AI visibility", needsDomain: false, async: async () => renderOpsPrompts({ api, me: state.me }) },
       { id: "rank", label: LANG === "fr" ? "Positions suivies" : "Tracked rankings", needsDomain: false, async: async () => renderOpsRank({ api, me: state.me }) },
-      { id: "articles", label: LANG === "fr" ? "Articles" : "Articles", needsDomain: false, async: async () => renderOpsArticles({ api, me: state.me }) },
+      { id: "articles", label: LANG === "fr" ? "Articles" : "Articles", needsDomain: false, async: async (filters) => renderOpsArticles({ api, me: state.me, pinId: filters?.pinId }) },
       { id: "alerts", label: LANG === "fr" ? "Alertes" : "Alerts", needsDomain: false, async: async () => renderOpsAlerts({ api, me: state.me }) }]) },
   ],
 };
@@ -361,6 +361,11 @@ function launchWizard() {
 }
 let started = false;
 let current = { section: "overview", tab: "" };
+function routeFromHash() {
+  const [section, tab, id] = location.hash.slice(1).split('/');
+  const pinId = section === 'ops' && tab === 'articles' && /^[0-9a-f-]{36}$/.test(id || '') ? id : undefined;
+  return [section, tab, pinId ? { pinId } : undefined];
+}
 let mountedEditor = null;
 let viewEpoch = 0;
 async function saveSettings(body) {
@@ -379,7 +384,7 @@ async function saveSettings(body) {
   startBackground();
   return data;
 }
-async function show(sectionId, tabId) {
+async function show(sectionId, tabId, initialFilters) {
   if (!started) return;
   const epoch = ++viewEpoch;
   if (mountedEditor?.beforeLeave && !(await mountedEditor.beforeLeave())) {
@@ -392,7 +397,8 @@ async function show(sectionId, tabId) {
   const def = section.build();
   const requestedTab = !state.me?.tenant && state.me?.platformAdmin && section.id === 'settings' && !tabId ? 'access' : tabId;
   const tab = def.tabs.find((x) => x.id === requestedTab) ?? def.tabs[0];
-  current = { section: section.id, tab: tab.id };
+  const pinId = section.id === 'ops' && tab.id === 'articles' ? initialFilters?.pinId : undefined;
+  current = { section: section.id, tab: tab.id, pinId };
   const decision = decisionLocation(section.id, tab.id);
   $('#c-app').dataset.area = decision.area;
   $('.app-side').classList.remove('is-nav-open'); $('#c-nav-toggle').setAttribute('aria-expanded', 'false');
@@ -404,7 +410,7 @@ async function show(sectionId, tabId) {
     }
     consoleCoach.setContext({ section: section.id, tab: tab.id, overview: state.overview, status: state.sourceStatus });
   }
-  history.replaceState(null, "", `#${section.id}${tab.id !== def.tabs[0].id ? `/${tab.id}` : ""}`);
+  history.replaceState(null, "", `#${section.id}${tab.id !== def.tabs[0].id ? `/${tab.id}` : ""}${pinId ? `/${pinId}` : ""}`);
   document.querySelectorAll(".app-nav a").forEach((a) => { const on = a.dataset.section === decision.area; a.classList.toggle("is-active", on); if (on) a.setAttribute("aria-current", "true"); else a.removeAttribute("aria-current"); });
   const screenTitle = (section.id === "platform" ? (LANG === "fr" ? "Administration plateforme" : "Platform administration") : section.id === "competition" ? (LANG === "fr" ? "Concurrence" : "Competition") : section.id === "ai_visibility" ? (LANG === "fr" ? "Visibilité IA" : "AI visibility") : t(`s_${section.id}`));
   $("#c-crumb").textContent = decisionLabel(decision.area, LANG);
@@ -438,7 +444,7 @@ async function show(sectionId, tabId) {
   if (!state.url && tab.needsDomain !== false) { panel.append(renderDataGuide("domain")); return; }
   const loading = tab.progress ? el("div", "c-source-progress-host") : el("p", "c-loading", t("loadingOverview")); panel.append(loading);
   try {
-    const nodes = await tab.async(loading);
+    const nodes = await tab.async(tab.progress ? loading : initialFilters);
     if (epoch === viewEpoch && panel.isConnected) {
       loading.replaceWith(...[nodes].flat());
       mountedEditor = [nodes].flat().find(node => typeof node?.dispose === 'function') || null;
@@ -629,14 +635,14 @@ async function start() {
     const notice = el("p", "c-error", LANG === "fr" ? `Le domaine ${state.requestedDomainUnavailable} n’est pas autorisé dans cet espace. Contactez votre administrateur pour l’ajouter.` : `The domain ${state.requestedDomainUnavailable} is not authorized in this workspace. Contact your administrator to add it.`);
     notice.setAttribute("role", "alert"); $("#c-app").prepend(notice);
   }
-  const [s, tb] = location.hash.slice(1).split("/");
+  const [s, tb, hashFilters] = routeFromHash();
   if (!state.url || !state.me?.tenant) { picker.hidden = false; sw.setAttribute("aria-expanded", "true"); }
   startBackground();
   started = true;
-  show(s || (state.me?.tenant?.usageType === "agency" && state.me?.memberships?.length > 1 ? "portfolio" : "overview"), tb);
+  show(s || (state.me?.tenant?.usageType === "agency" && state.me?.memberships?.length > 1 ? "portfolio" : "overview"), tb, hashFilters);
   // The coach is the default welcome. The setup wizard remains available when
   // explicitly requested, including the public website onboarding handoff.
   if (state.me?.tenant && !state.requestedDomainUnavailable && state.openRequestedWizard) launchWizard();
 }
-window.addEventListener("hashchange", () => { const [a, b] = location.hash.slice(1).split("/"); if (a && ALL.some((x) => x.id === a)) show(a, b); });
+window.addEventListener("hashchange", () => { const [a, b, filters] = routeFromHash(); if (a && ALL.some((x) => x.id === a)) show(a, b, filters); });
 start().catch((error) => { console.error(error); loginScreen(); $("#c-login-error").textContent = error.message; });
