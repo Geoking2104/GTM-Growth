@@ -97,11 +97,11 @@ const UI = {
 };
 
 const PILLARS = [
-  { id: "seo", symbol: "⌕", fr: "SEO", en: "SEO" },
-  { id: "geo", symbol: "◇", fr: "GEO", en: "GEO" },
-  { id: "ai", symbol: "✦", fr: "Moteurs IA", en: "AI engines" },
-  { id: "crm", symbol: "◎", fr: "CRM", en: "CRM" },
-  { id: "social", symbol: "↗", fr: "Réseaux sociaux", en: "Social" },
+  { id: "seo", symbol: "⌕", fr: "SEO", en: "SEO", fragment: "audit" },
+  { id: "geo", symbol: "◇", fr: "GEO", en: "GEO", fragment: "geo" },
+  { id: "ai", symbol: "✦", fr: "Moteurs IA", en: "AI engines", fragment: "ai_visibility" },
+  { id: "crm", symbol: "◎", fr: "CRM", en: "CRM", fragment: "crm/connections" },
+  { id: "social", symbol: "↗", fr: "Réseaux sociaux", en: "Social", fragment: "social/connections" },
 ];
 
 const V2_CATEGORY = {
@@ -255,7 +255,14 @@ function pillarCard(pillar, lang, copy) {
   const note = copy[`${pillar.id}Note`];
   card.append(span(`report360-coverage report360-coverage-${pillar.coverage}`, coverage), el("p", "", note));
   if (pillar.id === "seo" || pillar.id === "geo") card.append(el("p", "report360-fact", `${pillar.needsAttention ?? "—"} ${copy.attention}`));
+  card.append(pillarLink(item, lang, copy));
   return card;
+}
+function pillarLink(pillar, lang, copy) {
+  const link = el("a", "report360-workspace", `${copy.connectionOpen} ↗`);
+  link.href = `/console/?lang=${lang}#${pillar.fragment}`;
+  link.setAttribute("aria-label", `${copy.connectionOpen} · ${pillar[lang]}`);
+  return link;
 }
 function actionCard(action, lang, copy, idx) {
   const info = guide(action, lang);
@@ -446,17 +453,16 @@ function renderConnections(lang, copy) {
   const section = el("section", "report360-connections");
   section.append(el("p", "report360-eyebrow", copy.next), el("h2", "", copy.connectionsTitle), el("p", "report360-subtitle", copy.connectionsIntro));
   const items = [
-    ["ai", copy.connectionAi, copy.connectionAiNote, "ai_visibility"],
-    ["crm", copy.connectionCrm, copy.connectionCrmNote, "crm/connections"],
-    ["social", copy.connectionSocial, copy.connectionSocialNote, "social/connections"],
+    ["ai", copy.connectionAi, copy.connectionAiNote],
+    ["crm", copy.connectionCrm, copy.connectionCrmNote],
+    ["social", copy.connectionSocial, copy.connectionSocialNote],
   ];
   const grid = el("div", "report360-connection-grid");
-  for (const [id, label, note, fragment] of items) {
+  for (const [id, label, note] of items) {
     const card = el("article", `report360-connection report360-connection-${id}`);
     const pillar = PILLARS.find(p => p.id === id);
     card.append(span("report360-glyph", pillar?.symbol || "↗"), el("h3", "", label), el("p", "", note));
-    const link = el("a", "report360-workspace", `${copy.connectionOpen} ↗`);
-    link.href = `/console/?lang=${lang}#${fragment}`; card.append(link); grid.append(card);
+    card.append(pillarLink(pillar, lang, copy)); grid.append(card);
   }
   section.append(grid); return section;
 }
