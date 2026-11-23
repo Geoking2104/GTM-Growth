@@ -60,7 +60,7 @@ it.each(["fr", "en"])("renders the per-step impact timeline with J+14/J+28 remin
   expect(head.textContent).toContain("2026");
   expect(head.textContent).toContain(lang === "fr" ? "21 jours" : "21 days");
   expect(head.textContent).toContain(lang === "fr" ? "Confiance : Haute" : "Confidence : High");
-  expect(root!.querySelector("div.impact-reasons")!.textContent).toContain("same_grid_version");
+  expect(root!.querySelector("details.impact-reasons")!.textContent).toContain("same_grid_version");
   const counters = root!.querySelector("ul.impact-counters")!;
   expect(counters.textContent).toContain(lang === "fr" ? "améliorés : 1" : "improved : 1");
   expect(counters.textContent).toContain(lang === "fr" ? "nouvellement observés : 1" : "newly observed : 1");
