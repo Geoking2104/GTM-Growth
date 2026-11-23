@@ -33,7 +33,7 @@ export function renderOpsMarket({ api, me }) {
   /* Volumes form. */
   const volumesInput = el("textarea"); volumesInput.rows = 3; volumesInput.style.width = "100%";
   volumesInput.setAttribute("aria-label", L("Mots-clés (un par ligne)", "Keywords (one per line)"));
-  const volumesDevice = el("select"); for (const [value, text] of [["desktop", L("ordinateur", "desktop")], ["mobile", L("mobile", "mobile")]]) { const o = el("option", "", text); o.value = value; volumesDevice.append(o); }
+  const volumesDevice = el("select"); for (const [value, text] of [["desktop", L("ordinateur", "desktop")], ["mobile", L("mobile", "mobile")]]) { const o = el("option", "", text); o.value = value; o.selected = value === "desktop"; volumesDevice.append(o); }
   const volumesResult = el("div");
   const volumesButton = button(L("Volumes de recherche", "Search volumes"), async () => {
     message.textContent = L("Appel au pont partenaire…", "Calling the partner bridge…");
