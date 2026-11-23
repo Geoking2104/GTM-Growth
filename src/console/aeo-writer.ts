@@ -238,7 +238,7 @@ export function aeoWriterRoutes(deps: AeoWriterDeps = {}): ConsoleRoute[] {
       const dataset = datasetOf(tenantId, str(ctx.body.datasetId) || null);
       if (!dataset) throw new Error("Panneau de visibilité IA introuvable pour ce tenant.");
       const rawContent = typeof ctx.body.content === "string" ? ctx.body.content.trim() : "";
-      const content = rawContent.length >= AEO_CONTENT_MIN ? ctx.body.content : null;
+      const content = rawContent.length >= AEO_CONTENT_MIN ? rawContent : null;
       const brand = str(ctx.body.brand) || undefined;
       const limit = typeof ctx.body.limit === "number" && Number.isFinite(ctx.body.limit) ? ctx.body.limit : AEO_DRAFT_ROWS;
       return aeoDrafts(dataset, content, limit, brand);
