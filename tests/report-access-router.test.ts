@@ -47,6 +47,11 @@ describe("email-gated report routes", () => {
     expect(invite.status).toBe(201);
     const data = await invite.json() as { id: string };
     expect(data.id).toBe(sent?.id);
+    const evidence = { source: 'Provider', observedAt: report.observedAt, excerpt: 'Specific authorised excerpt', citations: ['https://source.example/proof'] };
+    service.shareVisibilityEvidence({ id: data.id, email: 'reader@example.org', page: report.sourceUrl, tenantId: 'acme', pinId: 'pin', evidence });
+    const protectedHtml = await fetch(`${base}/report?id=${data.id}`);
+    expect(protectedHtml.status).toBe(401);
+    expect(await protectedHtml.text()).not.toContain(evidence.excerpt);
     const protectedRead = await fetch(`${base}/download?id=${data.id}&format=md`);
     expect(protectedRead.status).toBe(401);
 
@@ -57,11 +62,14 @@ describe("email-gated report routes", () => {
     expect(verified.headers.get("set-cookie")).toContain("HttpOnly");
     const html = await fetch(`${base}/report?id=${data.id}`, { headers: { Cookie: cookie } });
     expect(html.status).toBe(200);
-    expect((await html.json()).report360.sourceUrl).toBe(report.sourceUrl);
+    expect(await html.json()).toMatchObject({ report360: { sourceUrl: report.sourceUrl }, visibilityEvidence: [evidence] });
+    expect(html.headers.get('cache-control')).toContain('no-store');
     const md = await fetch(`${base}/download?id=${data.id}&format=md`, { headers: { Cookie: cookie } });
     expect(md.status).toBe(200);
     expect(md.headers.get("content-disposition")).toContain(".md");
-    expect(await md.text()).toContain("Rapport gratuit");
+    const markdown = await md.text();
+    expect(markdown).toContain("Rapport gratuit");
+    expect(markdown).not.toContain(evidence.excerpt);
     const pdf = await fetch(`${base}/download?id=${data.id}&format=pdf`, { headers: { Cookie: cookie } });
     expect(pdf.status).toBe(200);
     expect(pdf.headers.get("content-type")).toContain("application/pdf");

@@ -10,6 +10,29 @@ const oldPath = process.env.AI_VISIBILITY_PATH;
 afterEach(() => { closeVisibilityStores(); if (oldPath === undefined) delete process.env.AI_VISIBILITY_PATH; else process.env.AI_VISIBILITY_PATH = oldPath; });
 
 describe("AI visibility transactional storage", () => {
+  it("replays a reviewed tracker import within its own workspace", async () => {
+    process.env.AI_VISIBILITY_PATH = mkdtempSync(path.join(tmpdir(), "ai-store-"));
+    const { aiVisibilityRoutes } = await import("../src/console/ai-visibility.js");
+    const body = {
+      provider: "generic", format: "csv", brands: [{ name: "Alpha" }],
+      payload: "Question,Answer,Date\nCRM?,Alpha is reliable.,2026-11-01",
+    };
+    function call(path: string, tenantId: string, input: Record<string, unknown> = body) {
+      const route = aiVisibilityRoutes.find((candidate) => candidate.path === `/ai-visibility/${path}`)!;
+      return route.handler({ body: input, tenancy: { tenant: { id: tenantId } } } as Parameters<typeof route.handler>[0]);
+    }
+    const preview = await call("import-tracker-preview", "acme") as { previewDigest: string };
+    expect(preview).toMatchObject({ mapping: { prompt: ["Question"], answer: ["Answer"], date: ["Date"] }, existingDatasetId: null });
+    const reviewed = { ...body, previewDigest: preview.previewDigest };
+    await expect(call("import-tracker", "acme", { ...reviewed, payload: body.payload.replace("reliable", "useful") })).rejects.toThrow("Review the current export");
+    const first = await call("import-tracker", "acme", reviewed) as { id: string };
+    expect(await call("import-tracker-preview", "acme")).toMatchObject({ existingDatasetId: first.id });
+    expect(await call("import-tracker", "acme", reviewed)).toMatchObject({ id: first.id, reused: true });
+    expect(await call("import-tracker-preview", "globex")).toMatchObject({ existingDatasetId: null });
+    expect(await call("import-tracker", "globex", reviewed)).toMatchObject({ reused: false });
+    expect(listDatasets("acme")).toHaveLength(1);
+    expect(getDataset("globex", first.id)).toBeUndefined();
+  });
   it("migrates existing JSON once without deleting it and isolates tenants", () => {
     const dir = mkdtempSync(path.join(tmpdir(), "ai-store-")); process.env.AI_VISIBILITY_PATH = dir;
     const legacy = { id: "legacy", createdAt: "2026-01-01T00:00:00Z", brands: [], observations: [] };

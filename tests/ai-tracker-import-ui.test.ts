@@ -20,7 +20,7 @@ const views = {
   overall: { responses: 1, mentions: 1, brands: [{ brand: "Alpha", mentions: 1, shareOfVoice: 100, visibility: 100, sentiment }] },
   note: "Shares are proportions of this stored panel only: mentions per engine divided by that engine's mention total. This is not engine market share and not consumer sessions.",
 };
-const previewResult = { provider: "meteoria", format: "csv", count: 2, engines: ["ChatGPT"], ignoredColumns: ["utm"], normalisedDates: 1, sources: ["Meteoria import (ChatGPT)"], provenance: "imported", warning: "Tracker imports keep the tracker's own measurement; no external call was made." };
+const previewResult = { provider: "generic", format: "csv", count: 2, engines: ["ChatGPT"], mapping: { prompt: ["prompt"] }, previewDigest: "digest", ignoredColumns: ["utm"], normalisedDates: 1, sources: ["Generic import (ChatGPT)"], provenance: "imported", warning: "Tracker imports keep the tracker's own measurement; no external call was made." };
 const importResult = { id: "d9", count: 2, provider: "meteoria", engines: ["ChatGPT"], ignoredColumns: ["utm"], normalisedDates: 1, provenance: "imported" };
 it.each(["fr", "en"])("reviews then commits a tracker import in %s", async lang => {
   const { document, window } = dom(lang); const { renderAiVisibility } = await import("../site/console/ai-visibility.js");
@@ -42,9 +42,10 @@ it.each(["fr", "en"])("reviews then commits a tracker import in %s", async lang 
   await vi.waitFor(() => expect(commit.disabled).toBe(false));
   const feedback = panel.querySelector("[role=status]")!;
   expect(feedback.textContent).toContain(lang === "fr" ? "colonnes ignorées" : "ignored columns");
-  expect(feedback.textContent).toContain("meteoria · csv · 2");
+  expect(feedback.textContent).toContain("generic · csv · 2");
+  expect(feedback.textContent).toContain(lang === "fr" ? "Question ← prompt" : "Prompt ← prompt");
   const previewCall = api.mock.calls.filter(([route]) => route === "/ai-visibility/import-tracker-preview").at(-1)!;
-  expect(previewCall[1]).toMatchObject({ provider: "meteoria", format: "csv", brands: [{ name: "Alpha", aliases: [] }] });
+  expect(previewCall[1]).toMatchObject({ provider: "generic", format: "csv", brands: [{ name: "Alpha", aliases: [] }] });
   payload.value = "date,prompt,answer,utm\n02/01/2026,Best CRM?,Alpha helps teams.,changed";
   payload.dispatchEvent(new window.Event("input"));
   expect(commit.disabled).toBe(true);
@@ -55,7 +56,7 @@ it.each(["fr", "en"])("reviews then commits a tracker import in %s", async lang 
   commit.click();
   await vi.waitFor(() => expect(api.mock.calls.some(([route]) => route === "/ai-visibility/import-tracker")).toBe(true));
   const importCall = api.mock.calls.filter(([route]) => route === "/ai-visibility/import-tracker").at(-1)!;
-  expect(importCall[1]).toMatchObject({ provider: "meteoria", format: "csv", payload: expect.stringContaining("changed"), brands: [{ name: "Alpha", aliases: [] }] });
+  expect(importCall[1]).toMatchObject({ provider: "generic", format: "csv", previewDigest: "digest", payload: expect.stringContaining("changed"), brands: [{ name: "Alpha", aliases: [] }] });
 });
 it("shows a tracker preview error without enabling the commit", async () => {
   const { document } = dom(); const { renderAiVisibility } = await import("../site/console/ai-visibility.js");

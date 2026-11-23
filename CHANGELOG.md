@@ -53,6 +53,33 @@
 
 Release reference is available after the signed tag exists. [v0.23.0](https://github.com/Geoking2104/GTM-Growth/releases/tag/v0.23.0)
 
+### Visibility evidence, durable collections, matched-cohort comparison and editorial impact
+
+- Answer evidence now records an explicit measurement context — engine, model,
+  mode (`api`, `consumer`, `tracker`, `manual`), language and market — next to
+  a declared and an effective provenance and a collection-verified flag, and
+  citation metadata is tracked as available or missing. Re-imported tracker
+  exports reuse the stored dataset by fingerprint instead of duplicating
+  panels, and per-tenant dataset capacity is enforced by the store.
+- Panels that share a brand signature can be compared across collection
+  periods through matched-cohort observations (`matched-cohorts-v1`): each
+  side keeps its scope (source, dates, prompt groups), observations are
+  matched by cohort key, cohorts without a comparable pair are excluded and
+  reported, and the comparison exports to CSV with injection-safe cells.
+- Scheduled visibility collections run durably: a PostgreSQL job store and a
+  Redis queue claim and run per-tenant collection jobs with the tenant's own
+  AI account, bounded by dataset capacity and explicit job states (queued,
+  claimed, calling, succeeded, failed, provider rate limit, quota, panel or
+  account unavailable). The legacy in-process ops scheduler stands down when
+  `VISIBILITY_JOBS_ENABLED=true`, the queue is opt-in and off by default, and
+  the console exposes a bilingual schedule console with per-job histories.
+- Editorial decisions pin verified AI evidence: an answer pin records the
+  dataset, dataset scope and snapshot date it was read from, drafts are
+  checked against the editorial quality gates with optimistic revision
+  checks, WordPress publication remains double-verified against the approved
+  revision, and J+14/J+28 client follow-ups are planned from the verified
+  impact reads of the pinned scope.
+
 ### Citation gaps in the visibility panel (R2)
 
 - The citation-source gap analysis delivered with the observation model is
