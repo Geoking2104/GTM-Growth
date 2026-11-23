@@ -78,6 +78,10 @@ when the grid version changed, the pair is not comparable, the window is under
 one day or over a year, or coverage is under 0.20; it is capped at `medium`
 while measured coverage stays partial or the interval exceeds 180 days. A
 snapshot from another page refuses the whole timeline (`scope_mismatch`).
+The public read page renders this timeline and the J+14/J+28 dates in a
+dedicated panel after the report invitation (`site/console/impact-timeline.js`),
+run-token authorised, with the panel disappearing when the trajectory is
+unavailable.
 
 Counters are **never summed**: each step reports its own outcome counters and
 no totals are computed across steps, scopes or clients. The response also
@@ -86,7 +90,9 @@ observation (UTC calendar days, `upcoming`/`due`), each with a bilingual
 suggested action — re-run the same URL with the same method, then send the
 white-label client report in the client's language. By default reminders stay
 surfaces only: nothing is emailed or scheduled automatically.
-`tests/impact-timeline.test.ts` covers the pure classifier.
+`tests/impact-timeline.test.ts` covers the pure classifier;
+`tests/impact-timeline-ui.test.ts` covers the public panel that renders the
+per-step trajectory and the J+14/J+28 dates after the report invitation.
 
 ### Scheduled J+14/J+28 white-label dispatch (double opt-in)
 
