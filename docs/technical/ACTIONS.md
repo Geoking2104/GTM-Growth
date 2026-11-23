@@ -89,9 +89,25 @@ rules above) decides. Execution still runs the target module's own
 validations; an agent's standing instruction cannot bypass them. See
 [docs/PAP-SPECIFICATION.md](../PAP-SPECIFICATION.md) for the protocol-level
 rules; the extension is advertised only after acceptance, behind
-`PAP_OPERATIONS_ENABLED` (fail-closed, off by default). This first R11
-increment ships the catalog, ledger, adapters, audit and console routes; the
-PAP propose surface and the flag land in the second R11 increment.
+`PAP_OPERATIONS_ENABLED` (fail-closed, off by default). This delivery ships
+the propose surface: the `gtm:operations:propose` scope, the
+`POST /api/poppy/operations/propose` route and the ledger wiring, all
+gated on the flag. The flag stays off until pilot acceptance; with the flag
+off the scope is refused in consent, absent from discovery, the OAuth
+protected-resource metadata and the OpenAPI facade, and the route answers
+503. The stable MCP tool contracts are documented in
+[docs/mcp/TOOLS.md](../mcp/TOOLS.md) alongside this catalog.
+
+The route contract matches the read pilot: bearer access token, exact
+resource origin, `Poppy-Version: 1.0`, no extension headers, a fresh
+delegated `Poppy-Session` proof bound to the token, rate limits per grant
+and per tenant, and a re-read of the authorization state before writing.
+`{ action, terms }` runs the same strict entry rules as the console
+proposal (`normaliseTerms`), an IndexNow proposal must target a domain the
+tenant owns, and the answer is `{ proposed, operationId, state,
+proposalExpiresAt, next }` plus the console link: no execution data, ever.
+Both audit trails record the proposal (PAP audit and
+`action_events`), with the actor `agent:<client_id>`.
 
 ## Validation
 
@@ -104,4 +120,10 @@ PAP propose surface and the flag land in the second R11 increment.
 - `tests/actions-routes.test.ts`: member/admin gating, catalog publication,
   one-click approve+execute, IndexNow tenant-domain refusal, out-of-catalog
   refusals, replay, cancellation, resolve rules.
+- `tests/poppy-operations.test.ts`: the PAP propose surface — no advertisement
+  and a 503 while `PAP_OPERATIONS_ENABLED` is off; scope, OAuth token and
+  delegated-session gates; a proposal recorded with origin `pap` and actor
+  `agent:<client>` for the exact tenant, journalled in both audit trails; and
+  the out-of-catalog (`invalid_request`) and out-of-domain (`resource_denied`)
+  refusals.
 - CI runs every suite with the full toolchain (`pnpm test`).
