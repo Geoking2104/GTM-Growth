@@ -127,7 +127,7 @@ export function renderOpsMarket({ api, me }) {
     if (!config.enabled) {
       wrap.append(el("p", "c-note", L("Aucun pont données de marché activé. L’opérateur configure MARKET_DATA_ENABLED=true, MARKET_DATA_API_URL, MARKET_DATA_API_LOGIN et MARKET_DATA_API_PASSWORD ; Google.fr est la première locale (MARKET_DATA_LOCALES).", "No market-data bridge enabled. The operator configures MARKET_DATA_ENABLED=true, MARKET_DATA_API_URL, MARKET_DATA_API_LOGIN and MARKET_DATA_API_PASSWORD; Google.fr is the first locale (MARKET_DATA_LOCALES).")));
     } else {
-      wrap.append(el("p", "c-note", `${config.provider} — ${L("locales activées", "enabled locales")} : ${config.locales.join(", ")}`));
+      wrap.append(el("p", "c-note", `${config.provider} — ${L("locales activées", "enabled locales")} : ${config.locales.join(", ")} · ${L("provenance partenaire", "partner provenance")} : ${config.provenance}`));
       wrap.append(volumesBlock(), serpBlock(), gridBlock());
       if (!admin) wrap.append(el("p", "c-note", L("Seuls les administrateurs peuvent lancer des appels partenaire.", "Only administrators can run partner calls.")));
     }

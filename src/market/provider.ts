@@ -214,7 +214,7 @@ export async function marketGrid(
   const device = input.device ?? "mobile";
   const { observedAt, costUsd, data } = await callPartner(config, "/local-grid", { keyword: input.keyword, locale, device, grid: input.grid }, transport);
   const rows = Array.isArray(data.points) ? data.points : [];
-  const results = input.grid.map((point, index) => {
+  const results = input.grid.map((point, index): MarketGridPoint => {
     const row = rows[index] as Record<string, unknown> | undefined;
     const rawRank = typeof row?.rank === "number" && Number.isFinite(row.rank) ? Math.trunc(row.rank) : null;
     const rank = rawRank !== null && rawRank >= 1 && rawRank <= LOCAL_GRID_DEPTH ? rawRank : null;
