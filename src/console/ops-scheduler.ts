@@ -103,25 +103,32 @@ export async function runDueJobs(options: SchedulerOptions = {}): Promise<{ tena
   return { tenants: store.list().length, jobs: jobs + followUpPass.jobs, details: [...details, ...followUpPass.details] };
 }
 
+/** Env-gated, fail-closed runtime for the R9 follow-up pipeline, shared by
+ * the scheduled pass and the pre-approved action catalog (R11). `ownsStore`
+ * tells the caller to close the database handle when it built it. */
+export function reportFollowUpsRuntime(injected?: SchedulerOptions["reportFollowUps"]): { store: FollowUpStore; sender: FollowUpSender; reader: FollowUpReader; ownsStore: boolean } | null {
+  if (injected) return { store: injected.store, sender: injected.sender, reader: injected.reader, ownsStore: false };
+  const settings = process.env.REPORT_ACCESS_ENABLED === "true" ? smtpSettings() : null;
+  return followUpsEnabled() && settings && process.env.REPORT_ACCESS_SECRET && process.env.REPORT_ACCESS_SECRET.length >= 32
+    ? {
+      store: new ReportAccessService({ dbPath: process.env.REPORT_ACCESS_DB_PATH || "data/report-access.sqlite3", secret: process.env.REPORT_ACCESS_SECRET }),
+      sender: createSmtpFollowUpSender(settings),
+      reader: followUpReaderFromEnv(),
+      ownsStore: true,
+    }
+    : null;
+}
+
 /** Scheduled R9 follow-ups pass, drained once per tick after tenant jobs.
  * The default wiring is env-gated and fail-closed (REPORT_FOLLOW_UPS_ENABLED);
  * tests inject a store/sender/reader through the same options. */
 export async function drainReportFollowUps(options: SchedulerOptions, now: () => Date): Promise<{ tenants: number; jobs: number; details: Array<{ tenant: string; job: string; status: string }> }> {
   const details: Array<{ tenant: string; job: string; status: string }> = [];
   let jobs = 0;
-  const injected = options.reportFollowUps;
-  const settings = process.env.REPORT_ACCESS_ENABLED === "true" ? smtpSettings() : null;
-  const runtime = injected ?? (followUpsEnabled() && settings && process.env.REPORT_ACCESS_SECRET && process.env.REPORT_ACCESS_SECRET.length >= 32
-    ? {
-      store: new ReportAccessService({ dbPath: process.env.REPORT_ACCESS_DB_PATH || "data/report-access.sqlite3", secret: process.env.REPORT_ACCESS_SECRET }),
-      sender: createSmtpFollowUpSender(settings),
-      reader: followUpReaderFromEnv(),
-    }
-    : null);
+  const runtime = reportFollowUpsRuntime(options.reportFollowUps);
   if (!runtime) return { tenants: 0, jobs, details };
   // When this pass built the store itself, close it again: the next tick
   // reopens fresh, so no database handle accumulates on a long-lived scheduler.
-  const ownsStore = !injected;
   jobs++;
   try {
     const result = await dispatchDueFollowUps({
@@ -129,11 +136,11 @@ export async function drainReportFollowUps(options: SchedulerOptions, now: () =>
       renderPdf: (report, language, opts) => renderReportPdf(report as FreeReport360, language, { brand: opts?.brand ?? null }),
       suggestionFor: (milestone) => followUpSuggestionFor(milestone),
       reportNote: FOLLOWUP_REPORT_NOTE,
-      limit: injected?.limit ?? 5, now,
+      limit: options.reportFollowUps?.limit ?? 5, now,
     });
     details.push({ tenant: "report-access", job: "report-follow-ups", status: `sent:${result.sent}/failed:${result.failed}` });
   } finally {
-    if (ownsStore && runtime.store instanceof ReportAccessService) runtime.store.close();
+    if (runtime.ownsStore && runtime.store instanceof ReportAccessService) runtime.store.close();
   }
   return { tenants: 0, jobs, details };
 }

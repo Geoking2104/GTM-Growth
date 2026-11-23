@@ -37,6 +37,15 @@ into per-crawler and per-section crawl coverage, and produce Apply-Mode dry-run
 drafts of the AI-bot robots policy and an llms.txt skeleton: free, stateless,
 nothing invented, no writer wired.
 
+The [pre-approved action catalog](ACTIONS.md) (R11) turns confirmed intents into
+reviewable one-click operations: three versioned actions (bounded IndexNow
+submissions to the exact tenant host, pure local drafting, dispatch of an
+already-due J+14/J+28 follow-up), explicit never-eligible exclusions, and a
+governed SQLite ledger whose approvals ride the exact approved terms, with
+atomic claims, replay-safe execution, `reconciling` instead of auto-retry, and
+a per-execution audit trail. Every write outside the catalog keeps its human
+confirmation; a console panel is a later increment, the routes come first.
+
 The [console decision refit](../journey/CONSOLE-DECISION-REFIT.md) includes five
 business areas plus a member Portfolio, a durable cross-module inbox, synchronized
 intent evidence and a four-check GTM audit. `src/console/decision-*.ts` and
