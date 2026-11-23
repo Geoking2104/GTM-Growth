@@ -10,14 +10,14 @@ import { fetchPublicPage } from "../http/public-fetch.js";
 import type { Fetcher } from "../geo/http.js";
 import { canonicalVerifiedHostname } from "../geo/rendering/verified-domain.js";
 import { normalizeHost } from "../tenants/store.js";
-import { TenantAccessError } from "../tenants/context.js";
+import { TenantAccessError, type TenantContext } from "../tenants/context.js";
 import { analyzeAiCrawlerLogs, AI_CRAWLER_LOGS_MAX_BYTES, AI_CRAWLER_LOGS_MAX_LINES } from "../ai-crawlers/logs.js";
 import { buildAiCrawlerPolicyDraft, parseCrawlerChoices } from "../ai-crawlers/policy.js";
 import type { ConsoleRoute } from "./util.js";
 
 /** Dependency injection stays in the server/test composition root. */
 export function aiCrawlerRoutes(fetcher?: Fetcher): ConsoleRoute[] {
-  const requireActiveTenant = (tenancy: { tenant?: { id?: string; status?: string; domains?: string[] } }, userSub?: string) => {
+  const requireActiveTenant = (tenancy: TenantContext | undefined, userSub?: string) => {
     const tenant = tenancy?.tenant;
     if (!tenant || tenant.status !== "active" || !userSub)
       throw new TenantAccessError("Un tenant actif authentifié est requis pour l'analytique des crawlers IA");
@@ -36,7 +36,7 @@ export function aiCrawlerRoutes(fetcher?: Fetcher): ConsoleRoute[] {
       needsUrl: false,
       adminOnly: true,
       handler: async ({ body, user, tenancy }) => {
-        const tenant = requireActiveTenant(tenancy ?? {}, user?.sub);
+        const tenant = requireActiveTenant(tenancy, user?.sub);
         if (body.confirm !== undefined || body.apply !== undefined || (body.mode !== undefined && body.mode !== "dry-run"))
           throw new Error("Les écritures Apply sont désactivées ; seul le dry-run est disponible.");
         const rawUrl = typeof body.url === "string" ? body.url.trim() : "";
@@ -73,7 +73,7 @@ export function aiCrawlerRoutes(fetcher?: Fetcher): ConsoleRoute[] {
       needsUrl: false,
       adminOnly: true,
       handler: async ({ body, user, tenancy }) => {
-        requireActiveTenant(tenancy ?? {}, user?.sub);
+        requireActiveTenant(tenancy, user?.sub);
         const logs = typeof body.logs === "string" ? body.logs : "";
         if (Buffer.byteLength(logs, "utf8") > AI_CRAWLER_LOGS_MAX_BYTES || logs.split("\n").length > AI_CRAWLER_LOGS_MAX_LINES)
           throw new Error(`Journaux trop volumineux (limite ${AI_CRAWLER_LOGS_MAX_LINES} lignes ou ${AI_CRAWLER_LOGS_MAX_BYTES} octets) ; fournissez un extrait plus court.`);
