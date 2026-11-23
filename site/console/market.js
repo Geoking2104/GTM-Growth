@@ -1,8 +1,11 @@
-/* Partner market-data console panel (R4): keyword search volumes, Google SERP
- * positions and GBP local rank grids from the operator's DataForSEO-compatible
- * bridge. Every figure carries provenance `partner-api`, the observation date
+/* Partner market-data console panel (R4/R5): keyword search volumes, Google
+ * SERP positions, GBP local rank grids and backlink intelligence (overview,
+ * link gap, disavow export) from the operator's DataForSEO-compatible bridge.
+ * Every partner figure carries provenance `partner-api`, the observation date
  * and the locale; unknown stays "—", never zero; the operator owns the partner
- * keys and the call costs. Partner calls are tenant-admin only. */
+ * keys and the call costs. Partner calls are tenant-admin only. The disavow
+ * export is a pure tenant selection (provenance tenant-selection), no partner
+ * call, and stays available even when the bridge is off. */
 import { el } from "./render.js";
 import { LANG } from "./i18n.js";
 const L = (fr, en) => LANG === "fr" ? fr : en;
@@ -24,7 +27,7 @@ export function renderOpsMarket({ api, me }) {
   const content = el("div"); const message = el("p", "c-note"); message.setAttribute("role", "status");
   box.append(
     el("h3", "", L("Données de marché partenaires", "Partner market data")),
-    el("p", "c-note", L("Volumes de recherche, positions Google et grille locale GBP depuis le pont partenaire de l’opérateur. Chaque chiffre porte la provenance partner-api avec sa date d’observation ; aucune valeur n’est inventée hors pont et les coûts d’appel restent à l’opérateur.", "Search volumes, Google positions and GBP local grids from the operator's partner bridge. Every figure carries provenance partner-api with its observation date; nothing is invented outside the bridge and call costs stay with the operator.")),
+    el("p", "c-note", L("Volumes de recherche, positions Google, grille locale GBP et intelligence de netlinking (aperçu, écart concurrentiel, export disavow) depuis le pont partenaire de l’opérateur. Chaque chiffre porte la provenance partner-api avec sa date d’observation ; aucune valeur n’est inventée hors pont et les coûts d’appel restent à l’opérateur.", "Search volumes, Google positions, GBP local grids and backlink intelligence (overview, competitor gap, disavow export) from the operator's partner bridge. Every figure carries provenance partner-api with its observation date; nothing is invented outside the bridge and call costs stay with the operator.")),
     content, message,
   );
   let enabled = false;
@@ -89,13 +92,82 @@ export function renderOpsMarket({ api, me }) {
   });
   gridButton.disabled = true;
 
+  /* Backlinks: domain overview, link gap versus named competitors (R5). */
+  const blDomain = el("input"); blDomain.placeholder = " exemple.fr "; blDomain.size = 28;
+  blDomain.setAttribute("aria-label", L("Domaine à analyser", "Domain to analyse"));
+  const blReferrers = el("input"); blReferrers.type = "number"; blReferrers.min = "1"; blReferrers.max = "50"; blReferrers.value = "20"; blReferrers.style.width = "64px";
+  blReferrers.setAttribute("aria-label", L("Référents affichés (max 50)", "Referrers shown (max 50)"));
+  const blOverviewResult = el("div");
+  const blOverviewButton = button(L("Aperçu netlinking", "Backlink overview"), async () => {
+    message.textContent = L("Appel au pont partenaire…", "Calling the partner bridge…");
+    try {
+      const result = await api("/market/backlinks/overview", { domain: blDomain.value, referrersLimit: Number(blReferrers.value) || 20 });
+      message.textContent = "";
+      const profile = el("p", "c-note", `${L("Profil de", "Profile of")} ${dash(result.profile?.domain)} · ${L("backlinks", "backlinks")} : ${dash(result.profile?.backlinks)} · ${L("domaines référents", "referring domains")} : ${dash(result.profile?.refDomains)}`);
+      const table = el("table", "c-table"); const head = el("tr");
+      for (const h of [L("Domaine référent", "Referring domain"), L("Backlinks", "Backlinks")]) head.append(el("th", "", h));
+      table.append(head);
+      for (const r of result.referrers ?? []) { const tr = el("tr"); tr.append(el("td", "", String(r.domain ?? "")), el("td", "", dash(r.backlinks))); table.append(tr); }
+      blOverviewResult.replaceChildren(el("p", "c-note", metaLine(result)), profile, table);
+    } catch (error) { message.textContent = error.message; }
+  });
+  blOverviewButton.disabled = true;
+
+  const blCompetitors = el("input"); blCompetitors.placeholder = L(" concurrent1.fr, concurrent2.fr ", "competitor1.fr, competitor2.fr "); blCompetitors.size = 40;
+  blCompetitors.setAttribute("aria-label", L("Concurrents (1 à 5, séparés par des virgules)", "Competitors (1 to 5, comma-separated)"));
+  const blGapResult = el("div");
+  const blGapButton = button(L("Écart de netlinking", "Link gap"), async () => {
+    message.textContent = L("Appel au pont partenaire…", "Calling the partner bridge…");
+    try {
+      const competitors = [...new Set(blCompetitors.value.split(",").map((c) => c.trim()).filter(Boolean))];
+      const result = await api("/market/backlinks/gap", { domain: blDomain.value, competitors });
+      message.textContent = "";
+      const profilesTable = el("table", "c-table"); const pHead = el("tr");
+      for (const h of [L("Domaine", "Domain"), L("Backlinks", "Backlinks"), L("Domaines référents", "Referring domains")]) pHead.append(el("th", "", h));
+      profilesTable.append(pHead);
+      for (const r of result.profiles ?? []) { const tr = el("tr"); tr.append(el("td", "", String(r.domain ?? "")), el("td", "", dash(r.backlinks)), el("td", "", dash(r.refDomains))); profilesTable.append(tr); }
+      const gapsTable = el("table", "c-table"); const gHead = el("tr");
+      for (const h of [L("Domaine à aller chercher", "Domain to pursue"), L("Cite", "Cites"), L("Backlinks vers lui", "Backlinks to it")]) gHead.append(el("th", "", h));
+      gapsTable.append(gHead);
+      for (const r of result.gaps ?? []) { const tr = el("tr"); tr.append(el("td", "", String(r.domain ?? "")), el("td", "", String((r.citedBy ?? []).join(", "))), el("td", "", dash(r.backlinks))); gapsTable.append(tr); }
+      const gapNote = el("p", "c-note", L("Ces domaines citent au moins un concurrent nommé mais pas le domaine du client : terrain de netlinking à instruire, pas un plan d’action automatique.", "These domains cite at least one named competitor but not the client's domain: link-building ground to review, not an automatic action plan."));
+      blGapResult.replaceChildren(el("p", "c-note", metaLine(result)), profilesTable, el("p", "c-note", L("Profils comparés", "Compared profiles")), gapsTable, gapNote);
+    } catch (error) { message.textContent = error.message; }
+  });
+  blGapButton.disabled = true;
+
+  /* Disavow export: pure tenant selection, partner-free, bridge-independent. */
+  const blDisavowInput = el("textarea"); blDisavowInput.rows = 4; blDisavowInput.style.width = "100%";
+  blDisavowInput.setAttribute("aria-label", L("Domaines à désavouer (un par ligne, 200 max)", "Domains to disavow (one per line, 200 max)"));
+  const blDisavowResult = el("div");
+  const blDisavowButton = button(L("Générer le fichier disavow", "Generate disavow file"), async () => {
+    message.textContent = "";
+    try {
+      const result = await api("/market/backlinks/disavow", { domains: blDisavowInput.value.split("\n").map((d) => d.trim()).filter(Boolean) });
+      message.textContent = "";
+      const pre = el("pre", "c-code"); pre.textContent = result.content ?? "";
+      blDisavowResult.replaceChildren(
+        el("p", "c-note", `${L("Fichier", "File")} : ${dash(result.filename)} · ${dash(result.count)} ${L("domaines (provenance : sélection client, aucun appel partenaire)", "domains (provenance: tenant selection, no partner call)")}`),
+        pre,
+        el("p", "c-note", result.note ?? ""),
+        el("p", "c-note", L("Relisez le fichier avant tout import Search Console : le désavow est un acte manuel de l’exploitant, jamais automatique ici.", "Review the file before any Search Console import: disavowing is a manual operator act, never automated here.")),
+      );
+    } catch (error) { message.textContent = error.message; }
+  });
+  blDisavowButton.disabled = true;
+
   const volumesRow = el("p"); volumesRow.append(volumesInput, document.createTextNode(" "), volumesDevice, document.createTextNode(" "), volumesButton);
   const serpRow = el("p"); serpRow.append(serpInput, document.createTextNode(` ${L("profondeur", "depth")} `), serpDepth, document.createTextNode(" "), serpButton);
   const gridRow = el("p"); gridRow.append(gridKeyword, document.createTextNode(` ${L("centre", "centre")} `), gridLat, document.createTextNode(" "), gridLng, document.createTextNode(` ${L("rayon (km)", "distance (km)")} `), gridDistance, document.createTextNode(" "), gridButton);
   const volumesBox = el("div"); volumesBox.append(el("h4", "", L("Volumes de recherche Google", "Google search volumes")), volumesRow, volumesResult);
   const serpBox = el("div"); serpBox.append(el("h4", "", L("Positions Google (SERP)", "Google positions (SERP)")), serpRow, serpResult);
   const gridBox = el("div"); gridBox.append(el("h4", "", L("Grille locale Google Business Profile", "Google Business Profile local grid")), el("p", "c-note", L("Grille 5×5 autour du centre, mobile, rangs jusqu’à 20 : au-delà le point est non trouvé, jamais zéro.", "5×5 grid around the centre, mobile, ranks up to 20: beyond, the point is not found, never zero.")), gridRow, gridResult);
-  content.append(statusLine, volumesBox, serpBox, gridBox);
+  const blOverviewRow = el("p"); blOverviewRow.append(blDomain, document.createTextNode(` ${L("référents", "referrers")} `), blReferrers, document.createTextNode(" "), blOverviewButton);
+  const blOverviewBox = el("div"); blOverviewBox.append(el("h4", "", L("Aperçu netlinking du domaine", "Domain backlink overview")), blOverviewRow, blOverviewResult);
+  const blGapRow = el("p"); blGapRow.append(blCompetitors, document.createTextNode(" "), blGapButton);
+  const blGapBox = el("div"); blGapBox.append(el("h4", "", L("Écart de netlinking vs concurrents", "Link gap versus competitors")), el("p", "c-note", L("Jusqu’à 5 concurrents nommés : le pont liste les domaines qui les citent sans citer le domaine du client.", "Up to 5 named competitors: the bridge lists domains citing them without citing the client's domain.")), blGapRow, blGapResult);
+  const blDisavowBox = el("div"); blDisavowBox.append(el("h4", "", L("Export disavow (sélection client)", "Disavow export (tenant selection)")), el("p", "c-note", L("Copiez-collez votre sélection de domaines à désavouer : le fichier texte est généré localement, sans appel partenaire, puis vous l’importez manuellement dans Search Console après relecture.", "Paste your selection of domains to disavow: the text file is generated locally, with no partner call, then you import it manually into Search Console after review.")), blDisavowInput, blDisavowButton, blDisavowResult);
+  content.append(statusLine, volumesBox, serpBox, gridBox, blOverviewBox, blGapBox, blDisavowBox);
 
   const load = async () => {
     try {
@@ -107,8 +179,10 @@ export function renderOpsMarket({ api, me }) {
     } catch (error) { statusLine.textContent = error.message; enabled = false; }
     const gate = enabled && admin;
     volumesButton.disabled = !gate; serpButton.disabled = !gate; gridButton.disabled = !gate;
+    blOverviewButton.disabled = !gate; blGapButton.disabled = !gate;
+    blDisavowButton.disabled = !admin; /* pure tenant selection: works with the bridge off */
     if (!gate) box.append(el("p", "c-note", admin
-      ? L("Les appels partenaire attendent l’activation du pont par l’opérateur ; aucune donnée n’est inventée en attendant.", "Partner calls wait for the operator to enable the bridge; no data is invented in the meantime.")
+      ? L("Les appels partenaire attendent l’activation du pont par l’opérateur ; aucune donnée n’est inventée en attendant. L’export disavow, lui, reste disponible : c’est votre sélection client, sans appel partenaire.", "Partner calls wait for the operator to enable the bridge; no data is invented in the meantime. The disavow export stays available: it is your tenant selection, with no partner call.")
       : L("Seuls les administrateurs du client peuvent lancer les appels partenaire (coûts à l’opérateur).", "Only tenant administrators can trigger partner calls (costs are the operator's).")));
   };
   void load();

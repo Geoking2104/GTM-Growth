@@ -53,8 +53,9 @@ it.each(["fr", "en"])("shows the disabled-bridge state and gates every partner b
   expect(api.mock.calls.length).toBe(1);
   expect(api.mock.calls[0]![0]).toBe("/market/status");
   const buttons = [...root!.querySelectorAll<HTMLButtonElement>("button")];
-  expect(buttons.length).toBe(3);
-  for (const b of buttons) expect(b.disabled).toBe(true);
+  expect(buttons.length).toBe(6);
+  expect(buttons.filter((b) => b.disabled).length).toBe(5);
+  expect(buttons.filter((b) => !b.disabled).map((b) => b.textContent)).toContain(lang === "fr" ? "Générer le fichier disavow" : "Generate disavow file");
   expect(root!.querySelector("h3")!.textContent).toBe(lang === "fr" ? "Données de marché partenaires" : "Partner market data");
   expect(root!.textContent).toContain(lang === "fr" ? "aucune donnée n’est inventée" : "no data is invented");
 });
