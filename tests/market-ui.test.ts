@@ -71,7 +71,7 @@ it("runs the three admin partner calls with bounded bodies and maps the partner 
 
   const volumeInput = root!.querySelector("textarea")!;
   volumeInput.value = "  audit seo lyon \n mot inconnu \n\n";
-  const [volumes, serp, grid] = buttons;
+  const [volumes, serp] = buttons;
   volumes.click();
   await vi.waitFor(() => expect(root!.querySelector("table")!.textContent).toContain("1300"));
   expect(api.mock.calls.some((call: any[]) => call[0] === "/market/volumes" && call[1].keywords.length === 2 && call[1].keywords[0] === "audit seo lyon" && call[1].device === "desktop")).toBe(true);
