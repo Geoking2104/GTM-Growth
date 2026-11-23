@@ -47,6 +47,7 @@ import { aiProviderRoutes } from "./ai-visibility-providers.js";
 import { competitionRoutes } from "./competition.js";
 import { operationsRoutes } from "./ops-routes.js";
 import { marketRoutes } from "./market.js";
+import { marketDataConfig } from "../market/provider.js";
 import { aiCrawlerRoutes } from "./ai-crawlers.js";
 import { actionRoutes } from "./actions.js";
 import { aeoWriterRoutes } from "./aeo-writer.js";
@@ -440,8 +441,9 @@ export function discoverTenant(store: TenantStore, query: { email?: string; host
   return { id: tenant.id, name: tenant.branding.displayName ?? tenant.name, mode: tenant.mode, issuer: tenant.issuer, organization: tenant.mode === "organization" ? tenant.id : null, branding: { logoUrl: tenant.branding.logoUrl ?? null, primaryColor: tenant.branding.primaryColor ?? null } };
 }
 
-export function allConsoleRoutes(visibilityJobs?: VisibilityJobStore | null): ConsoleRoute[] {
-  return [...phase1Routes, ...phase2Routes, ...phase3Routes, ...analyticsRoutes, ...gtmRoutes, ...aiVisibilityRoutes, ...aiProviderRoutes, ...aiConnectionRoutes, ...competitionRoutes, ...operationsRoutes, ...marketRoutes(), ...aiCrawlerRoutes(), ...actionRoutes(), ...aeoWriterRoutes(), ...visibilityScheduleRoutes(visibilityJobs), ...applyPreviewRoutes, ...applyWriteRoutes, ...localSeoRoutes, ...socialRoutes, ...crmRoutes, ...visualCatalogRoutes, ...dataAgentRoutes, ...journeyRoutes, ...commerceRoutes, ...decisionInboxRoutes, ...decisionIntentRoutes, ...decisionEditorialRoutes, ...decisionPortfolioRoutes, ...measurementRoutes, ...scenarioRoutes];
+export function allConsoleRoutes(visibilityJobs?: VisibilityJobStore | null, cloud?: CloudAccess): ConsoleRoute[] {
+  const meterPartnerCost = cloud ? (tenantId: string, costUsd: number) => cloud!.meterPartnerCost(tenantId, costUsd) : undefined;
+  return [...phase1Routes, ...phase2Routes, ...phase3Routes, ...analyticsRoutes, ...gtmRoutes, ...aiVisibilityRoutes, ...aiProviderRoutes, ...aiConnectionRoutes, ...competitionRoutes, ...operationsRoutes, ...(meterPartnerCost ? marketRoutes(marketDataConfig(), { meterPartnerCost }) : marketRoutes()), ...aiCrawlerRoutes(), ...actionRoutes(), ...aeoWriterRoutes(), ...visibilityScheduleRoutes(visibilityJobs), ...applyPreviewRoutes, ...applyWriteRoutes, ...localSeoRoutes, ...socialRoutes, ...crmRoutes, ...visualCatalogRoutes, ...dataAgentRoutes, ...journeyRoutes, ...commerceRoutes, ...decisionInboxRoutes, ...decisionIntentRoutes, ...decisionEditorialRoutes, ...decisionPortfolioRoutes, ...measurementRoutes, ...scenarioRoutes];
 }
 
 export function mountConsoleApi(app: Express, options: ConsoleOptions = {}): void {
@@ -458,5 +460,5 @@ export function mountConsoleApi(app: Express, options: ConsoleOptions = {}): voi
     return found ? res.json(found) : fail(res, 404, "Aucun espace client trouvé.");
   });
   app.use("/api/platform", buildPlatformRouter(opts));
-  app.use("/api/console", buildConsoleRouter(options.routes ?? allConsoleRoutes(options.visibilityJobs), opts));
+  app.use("/api/console", buildConsoleRouter(options.routes ?? allConsoleRoutes(options.visibilityJobs, options.cloud), opts));
 }
