@@ -133,3 +133,37 @@ describe("market backlinks console routes (R5)", () => {
     await expect(partner.handler(ctx({ domains: ["pas-un-domaine"] }))).rejects.toThrow("Nom de domaine invalide.");
   });
 });
+
+describe("partner-cost metering (R10)", () => {
+  it("meters the partner-reported cost of every successful partner call for the exact tenant", async () => {
+    const metered: Array<[string, number]> = [];
+    const meterPartnerCost = (tenantId: string, costUsd: number) => metered.push([tenantId, costUsd]);
+    const routes = (path: string) => marketRoutes(config, { meterPartnerCost }).find((r) => r.path === path)!;
+    stubPartner({ observedAt: "2026-11-23T12:00:00Z", costUsd: 0.012, volumes: [{ keyword: "audit seo lyon", search_volume: 1300 }] });
+    await routes("/market/volumes").handler(ctx({ keywords: ["audit seo lyon"] }));
+    stubPartner({ observedAt: "2026-11-23T12:30:00Z", costUsd: 0.04, profiles: [], gaps: [] });
+    await routes("/market/backlinks/gap").handler(ctx({ domain: "exemple.fr", competitors: ["comp1.fr"] }));
+    stubPartner({ observedAt: "2026-11-23T13:00:00Z", costUsd: 0.002, organic_results: [] });
+    await routes("/market/serp").handler(ctx({ keyword: "crm pme" }));
+    expect(metered).toEqual([["acme", 0.012], ["acme", 0.04], ["acme", 0.002]]);
+  });
+
+  it("never meters an unknown partner cost nor the partner-free disavow export", async () => {
+    const metered: Array<[string, number]> = [];
+    const meterPartnerCost = (tenantId: string, costUsd: number) => metered.push([tenantId, costUsd]);
+    const routes = (path: string) => marketRoutes(config, { meterPartnerCost }).find((r) => r.path === path)!;
+    stubPartner({ observedAt: "2026-11-23T14:00:00Z", volumes: [{ keyword: "mot", search_volume: 10 }] });
+    const volumes = await routes("/market/volumes").handler(ctx({ keywords: ["mot"] })) as Record<string, unknown>;
+    expect(volumes.costUsd).toBeNull();
+    await routes("/market/backlinks/disavow").handler(ctx({ domains: ["spam1.fr"] }));
+    expect(metered).toEqual([]);
+  });
+
+  it("swallows a metering failure: the partner answer wins over the measurement", async () => {
+    stubPartner({ observedAt: "2026-11-23T15:00:00Z", costUsd: 0.03, backlinks: 900, ref_domains: 120, referrers: [] });
+    const routes = (path: string) => marketRoutes(config, { meterPartnerCost: () => { throw new Error("ledger indisponible"); } }).find((r) => r.path === path)!;
+    const result = await routes("/market/backlinks/overview").handler(ctx({ domain: "exemple.fr" })) as Record<string, unknown>;
+    expect(result.costUsd).toBe(0.03);
+    expect(result.profile).toEqual({ domain: "exemple.fr", backlinks: 900, refDomains: 120 });
+  });
+});

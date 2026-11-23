@@ -361,6 +361,22 @@ describe("Cloud subscriptions / Mollie (no live charges)", () => {
     expect(plusCalendarMonth("2024-01-31T12:00:00.000Z")).toBe("2024-02-29T12:00:00.000Z");
     expect(plusCalendarMonth("2025-01-31T12:00:00.000Z")).toBe("2025-02-28T12:00:00.000Z");
   });
+  it("meters partner-reported costs into the billing usage ledger without invoicing anything (R10)", () => {
+    const store = new BillingStore(join(directory(), "meter.sqlite3")); stores.push(store);
+    const access = new CloudAccess(conf(), store);
+    const { account } = store.prepareCheckout({ tenantId: "acme", mode: "test", plan: "solo", cents: 3900, actor: "u1", termsVersion: "pilot-v1" });
+    access.meterPartnerCost("acme", 0.012);
+    access.meterPartnerCost("acme", 0.003);
+    access.meterPartnerCost("acme", 0.0035);
+    /* No metered row for an invalid cost, a non-enrolled tenant, or an enrolled tenant without a billing account. */
+    access.meterPartnerCost("acme", -5);
+    access.meterPartnerCost("acme", Number.NaN);
+    access.meterPartnerCost("selfhost", 0.05);
+    access.meterPartnerCost("globex", 0.05);
+    const meterRow = store.usage(account.id).find((u) => u.metric === "partner-data-usd-micros");
+    expect(meterRow?.quantity).toBe(12000 + 3000 + 3500);
+    expect(meterRow?.period).toBe(new Date().toISOString().slice(0, 7));
+  });
 });
 
 describe("billing HTTP boundary", () => {

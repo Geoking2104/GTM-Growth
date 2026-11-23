@@ -89,13 +89,34 @@ out after 30 seconds.
 - The self-hosted platform without the bridge stays free: no degraded or
   estimated data is produced by default.
 
+## Partner-cost metering (R10)
+
+The partner-reported cost of every successful partner call is metered into
+the billing usage ledger: `CloudAccess.meterPartnerCost` (R10 second
+increment) accumulates the integer micro-USD of each answer into the
+`billing_usage` metric `partner-data-usd-micros`, one row per account and UTC
+calendar month — the same period the operations quota uses. Measurement only:
+
+- Only cloud-enrolled tenants with an existing billing account are metered; a
+  self-hosted operator pays its own partner costs and appears nowhere in the
+  ledger. Tenants are never billed from this metric; the pricing decision
+  stays a human one (open question 3).
+- An unknown (`null`), invalid or non-positive cost is never metered, and the
+  partner-free disavow export never meters anything.
+- A metering failure is swallowed on purpose: the partner answer wins over
+  the measurement (a lost metering row is strictly less bad than a lost
+  answer), and the console wiring in `src/console/api.ts` passes the meter
+  only when billing is configured.
+
 ## Validation
 
 - `tests/market-data.test.ts`: configuration fail-closed behaviour, locale
   normalisation, volumes/SERP/grid mapping, grid geometry bounds.
 - `tests/market-routes.test.ts`: route gating (admin-only partner calls,
   status for all), request bounds, disabled-bridge refusals, partner payload
-  mapping.
+  mapping, and the R10 metering contract: exact-tenant cost metering per
+  partner call, no metering for unknown costs or the partner-free disavow
+  export, and a swallowed metering failure.
 - `tests/market-ui.test.ts`: linkedom UI coverage of the panel states, gates,
   bounded requests and the provenance line in FR/EN.
 - `tests/market-backlinks.test.ts`: domain normalisation, overview/gap

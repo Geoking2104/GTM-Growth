@@ -4,6 +4,9 @@ import { BillingStore, type BillingSubscription } from "./store.js";
 export class CloudAccessError extends Error {
   constructor(readonly status: number, readonly code: string) { super(code); }
 }
+/** Billing-ledger metric that accumulates the partner-reported cost of market-data
+ * calls in integer micro-USD per UTC month (R10): 0.012 USD rounds to 12000. */
+export const PARTNER_COST_METRIC = "partner-data-usd-micros";
 export function subscriptionAccess(sub: BillingSubscription | undefined, graceDays: number, time = Date.now()) {
   const until = Date.parse(sub?.paid_until ?? "");
   if (["active", "setup_pending", "past_due", "canceled"].includes(sub?.status ?? "") && until > time) return "paid";
@@ -26,8 +29,7 @@ const retainedRoutes = new Set([
 ]);
 export class CloudAccess {
   constructor(readonly config: BillingConfig, readonly store: BillingStore) {}
-  enrolled(tenantId: string) { return this.config.cloudTenants.includes(tenantId); }
-  /** Reserve before dispatch. An accepted operation counts even if its provider fails; no monetary overage. */
+  enrolled(tenantId: string) { return this.config.cloudTenants.includes(tenantId); }  /** Reserve before dispatch. An accepted operation counts even if its provider fails; no monetary overage. */
   authorize(tenantId: string, route: string, options: { consume?: boolean; domainCount?: number } = {}) {
     if (!this.enrolled(tenantId) || retainedRoutes.has(route)) return;
     this.store.db.transaction(() => {
@@ -44,5 +46,23 @@ export class CloudAccess {
       this.store.db.prepare(`INSERT INTO billing_usage (account_id,period,metric,quantity) VALUES (?,?,'operations',1)
         ON CONFLICT(account_id,period,metric) DO UPDATE SET quantity=quantity+1`).run(account.id, period);
     }).immediate();
+  }
+
+  /** R10 partner-cost metering — measurement, never invoicing. Partner calls
+   * (R4/R5 market data) report their partner-reported cost in USD; this
+   * records it into the billing usage ledger as integer micro-USD per UTC
+   * month for cloud-enrolled tenants with a billing account. A self-hosted
+   * operator pays its own partner costs and is never metered here; tenants
+   * are never billed for partner data (open question 3 stays open: the
+   * ledger is the evidence base, the pricing decision stays human). */
+  meterPartnerCost(tenantId: string, costUsd: number) {
+    if (!this.enrolled(tenantId)) return;
+    if (typeof costUsd !== "number" || !Number.isFinite(costUsd) || costUsd <= 0) return;
+    const account = this.store.account(tenantId, this.config.mode);
+    if (!account) return;
+    const period = new Date().toISOString().slice(0, 7); // UTC calendar month, same period as the operations quota
+    const micros = Math.round(costUsd * 1_000_000);
+    this.store.db.prepare(`INSERT INTO billing_usage (account_id,period,metric,quantity) VALUES (?,?,?,?)
+      ON CONFLICT(account_id,period,metric) DO UPDATE SET quantity=quantity+?`).run(account.id, period, PARTNER_COST_METRIC, micros, micros);
   }
 }

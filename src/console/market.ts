@@ -9,9 +9,12 @@
  * partner figure is never mistaken for a measurement made by this platform.
  * The disavow export is the exception: a pure, partner-free generation from a
  * tenant-supplied selection, explicitly labelled `tenant-selection`.
+ * The partner-reported cost of every successful call is metered into the
+ * billing usage ledger for cloud-enrolled tenants (R10): measurement only,
+ * never invoicing.
  */
 import type { ConsoleRoute } from "./util.js";
-import { str, num } from "./util.js";
+import { str, num, type HandlerContext } from "./util.js";
 import {
   gridPoints, marketDataConfig, marketDataDisabledError, marketGrid, marketSerp, marketVolumes, parseLocales,
   backlinkDisavowFile, marketBacklinkGap, marketBacklinkOverview,
@@ -40,7 +43,28 @@ const stringListOf = (raw: unknown, limit: number, label: string): string[] => {
   return list;
 };
 
-export function marketRoutes(config: MarketDataConfig | null = marketDataConfig()): ConsoleRoute[] {
+export interface MarketRouteDeps {
+  /** R10 partner-cost metering: records the partner-reported cost of a
+   * successful call into the billing usage ledger for cloud-enrolled
+   * tenants. Measurement only, never invoicing; a metering failure never
+   * breaks the partner answer. */
+  meterPartnerCost?: (tenantId: string, costUsd: number) => void;
+}
+
+/**
+ * The meter records the partner-reported cost of a successful partner call
+ * (R10) into the billing ledger. A failure in measurement is swallowed on
+ * purpose: the tenant already paid nothing, and losing a metering row is
+ * strictly less bad than losing the partner answer.
+ */
+const meterCost = (deps: MarketRouteDeps, ctx: HandlerContext, result: { costUsd: number | null }) => {
+  const tenantId = ctx.tenancy?.tenant?.id;
+  if (!deps.meterPartnerCost || !tenantId || result?.costUsd === null || result?.costUsd === undefined) return;
+  try { deps.meterPartnerCost(tenantId, result.costUsd); }
+  catch { /* la mesure ne doit jamais casser la réponse partenaire */ }
+};
+
+export function marketRoutes(config: MarketDataConfig | null = marketDataConfig(), deps: MarketRouteDeps = {}): ConsoleRoute[] {
   const requireConfig = (): MarketDataConfig => {
     if (!config) throw new Error(marketDataDisabledError());
     return config;
@@ -49,17 +73,21 @@ export function marketRoutes(config: MarketDataConfig | null = marketDataConfig(
     { path: "/market/status", needsUrl: false, handler: async () => ({
       enabled: Boolean(config), locales: config?.locales ?? parseLocales(undefined),
       provider: PROVIDER_NAME, provenance: MARKET_DATA_PROVENANCE, localGridDepth: LOCAL_GRID_DEPTH,
-      note: "Les volumes, positions et grilles locales viennent du pont partenaire de l'opérateur ; les coûts d'appels restent à l'opérateur et aucune valeur n'est inventée hors pont.",
+      note: "Les volumes, positions et grilles locales viennent du pont partenaire de l'opérateur ; les coûts d'appels restent à l'opérateur (comptabilisés dans le ledger de facturation pour les clients cloud, jamais refacturés aux clients) et aucune valeur n'est inventée hors pont.",
     }) },
     { path: "/market/volumes", needsUrl: false, adminOnly: true, handler: async (ctx) => {
       const keywords = keywordListOf(ctx.body.keywords, 20);
-      return await marketVolumes(requireConfig(), { keywords, locale: str(ctx.body.locale), device: deviceOf(ctx.body.device) });
+      const result = await marketVolumes(requireConfig(), { keywords, locale: str(ctx.body.locale), device: deviceOf(ctx.body.device) });
+      meterCost(deps, ctx, result);
+      return result;
     } },
     { path: "/market/serp", needsUrl: false, adminOnly: true, handler: async (ctx) => {
       const keyword = str(ctx.body.keyword) ?? "";
       if (!keyword) throw new Error("Mot-clé requis.");
       if (keyword.length > 200) throw new Error("Mot-clé trop long (200 caractères maximum).");
-      return await marketSerp(requireConfig(), { keyword, locale: str(ctx.body.locale), device: deviceOf(ctx.body.device), depth: num(ctx.body.depth, 20, 1, 100) });
+      const result = await marketSerp(requireConfig(), { keyword, locale: str(ctx.body.locale), device: deviceOf(ctx.body.device), depth: num(ctx.body.depth, 20, 1, 100) });
+      meterCost(deps, ctx, result);
+      return result;
     } },
     { path: "/market/local-grid", needsUrl: false, adminOnly: true, handler: async (ctx) => {
       const keyword = str(ctx.body.keyword) ?? "";
@@ -69,18 +97,24 @@ export function marketRoutes(config: MarketDataConfig | null = marketDataConfig(
       const longitude = num(ctx.body.longitude, Number.NaN, -180, 180);
       if (!Number.isFinite(latitude) || !Number.isFinite(longitude)) throw new Error("Coordonnées du centre de grille requises.");
       const grid = gridPoints({ latitude, longitude }, Math.trunc(num(ctx.body.columns, 5, 1, 7)), Math.trunc(num(ctx.body.rows, 5, 1, 7)), num(ctx.body.distanceKm, 1, 0.1, 20));
-      return await marketGrid(requireConfig(), { keyword, locale: str(ctx.body.locale), device: ctx.body.device === "desktop" ? "desktop" : "mobile", grid });
+      const result = await marketGrid(requireConfig(), { keyword, locale: str(ctx.body.locale), device: ctx.body.device === "desktop" ? "desktop" : "mobile", grid });
+      meterCost(deps, ctx, result);
+      return result;
     } },
     { path: "/market/backlinks/overview", needsUrl: false, adminOnly: true, handler: async (ctx) => {
       const domain = str(ctx.body.domain) ?? "";
       if (!domain) throw new Error("Nom de domaine requis.");
-      return await marketBacklinkOverview(requireConfig(), { domain, referrersLimit: num(ctx.body.referrersLimit, 20, 1, 50), locale: str(ctx.body.locale) });
+      const result = await marketBacklinkOverview(requireConfig(), { domain, referrersLimit: num(ctx.body.referrersLimit, 20, 1, 50), locale: str(ctx.body.locale) });
+      meterCost(deps, ctx, result);
+      return result;
     } },
     { path: "/market/backlinks/gap", needsUrl: false, adminOnly: true, handler: async (ctx) => {
       const domain = str(ctx.body.domain) ?? "";
       if (!domain) throw new Error("Nom de domaine requis.");
       const competitors = stringListOf(ctx.body.competitors, 5, "concurrents");
-      return await marketBacklinkGap(requireConfig(), { domain, competitors, locale: str(ctx.body.locale) });
+      const result = await marketBacklinkGap(requireConfig(), { domain, competitors, locale: str(ctx.body.locale) });
+      meterCost(deps, ctx, result);
+      return result;
     } },
     { path: "/market/backlinks/disavow", needsUrl: false, adminOnly: true, handler: async (ctx) => {
       const domains = stringListOf(ctx.body.domains, 200, "domaines");
