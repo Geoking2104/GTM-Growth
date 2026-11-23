@@ -32,6 +32,7 @@ import { renderOpsPrompts, renderOpsRank, renderOpsArticles, renderOpsAlerts } f
 import { renderOpsMarket } from "./market.js";
 import { renderOpsAiCrawlers } from "./ai-crawlers.js";
 import { renderOpsAeoWriter } from "./aeo-writer.js";
+import { renderOpsActions } from "./actions.js";
 import { renderApplyMode } from "./apply.js";
 import { openWizard, renderAgentHelp } from "./onboarding-wizard.js";
 import { toolbar, renderSearchPerformance, renderQueryPages, renderSitemaps, renderGa4, renderRealtime, renderEcommerce, renderTechnology, renderGtm, renderBing, renderStatus, renderTags, renderSettings } from "./analytics.js";
@@ -332,6 +333,7 @@ const SECTIONS = {
       { id: "market", label: LANG === "fr" ? "Données de marché" : "Market data", needsDomain: false, async: async () => renderOpsMarket({ api, me: state.me }) },
       { id: "crawlers", label: LANG === "fr" ? "Crawlers IA" : "AI crawlers", needsDomain: false, async: async () => renderOpsAiCrawlers({ api, me: state.me }) },
       { id: "writer", label: LANG === "fr" ? "AEO Writer" : "AEO Writer", needsDomain: false, async: async () => renderOpsAeoWriter({ api, me: state.me }) },
+      { id: "actions", label: LANG === "fr" ? "Catalogue d'actions" : "Action catalog", needsDomain: false, async: async () => renderOpsActions({ api, me: state.me }) },
       { id: "articles", label: LANG === "fr" ? "Articles" : "Articles", needsDomain: false, async: async (filters) => renderOpsArticles({ api, me: state.me, pinId: filters?.pinId }) },
       { id: "alerts", label: LANG === "fr" ? "Alertes" : "Alerts", needsDomain: false, async: async () => renderOpsAlerts({ api, me: state.me }) }]) },
   ],

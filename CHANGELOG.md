@@ -70,6 +70,27 @@ Release reference is available after the signed tag exists. [v0.23.0](https://gi
   (`#ops/writer`) with provenance line, per-prompt table (missing terms and
   evidence), citability strengths/gaps and drafts under review notes.
 
+### Pre-approved action catalog (R11, third increment: console panel)
+
+- Bilingual Operations tab `#ops/actions` (own symbol): every member reads the
+  catalog version, the three eligible actions with their titles and summaries
+  in the reader's language, the explicit never-eligible list and the standing
+  governance note; only tenant administrators act.
+- Admin gestures per ledger state: propose (select of the three catalog
+  entries plus a strict-terms JSON textarea, malformed terms refused locally
+  without any call), one-click execution (`approve: true`) on proposed/approved
+  operations with the ambiguity/stale-claim notes rendered verbatim, cancel,
+  and the resolved block for `reconciling` (verified outcome plus the
+  external-verification detail).
+- Every gesture refreshes the tenant ledger from the routes and renders the
+  audit trail of the last console act (operation id, event, actor, detail,
+  timestamp); a refused gesture surfaces the French error and leaves the
+  recorded state untouched. Members see the ledger without any gesture button.
+- New linkedom UI suite covers FR/EN wording, the propose flow and its local
+  JSON refusal, the stale-claim note, the resolve flow, member read-only
+  gating and the refused-gesture error path. With this increment R11 has no
+  remaining code item.
+
 ### Pre-approved action catalog (R11, second increment)
 
 - PAP L2 propose surface behind `PAP_OPERATIONS_ENABLED` (fail-closed, off by
