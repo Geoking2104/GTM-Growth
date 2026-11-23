@@ -53,6 +53,37 @@
 
 Release reference is available after the signed tag exists. [v0.23.0](https://github.com/Geoking2104/GTM-Growth/releases/tag/v0.23.0)
 
+### Pre-approved action catalog (R11, first increment)
+
+- Versioned catalog of three pre-approved actions (`indexnow.submit`, bounded
+  HTTPS submissions to the exact tenant host; `draft.generate`, pure local
+  titles/meta/outline drafting; `report.dispatch`, dispatch of an already-due
+  J+14/J+28 follow-up through the existing pipeline), with explicit
+  exclusions that are never eligible (`apply.robots-meta`, `wordpress.publish`,
+  `gbp.write`, `crm.write`, `social.publish`); every other write keeps its
+  human confirmation.
+- Governed ledger (`ACTIONS_DB_PATH`, SQLite `0600`) with strict entry rules
+  (terms text identical to the catalog, proposition expiring after 72 h) and
+  exit rules (approval tied to the exact digest of the approved terms,
+  execution claims are atomic under an immediate transaction, replays return
+  the existing state without re-running, ambiguous results become
+  `reconciling` and never auto-retry, external reconciliation on verified
+  results only, stale claims beyond 15 minutes become `reconciling`, cancel
+  only from `proposed`/`approved`).
+- Per-execution audit trail (`action_events`, latest first, capped 200 per
+  operation) including stale-claim and reconciliation events.
+- One-click execution gesture: `/actions/execute` accepts
+  `{operationId, approve:true}` and executes an already-approved operation
+  atomically; operations are also resolvable from a verified external result
+  through `/actions/resolve`.
+- Console routes (`/actions/catalog`, `/actions/operations`, propose/approve/
+  execute/cancel/resolve), IndexNow submissions gated on the exact tenant host,
+  `TenantAccessError` outside the tenant, admin-only governance routes.
+- Refactor: the J+14/J+28 dispatch loop and the env-gated scheduler runtime
+  now share the exported `dispatchOneFollowUp` and `reportFollowUpsRuntime`
+  helpers so the catalog dispatcher and the ops scheduler stay one pipeline
+  (no behaviour change; existing tests unchanged).
+
 ### Backlink intelligence (R5)
 
 - Domain netlinking overview on the operator's partner bridge: backlinks and

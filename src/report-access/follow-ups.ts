@@ -136,6 +136,35 @@ export interface DispatchOptions {
 
 const MAX_FRESH_BYTES = 500_000;
 
+/** One branded follow-up dispatch, same page/scope, no score summing. Shared
+ * by the scheduled pass and the pre-approved action catalog (R11): it is the
+ * single execution path, so both journals see identical external effects. */
+export async function dispatchOneFollowUp(options: DispatchOptions, item: DueFollowUp): Promise<{ status: "sent" } | { status: "failed"; error: string; tag: string }> {
+  try {
+    const fresh = await options.reader(item.url);
+    if (fresh.sourceUrl !== item.url) {
+      options.store.completeFollowUp(item.id, { status: "failed", error: "scope_mismatch" });
+      return { status: "failed", error: "scope_mismatch", tag: "failed:scope_mismatch" };
+    }
+    if (!fresh.observedAt || !Number.isFinite(Date.parse(fresh.observedAt)) || !fresh.blob || Buffer.byteLength(fresh.blob, "utf8") > MAX_FRESH_BYTES) {
+      options.store.completeFollowUp(item.id, { status: "failed", error: "unreadable_snapshot" });
+      return { status: "failed", error: "unreadable_snapshot", tag: "failed:unreadable_snapshot" };
+    }
+    const report = JSON.parse(fresh.blob);
+    const pdf = await options.renderPdf(report, item.language, { brand: item.brand });
+    const suggestions = options.suggestionFor(item.milestone);
+    const brandName = item.brand?.name ?? "gtm-growth";
+    const filename = `${brandSlug(brandName)}-rapport-360-suivi-${item.milestone.toLowerCase()}-${item.language}.pdf`;
+    await options.send({ to: item.email, language: item.language, brand: item.brand, milestone: item.milestone, observedAt: item.observedAt, measuredAt: fresh.observedAt, url: item.url, suggestion: suggestions, reportNote: options.reportNote, pdf, filename });
+    options.store.completeFollowUp(item.id, { status: "sent", freshPayload: fresh.blob });
+    return { status: "sent" };
+  } catch (error) {
+    const message = (error instanceof Error ? error.message : String(error)).slice(0, 120);
+    options.store.completeFollowUp(item.id, { status: "failed", error: message });
+    return { status: "failed", error: message, tag: "failed" };
+  }
+}
+
 /** One bounded pass over due follow-ups: re-measure the exact same URL, then
  * reuse the A4 branded pipeline for the dispatch. Failures retry up to
  * FOLLOWUP_MAX_ATTEMPTS; permanent failures keep their evidence row. */
@@ -146,30 +175,9 @@ export async function dispatchDueFollowUps(options: DispatchOptions): Promise<{ 
   const details: Array<{ milestone: string; status: string }> = [];
   let sent = 0, failed = 0;
   for (const item of due) {
-    try {
-      const fresh = await options.reader(item.url);
-      if (fresh.sourceUrl !== item.url) {
-        options.store.completeFollowUp(item.id, { status: "failed", error: "scope_mismatch" });
-        failed++; details.push({ milestone: item.milestone, status: "failed:scope_mismatch" });
-        continue;
-      }
-      if (!fresh.observedAt || !Number.isFinite(Date.parse(fresh.observedAt)) || !fresh.blob || Buffer.byteLength(fresh.blob, "utf8") > MAX_FRESH_BYTES) {
-        options.store.completeFollowUp(item.id, { status: "failed", error: "unreadable_snapshot" });
-        failed++; details.push({ milestone: item.milestone, status: "failed:unreadable_snapshot" });
-        continue;
-      }
-      const report = JSON.parse(fresh.blob);
-      const pdf = await options.renderPdf(report, item.language, { brand: item.brand });
-      const suggestions = options.suggestionFor(item.milestone);
-      const brandName = item.brand?.name ?? "gtm-growth";
-      const filename = `${brandSlug(brandName)}-rapport-360-suivi-${item.milestone.toLowerCase()}-${item.language}.pdf`;
-      await options.send({ to: item.email, language: item.language, brand: item.brand, milestone: item.milestone, observedAt: item.observedAt, measuredAt: fresh.observedAt, url: item.url, suggestion: suggestions, reportNote: options.reportNote, pdf, filename });
-      options.store.completeFollowUp(item.id, { status: "sent", freshPayload: fresh.blob });
-      sent++; details.push({ milestone: item.milestone, status: "sent" });
-    } catch (error) {
-      options.store.completeFollowUp(item.id, { status: "failed", error: (error instanceof Error ? error.message : String(error)).slice(0, 120) });
-      failed++; details.push({ milestone: item.milestone, status: "failed" });
-    }
+    const result = await dispatchOneFollowUp(options, item);
+    if (result.status === "sent") { sent++; details.push({ milestone: item.milestone, status: "sent" }); }
+    else { failed++; details.push({ milestone: item.milestone, status: result.tag }); }
   }
   return { sent, failed, details };
 }
