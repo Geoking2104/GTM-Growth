@@ -30,6 +30,7 @@ import { renderPlatformSetup } from "./platform-setup.js";
 import { renderTrackedQueries } from "./tracked-queries.js";
 import { renderOpsPrompts, renderOpsRank, renderOpsArticles, renderOpsAlerts } from "./ops.js";
 import { renderOpsMarket } from "./market.js";
+import { renderOpsAiCrawlers } from "./ai-crawlers.js";
 import { renderApplyMode } from "./apply.js";
 import { openWizard, renderAgentHelp } from "./onboarding-wizard.js";
 import { toolbar, renderSearchPerformance, renderQueryPages, renderSitemaps, renderGa4, renderRealtime, renderEcommerce, renderTechnology, renderGtm, renderBing, renderStatus, renderTags, renderSettings } from "./analytics.js";
@@ -328,6 +329,7 @@ const SECTIONS = {
       { id: "prompts", label: LANG === "fr" ? "Visibilité IA en direct" : "Live AI visibility", needsDomain: false, async: async () => renderOpsPrompts({ api, me: state.me }) },
       { id: "rank", label: LANG === "fr" ? "Positions suivies" : "Tracked rankings", needsDomain: false, async: async () => renderOpsRank({ api, me: state.me }) },
       { id: "market", label: LANG === "fr" ? "Données de marché" : "Market data", needsDomain: false, async: async () => renderOpsMarket({ api, me: state.me }) },
+      { id: "crawlers", label: LANG === "fr" ? "Crawlers IA" : "AI crawlers", needsDomain: false, async: async () => renderOpsAiCrawlers({ api, me: state.me }) },
       { id: "articles", label: LANG === "fr" ? "Articles" : "Articles", needsDomain: false, async: async (filters) => renderOpsArticles({ api, me: state.me, pinId: filters?.pinId }) },
       { id: "alerts", label: LANG === "fr" ? "Alertes" : "Alerts", needsDomain: false, async: async () => renderOpsAlerts({ api, me: state.me }) }]) },
   ],

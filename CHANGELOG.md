@@ -53,6 +53,28 @@
 
 Release reference is available after the signed tag exists. [v0.23.0](https://github.com/Geoking2104/GTM-Growth/releases/tag/v0.23.0)
 
+### AI-crawler analytics and access drafts (R6)
+
+- AI-crawler log analytics: tenant-supplied server/CDN access logs (nginx
+  combined, bounded to 5,000 lines / 512 KB) are parsed to report GPTBot,
+  ClaudeBot, PerplexityBot, OAI-SearchBot and the other registered AI crawlers
+  per site section. Longest-token classification against the platform registry,
+  served/error splits, covered period and ignored-line counts; every answer
+  carries the tenant-supplied provenance and its parse date, sections not
+  crawled in the period stay unknown, never zero. Nothing is stored: the
+  analysis is free and stateless; no partner call.
+- Inside Apply Mode, a dry-run policy draft builds the per-crawler robots
+  choices (allow/disallow per registry token): explicit `User-agent` groups are
+  appended without ever rewriting existing rules (kept and reported for manual
+  review; a specific group is proposed in append-only mode when only the
+  generic `*` group covers the crawler), plus a bounded llms.txt skeleton whose
+  descriptions stay to be filled by the operator — no description is invented.
+  The drafts are text-only: `writesEnabled: false`, no writer is wired, the
+  existing read-only robots-ai preview is unchanged.
+- A bilingual "AI crawlers" Operations tab surfaces both: the coverage tables
+  with their provenance line, and the per-crawler choice form with the draft
+  diffs and the standing dry-run note. Both actions are tenant-admin only.
+
 ### Partner market-data console panel (R4 follow-up)
 
 - A bilingual FR/EN "Market data" panel in Operations surfaces the bridge: search

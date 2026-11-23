@@ -30,6 +30,11 @@ keyword volumes, Google SERP positions and GBP local rank grids behind
 the operator pays the partner costs and every answer keeps provenance
 `partner-api`.
 
+The [AI-crawler analytics](AI-CRAWLERS.md) (R6) parse tenant-supplied access logs
+into per-crawler and per-section crawl coverage, and produce Apply-Mode dry-run
+drafts of the AI-bot robots policy and an llms.txt skeleton: free, stateless,
+nothing invented, no writer wired.
+
 The [console decision refit](../journey/CONSOLE-DECISION-REFIT.md) includes five
 business areas plus a member Portfolio, a durable cross-module inbox, synchronized
 intent evidence and a four-check GTM audit. `src/console/decision-*.ts` and
