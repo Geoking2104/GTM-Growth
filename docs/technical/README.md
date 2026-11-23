@@ -54,6 +54,12 @@ The [MCP tool contracts](../mcp/TOOLS.md) (R11) are the stable reference for all
 env-flag gates on every write, bounded batches, and evidence on every audit
 answer, generated from the tool sources so the page cannot drift from the code.
 
+The [AEO Writer](AEO-WRITER.md) (R8) closes the visibility loop: a tenant
+content is scored against the prompts of the stored AI answers (per-prompt
+coverage with evidence, citability audit as the base, unevaluated stays null),
+and uncovered prompts get local title/outline drafts with a review note. Free,
+local, nothing stored.
+
 The [console decision refit](../journey/CONSOLE-DECISION-REFIT.md) includes five
 business areas plus a member Portfolio, a durable cross-module inbox, synchronized
 intent evidence and a four-check GTM audit. `src/console/decision-*.ts` and
