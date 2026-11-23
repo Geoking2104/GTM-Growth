@@ -53,6 +53,26 @@
 
 Release reference is available after the signed tag exists. [v0.23.0](https://github.com/Geoking2104/GTM-Growth/releases/tag/v0.23.0)
 
+### Third-party consultation refresh: professional README and commercial landing
+
+- The project README is rewritten for external review: at-a-glance fact table,
+  a five-stage capability map covering every shipped module, the four
+  interfaces (bilingual console, public CLI, 100 documented MCP tool
+  contracts, opt-in PAP agents), the enforced honesty rules, the OVH
+  deployment kit, the reading tracks and an explicit status split between
+  implemented, fail-closed-by-default and not-yet-implemented. The preserved
+  legacy anchors are retained.
+- The bilingual landing gains a commercial trust band before the plans
+  (open source and self-hosted, proof on every figure, console/CLI/MCP
+  interfaces, documented GDPR posture with the trust pack on GitHub) and each
+  plan card now carries a positioning badge (self-hosted, popular,
+  multi-client, custom) with hover elevation; the pricing lede is sharper
+  while the pilot honesty contract stays verbatim (39/149, HT/TTC, Mollie not
+  yet active, three contact CTAs).
+- Site contracts unchanged and revalidated: shared layout with 324 dictionary
+  keys per locale, 8 FAQ entries, 6 Ops stages, 3 roadmap phases, 7 toolkit
+  levers, generated parity check and the structural EN/FR equality.
+
 ### Trust pack: partner-cost metering (R10, second increment)
 
 - The partner-reported cost of every successful market-data call (volumes,
