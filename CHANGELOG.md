@@ -53,6 +53,23 @@
 
 Release reference is available after the signed tag exists. [v0.23.0](https://github.com/Geoking2104/GTM-Growth/releases/tag/v0.23.0)
 
+### Answer-grounded AEO Writer (R8)
+
+- New answer-grounded content scoring: a tenant-supplied content (page or
+  draft, text or HTML, 40..20000 chars) is scored against the prompts of the
+  tenant's stored AI-visibility panel (imported or collected answers, R1/R2),
+  with strict intent-term coverage per prompt (covered/partial/absent,
+  evidence sentence returned, prompts without usable terms stay unevaluated)
+  on top of the existing citability audit; combined score 0.6×coverage +
+  0.4×citability, unevaluated (null, never zero) without usable prompts.
+- Local AEO-Writer drafts: for the uncovered prompts (bounded to 5), three
+  title proposals and a full outline with FAQ via the open-source generators;
+  every draft carries its review note, nothing is published.
+- Routes `/aeo-writer/score` and `/aeo-writer/drafts` (active tenant, members
+  can read; no network call, nothing stored) and a bilingual Operations panel
+  (`#ops/writer`) with provenance line, per-prompt table (missing terms and
+  evidence), citability strengths/gaps and drafts under review notes.
+
 ### Pre-approved action catalog (R11, second increment)
 
 - PAP L2 propose surface behind `PAP_OPERATIONS_ENABLED` (fail-closed, off by
