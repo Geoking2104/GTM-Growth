@@ -98,6 +98,21 @@ after the report invitation (run-token authorised); the panel disappears
 without breaking the read when the trajectory is unavailable. Not part of the 15 November reviewed
 revision `353e658`.
 
+Increment of 23 November 2026: the **partner market-data bridge (R4)** is
+implemented behind an operator configuration. Keyword volumes, Google SERP
+positions and local (GBP) rank grids come from an operator-owned,
+DataForSEO-compatible bridge, fail-closed: active only with
+`MARKET_DATA_ENABLED=true` plus the three credentials, Google.fr first and
+every other locale an explicit `MARKET_DATA_LOCALES` opt-in. Every call is an
+administrator action that spends operator credits, never billed to tenants;
+every result carries its provider, observation date, locale, device and
+`partner-api` provenance, and unknown values stay null (unknown), never zero.
+Local grids are bounded 7 x 7 (0.1 to 20 km), ranks are capped at the grid
+depth (not-found, never zero), and a grid result can only *propose* a
+Global & local SEO observation: the agency remains the importer of record and
+the existing import route re-validates site, country and duplicates. Not
+part of the 15 November reviewed revision `353e658`.
+
 | Stage / capability | Source status | Activation or scope | Evidence / reference |
 | --- | --- | --- | --- |
 | Diagnose: public read / 360° report | Implemented in feature branch; **not yet merged/deployed** | One public page, GEO v1/SEO evidence, five distinct pillars, evidence-linked FR/EN actions and A4 browser print. Private metrics and score gains remain unknown; before/after comparisons exist at the audit API level for public outcomes with matching method and URL | [Free report contract](../product/FREE-REPORT-360.md), [free read](../../src/freeread/index.ts), [public API](../PUBLIC_API.md) |
@@ -118,6 +133,7 @@ revision `353e658`.
 | Measure: API collection | Implemented for OpenAI, Claude, Mistral, Grok; Gemini collection blocked | Selected API account, explicit collection/cost confirmation. Consumer chat subscription/login is not API authorisation | [Collectors](../../src/console/ai-visibility-providers.ts), [account guide](../product/AI-VISIBILITY-PROVIDERS.md) |
 | Measure: citation gaps | Implemented (18 November 2026 increment, console view 19 November 2026; not in the reviewed `353e658` revision) | One stored/collected panel; provenance kept across re-imports; brand website must be declared, unknown stays unevaluated (`—` in the panel, never zero); rendered as a "Citation gaps" section with per-category bars, top hosts and per-answer evidence rows | [Observation model](../specs/AI-VISIBILITY-OBSERVATION-MODEL-v1-2026-11-18.md), [citations](../../src/console/ai-citations.ts), [panel](../../site/console/ai-visibility.js) |
 | Measure: commerce | Implemented; live store qualification required | Shopify custom app / PrestaShop webservice, sealed credentials, sync/webhook; real-time PrestaShop needs an external companion module | [Commerce spec](../specs/ECOMMERCE-CONNECTORS-v1-2026-11-13.md), [current KPI limitations](../marketing/MEASUREMENT.md#known-commerce-limitations-in-this-revision) |
+| Measure: partner market data (volumes, SERP, local grid) | Implemented behind `MARKET_DATA_ENABLED=false` (off by default); fail-closed operator configuration | Operator-owned DataForSEO-compatible bridge, Google.fr first, other locales explicit `MARKET_DATA_LOCALES` opt-ins; calls are administrator-only and spend operator credits; provenance `partner-api`, observation date, locale and device on every result; unknown stays null, never zero; grid results only propose a Global & local SEO observation (agency stays importer of record) | [Bridge](../../src/market/provider.ts), [routes](../../src/console/market-data.ts), [panel](../../site/console/market-data.js) |
 | Report: impact timeline and J+14/J+28 reminders | Implemented (18 November 2026 increment; not in the reviewed `353e658` revision) | One requestor, one public-URL scope; consecutive snapshot pairs with explicit per-step confidence; J+14/J+28 are surfaced dates only, never automatic actions; outcome counters are never summed across steps, scopes or clients; the public read page renders the per-step trajectory and the J+14/J+28 date plan after the report invitation, run-token authorised | [Timeline](../../src/impact/timeline.ts), [follow-ups](../../src/impact/follow-ups.ts), [panel](../../site/console/impact-timeline.js), [pipeline runbook](../technical/AUDIT-PIPELINE.md) |
 | Report: scheduled J+14/J+28 dispatch | Implemented (19 November 2026 increment; not in the reviewed `353e658` revision) | Double opt-in only: per-invitation agency choice (`followUp: "auto"`) plus the operator gate `REPORT_FOLLOW_UPS_ENABLED`; the scheduler re-measures the same URL, refuses another page, and sends one branded bilingual PDF through the A4 pipeline; recipient address sealed AES-256-GCM; three-attempt cap; session-visible plan without any address; no summed metrics | [Scheduled follow-ups](../../src/report-access/follow-ups.ts), [scheduler drain](../../src/console/ops-scheduler.ts), [pipeline runbook](../technical/AUDIT-PIPELINE.md) |
 | Report: white-label client export | Implemented (18 November 2026 increment; not in the reviewed `353e658` revision) | One strictly validated brand per email-verified invitation (bounded name/tagline/color); the branded A4 PDF/Markdown export reuses the same saved snapshot: one report, one language, no metric aggregation | [Brand validation](../../src/report-access/brand.ts), [export](../../src/report-access/export.ts) |

@@ -19,6 +19,7 @@ const retainedRoutes = new Set([
   "/ai-visibility/openai-status", "/ai-visibility/gemini-status", "/visibility/prompts", "/visibility/runs",
   "/visibility/schedule", "/visibility/schedule/options", "/visibility/schedule/pause", "/visibility/schedule/billed",
   "/rank/keywords", "/ops/alerts", "/ops/alerts/ack", "/ops/automation", "/data-agent/context",
+  "/market/config",
   "/social/state", "/social/analytics", "/social/export", "/local-seo/state", "/local-seo/export",
   "/local-seo/evidence/read", "/local-seo/gbp/unbind", "/local-seo/publication/cancel",
   "/commerce/stores", "/commerce/disconnect", "/commerce/dashboard", "/commerce/orders", "/commerce/products", "/commerce/feed/readiness",
