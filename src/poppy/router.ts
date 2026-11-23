@@ -17,7 +17,7 @@ import { isCatalogAction, normaliseTerms } from "../actions/catalog.js";
 import { ActionLedger } from "../actions/ledger.js";
 /** R11 L2: a PAP agent may only *propose* a catalog operation. Returns the
  *  durable proposal; execution stays a human console act (approve/execute). */
-export type PapPropose = (tenant: { id: string; domains: string[] }, actor: string, action: string, terms: Record<string, unknown>, at: number) => { id: string; state: string; action: string; proposalExpiresAt: number };
+export type PapPropose = (tenant: { id: string; domains: string[] }, actor: string, action: string, terms: unknown, at: number) => { id: string; state: string; action: string; proposalExpiresAt: number };
 export interface PapOptions {
     cloud?: import("../billing/access.js").CloudAccess;
     config?: PapConfig | null;
@@ -343,7 +343,7 @@ export function mountPoppy(app: Express, options: PapOptions = {}): PapStore | n
         }
         const requestId = res.locals.papRequestId as string;
         const current = await authorized(g.id, store, tenants, config, member);
-        let terms: Record<string, unknown>;
+        let terms: unknown;
         try {
             terms = normaliseTerms(q.action, q.terms);
         }
@@ -353,7 +353,8 @@ export function mountPoppy(app: Express, options: PapOptions = {}): PapStore | n
         if (!isCatalogAction(q.action))
             throw new PapError(400, "invalid_request");
         if (q.action === "indexnow.submit") {
-            const host = typeof (terms as { host?: unknown }).host === "string" ? (terms as { host: string }).host : "";
+            const normalized = terms as { host?: unknown };
+            const host = typeof normalized.host === "string" ? normalized.host : "";
             demand(host && tenantOwnsUrl(current.tenant, `https://${host}`), "resource_denied", 403);
         }
         const operation = proposeOperation(current.tenant, `agent:${g.client}`, q.action, terms, Date.now());
