@@ -88,7 +88,7 @@ async function callPartner(
   config: MarketDataConfig,
   path: string,
   payload: unknown,
-  transport: typeof fetch,
+  transport: typeof fetch = fetch,
 ): Promise<{ observedAt: string | null; costUsd: number | null; data: Record<string, unknown> }> {
   const response = await transport(`${config.baseUrl}${path}`, {
     method: "POST",
@@ -119,7 +119,7 @@ const meta = (config: MarketDataConfig, locale: string, device: MarketDevice, ob
 export async function marketVolumes(
   config: MarketDataConfig,
   input: { keywords: string[]; locale?: string; device?: MarketDevice },
-  transport: typeof fetch,
+  transport: typeof fetch = fetch,
   now: () => string = () => new Date().toISOString(),
 ): Promise<MarketMeta & { results: MarketVolume[] }> {
   const locale = normaliseLocale(input.locale, config);
@@ -149,7 +149,7 @@ export async function marketVolumes(
 export async function marketSerp(
   config: MarketDataConfig,
   input: { keyword: string; locale?: string; device?: MarketDevice; depth?: number },
-  transport: typeof fetch,
+  transport: typeof fetch = fetch,
   now: () => string = () => new Date().toISOString(),
 ): Promise<MarketMeta & { results: MarketSerpPosition[]; aiOverview: { present: boolean; citedUrls: string[] } | null }> {
   const locale = normaliseLocale(input.locale, config);
@@ -207,7 +207,7 @@ export function gridPoints(
 export async function marketGrid(
   config: MarketDataConfig,
   input: { keyword: string; locale?: string; device?: MarketDevice; grid: Array<{ latitude: number; longitude: number }> },
-  transport: typeof fetch,
+  transport: typeof fetch = fetch,
   now: () => string = () => new Date().toISOString(),
 ): Promise<MarketMeta & { results: MarketGridPoint[] }> {
   const locale = normaliseLocale(input.locale, config);

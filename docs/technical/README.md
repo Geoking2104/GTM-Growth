@@ -24,6 +24,12 @@ storage, a BullMQ outbox dispatcher and separate Redis workers for public reads.
 API and worker images now use Node 24. Other module stores remain on SQLite/files;
 only audit workers are ready for independent replication in this increment.
 
+The optional [partner market-data bridge](MARKET-DATA.md) (R4) exposes operator-owned
+keyword volumes, Google SERP positions and GBP local rank grids behind
+`MARKET_DATA_ENABLED=false`: a fail-closed DataForSEO-compatible gateway where
+the operator pays the partner costs and every answer keeps provenance
+`partner-api`.
+
 The [console decision refit](../journey/CONSOLE-DECISION-REFIT.md) includes five
 business areas plus a member Portfolio, a durable cross-module inbox, synchronized
 intent evidence and a four-check GTM audit. `src/console/decision-*.ts` and
