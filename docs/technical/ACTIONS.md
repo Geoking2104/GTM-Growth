@@ -109,6 +109,26 @@ proposalExpiresAt, next }` plus the console link: no execution data, ever.
 Both audit trails record the proposal (PAP audit and
 `action_events`), with the actor `agent:<client_id>`.
 
+## Console panel
+
+The bilingual FR/EN Operations tab `site/console/actions.js` (`#ops/actions`,
+own symbol) surfaces the governed surface for every member: the catalog version,
+the three eligible actions with their titles and summaries in the reader's
+language, the explicit never-eligible list (ids only, with the standing
+governance note), and the tenant's operations table (id, action, state label,
+origin, creation date, attempts) — members and tenant admins read the same
+ledger, only tenant admins act. Admin gestures render per state: propose
+(action select of the three catalog entries plus a strict-terms JSON textarea,
+validated locally before any call), run-the-one-click-execution on
+`proposed`/`approved` operations (`approve: true`, the note of an ambiguity or
+stale claim shown verbatim), cancel, and the resolved-only-for-
+`reconciling` block (verified outcome select plus the external-verification
+detail). Every gesture refreshes the ledger from the routes and renders the
+audit trail of the last console act (operation id, event, actor, detail,
+timestamp) in a details block; a refused gesture surfaces the French error and
+leaves the recorded state untouched. No gesture is offered for a member, and
+nothing outside the catalog ever appears here.
+
 ## Validation
 
 - `tests/actions-catalog.test.ts`: catalog versioning, explicit exclusions,
@@ -120,6 +140,11 @@ Both audit trails record the proposal (PAP audit and
 - `tests/actions-routes.test.ts`: member/admin gating, catalog publication,
   one-click approve+execute, IndexNow tenant-domain refusal, out-of-catalog
   refusals, replay, cancellation, resolve rules.
+- `tests/actions-ui.test.ts`: linkedom UI coverage of the panel in FR/EN —
+  catalog version and exclusions rendering, the propose form and its local
+  JSON refusal, the one-click execution with its stale-claim note, the
+  resolve gesture with the verification detail, member read-only gating
+  (no button, no select, no textarea) and the refused-gesture error path.
 - `tests/poppy-operations.test.ts`: the PAP propose surface — no advertisement
   and a 503 while `PAP_OPERATIONS_ENABLED` is off; scope, OAuth token and
   delegated-session gates; a proposal recorded with origin `pap` and actor

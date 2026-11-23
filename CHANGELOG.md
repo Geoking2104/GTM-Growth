@@ -53,6 +53,22 @@
 
 Release reference is available after the signed tag exists. [v0.23.0](https://github.com/Geoking2104/GTM-Growth/releases/tag/v0.23.0)
 
+### Trust pack: GDPR, DPA, hosting, security, status, Mollie runbooks (R10, first increment)
+
+- New trust documentation set (`docs/trust/`): GDPR posture with a per-module
+  data map, retention and sub-processor list; the customer DPA template;
+  the OVH hosting page (isolation, TLS, secrets, backups); the public
+  security-page content with the responsible-disclosure policy; the
+  status-page policy (components, incident posting, measured-availability-only
+  claims); and the Mollie activation runbook with the final-quota gates.
+- The runbook documents the fail-closed activation the code already enforces
+  (`src/billing/config.ts`): test→live gates (owner approval, prices approved,
+  tax-inclusive amounts, terms URLs, `BILLING_LIMITS_JSON` quotas,
+  reconciliation token). Live activation, TLS/SMTP enablement and publishing
+  the security/status pages stay explicit operator acts.
+- Honest scope: partner-cost metering into the billing ledger is stated as
+  the remaining R10 code item, not claimed as delivered by this increment.
+
 ### Answer-grounded AEO Writer (R8)
 
 - New answer-grounded content scoring: a tenant-supplied content (page or
@@ -69,6 +85,27 @@ Release reference is available after the signed tag exists. [v0.23.0](https://gi
   can read; no network call, nothing stored) and a bilingual Operations panel
   (`#ops/writer`) with provenance line, per-prompt table (missing terms and
   evidence), citability strengths/gaps and drafts under review notes.
+
+### Pre-approved action catalog (R11, third increment: console panel)
+
+- Bilingual Operations tab `#ops/actions` (own symbol): every member reads the
+  catalog version, the three eligible actions with their titles and summaries
+  in the reader's language, the explicit never-eligible list and the standing
+  governance note; only tenant administrators act.
+- Admin gestures per ledger state: propose (select of the three catalog
+  entries plus a strict-terms JSON textarea, malformed terms refused locally
+  without any call), one-click execution (`approve: true`) on proposed/approved
+  operations with the ambiguity/stale-claim notes rendered verbatim, cancel,
+  and the resolved block for `reconciling` (verified outcome plus the
+  external-verification detail).
+- Every gesture refreshes the tenant ledger from the routes and renders the
+  audit trail of the last console act (operation id, event, actor, detail,
+  timestamp); a refused gesture surfaces the French error and leaves the
+  recorded state untouched. Members see the ledger without any gesture button.
+- New linkedom UI suite covers FR/EN wording, the propose flow and its local
+  JSON refusal, the stale-claim note, the resolve flow, member read-only
+  gating and the refused-gesture error path. With this increment R11 has no
+  remaining code item.
 
 ### Pre-approved action catalog (R11, second increment)
 

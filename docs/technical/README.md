@@ -45,7 +45,9 @@ governed SQLite ledger whose approvals ride the exact approved terms, with
 atomic claims, replay-safe execution, `reconciling` instead of auto-retry, and
 a per-execution audit trail. PAP agents may only *propose* operations into the
 same ledger behind `PAP_OPERATIONS_ENABLED` (off by default, unadvertised
-while off); approval and execution stay human. Every write outside the catalog
+while off); approval and execution stay human, in the bilingual
+`#ops/actions` console panel that renders the catalog, the tenant ledger and
+the audit trail of every console gesture. Every write outside the catalog
 keeps its human confirmation; a console panel is a later increment, the routes
 come first.
 
@@ -59,6 +61,12 @@ content is scored against the prompts of the stored AI answers (per-prompt
 coverage with evidence, citability audit as the base, unevaluated stays null),
 and uncovered prompts get local title/outline drafts with a review note. Free,
 local, nothing stored.
+
+The [trust pack](../trust/README.md) (R10) carries the GDPR posture and data
+map, the customer DPA template, the OVH hosting page, the security and status
+page content, and the fail-closed Mollie activation runbook with the final
+quotas: each states what the code enforces and what stays an explicit operator
+act.
 
 The [console decision refit](../journey/CONSOLE-DECISION-REFIT.md) includes five
 business areas plus a member Portfolio, a durable cross-module inbox, synchronized
