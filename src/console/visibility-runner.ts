@@ -1,14 +1,14 @@
 /** Scheduled AI-visibility collection (T-1): run the tenant prompt pool
- * through the existing BYOK collectors (OpenAI / Gemini) and store the
+ * through the enabled BYOK collector and store the
  * results as competition datasets, exactly like a manual import.
  * Deterministic orchestration, injectable transports, bounded calls. */
 import { randomUUID } from "node:crypto";
-import { collectGemini, collectOpenAI, normalizeImport } from "./ai-visibility.js";
+import { collectOpenAI, geminiCollectionStatus, GEMINI_COLLECTION_BLOCKED, normalizeImport } from "./ai-visibility.js";
 import { insertDataset } from "./ai-visibility-store.js";
 import { addPrompt, listPrompts, recordVisibilityRun, type VisibilityRun, type TrackedPrompt } from "./ops-store.js";
 
 export type EngineId = "openai" | "gemini";
-export interface EngineStatus { id: EngineId; label: string; configured: boolean; model: string }
+export interface EngineStatus { id: EngineId; label: string; configured: boolean; enabled: boolean; model: string }
 export interface PromptCheckResult { engine: EngineId; prompts: number; succeeded: number; failed: Array<{ prompt: string; reason: string }>; datasetId: string | null; error: string | null }
 
 const MAX_PROMPTS_PER_RUN = 5;
@@ -17,8 +17,8 @@ const MAX_BATCHES_PER_RUN = 2;
 export function engineStatuses(tenantId: string): EngineStatus[] {
   const suffix = tenantId.toUpperCase().replace(/-/g, "_");
   return [
-    { id: "openai", label: "ChatGPT (OpenAI)", configured: Boolean(process.env[`AI_VISIBILITY_OPENAI_KEY_${suffix}`]), model: "gpt-4.1-mini" },
-    { id: "gemini", label: "Gemini (Google)", configured: Boolean(process.env[`AI_VISIBILITY_GEMINI_KEY_${suffix}`]), model: "gemini-2.5-flash" },
+    { id: "openai", label: "ChatGPT (OpenAI)", configured: Boolean(process.env[`AI_VISIBILITY_OPENAI_KEY_${suffix}`]), enabled: true, model: "gpt-4.1-mini" },
+    { id: "gemini", label: "Gemini (Google)", ...geminiCollectionStatus(tenantId) },
   ];
 }
 
@@ -46,6 +46,10 @@ export async function runVisibilityCheck(
   const results: PromptCheckResult[] = [];
   for (const engine of engines) {
     let succeeded = 0; let failed: Array<{ prompt: string; reason: string }> = []; let datasetId: string | null = null; let error: string | null = null;
+    if (engine === "gemini") {
+      results.push({ engine, prompts: prompts.length, succeeded, failed, datasetId, error: GEMINI_COLLECTION_BLOCKED });
+      continue;
+    }
     const key = engineKey(engine, tenantId);
     if (!key) { results.push({ engine, prompts: prompts.length, succeeded: 0, failed: [], datasetId: null, error: "Clé API non configurée pour ce client (AI_VISIBILITY_*_KEY_<TENANT>)." }); continue; }
     try {
@@ -54,9 +58,7 @@ export async function runVisibilityCheck(
         const slice = prompts.slice(batch * limit, (batch + 1) * limit);
         if (!slice.length) break;
         const raw = slice.map((p) => p.prompt);
-        const outcome = engine === "openai"
-          ? await collectOpenAI({ brands, prompts: raw, confirmed: true }, key, transport)
-          : await collectGemini({ brands, prompts: raw, confirmed: true }, key, transport);
+        const outcome = await collectOpenAI({ brands, prompts: raw, confirmed: true }, key, transport);
         succeeded += outcome.successes.length;
         failed = failed.concat(outcome.failures);
         collected.push(...outcome.successes);

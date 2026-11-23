@@ -14,13 +14,15 @@ export function subscriptionAccess(sub: BillingSubscription | undefined, graceDa
 const retainedRoutes = new Set([
   "/scenarios/list", "/scenarios/get", "/scenarios/history", "/scenarios/revision", "/scenarios/comments", "/scenarios/evidence", "/scenarios/capabilities", "/scenarios/export", "/scenarios/validate",
   "/decision/inbox", "/decision/intent", "/decision/measurement/latest", "/decision/portfolio/card",
+  "/decision/editorial/brief", "/decision/editorial/follow-ups", "/decision/editorial/revoke-evidence",
   "/ai-visibility/datasets", "/ai-visibility/report", "/ai-visibility/citation-gaps", "/ai-visibility/accounts", "/ai-visibility/accounts/disconnect",
   "/ai-visibility/openai-status", "/ai-visibility/gemini-status", "/visibility/prompts", "/visibility/runs",
+  "/visibility/schedule", "/visibility/schedule/options", "/visibility/schedule/pause", "/visibility/schedule/billed",
   "/rank/keywords", "/ops/alerts", "/ops/alerts/ack", "/ops/automation", "/data-agent/context",
   "/social/state", "/social/analytics", "/social/export", "/local-seo/state", "/local-seo/export",
   "/local-seo/evidence/read", "/local-seo/gbp/unbind", "/local-seo/publication/cancel",
   "/commerce/stores", "/commerce/disconnect", "/commerce/dashboard", "/commerce/orders", "/commerce/products", "/commerce/feed/readiness",
-  "/competition/state", "/competition/report", "/crm/overview", "/crm/contact/detail", "/crm/timeline", "/crm/export",
+  "/competition/state", "/competition/report", "/competition/comparison", "/crm/overview", "/crm/contact/detail", "/crm/timeline", "/crm/export",
 ]);
 export class CloudAccess {
   constructor(readonly config: BillingConfig, readonly store: BillingStore) {}

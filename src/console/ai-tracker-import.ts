@@ -13,10 +13,11 @@
  * Row numbers in errors are the export file's own spreadsheet row (header is row 1).
  */
 import type { Provenance } from "./ai-visibility.js";
+import { normalizeMeasurement } from "./visibility-measurement.js";
 
-export type TrackerProvider = "meteoria" | "peec" | "qwairy" | "profound";
-export const TRACKER_PROVIDERS: TrackerProvider[] = ["meteoria", "peec", "qwairy", "profound"];
-const PROVIDER_LABELS: Record<TrackerProvider, string> = { meteoria: "Meteoria", peec: "Peec AI", qwairy: "Qwairy", profound: "Profound" };
+export type TrackerProvider = "meteoria" | "peec" | "qwairy" | "profound" | "generic";
+export const TRACKER_PROVIDERS: TrackerProvider[] = ["meteoria", "peec", "qwairy", "profound", "generic"];
+const PROVIDER_LABELS: Record<TrackerProvider, string> = { meteoria: "Meteoria", peec: "Peec AI", qwairy: "Qwairy", profound: "Profound", generic: "Generic" };
 const TRACKER_PROVENANCE: Provenance = "imported";
 export const TRACKER_IMPORT_WARNING = "Tracker imports keep the tracker's own measurement; sentiment stays heuristic-v1-unvalidated and requires human review. No external call was made.";
 export const MAX_TRACKER_PAYLOAD_CHARS = 5_000_000;
@@ -33,6 +34,13 @@ const key = (value: string): string => value.normalize("NFD").replace(/[\u0300-\
 /** Documented field aliases per canonical column. Shared core plus each
  * provider's own export vocabulary; nothing outside this map is read. */
 const ALIASES: Record<TrackerProvider, { prompt: string[]; answer: string[]; date: string[]; engine: string[]; citations: string[] }> = {
+  generic: {
+    prompt: ["prompt", "question", "query", "requete"],
+    answer: ["answer", "response", "reponse"],
+    date: ["observedat", "date", "timestamp"],
+    engine: ["source", "engine", "model", "moteur"],
+    citations: ["citations", "citedurls", "sources", "liens"],
+  },
   meteoria: {
     prompt: ["prompt", "question", "query", "questionposee"],
     answer: ["answer", "response", "aianswer", "reponse", "answerstext"],
@@ -63,11 +71,20 @@ const ALIASES: Record<TrackerProvider, { prompt: string[]; answer: string[]; dat
   },
 };
 
+const CONTEXT_ALIASES = {
+  model: ["modelversion", "modelid"],
+  mode: ["capturemode", "collectionmode", "modedecollecte"],
+  language: ["language", "locale", "langue"],
+  market: ["market", "country", "marche", "pays"],
+};
+const mappingFor = (provider: TrackerProvider) => ({ ...ALIASES[provider], ...CONTEXT_ALIASES });
+
 interface TrackerImportInput { provider: unknown; format: unknown; payload: unknown; brands: unknown }
 
 export interface TrackerImportMeta {
   provider: TrackerProvider; format: "csv" | "json"; rows: number;
   engines: string[]; ignoredColumns: string[]; normalisedDates: number; provenance: Provenance;
+  mapping: Record<string, string[]>;
 }
 export interface TrackerNormalisedImport { body: { brands: unknown; responses: Array<Record<string, unknown>> }; meta: TrackerImportMeta }
 
@@ -142,26 +159,32 @@ function mapRow(provider: TrackerProvider, record: Record<string, string> | Reco
   const prompt = find(aliases.prompt), answer = find(aliases.answer), date = find(aliases.date);
   if (!prompt || !answer || !date) throw new Error(`Row ${rowNumber}: prompt, answer and date columns are required`);
   const engine = find(aliases.engine) ?? null;
-  const citationsRaw = aliases.citations.map((name) => record[name]).find((v) => typeof v === "string" && v.trim() || Array.isArray(v) && v.length);
+  const citationsRaw = aliases.citations.map((name) => record[name]).find((v) => typeof v === "string" && v.trim() || Array.isArray(v));
   let citations: string[] = [];
   if (Array.isArray(citationsRaw)) citations = citationsRaw.map((v) => String(v).trim()).filter(Boolean);
   else if (typeof citationsRaw === "string") citations = splitCitations(citationsRaw);
   const normalised = normaliseTrackerDate(date.trim(), rowNumber);
   const source = `${PROVIDER_LABELS[provider]} import${engine ? ` (${engine.slice(0, 60)})` : ""}`.slice(0, 100);
   const response: Record<string, unknown> = { prompt, answer, source, observedAt: normalised.observedAt, provenance: TRACKER_PROVENANCE };
-  if (citations.length) response.citations = citations;
+  if (citationsRaw !== undefined) response.citations = citations;
+  const context = Object.fromEntries(Object.entries(CONTEXT_ALIASES).map(([field, names]) => [field, find(names)]));
+  try {
+    const measurement = normalizeMeasurement(context);
+    if (measurement) response.measurement = { ...(engine ? { engine: engine.trim().slice(0, 100) } : {}), ...measurement };
+  } catch (error) {
+    throw new Error(`Row ${rowNumber}: ${(error as Error).message}`);
+  }
   return { response, engine, normalisedDate: normalised.partial };
 }
 
-interface MappedBody { responses: Array<Record<string, unknown>>; engines: string[]; ignored: string[]; normalisedDates: number }
+interface MappedBody { responses: Array<Record<string, unknown>>; engines: string[]; ignored: string[]; normalisedDates: number; headers: string[] }
 
 function csvBody(provider: TrackerProvider, payload: string): MappedBody {
   const rows = parseCsv(payload);
   if (rows.length < 2) throw new Error("CSV export requires a header row and at least one data row");
-  const aliases = ALIASES[provider];
-  const belongsTo = (header: string, names: string[]): boolean => names.includes(key(header));
+  const known = Object.values(mappingFor(provider)).flat();
   const header = rows[0];
-  const used = header.map((h) => belongsTo(h, [...aliases.prompt, ...aliases.answer, ...aliases.date, ...aliases.engine, ...aliases.citations]));
+  const used = header.map((h) => known.includes(key(h)));
   if (!header.some((h, i) => used[i])) throw new Error("CSV export has no recognised column; expected prompt, answer and date columns");
   const ignored = [...new Set(header.filter((h, i) => h.trim() && !used[i]))];
   const engines = new Set<string>();
@@ -178,7 +201,7 @@ function csvBody(provider: TrackerProvider, payload: string): MappedBody {
     if (mapped.normalisedDate) normalisedDates++;
     responses.push(mapped.response);
   }
-  return { responses, engines: [...engines], ignored, normalisedDates };
+  return { responses, engines: [...engines], ignored, normalisedDates, headers: header };
 }
 
 function jsonBody(provider: TrackerProvider, payload: string): MappedBody {
@@ -194,23 +217,26 @@ function jsonBody(provider: TrackerProvider, payload: string): MappedBody {
   }
   if (!list.length) throw new Error("JSON export contains no answers");
   if (list.length > MAX_ROWS) throw new Error(`Tracker exports are bounded to ${MAX_ROWS} rows`);
-  const aliases = ALIASES[provider];
-  const known = [...aliases.prompt, ...aliases.answer, ...aliases.date, ...aliases.engine, ...aliases.citations];
+  const known = Object.values(mappingFor(provider)).flat();
   const engines = new Set<string>();
   const ignored = new Set<string>();
+  const headers = new Set<string>();
   const responses: Array<Record<string, unknown>> = [];
   let normalisedDates = 0;
   for (let i = 0; i < list.length; i++) {
     const item = list[i];
     if (!item || typeof item !== "object" || Array.isArray(item)) throw new Error(`Row ${i + 1}: each answer must be an object`);
     const record = item as Record<string, unknown>;
-    for (const k of Object.keys(record)) if (k.trim() && !known.includes(key(k))) ignored.add(k.trim());
+    for (const k of Object.keys(record)) {
+      headers.add(k);
+      if (k.trim() && !known.includes(key(k))) ignored.add(k.trim());
+    }
     const mapped = mapRow(provider, Object.fromEntries(Object.entries(record).map(([k, v]) => [key(k), v])), i + 1);
     if (mapped.engine) engines.add(mapped.engine);
     if (mapped.normalisedDate) normalisedDates++;
     responses.push(mapped.response);
   }
-  return { responses, engines: [...engines], ignored: [...ignored], normalisedDates };
+  return { responses, engines: [...engines], ignored: [...ignored], normalisedDates, headers: [...headers] };
 }
 
 /** Normalise one tracker export to the canonical import body. The brands
@@ -219,14 +245,15 @@ export function normalizeTrackerExport(input: unknown): TrackerNormalisedImport 
   if (!input || typeof input !== "object" || Array.isArray(input)) throw new Error("Invalid tracker import");
   const body = input as TrackerImportInput;
   const provider = parseTrackerProvider(body.provider);
-  if (!provider) throw new Error("Unknown tracker provider: expected meteoria, peec, qwairy or profound");
+  if (!provider) throw new Error("Unknown tracker provider: expected generic, meteoria, peec, qwairy or profound");
   if (body.format !== "csv" && body.format !== "json") throw new Error("Tracker import format must be csv or json");
   if (typeof body.payload !== "string" || !body.payload.trim()) throw new Error("Tracker import requires the exported payload as text");
   if (body.payload.length > MAX_TRACKER_PAYLOAD_CHARS) throw new Error("Tracker export exceeds the 5 MB import bound");
   if (!Array.isArray(body.brands) || body.brands.length < 1) throw new Error("Tracker import requires the tenant brand declaration (1–10 brands)");
   const parsed = body.format === "csv" ? csvBody(provider, body.payload) : jsonBody(provider, body.payload);
+  const mapping = Object.fromEntries(Object.entries(mappingFor(provider)).map(([field, aliases]) => [field, parsed.headers.filter((header) => aliases.includes(key(header)))]));
   return {
     body: { brands: body.brands, responses: parsed.responses },
-    meta: { provider, format: body.format, rows: parsed.responses.length, engines: parsed.engines, ignoredColumns: parsed.ignored, normalisedDates: parsed.normalisedDates, provenance: TRACKER_PROVENANCE },
+    meta: { provider, format: body.format, rows: parsed.responses.length, engines: parsed.engines, ignoredColumns: parsed.ignored, normalisedDates: parsed.normalisedDates, provenance: TRACKER_PROVENANCE, mapping },
   };
 }

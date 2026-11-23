@@ -46,6 +46,8 @@ import { aiConnectionRoutes } from "./ai-connections.js";
 import { aiProviderRoutes } from "./ai-visibility-providers.js";
 import { competitionRoutes } from "./competition.js";
 import { operationsRoutes } from "./ops-routes.js";
+import { visibilityScheduleRoutes } from "../visibility-jobs/routes.js";
+import type { VisibilityJobStore } from "../visibility-jobs/store.js";
 import { analyticsRoutes } from "./analytics.js";
 import { gtmRoutes } from "./gtm-console.js";
 import { socialRoutes } from "./social.js";
@@ -61,6 +63,8 @@ import { journeyRoutes } from "./journey.js";
 import { commerceRoutes } from "./commerce.js";
 import { decisionInboxRoutes } from './decision-inbox.js';
 import { decisionIntentRoutes } from './decision-intent.js';
+import { decisionEditorialRoutes } from './decision-editorial.js';
+import { ReportAccessError } from '../report-access/service.js';
 import { decisionPortfolioRoutes } from './decision-portfolio.js';
 import { measurementRoutes } from './measurement-audit.js';
 import { changeDecision } from './decision-store.js';
@@ -175,6 +179,7 @@ export const phase1Routes: ConsoleRoute[] = [
 
 export interface ConsoleOptions {
   cloud?: CloudAccess;
+  visibilityJobs?: VisibilityJobStore | null;
   config?: OidcConfig | null;
   jwksLoader?: JwksLoader;
   routes?: ConsoleRoute[];
@@ -383,7 +388,7 @@ export function buildConsoleRouter(routes: ConsoleRoute[], options: ConsoleOptio
       } catch (error) {
         logger.info(`[console] ${route.path} failed: ${(error as Error).message}`);
         if (error instanceof ScenarioError) return res.status(error.status).json({ error: error.message, code: error.code });
-        return fail(res, error instanceof TenantAccessError || error instanceof CloudAccessError ? error.status : error instanceof ZodError ? 400 : /^(DECISION_CHANGED|DECISION_EVIDENCE_EXPIRED|MEASUREMENT_ALREADY_RUNNING)$/.test((error as Error).message) ? 409 : 502, (error as Error).message);
+        return fail(res, error instanceof TenantAccessError || error instanceof CloudAccessError || error instanceof ReportAccessError ? error.status : error instanceof ZodError ? 400 : /^(DECISION_CHANGED|DECISION_EVIDENCE_EXPIRED|MEASUREMENT_ALREADY_RUNNING|WORDPRESS_PUBLICATION_UNVERIFIED)$/.test((error as Error).message) ? 409 : 502, (error as Error).message);
       }
     });
   }
@@ -431,8 +436,8 @@ export function discoverTenant(store: TenantStore, query: { email?: string; host
   return { id: tenant.id, name: tenant.branding.displayName ?? tenant.name, mode: tenant.mode, issuer: tenant.issuer, organization: tenant.mode === "organization" ? tenant.id : null, branding: { logoUrl: tenant.branding.logoUrl ?? null, primaryColor: tenant.branding.primaryColor ?? null } };
 }
 
-export function allConsoleRoutes(): ConsoleRoute[] {
-  return [...phase1Routes, ...phase2Routes, ...phase3Routes, ...analyticsRoutes, ...gtmRoutes, ...aiVisibilityRoutes, ...aiProviderRoutes, ...aiConnectionRoutes, ...competitionRoutes, ...operationsRoutes, ...applyPreviewRoutes, ...applyWriteRoutes, ...localSeoRoutes, ...socialRoutes, ...crmRoutes, ...visualCatalogRoutes, ...dataAgentRoutes, ...journeyRoutes, ...commerceRoutes, ...decisionInboxRoutes, ...decisionIntentRoutes, ...decisionPortfolioRoutes, ...measurementRoutes, ...scenarioRoutes];
+export function allConsoleRoutes(visibilityJobs?: VisibilityJobStore | null): ConsoleRoute[] {
+  return [...phase1Routes, ...phase2Routes, ...phase3Routes, ...analyticsRoutes, ...gtmRoutes, ...aiVisibilityRoutes, ...aiProviderRoutes, ...aiConnectionRoutes, ...competitionRoutes, ...operationsRoutes, ...visibilityScheduleRoutes(visibilityJobs), ...applyPreviewRoutes, ...applyWriteRoutes, ...localSeoRoutes, ...socialRoutes, ...crmRoutes, ...visualCatalogRoutes, ...dataAgentRoutes, ...journeyRoutes, ...commerceRoutes, ...decisionInboxRoutes, ...decisionIntentRoutes, ...decisionEditorialRoutes, ...decisionPortfolioRoutes, ...measurementRoutes, ...scenarioRoutes];
 }
 
 export function mountConsoleApi(app: Express, options: ConsoleOptions = {}): void {
@@ -449,5 +454,5 @@ export function mountConsoleApi(app: Express, options: ConsoleOptions = {}): voi
     return found ? res.json(found) : fail(res, 404, "Aucun espace client trouvé.");
   });
   app.use("/api/platform", buildPlatformRouter(opts));
-  app.use("/api/console", buildConsoleRouter(options.routes ?? allConsoleRoutes(), opts));
+  app.use("/api/console", buildConsoleRouter(options.routes ?? allConsoleRoutes(options.visibilityJobs), opts));
 }
