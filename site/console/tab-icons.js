@@ -19,7 +19,7 @@ export const TAB_ICONS = {
   billing: { subscription: 'billing' }, agents: { connections: 'agents' }, gtm: { workspace: 'layers' },
   audit: { tech: 'audit', serp: 'window' }, generators: { titles: 'heading', meta: 'text', outline: 'checklist' },
   calculators: { ctr: 'percent', value: 'coins', roi: 'overview', budget: 'wallet' },
-  report: { pdf: 'report' }, ops: { prompts: 'message', rank: 'competition', market: 'compass', articles: 'page', alerts: 'bell' },
+  report: { pdf: 'report' }, ops: { prompts: 'message', rank: 'competition', articles: 'page', alerts: 'bell', market: 'coins' },
   platform: { clients: 'building', setup: 'operations' },
 };
 export const tabIcon = (section, tab) => TAB_ICONS[section]?.[tab] || 'page';

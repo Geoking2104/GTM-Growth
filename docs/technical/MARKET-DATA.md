@@ -92,11 +92,19 @@ out after 30 seconds.
 - `tests/market-routes.test.ts`: route gating (admin-only partner calls,
   status for all), request bounds, disabled-bridge refusals, partner payload
   mapping.
+- `tests/market-ui.test.ts`: linkedom UI coverage of the panel states, gates,
+  bounded requests and the provenance line in FR/EN.
 - CI runs both suites with the full toolchain (`pnpm test`).
+
+## Console panel
+
+The bilingual FR/EN Operations panel `site/console/market.js` renders the
+status line (enabled flag, locales, grid depth), the three partner forms and
+every answer with its provenance line. Partner buttons are disabled for
+members and while the bridge is off. Unknown values render "—", never zero.
 
 ## Not in this increment
 
-- Console panels consuming these routes ship in a follow-up slice (PR-B).
 - No caching tier and no scheduled collection of market data: each call is a
   live, bounded, operator-costed request.
 - R5 (backlinks on the same partner) is a later increment; this bridge only
