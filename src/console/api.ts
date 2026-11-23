@@ -46,7 +46,7 @@ import { aiConnectionRoutes } from "./ai-connections.js";
 import { aiProviderRoutes } from "./ai-visibility-providers.js";
 import { competitionRoutes } from "./competition.js";
 import { operationsRoutes } from "./ops-routes.js";
-import { marketDataRoutes } from "./market-data.js";
+import { marketRoutes } from "./market.js";
 import { visibilityScheduleRoutes } from "../visibility-jobs/routes.js";
 import type { VisibilityJobStore } from "../visibility-jobs/store.js";
 import { analyticsRoutes } from "./analytics.js";
@@ -438,7 +438,7 @@ export function discoverTenant(store: TenantStore, query: { email?: string; host
 }
 
 export function allConsoleRoutes(visibilityJobs?: VisibilityJobStore | null): ConsoleRoute[] {
-  return [...phase1Routes, ...phase2Routes, ...phase3Routes, ...analyticsRoutes, ...gtmRoutes, ...aiVisibilityRoutes, ...aiProviderRoutes, ...aiConnectionRoutes, ...competitionRoutes, ...operationsRoutes, ...marketDataRoutes(), ...visibilityScheduleRoutes(visibilityJobs), ...applyPreviewRoutes, ...applyWriteRoutes, ...localSeoRoutes, ...socialRoutes, ...crmRoutes, ...visualCatalogRoutes, ...dataAgentRoutes, ...journeyRoutes, ...commerceRoutes, ...decisionInboxRoutes, ...decisionIntentRoutes, ...decisionEditorialRoutes, ...decisionPortfolioRoutes, ...measurementRoutes, ...scenarioRoutes];
+  return [...phase1Routes, ...phase2Routes, ...phase3Routes, ...analyticsRoutes, ...gtmRoutes, ...aiVisibilityRoutes, ...aiProviderRoutes, ...aiConnectionRoutes, ...competitionRoutes, ...operationsRoutes, ...marketRoutes(), ...visibilityScheduleRoutes(visibilityJobs), ...applyPreviewRoutes, ...applyWriteRoutes, ...localSeoRoutes, ...socialRoutes, ...crmRoutes, ...visualCatalogRoutes, ...dataAgentRoutes, ...journeyRoutes, ...commerceRoutes, ...decisionInboxRoutes, ...decisionIntentRoutes, ...decisionEditorialRoutes, ...decisionPortfolioRoutes, ...measurementRoutes, ...scenarioRoutes];
 }
 
 export function mountConsoleApi(app: Express, options: ConsoleOptions = {}): void {
