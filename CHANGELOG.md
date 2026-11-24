@@ -53,6 +53,23 @@
 
 Release reference is available after the signed tag exists. [v0.23.0](https://github.com/Geoking2104/GTM-Growth/releases/tag/v0.23.0)
 
+### OVH production deployment evidence (24 November 2026)
+
+- Record the observed production deployment in the capability register's dated
+  release-evidence section: OVH
+  [run #61](https://github.com/Geoking2104/GTM-Growth/actions/runs/45451046004)
+  on `main` (workflow_dispatch, `DEPLOY` confirmation, production review
+  approved) completed successfully, fast-forwarding the production host from
+  `e4d3718` (run #60, 20 November) to `73e9730`, 17 commits, with Docker
+  rebuild and app/Keycloak readiness checks.
+- Post-deploy public checks on gtm.kayroslab.com: `/health` 200, the EN homepage
+  at the root and the FR homepage at `/fr/` serve the refreshed trust band and
+  plan badges, console public-read pages and EN/FR reading guides return 200.
+- Correct the stale public-read register row ("implemented in feature branch;
+  not yet merged/deployed") to the observed deployed state, keeping
+  authenticated client sessions, the optional GEO v2 renderer service, Apply
+  Mode writers and live billing explicitly unverified.
+
 ### Third-party consultation refresh: professional README and commercial landing
 
 - The project README is rewritten for external review: at-a-glance fact table,

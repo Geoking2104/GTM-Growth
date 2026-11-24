@@ -100,7 +100,7 @@ revision `353e658`.
 
 | Stage / capability | Source status | Activation or scope | Evidence / reference |
 | --- | --- | --- | --- |
-| Diagnose: public read / 360° report | Implemented in feature branch; **not yet merged/deployed** | One public page, GEO v1/SEO evidence, five distinct pillars, evidence-linked FR/EN actions and A4 browser print. Private metrics and score gains remain unknown; before/after comparisons exist at the audit API level for public outcomes with matching method and URL | [Free report contract](../product/FREE-REPORT-360.md), [free read](../../src/freeread/index.ts), [public API](../PUBLIC_API.md) |
+| Diagnose: public read / 360° report | Implemented; deployed on the OVH production instance on 24 November 2026 (see [release evidence](#release-evidence)) | One public page, GEO v1/SEO evidence, five distinct pillars, evidence-linked FR/EN actions and A4 browser print. Private metrics and score gains remain unknown; before/after comparisons exist at the audit API level for public outcomes with matching method and URL | [Free report contract](../product/FREE-REPORT-360.md), [free read](../../src/freeread/index.ts), [public API](../PUBLIC_API.md) |
 | Diagnose: GEO, citability, sitemap, performance | Implemented | Authorised URLs; lab/field data and readiness remain distinct | [GEO](../GEO.md), [CLI](../CLI.md) |
 | Diagnose: GEO v2 | Foundation; renderer and egress gate merged | 42-control contracts, ownership registry and offline rendering code are on main; the isolated renderer and the fail-closed egress gateway are merged with CI smokes but not deployed as a public service. Verified-domain grants are operator-issued; before/after comparisons are not inferred | [Rubric](../../src/geo/score/v2/rubric.ts), [renderer](../../src/geo/rendering/geo-renderer.ts), [egress gate](../../src/geo/rendering/geo-egress.ts), [deploy guide](../../deploy/geo-renderer/README.md), [pilot ADR](../architecture/GEO-V2-PLAYWRIGHT-PILOT.md) |
 | Understand: buyer questions | Implemented | Actual Product/Service context and explicit confirmation; at most two selected comparable offers; unsupported stages stay empty | [Current contract](../product/CUSTOMER-JOURNEY-INTEGRATION.md), [model](../../site/console/customer-journey-model.js) |
@@ -152,6 +152,18 @@ This documentation pass did not dispatch a deployment or verify live authenticat
 customer connections. The workflow performs a source update: identify the actual
 deployed SHA from execution evidence, not only its dispatch head. Use the
 [release sequence](../technical/OPERATIONS.md#release-sequence) for production acceptance.
+
+Deployment observation recorded on 24 November 2026 (Europe/Paris):
+
+| Evidence | Observed state | What can be concluded |
+| --- | --- | --- |
+| [OVH run #61](https://github.com/Geoking2104/GTM-Growth/actions/runs/45451046004), head `73e9730` | Completed / success; workflow_dispatch on `main` with `DEPLOY` confirmation and the production review approved; fast-forward of `/opt/gtm-growth` from `e4d3718` (run #60, 20 November) to `73e9730`, 17 commits; Docker rebuild and app/Keycloak readiness checks passed | `main` through `73e9730` is the deployed production source revision; the dispatch head and the fast-forward checkout are identical in this run |
+| Public checks on `gtm.kayroslab.com`, 24 November 2026 | `/health` 200 with `{"status":"ok","sessions":0}`; EN homepage at the root and FR homepage at `/fr/` serve the refreshed trust band and plan badges; `/console/?lang=en` and `/console/?lang=fr` return 200; EN/FR reading guides return 200 | The public site and console pages are served from the deployed revision |
+
+This observation did not verify authenticated client sessions, the optional GEO v2
+renderer service, production Apply Mode writers or live billing; Mollie stays
+inactive. A subsequent deploy must repeat the checks in the
+[release sequence](../technical/OPERATIONS.md#release-sequence).
 
 ## Update rule
 
