@@ -1,0 +1,188 @@
+name: Escrow MCP token to the operator key (read-only VPS)
+
+# Manual only. Reads MCP_API_TOKEN on the shared OVH VPS and encrypts it ON THE
+# VPS with the pinned operator public key (RSA-4096, OAEP-SHA256). The plaintext
+# never leaves the VPS: only the ciphertext reaches the runner and is uploaded as
+# a 1-day artifact. The private key stays on the operator machine.
+# Optional read-only SSH diagnostics explain why a given IP cannot reach port 22.
+# The only state-changing option is `unban_ip` (fail2ban sshd unban), empty by
+# default. Runs behind the `production` environment reviewers.
+on:
+  workflow_dispatch:
+    inputs:
+      confirmation:
+        description: 'Type ESCROW to read and encrypt MCP_API_TOKEN'
+        required: true
+        type: string
+      diagnostics:
+        description: 'Print read-only SSH diagnostics (ufw, fail2ban sshd, sshd listening)'
+        required: false
+        default: true
+        type: boolean
+      check_ip:
+        description: 'Optional IP to look up in fail2ban/ufw/iptables (no change)'
+        required: false
+        default: ''
+        type: string
+      unban_ip:
+        description: 'Optional IP to remove from the fail2ban sshd jail (the only change this workflow can make)'
+        required: false
+        default: ''
+        type: string
+
+permissions:
+  contents: read
+
+concurrency:
+  group: vps-mcp-token-escrow
+  cancel-in-progress: false
+
+jobs:
+  escrow:
+    if: ${{ github.ref == 'refs/heads/main' && inputs.confirmation == 'ESCROW' }}
+    runs-on: ubuntu-latest
+    environment: production
+    timeout-minutes: 10
+    env:
+      # Same pin as deploy-kayroslab-vps.yml (operator strict SSH session, 2026-11-08).
+      VPS_HOST_FINGERPRINT: 'SHA256:iWJ+4asSlFAKA9UllEF2ZjYneUzm9OeRfZaUqQf9Ruc'
+      # sha256 of the DER public key in deploy/kayroslab-vps/keys/mcp-token-recipient.pub.pem
+      RECIPIENT_SHA256: '867f313ec22a522ebe6588c3cc8786d1a18fd31c852acd14b824bcbec6b9d075'
+    steps:
+      - name: Check out the pinned recipient key only
+        uses: actions/checkout@v4
+        with:
+          sparse-checkout: deploy/kayroslab-vps/keys
+          sparse-checkout-cone-mode: false
+          persist-credentials: false
+
+      - name: Verify recipient key and inputs
+        id: prep
+        env:
+          CHECK_IP: ${{ inputs.check_ip }}
+          UNBAN_IP: ${{ inputs.unban_ip }}
+        run: |
+          set -euo pipefail
+          key=deploy/kayroslab-vps/keys/mcp-token-recipient.pub.pem
+          digest="$(openssl pkey -pubin -in "$key" -outform DER | sha256sum | awk '{print $1}')"
+          if [ "$digest" != "$RECIPIENT_SHA256" ]; then
+            echo "Recipient key digest mismatch ($digest); refusing to encrypt to an unpinned key." >&2
+            exit 1
+          fi
+          valid_ip() { [[ -z "$1" ]] || [[ "$1" =~ ^([0-9]{1,3}\.){3}[0-9]{1,3}$ ]] || [[ "$1" =~ ^[0-9A-Fa-f:]{2,45}$ ]]; }
+          valid_ip "$CHECK_IP" || { echo 'check_ip is not an IPv4/IPv6 address.' >&2; exit 1; }
+          valid_ip "$UNBAN_IP" || { echo 'unban_ip is not an IPv4/IPv6 address.' >&2; exit 1; }
+          echo "pub_b64=$(base64 -w0 "$key")" >> "$GITHUB_OUTPUT"
+          echo "Recipient key pinned: $digest"
+
+      - name: Read and encrypt MCP_API_TOKEN on the VPS
+        env:
+          VPS_DEPLOY_USER: ${{ secrets.VPS_SSH_USER }}
+          VPS_DEPLOY_KEY: ${{ secrets.VPS_SSH_KEY }}
+          PUB_B64: ${{ steps.prep.outputs.pub_b64 }}
+          DIAGNOSTICS: ${{ inputs.diagnostics }}
+          CHECK_IP: ${{ inputs.check_ip }}
+          UNBAN_IP: ${{ inputs.unban_ip }}
+        run: |
+          set -euo pipefail
+          ssh_dir="$(mktemp -d)"
+          out_dir="$RUNNER_TEMP/escrow"
+          mkdir -p "$out_dir"
+          trap 'rm -rf "$ssh_dir"' EXIT
+          chmod 700 "$ssh_dir"
+          ssh-keyscan -T 15 -p 22 -t ed25519 51.210.9.71 > "$ssh_dir/known_hosts"
+          presented="$(ssh-keygen -lf "$ssh_dir/known_hosts" -E sha256 | awk '{print $2}')"
+          if [ "$presented" != "$VPS_HOST_FINGERPRINT" ]; then
+            echo "ED25519 host fingerprint mismatch; refusing SSH: $presented" >&2
+            exit 1
+          fi
+          printf '%s\n' "$VPS_DEPLOY_KEY" > "$ssh_dir/deploy_key"
+          chmod 600 "$ssh_dir/deploy_key"
+          set +e
+          timeout 5m ssh -T -p 22 -i "$ssh_dir/deploy_key" \
+            -o BatchMode=yes -o IdentitiesOnly=yes \
+            -o StrictHostKeyChecking=yes -o HostKeyAlgorithms=ssh-ed25519 \
+            -o UserKnownHostsFile="$ssh_dir/known_hosts" -o GlobalKnownHostsFile=/dev/null \
+            -o ConnectTimeout=30 \
+            "$VPS_DEPLOY_USER@51.210.9.71" \
+            "bash -s -- '$PUB_B64' '${DIAGNOSTICS:-true}' '${CHECK_IP:--}' '${UNBAN_IP:--}'" \
+            > "$out_dir/remote.out" <<'REMOTE'
+          set -uo pipefail
+          pub_b64="$1"; diag="$2"; check_ip="$3"; unban_ip="$4"
+          [ "$check_ip" = "-" ] && check_ip=""
+          [ "$unban_ip" = "-" ] && unban_ip=""
+          ip_ok() { [[ -z "$1" ]] || [[ "$1" =~ ^([0-9]{1,3}\.){3}[0-9]{1,3}$ ]] || [[ "$1" =~ ^[0-9A-Fa-f:]{2,45}$ ]]; }
+          ip_ok "$check_ip" && ip_ok "$unban_ip" || { echo 'Invalid IP argument.'; exit 2; }
+          if [ "$(id -u)" -eq 0 ]; then S=(); else S=(sudo -n); fi
+          ENV_FILE=/opt/gtm-growth/deploy/kayroslab-vps/.env.local
+          if [ -r "$ENV_FILE" ]; then R=(); else R=("${S[@]}"); fi
+          pub="$(mktemp)"; trap 'rm -f "$pub"' EXIT
+          printf '%s' "$pub_b64" | base64 -d > "$pub"
+          openssl pkey -pubin -in "$pub" -noout || { echo 'Recipient key unreadable on VPS.'; exit 2; }
+          token_value() {
+            "${R[@]}" grep -m1 '^MCP_API_TOKEN=' "$ENV_FILE" | cut -d= -f2- \
+              | sed -E "s/^\"(.*)\"\$/\\1/; s/^'(.*)'\$/\\1/" | tr -d '\r\n'
+          }
+          # Presence check without printing the value.
+          if ! "${R[@]}" test -r "$ENV_FILE"; then
+            echo 'MCP_API_TOKEN_STATUS=env_file_unreadable'
+          elif [ "$(token_value | wc -c)" -eq 0 ]; then
+            echo 'MCP_API_TOKEN_STATUS=absent'
+          else
+            echo 'MCP_API_TOKEN_STATUS=present'
+            ct="$(token_value | openssl pkeyutl -encrypt -pubin -inkey "$pub" \
+              -pkeyopt rsa_padding_mode:oaep -pkeyopt rsa_oaep_md:sha256 | base64 -w0)"
+            [ -n "$ct" ] && echo "CIPHERTEXT:$ct" || echo 'MCP_API_TOKEN_STATUS=encrypt_failed'
+          fi
+          if [ "$diag" = "true" ]; then
+            echo '=== SSH identity ==='
+            echo "user=$(id -un) uid=$(id -u)"
+            if [ "${#S[@]}" -eq 0 ] || sudo -n true 2>/dev/null; then echo 'root_or_passwordless_sudo=yes'; else echo 'root_or_passwordless_sudo=no'; fi
+            echo '=== sshd ==='
+            systemctl is-active ssh 2>/dev/null || systemctl is-active sshd 2>/dev/null || true
+            ss -ltn 2>/dev/null | awk 'NR==1 || $4 ~ /:22$/' || true
+            "${S[@]}" sshd -T 2>/dev/null | grep -Ei '^(port|listenaddress|allowusers|allowgroups|maxstartups|maxauthtries) ' || true
+            echo '=== ufw ==='
+            "${S[@]}" ufw status verbose 2>&1 || true
+            echo '=== fail2ban sshd ==='
+            f2b="$("${S[@]}" fail2ban-client status sshd 2>&1 || true)"
+            printf '%s\n' "$f2b" | grep -Ev 'Banned IP list' || true
+            echo '=== iptables rules mentioning port 22 / fail2ban ==='
+            "${S[@]}" iptables -S 2>/dev/null | grep -E -- '--dport (22|ssh)( |$)|f2b' || true
+            "${S[@]}" ip6tables -S 2>/dev/null | grep -E -- '--dport (22|ssh)( |$)|f2b' || true
+            echo '=== hosts.deny (non-comment) ==='
+            grep -Ev '^\s*(#|$)' /etc/hosts.deny 2>/dev/null || echo '(empty)'
+            if [ -n "$check_ip" ]; then
+              echo "=== Lookup of $check_ip (no change) ==="
+              if printf '%s\n' "$f2b" | grep -qwF -- "$check_ip"; then echo 'fail2ban_sshd_banned=yes'; else echo 'fail2ban_sshd_banned=no'; fi
+              "${S[@]}" ufw status 2>/dev/null | grep -F -- "$check_ip" || echo 'ufw_rule_for_ip=none'
+              "${S[@]}" iptables -S 2>/dev/null | grep -F -- "$check_ip" || echo 'iptables_rule_for_ip=none'
+              echo "sshd_log_lines_last_24h=$("${S[@]}" journalctl -u ssh -u sshd --since '-24h' 2>/dev/null | grep -cF -- "$check_ip" || true)"
+            fi
+            echo 'Note: the OVH edge Network Firewall is not visible from inside the VPS.'
+          fi
+          if [ -n "$unban_ip" ]; then
+            echo "=== Unban $unban_ip from fail2ban sshd (only change) ==="
+            "${S[@]}" fail2ban-client set sshd unbanip "$unban_ip" 2>&1 || true
+          fi
+          REMOTE
+          rc=$?
+          set -e
+          ct="$(grep -m1 '^CIPHERTEXT:' "$out_dir/remote.out" | cut -d: -f2- || true)"
+          if [ -n "$ct" ]; then
+            echo "::add-mask::$ct"
+            printf '%s\n' "$ct" > "$out_dir/mcp_api_token.enc.b64"
+            echo "Ciphertext sha256: $(sha256sum "$out_dir/mcp_api_token.enc.b64" | awk '{print $1}')"
+          fi
+          grep -v '^CIPHERTEXT:' "$out_dir/remote.out" || true
+          rm -f "$out_dir/remote.out"
+          if [ "$rc" -ne 0 ]; then echo "Remote script exited $rc" >&2; exit "$rc"; fi
+          [ -n "$ct" ] || { echo 'No ciphertext produced.' >&2; exit 1; }
+
+      - name: Upload ciphertext (1-day retention)
+        uses: actions/upload-artifact@v4
+        with:
+          name: mcp-token-ciphertext
+          path: ${{ runner.temp }}/escrow/mcp_api_token.enc.b64
+          retention-days: 1
+          if-no-files-found: error
