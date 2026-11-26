@@ -91,12 +91,12 @@ export function outcomeChart(controls, lang) {
     const end = offset + 100 * count / controls.length;
     stops.push(`${color} ${offset}% ${end}%`); offset = end;
     const item = node("li"), dot = node("i");
-    dot.setAttribute("style", "background:" + color);
+    dot.style.backgroundColor = color;
     item.append(dot, node("span", "", label), node("b", "", count)); legend.append(item);
   }
   const ring = node("div", "read-ring"), center = node("span", "", controls.length);
   ring.setAttribute("aria-hidden", "true");
-  ring.setAttribute("style", "background:conic-gradient(" + stops.join(",") + ")");
+  ring.style.backgroundImage = "conic-gradient(" + stops.join(",") + ")";
   ring.append(center); chart.append(ring, legend); return chart;
 }
 
@@ -181,7 +181,7 @@ export function sitemapActivity(map, observedAt, lang) {
     const name = month.toLocaleDateString(lang, { month: "short", year:"2-digit", timeZone:"UTC" });
     const bar = node("div", "read-month");
     const plot = node("span", "read-month-plot"); const fill = node("i");
-    fill.setAttribute("style", "height:" + (100 * count/max) + "%"); plot.append(fill);
+    fill.style.height = (100 * count/max) + "%"; plot.append(fill);
     bar.append(node("b", "", count), plot, node("small", "", name)); bars.append(bar);
   });
   box.append(bars); return box;

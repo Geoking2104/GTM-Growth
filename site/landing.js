@@ -128,16 +128,15 @@ async function loadLiveRead(url, host, view, requestId) {
         ? `${L("Audit de la page", "Page audit for")} ${host} · ${unknown} ${L("contrôles à vérifier. La note sur 100 est calculée quand les 42 le sont, dans votre espace.", "checks to verify. The score out of 100 is calculated once all 42 are done, in your workspace.")}`
         : `${L("Audit de la page", "Page audit for")} ${host} · ${L("les 42 contrôles sont faits. La note sur 100 s'affiche dans votre espace.", "all 42 checks are done. The score out of 100 is shown in your workspace.")}`;
       view.explanation.textContent = L("Les 42 contrôles de visibilité IA lisent votre page, son robots.txt, son llms.txt et son sitemap. Un contrôle à vérifier ne compte jamais comme un échec.", "The 42 AI visibility checks read your page, its robots.txt, llms.txt and sitemap. A check still to verify never counts as a failure.");
-    } else {
-      view.score.textContent = L("Visibilité IA : lecture indisponible", "AI visibility: read unavailable");
-      view.verdictText.textContent = L("Les 42 contrôles de visibilité IA n'ont pas pu être lus pour cette page. Les anciennes mesures ne remplacent pas cette note.", "The 42 AI visibility checks could not be read for this page. Older measurements do not replace this score.");      view.explanation.textContent = "";
-    }
-    if (payload.geoV2?.controls?.length && payload.geoV2.status !== "failed") {
       const outcomes = outcomeChart(payload.geoV2.controls, language);
       if (outcomes) view.geoBody.append(outcomes);
       const points = await auditSeries(payload);
       if (requestId !== generation) return;
       view.charts.append(categoryChart(payload.geoV2.controls, language), trendPanel(points, language));
+    } else {
+      view.score.textContent = L("Visibilité IA : lecture indisponible", "AI visibility: read unavailable");
+      view.verdictText.textContent = L("Les 42 contrôles de visibilité IA n'ont pas pu être lus pour cette page. Les anciennes mesures ne remplacent pas cette note.", "The 42 AI visibility checks could not be read for this page. Older measurements do not replace this score.");
+      view.explanation.textContent = "";
     }
     renderSources(view.tables, language === "fr" ? translateLiveTables(payload.tables ?? []) : (payload.tables ?? []));
     const fixes = (payload.report360?.actions ?? []).filter(a => a.kind === "observed_fix" && a.pillar === "geo").slice(0, 3);
