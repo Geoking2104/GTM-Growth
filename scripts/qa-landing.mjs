@@ -9,7 +9,7 @@ import path from "node:path";
 import { get as httpGet } from "node:http";
 import { spawn } from "node:child_process";
 import { setTimeout as wait } from "node:timers/promises";
-import { chromium } from "playwright-core";
+import { chromium, devices, firefox, webkit } from "playwright-core";
 
 const root = process.cwd();
 const outputDir = path.resolve(process.env.LANDING_QA_OUTPUT_DIR || "../qa-landing");
@@ -32,6 +32,61 @@ async function ready() {
     await wait(100);
   }
   throw new Error("Static preview server did not start");
+}
+
+// Fragment navigation and input focus must never scroll the hero independently of the page.
+const auditViewports = [[320,568], [390,844], [650,900], [651,900], [768,1024], [844,390], [1024,768], [1440,900], [2048,1152]];
+
+async function verifyAuditPlacement(browser, locale, viewports = auditViewports, device = {}) {
+  const page = await browser.newPage({ ...device, reducedMotion: 'reduce' });
+  const home = origin + (locale === 'fr' ? '/fr/' : '/');
+  await page.route('**/api/free-read', route => route.fulfill({
+    status: 503, contentType: 'application/json', body: '{"error":"offline test"}',
+  }));
+  await page.goto(home);
+  await page.getByRole('button', { name: locale === 'fr' ? 'Refuser' : 'Reject', exact: true }).click();
+  for (const [width, height] of viewports) {
+    const label = locale + ' ' + width + '×' + height;
+    await page.setViewportSize({ width, height });
+    await page.goto(home + '#ops');
+    await page.locator('#ops').waitFor();
+    await page.locator('a[href="#url-form"]:visible').first().click();
+    await page.waitForURL(home + '#url-form');
+    // Reopening the bookmark also exercises initial fragment placement after fonts load.
+    await page.reload();
+    await page.evaluate(() => document.fonts.ready);
+    await page.locator('#url-input').focus();
+    const layout = await page.evaluate(() => {
+      const hero = document.querySelector('.vh-hero');
+      const rect = selector => document.querySelector(selector).getBoundingClientRect().toJSON();
+      return {
+        header: rect('.site-header'), input: rect('#url-input'), button: rect('#url-form button'),
+        blank: hero.getBoundingClientRect().bottom - rect('.hero-copy > .vh-text-link').bottom,
+        innerScroll: hero.scrollTop, pageWidth: document.documentElement.scrollWidth,
+      };
+    });
+    const { header, input, button } = layout;
+    assert.equal(layout.innerScroll, 0, label + ' unexpected internal hero scrolling: ' + JSON.stringify(layout));
+    assert.ok(layout.blank < 64, label + ' gap below the form: ' + layout.blank);
+    assert.ok(input.top >= Math.max(0, header.bottom) + 4, label + ' header overlaps the field');
+    assert.ok(button.bottom <= height && input.left >= 0 && button.right <= width + 1 && layout.pageWidth <= width + 1, label + ' controls must fit');
+    assert.ok(Math.min(input.height, button.height) >= 44, label + ' touch target size');
+    if (width <= 650) {
+      assert.ok(button.top >= input.bottom && Math.abs(button.width - input.width) <= 1, label + ' stacked controls');
+    } else {
+      assert.ok(button.left >= input.right && Math.abs(button.top - input.top) <= 1 && Math.abs(button.height - input.height) <= 1, label + ' aligned controls');
+    }
+    await page.locator('#url-input').fill('not a url');
+    await page.locator('#url-input').press('Enter');
+    assert.ok((await page.locator('#form-msg').innerText()).length > 0, label + ' validation feedback');
+    await page.locator('#url-input').fill('example.com');
+    await page.locator('#url-input').press('Enter');
+    await page.locator('#read-result .gg-checks li').first().waitFor();
+    const result = await page.locator('#read-result').boundingBox();
+    const headerAfter = await page.locator('.site-header').boundingBox();
+    assert.ok(result.y >= Math.max(0, headerAfter.y + headerAfter.height) && result.y < height / 2, label + ' results visible after submitting');
+  }
+  await page.close();
 }
 
 async function verifyCarousel(browser, locale, viewport) {
@@ -412,6 +467,20 @@ try {
   await ready();
   const browserExecutable = process.env.CHROMIUM_BIN || (existsSync(chromium.executablePath()) ? chromium.executablePath() : "/usr/bin/chromium");
   browser = await chromium.launch({ executablePath: browserExecutable, headless: true, args: ["--no-sandbox", "--disable-dev-shm-usage"] });
+  await verifyAuditPlacement(browser, "fr");
+  await verifyAuditPlacement(browser, "en");
+  await verifyAuditPlacement(browser, 'fr', [[412,839], [839,412]], devices['Pixel 7']);
+  if (process.env.LANDING_CROSS_BROWSER === '1') {
+    const safari = await webkit.launch();
+    try {
+      await verifyAuditPlacement(safari, 'fr', [[390,664], [664,390]], devices['iPhone 13']);
+      await verifyAuditPlacement(safari, 'en', [[810,1080], [1080,810]], devices['iPad (gen 7)']);
+    } finally { await safari.close(); }
+    const gecko = await firefox.launch();
+    try {
+      await verifyAuditPlacement(gecko, 'fr', [[768,1024], [1440,900]]);
+    } finally { await gecko.close(); }
+  }
   await visitLocalSeoWorkspace(browser, "fr");
   await visitLocalSeoWorkspace(browser, "en");
   const context = await browser.newContext({ locale: "fr-FR" });
