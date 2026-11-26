@@ -29,6 +29,9 @@ services:
       KEYCLOAK_INTERNAL_URL: http://keycloak:8080
       OIDC_EXTRA_ISSUERS: ${OIDC_EXTRA_ISSUERS:-}
       TENANTS_PATH: /data/tenants.json
+      MCP_RESOURCE: ${MCP_RESOURCE:-https://gtm.kayroslab.com/mcp}
+      MCP_PUBLIC_ORIGIN: ${MCP_PUBLIC_ORIGIN:-https://gtm.kayroslab.com}
+      MCP_STATIC_TOKEN_ENABLED: ${MCP_STATIC_TOKEN_ENABLED:-true}
       REPORTS_PATH: /data/reports
       # Public report email-code gate. The persisted secret is generated once
       # by deploy.sh; SMTP must be configured separately before enabling.

@@ -39,7 +39,7 @@ This repo ships [`.mcp.json`](../.mcp.json):
 
 Build first: `pnpm install && pnpm run build`.
 
-Remote HTTP: point Claude at `https://your-host/mcp`. Set `MCP_API_TOKEN` on the server and send `Authorization: Bearer <token>`.
+Remote HTTP: point Claude at `https://your-host/mcp`. Set `MCP_API_TOKEN` on the server and send `Authorization: Bearer <token>`. For per-user Keycloak login (OAuth 2.1, required for a public Mistral connector), see [MCP OAuth](mcp/OAUTH.md). The static token remains available for the operator when `MCP_STATIC_TOKEN_ENABLED` is not `false`.
 
 ## Verify
 

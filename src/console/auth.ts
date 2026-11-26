@@ -21,6 +21,12 @@ export interface OidcConfig {
   /** Extra trusted issuers: dedicated realms for tenants that need full isolation/branding. */
   extraIssuers?: string[];
   clientId: string;
+  /**
+   * Accepted token audiences (RFC 8707). When set, a token is accepted if `aud`
+   * or `azp` matches one of these values. When omitted, `clientId` is the only
+   * accepted audience (console behaviour).
+   */
+  audiences?: string[];
   /** JWKS of the primary issuer (may point at the internal Keycloak URL). */
   jwksUrl: string;
   /** Internal Keycloak base (e.g. http://keycloak:8080) used to fetch JWKS of any trusted issuer. */
@@ -152,7 +158,8 @@ export async function verifyAccessToken(token: string, config: OidcConfig, keys:
   if (typeof claims.exp !== "number" || claims.exp + leeway < now) throw new Error("token expired");
   if (typeof claims.nbf === "number" && claims.nbf - leeway > now) throw new Error("token not yet valid");
   const aud = Array.isArray(claims.aud) ? claims.aud : claims.aud ? [claims.aud] : [];
-  if (!aud.includes(config.clientId) && claims.azp !== config.clientId) throw new Error("bad audience");
+  const allowed = config.audiences?.length ? config.audiences : [config.clientId];
+  if (!aud.some((value) => allowed.includes(value)) && !allowed.includes(claims.azp ?? "")) throw new Error("bad audience");
   if (config.requiredRole && !(claims.realm_access?.roles ?? []).includes(config.requiredRole)) throw new Error("missing role");
   return claims;
 }
