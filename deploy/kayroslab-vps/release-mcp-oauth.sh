@@ -100,49 +100,68 @@ if [[ "$ENSURE_ENV" == true ]]; then
 fi
 
 if [[ "$RELOAD_NGINX" == true ]]; then
-  if [[ ! -f "$NGINX_LIVE" ]]; then
-    echo "Nginx vhost not found at ${NGINX_LIVE}" >&2
+  patcher="${DEPLOY_DIR}/patch-nginx-mcp-metadata.py"
+  if [[ ! -f "$patcher" ]]; then
+    echo "Missing ${patcher}" >&2
     exit 1
   fi
+  mapfile -t candidates < <(
+    {
+      [[ -e "$NGINX_LIVE" ]] && printf '%s\n' "$NGINX_LIVE"
+      "${S[@]}" ls /etc/nginx/sites-available/gtm.kayroslab.com /etc/nginx/sites-enabled/gtm.kayroslab.com 2>/dev/null || true
+      "${S[@]}" grep -lR --include='*.conf' --include='gtm.kayroslab.com' -E 'gtm\.kayroslab\.com' /etc/nginx/sites-available /etc/nginx/sites-enabled /etc/nginx/conf.d 2>/dev/null || true
+    } | awk 'NF && !seen[$0]++'
+  )
+  if [[ ${#candidates[@]} -eq 0 ]]; then
+    echo "No nginx vhost mentioning gtm.kayroslab.com was found." >&2
+    exit 1
+  fi
+  echo "Nginx candidate files:"
+  for file in "${candidates[@]}"; do
+    echo "  $file"
+  done
   stamp="$(date +%Y%m%d-%H%M%S)"
-  backup="/root/nginx-gtm.kayroslab.com.${stamp}"
-  "${S[@]}" cp -a "$NGINX_LIVE" "$backup"
-  echo "Nginx backup: ${backup}"
-  tmp="$(mktemp)"
-  "${S[@]}" cat "$NGINX_LIVE" > "$tmp"
-  python3 - "$tmp" <<'PY'
-import re, sys
-from pathlib import Path
-path = Path(sys.argv[1])
-text = path.read_text()
-if "oauth-protected-resource(/mcp)?" in text:
-    print("nginx well-known already includes /mcp")
-    raise SystemExit(0)
-pattern = re.compile(r"location\s+~\s+\^/\\?\.well-known/[^\n{]+")
-matches = list(pattern.finditer(text))
-if not matches:
-    print("NO_WELLKNOWN_LOCATION: no .well-known location found in the live vhost", file=sys.stderr)
-    raise SystemExit(3)
-def repl(match: re.Match[str]) -> str:
-    line = match.group(0)
-    if "oauth-protected-resource(/mcp)?" in line:
-        return line
-    if "oauth-protected-resource" not in line:
-        return line
-    return line.replace("oauth-protected-resource", "oauth-protected-resource(/mcp)?", 1)
-updated, count = pattern.subn(repl, text)
-if "oauth-protected-resource(/mcp)?" not in updated:
-    print("LIVE_WELLKNOWN_UNRECOGNIZED: could not patch the live well-known location safely", file=sys.stderr)
-    raise SystemExit(3)
-path.write_text(updated)
-print(f"nginx well-known location updated ({count} match(es))")
-PY
-  "${S[@]}" cp "$tmp" "$NGINX_LIVE"
-  rm -f "$tmp"
+  patched=0
+  declare -A seen_real=()
+  for file in "${candidates[@]}"; do
+    [[ -e "$file" ]] || continue
+    real="$("${S[@]}" realpath "$file")"
+    if [[ -n "${seen_real[$real]:-}" ]]; then
+      echo "Skipping $file (same file as ${seen_real[$real]})"
+      continue
+    fi
+    seen_real[$real]="$file"
+    backup="/root/nginx-$(basename "$real").${stamp}"
+    "${S[@]}" cp -a "$real" "$backup"
+    echo "Nginx backup: ${backup} (from ${file})"
+    tmp="$(mktemp)"
+    "${S[@]}" cat "$real" > "$tmp"
+    set +e
+    python3 "$patcher" --write "$tmp"
+    status=$?
+    set -e
+    if [[ "$status" -ne 0 ]]; then
+      echo "Failed to patch ${file}; left live file unchanged (backup ${backup})." >&2
+      rm -f "$tmp"
+      exit "$status"
+    fi
+    "${S[@]}" cp "$tmp" "$real"
+    rm -f "$tmp"
+    patched=$((patched + 1))
+  done
+  if [[ "$patched" -eq 0 ]]; then
+    echo "No nginx vhost file could be patched." >&2
+    exit 1
+  fi
   if ! "${S[@]}" nginx -t; then
-    echo "nginx -t failed; restoring ${backup}" >&2
-    "${S[@]}" cp -a "$backup" "$NGINX_LIVE"
-    "${S[@]}" nginx -t
+    echo "nginx -t failed; restoring backups from ${stamp}" >&2
+    for file in "${candidates[@]}"; do
+      backup="/root/nginx-$(basename "$file").${stamp}"
+      if "${S[@]}" test -f "$backup"; then
+        "${S[@]}" cp -a "$backup" "$file"
+      fi
+    done
+    "${S[@]}" nginx -t || true
     exit 1
   fi
   "${S[@]}" systemctl reload nginx
