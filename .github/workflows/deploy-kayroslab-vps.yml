@@ -22,6 +22,16 @@ on:
         required: false
         default: false
         type: boolean
+      apply_mcp_oauth:
+        description: 'Apply the MCP OAuth Keycloak script to the production realm (ALLOW_PROD_KEYCLOAK=yes)'
+        required: false
+        default: false
+        type: boolean
+      reload_nginx:
+        description: 'Backup, patch, test and reload gtm.kayroslab.com nginx for MCP resource metadata'
+        required: false
+        default: false
+        type: boolean
 
 jobs:
   deploy:
@@ -46,6 +56,8 @@ jobs:
           VPS_DEPLOY_KEY: ${{ secrets.VPS_SSH_KEY }}
           SYNC_LOGIN_TITLES: ${{ inputs.sync_login_titles }}
           PAP_READINESS_ONLY: ${{ inputs.pap_readiness_only }}
+          APPLY_MCP_OAUTH: ${{ inputs.apply_mcp_oauth }}
+          RELOAD_NGINX: ${{ inputs.reload_nginx }}
         run: |
           set -euo pipefail
           ssh_dir="$(mktemp -d)"
@@ -67,7 +79,7 @@ jobs:
             -o StrictHostKeyChecking=yes -o HostKeyAlgorithms=ssh-ed25519 \
             -o UserKnownHostsFile="$ssh_dir/known_hosts" -o GlobalKnownHostsFile=/dev/null \
             -o ConnectTimeout=30 -o ServerAliveInterval=30 -o ServerAliveCountMax=3 \
-            "$VPS_DEPLOY_USER@51.210.9.71" "bash -se -- ${SYNC_LOGIN_TITLES:-false} ${PAP_READINESS_ONLY:-false}" <<'REMOTE'
+            "$VPS_DEPLOY_USER@51.210.9.71" "bash -se -- ${SYNC_LOGIN_TITLES:-false} ${PAP_READINESS_ONLY:-false} ${APPLY_MCP_OAUTH:-false} ${RELOAD_NGINX:-false}" <<'REMOTE'
             set -euo pipefail
             git config --global --add safe.directory /opt/gtm-growth
             cd /opt/gtm-growth
@@ -81,7 +93,13 @@ jobs:
               bash deploy/kayroslab-vps/pap-readiness.sh
               exit
             fi
+            if [ -x deploy/kayroslab-vps/release-mcp-oauth.sh ]; then
+              bash deploy/kayroslab-vps/release-mcp-oauth.sh --ensure-env=true --nginx="${4:-false}" --apply-keycloak=false
+            fi
             bash deploy/kayroslab-vps/deploy.sh
+            if [ "${3:-false}" = true ]; then
+              bash deploy/kayroslab-vps/release-mcp-oauth.sh --ensure-env=false --nginx=false --apply-keycloak=true
+            fi
             if [ "${1:-false}" = true ]; then
               bash deploy/kayroslab-vps/sync-login-titles.sh
             fi

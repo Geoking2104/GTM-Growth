@@ -63,7 +63,7 @@ beside them provide exact mappings and limitations; the diagrams do not imply ne
 | Optional Slack agent | [Eve runbook](../integrations/eve-data-agent/README.md), [upstream notice](../integrations/eve-data-agent/NOTICE.md) |
 | Cache | [Redis](CACHING.md) |
 | CLI and agent tool reference | [CLI](CLI.md), [tool catalog](../skills/gtm-growth/references/tools.md), [examples](../skills/gtm-growth/references/examples.md), [sGTM](../skills/gtm-growth/references/sgtm.md), [GEO](../skills/gtm-growth/references/geo.md) |
-| MCP client setup | [Claude](CLAUDE_SETUP.md), [Codex](CODEX_SETUP.md), [Grok](GROK_SETUP.md), [Grok Build](GROK_BUILD.md), [canonical skill](../skills/gtm-growth/SKILL.md), [setup](../skills/gtm-growth/references/setup.md) |
+| MCP client setup | [Claude](CLAUDE_SETUP.md), [Codex](CODEX_SETUP.md), [Grok](GROK_SETUP.md), [Grok Build](GROK_BUILD.md), [OAuth / Mistral](mcp/OAUTH.md), [canonical skill](../skills/gtm-growth/SKILL.md), [setup](../skills/gtm-growth/references/setup.md) |
 | Alternative deployment targets | [Generic Docker/Fly/Railway](DEPLOYMENT.md), [Caddy VPS](VPS_DEPLOY.md), [public Cloudflare Worker](WORKER.md) |
 
 ## Plans, supplied scope and history

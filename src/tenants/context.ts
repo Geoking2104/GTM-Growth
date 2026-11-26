@@ -32,6 +32,26 @@ export function organizationsOf(claims: TokenClaims): string[] {
 
 const rank = (r: string) => (r === "tenant-admin" ? 2 : r === "tenant-user" ? 1 : 0);
 
+export function listOrganizationMemberships(claims: TokenClaims, store: TenantStore, primaryIssuer: string): { id: string; role: TenantRole }[] {
+  if (claims.iss !== primaryIssuer) {
+    const tenant = claims.iss ? store.byIssuer(claims.iss) : undefined;
+    if (!tenant || tenant.status !== "active") return [];
+    const role = (claims.realm_access?.roles ?? []).includes("tenant-admin") ? "tenant-admin" : (claims.realm_access?.roles ?? []).includes("tenant-user") ? "tenant-user" : null;
+    return role ? [{ id: tenant.id, role }] : [];
+  }
+  const orgs = new Set(organizationsOf(claims));
+  const byTenant = new Map<string, TenantRole>();
+  const rank = (r: string) => (r === "tenant-admin" ? 2 : r === "tenant-user" ? 1 : 0);
+  for (const g of claims.groups ?? []) {
+    const m = /^\/tenants\/([a-z0-9-]+)\/(tenant-admin|tenant-user)$/.exec(g);
+    if (!m || !orgs.has(m[1])) continue;
+    const t = store.get(m[1]);
+    if (!t || t.mode !== "organization" || t.status !== "active") continue;
+    if (rank(m[2]) > rank(byTenant.get(m[1]) ?? "")) byTenant.set(m[1], m[2] as TenantRole);
+  }
+  return [...byTenant].map(([id, role]) => ({ id, role }));
+}
+
 export function resolveTenant(claims: TokenClaims, store: TenantStore, primaryIssuer: string, requested?: string): TenantContext {
   const realmRoles = claims.realm_access?.roles ?? [];
 

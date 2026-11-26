@@ -4,16 +4,11 @@ import { crmPluginRouter } from "./crm/plugins.js";
 import { buildSocialMcpRouter } from './console/social-mcp.js';
 import { socialWorkerRouter } from "./social/worker.js";
 import { localWorkerRouter } from "./local-seo/worker.js";
-import { Server } from "@modelcontextprotocol/sdk/server/index.js";
 import { StdioServerTransport } from "@modelcontextprotocol/sdk/server/stdio.js";
-import { SSEServerTransport } from "@modelcontextprotocol/sdk/server/sse.js";
-import { StreamableHTTPServerTransport } from "@modelcontextprotocol/sdk/server/streamableHttp.js";
-import { CallToolRequestSchema, ListToolsRequestSchema } from "@modelcontextprotocol/sdk/types.js";
-import { zodToJsonSchema } from "zod-to-json-schema";
-import { tools, handleToolCall } from "./tools/index.js";
-import express, { Request, Response, NextFunction } from "express";
+import { tools } from "./tools/index.js";
+import { createMcpServer, mountMcpHttp, mountMcpMetadata } from "./mcp/http.js";
+import express from "express";
 import cors from "cors";
-import { randomUUID } from "crypto";
 import { readFileSync } from "fs";
 import { fileURLToPath } from "url";
 import { dirname, join } from "path";
@@ -42,52 +37,7 @@ function getVersion(): string {
 const VERSION = getVersion();
 const SERVER_NAME = "gtm-growth";
 
-function createMcpServer() {
-  const server = new Server(
-    {
-      name: SERVER_NAME,
-      version: VERSION,
-    },
-    {
-      capabilities: {
-        tools: {},
-      },
-    }
-  );
-
-  server.setRequestHandler(ListToolsRequestSchema, async () => {
-    return {
-      tools: tools.map((t) => ({
-        name: t.name,
-        description: t.description,
-        inputSchema: zodToJsonSchema(t.schema),
-      })),
-    };
-  });
-
-  server.setRequestHandler(CallToolRequestSchema, async (request) => {
-    const { name, arguments: args } = request.params;
-    return handleToolCall(name, args ?? {});
-  });
-
-  return server;
-}
-
-/**
- * Optional bearer-token auth for the HTTP transport.
- * Only enforced when MCP_API_TOKEN is set. When unset, the server stays
- * open (useful for local stdio / trusted networks).
- */
-function requireToken(req: Request, res: Response, next: NextFunction) {
-  const token = process.env.MCP_API_TOKEN;
-  if (!token) return next();
-
-  const header = req.headers["authorization"] || "";
-  const incoming = header.startsWith("Bearer ") ? header.slice(7) : "";
-  if (incoming === token) return next();
-
-  res.status(401).json({ error: "Unauthorized: invalid or missing bearer token" });
-}
+export { createMcpServer } from "./mcp/http.js";
 
 export async function startServer(transportType: "stdio" | "http" = "stdio") {
   const server = createMcpServer();
@@ -112,13 +62,12 @@ export async function startServer(transportType: "stdio" | "http" = "stdio") {
   app.use("/api/integrations/commerce/webhooks", ecommerceWebhookRouter());
   app.use("/webhooks", ecommerceWebhookRouter());
   mountPoppy(app, { cloud });
+  mountMcpMetadata(app);
   app.use(express.json({ limit: "4mb" }));
+  const sessions = mountMcpHttp(app);
 
   const port = parseInt(process.env.PORT || "3000", 10);
   const host = process.env.HOST || "0.0.0.0";
-
-  // sessionId → transport (SSE legacy)
-  const sessions = new Map<string, SSEServerTransport>();
 
   // Health / info (no auth — status only)
   app.get("/", (_req, res) => {
@@ -157,101 +106,6 @@ export async function startServer(transportType: "stdio" | "http" = "stdio") {
   // Operations scheduler (T-11): periodic visibility + rank checks per tenant.
   // Opt-in through env so tests, stdio runs and CI stay quiet.
   if (process.env.OPS_SCHEDULER_ENABLED === "true") startScheduler({ cloud });
-
-  // ── Modern: Streamable HTTP transport at /mcp (stateless) ───────────
-  app.post("/mcp", requireToken, async (req: Request, res: Response) => {
-    try {
-      const sessionServer = createMcpServer();
-      const transport = new StreamableHTTPServerTransport({
-        sessionIdGenerator: undefined,
-      });
-      res.on("close", () => {
-        transport.close();
-        sessionServer.close();
-      });
-      await sessionServer.connect(transport);
-      await transport.handleRequest(req, res, req.body);
-    } catch (err: any) {
-      logger.info("[mcp] Error handling request:", err?.message);
-      if (!res.headersSent) {
-        res.status(500).json({ error: err?.message || "Internal error" });
-      }
-    }
-  });
-
-  // Streamable HTTP spec: GET/DELETE only valid for session-based mode.
-  app.get("/mcp", requireToken, (_req, res) => {
-    res.status(405).json({ error: "Method not allowed. Use POST /mcp." });
-  });
-  app.delete("/mcp", requireToken, (_req, res) => {
-    res.status(405).json({ error: "Method not allowed. Use POST /mcp." });
-  });
-
-  // ── Legacy: SSE transport at /sse (kept for older clients) ──────────
-  app.get("/sse", requireToken, async (req: Request, res: Response) => {
-    const sessionId = randomUUID();
-    logger.info(`[sse] New connection → session ${sessionId} from ${req.ip}`);
-
-    res.setHeader("Content-Type", "text/event-stream");
-    res.setHeader("Cache-Control", "no-cache");
-    res.setHeader("Connection", "keep-alive");
-    res.setHeader("X-Session-Id", sessionId);
-
-    const transport = new SSEServerTransport("/messages", res);
-    sessions.set(sessionId, transport);
-
-    const cleanup = () => {
-      sessions.delete(sessionId);
-      logger.info(`[sse] Session ${sessionId} closed (active: ${sessions.size})`);
-    };
-    res.on("close", cleanup);
-    res.on("error", cleanup);
-
-    try {
-      await server.connect(transport);
-      logger.info(`[sse] Session ${sessionId} connected (active: ${sessions.size})`);
-    } catch (err: any) {
-      logger.info(`[sse] Failed to connect session ${sessionId}:`, err?.message);
-      sessions.delete(sessionId);
-      if (!res.headersSent) {
-        res.status(500).end();
-      }
-    }
-  });
-
-  app.post("/messages", requireToken, async (req: Request, res: Response) => {
-    const sessionId =
-      (req.query.sessionId as string) ||
-      (req.headers["x-session-id"] as string);
-
-    if (!sessionId) {
-      const first = sessions.values().next().value;
-      if (first) {
-        try {
-          await first.handlePostMessage(req, res);
-          return;
-        } catch (err: any) {
-          logger.info("[messages] Error handling message (fallback):", err?.message);
-          return res.status(500).json({ error: err?.message });
-        }
-      }
-      return res.status(400).json({ error: "Missing sessionId" });
-    }
-
-    const transport = sessions.get(sessionId);
-    if (!transport) {
-      return res.status(404).json({ error: `Unknown session: ${sessionId}` });
-    }
-
-    try {
-      await transport.handlePostMessage(req, res);
-    } catch (err: any) {
-      logger.info(`[messages] Error for session ${sessionId}:`, err?.message);
-      if (!res.headersSent) {
-        res.status(500).json({ error: err?.message });
-      }
-    }
-  });
 
   // Graceful shutdown
   const httpServer = app.listen(port, host, () => {

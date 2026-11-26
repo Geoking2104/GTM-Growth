@@ -1,6 +1,7 @@
 import { AsyncLocalStorage } from "node:async_hooks";
 import path from "node:path";
 import { GoogleAuth, JWT } from "google-auth-library";
+import { currentMcpAuth } from "../mcp/context.js";
 
 /**
  * Identifiant Google propre à un client (tenant) : nom de fichier de clé posé à côté de
@@ -37,6 +38,16 @@ const SCOPES = [
 ];
 
 export async function getAuthClient(): Promise<JWT | GoogleAuth> {
+  const mcp = currentMcpAuth();
+  if (mcp?.mode === "oauth") {
+    const file = currentKeyFile();
+    const operator = process.env.GOOGLE_APPLICATION_CREDENTIALS;
+    if (!mcp.tenant?.googleCredential || !file || file === operator) {
+      throw new Error("Ce tenant n'a pas de compte Google connecté. Les identifiants de l'opérateur ne sont pas utilisés.");
+    }
+    if (!authCache.has(file)) authCache.set(file, new GoogleAuth({ scopes: SCOPES, keyFile: file }));
+    return authCache.get(file)!;
+  }
   if (process.env.GOOGLE_CREDENTIALS_JSON) {
     try {
       const credentials = JSON.parse(process.env.GOOGLE_CREDENTIALS_JSON);
