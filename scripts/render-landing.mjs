@@ -25,6 +25,7 @@ const assets = {
   landing_styles_url: assetUrl("landing.css"),
   visual_styles_url: assetUrl("visual-home.css"),
   visual_script_url: assetUrl("visual-home.js"),
+  landing_script_url: assetUrl("landing.js"),
 };
 for (const locale of ["en", "fr"]) {
   const copy = JSON.parse(fs.readFileSync(path.join(root, `site/landing/${locale}.json`), "utf8"));
