@@ -3,8 +3,11 @@ import { el } from './render.js';
 import { LANG } from './i18n.js';
 import { icon } from './icons.js';
 import { providerAsset, providerMark } from './provider-marks.js';
+import { journeyContent } from '../journey-content.js';
 import { DECISION_VIEWS } from './decision-navigation.js';
 const L = (fr, en) => LANG === 'fr' ? fr : en;
+
+const artByRoute = new Map(journeyContent(LANG).features.map(feature => [feature.route, feature.id]));
 
 export function sourceAvailability(source, value) {
   if (!value || value.error || value.problem) return 'unavailable';
@@ -31,6 +34,7 @@ const labels = {
 };
 export function decisionCard(item, status) {
   const link = el('a', 'decision-card'); link.href = item.route;
+  link.dataset.artScope = artByRoute.get(item.route) || item.route.slice(1).split('/')[0];
   const mark = el('span', 'decision-mark');
   if (providerAsset(item.source)) mark.append(providerMark(item.source === 'gsc' ? 'Search Console' : item.source === 'ga4' ? 'Google Analytics 4' : item.source, { symbolOnly: true }));
   else mark.innerHTML = icon(item.icon);

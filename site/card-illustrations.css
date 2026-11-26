@@ -1,0 +1,157 @@
+/* Shared art direction for public pages, the workspace and reports.
+   Scopes supply a topic to dynamically rendered cards, without adding DOM or requests to a provider. */
+[data-feature="billing"], [data-card-art="billing"], [data-art-scope="billing"] {
+  --feature-hue: 30; --card-picture: url("/assets/feature-art/billing.webp");
+}
+[data-feature="agents"], [data-card-art="agents"], [data-art-scope="agents"], .pap-panel, [data-art-scope="settings"] {
+  --feature-hue: 258; --card-picture: url("/assets/feature-art/agents.webp");
+}
+#crm-preview, [data-feature="crm"], [data-card-art="crm"], [data-art-scope="crm"], .report360-pillar-crm, .report360-action-crm, .report360-connection-crm, .crm-panel {
+  --feature-hue: 182; --card-picture: url("/assets/feature-art/crm.webp");
+}
+[data-feature="social"], [data-card-art="social"], [data-art-scope="social"], .public-social, .social-card, .report360-pillar-social, .report360-action-social, .report360-connection-social {
+  --feature-hue: 338; --card-picture: url("/assets/feature-art/social.webp");
+}
+[data-feature="public"], [data-card-art="public"], [data-art-scope="public"], .public-summary {
+  --feature-hue: 267; --card-picture: url("/assets/feature-art/public.webp");
+}
+[data-feature="geo"], [data-card-art="geo"], [data-art-scope="geo"], .read-geo, .report360-pillar-geo, .report360-action-geo {
+  --feature-hue: 213; --card-picture: url("/assets/feature-art/geo.webp");
+}
+.public-diagnostic, .journey-stage[data-stage="problem-aware"], [data-feature="audit"], [data-card-art="audit"], [data-art-scope="audit"], .read-address, [data-stage="diagnose"], [data-choose-stage="diagnose"], [data-stage-art="diagnose"], [data-art-scope="diagnose"], .public-signal, [data-evidence="canonical"], .report360-visual, .read-actions {
+  --feature-hue: 161; --card-picture: url("/assets/feature-art/audit.webp");
+}
+[data-feature="sitemap"], [data-card-art="sitemap"], [data-art-scope="sitemap"], .read-map, [data-evidence="sitemap"] {
+  --feature-hue: 189; --card-picture: url("/assets/feature-art/sitemap.webp");
+}
+[data-feature="performance"], [data-card-art="performance"], [data-art-scope="performance"], .v-gauge {
+  --feature-hue: 20; --card-picture: url("/assets/feature-art/performance.webp");
+}
+.journey-panel, [data-feature="journey"], [data-card-art="journey"], [data-art-scope="journey"], [data-stage="understand"], [data-choose-stage="understand"], [data-stage-art="understand"], .journey-board-step, .journey-stage {
+  --feature-hue: 352; --card-picture: url("/assets/feature-art/journey.webp");
+}
+[data-stage="all"], #tool-explorer, .journey-stage[data-stage="product-aware"], [data-feature="catalog"], [data-card-art="catalog"], [data-art-scope="catalog"], .v-product-card {
+  --feature-hue: 145; --card-picture: url("/assets/feature-art/catalog.webp");
+}
+[data-feature="citability"], [data-card-art="citability"], [data-art-scope="citability"], [data-evidence="description"] {
+  --feature-hue: 241; --card-picture: url("/assets/feature-art/citability.webp");
+}
+.journey-stage[data-stage="unaware"], [data-feature="search"], [data-card-art="search"], [data-art-scope="search"], .read-seo, .report360-pillar-seo, .report360-action-seo, .report360-search-preview, [data-evidence="title"] {
+  --feature-hue: 205; --card-picture: url("/assets/feature-art/search.webp");
+}
+[data-feature="keywords"], [data-card-art="keywords"], [data-art-scope="keywords"] {
+  --feature-hue: 293; --card-picture: url("/assets/feature-art/keywords.webp");
+}
+[data-feature="generators"], [data-card-art="generators"], [data-art-scope="generators"] {
+  --feature-hue: 277; --card-picture: url("/assets/feature-art/generators.webp");
+}
+[data-feature="apply_mode"], [data-card-art="apply_mode"], [data-art-scope="apply_mode"], [data-stage="prepare"], [data-choose-stage="prepare"], [data-stage-art="prepare"], .public-action-card, .public-recommendations, .scenario-diff-card {
+  --feature-hue: 166; --card-picture: url("/assets/feature-art/apply_mode.webp");
+}
+[data-feature="articles"], [data-card-art="articles"], [data-art-scope="articles"], .report360-page-outline {
+  --feature-hue: 23; --card-picture: url("/assets/feature-art/articles.webp");
+}
+[data-feature="indexnow"], [data-card-art="indexnow"], [data-art-scope="indexnow"], [data-evidence="indexing"] {
+  --feature-hue: 211; --card-picture: url("/assets/feature-art/indexnow.webp");
+}
+.journey-stage[data-stage="most-aware"], [data-feature="commerce"], [data-card-art="commerce"], [data-art-scope="commerce"] {
+  --feature-hue: 139; --card-picture: url("/assets/feature-art/commerce.webp");
+}
+[data-feature="tracking"], [data-card-art="tracking"], [data-art-scope="tracking"], .public-url-form, .c-data-guide, [data-art-scope="integrations"] {
+  --feature-hue: 194; --card-picture: url("/assets/feature-art/tracking.webp");
+}
+[data-feature="gsc"], [data-card-art="gsc"], [data-art-scope="gsc"], .read-gsc {
+  --feature-hue: 221; --card-picture: url("/assets/feature-art/gsc.webp");
+}
+[data-feature="ga4"], [data-card-art="ga4"], [data-art-scope="ga4"], .read-ga4, [data-art-scope="measure"] {
+  --feature-hue: 38; --card-picture: url("/assets/feature-art/ga4.webp");
+}
+[data-feature="gtm"], [data-card-art="gtm"], [data-art-scope="gtm"] {
+  --feature-hue: 228; --card-picture: url("/assets/feature-art/gtm.webp");
+}
+[data-feature="bing"], [data-card-art="bing"], [data-art-scope="bing"] {
+  --feature-hue: 174; --card-picture: url("/assets/feature-art/bing.webp");
+}
+[data-feature="ai_visibility"], [data-card-art="ai_visibility"], [data-art-scope="ai_visibility"], .public-engine-panel, .report360-pillar-ai, .report360-action-ai, .report360-connection-ai, .ai-metric {
+  --feature-hue: 250; --card-picture: url("/assets/feature-art/ai_visibility.webp");
+}
+.journey-stage[data-stage="solution-aware"], [data-feature="competition"], [data-card-art="competition"], [data-art-scope="competition"], .v-podium-card {
+  --feature-hue: 330; --card-picture: url("/assets/feature-art/competition.webp");
+}
+[data-feature="prompts"], [data-card-art="prompts"], [data-art-scope="prompts"], .gbp-reviews {
+  --feature-hue: 305; --card-picture: url("/assets/feature-art/prompts.webp");
+}
+[data-feature="rank"], [data-card-art="rank"], [data-art-scope="rank"], .gbp-rating {
+  --feature-hue: 40; --card-picture: url("/assets/feature-art/rank.webp");
+}
+[data-feature="overview"], [data-card-art="overview"], [data-art-scope="overview"], .read-trend, [data-stage="measure"], [data-choose-stage="measure"], [data-stage-art="measure"], .decision-portfolio-card, .gbp-performance {
+  --feature-hue: 199; --card-picture: url("/assets/feature-art/overview.webp");
+}
+#local-preview, [data-feature="local_seo"], [data-card-art="local_seo"], [data-art-scope="local_seo"], #local-seo-planner, .gbp-business, .gbp-account {
+  --feature-hue: 152; --card-picture: url("/assets/feature-art/local_seo.webp");
+}
+.report-invite, [data-feature="report"], [data-card-art="report"], [data-art-scope="report"], .report-downloads {
+  --feature-hue: 215; --card-picture: url("/assets/feature-art/report.webp");
+}
+[data-feature="calculators"], [data-card-art="calculators"], [data-art-scope="calculators"] {
+  --feature-hue: 44; --card-picture: url("/assets/feature-art/calculators.webp");
+}
+.impact-timeline, [data-feature="ops"], [data-card-art="ops"], [data-art-scope="ops"], .read-pending, [data-stage="coordinate"], [data-choose-stage="coordinate"], [data-stage-art="coordinate"], [data-art-scope="operate"], .scenario-plan-card {
+  --feature-hue: 12; --card-picture: url("/assets/feature-art/ops.webp");
+}
+[data-feature="assistant"], [data-card-art="assistant"], [data-art-scope="assistant"], .coach-next-card, .audience-card {
+  --feature-hue: 275; --card-picture: url("/assets/feature-art/assistant.webp");
+}
+[data-feature="slack"], [data-card-art="slack"], [data-art-scope="slack"] {
+  --feature-hue: 321; --card-picture: url("/assets/feature-art/slack.webp");
+}
+
+/* The decoration sits in reserved space above the content. It takes no space in print. */
+@media screen {
+  :is([data-card-art], [data-choose-stage], [data-stage-art], .read-kpi, .read-panel,
+      .public-login-card, .public-url-form, .public-summary, section.public-panel, .public-read-metric, .public-action-card, .public-signal,
+      .report360-pillar, .report360-action, .report360-connection, .report360-search-preview, .report360-page-outline,
+      .decision-card, .decision-priority, .decision-portfolio-card, .decision-metric, .live-metric, .audience-card,
+      .c-card, .c-data-guide, .c-feature-guide, .c-platform-metric, .c-metric, .kpi-cell, .ai-metric, .v-gauge,
+      .v-podium-card, .v-section-heading, .coach-next-card, .social-card, .crm-panel, .gbp-card, .local-action-card,
+      .journey-stage, .journey-board-step, .scenario-plan-card, .scenario-diff-card) {
+    position: relative;
+    /* Some cards use ID-scoped padding shorthands or switch grid layout on mobile. */
+    padding-block-start: calc(var(--band-height, clamp(5.75rem, 9vw, 8rem)) + var(--band-gap, .95rem)) !important;
+
+    &::after {
+      content: "";
+      pointer-events: none;
+      position: absolute;
+      inset: 0 0 auto;
+      height: var(--band-height, clamp(5.75rem, 9vw, 8rem));
+      border-start-start-radius: inherit;
+      border-start-end-radius: inherit;
+      --h: var(--feature-hue, 199);
+      background:
+        var(--card-picture, url("/assets/feature-art/overview.webp")) center / auto 89% no-repeat,
+        radial-gradient(circle, hsl(var(--h) 54% 51% / .19) .85px, transparent 1px) right center / 8px 8px repeat-y,
+        radial-gradient(circle at -1rem 140%, transparent 3.7rem, hsl(var(--h) 60% 63% / .17) 3.8rem 5rem, transparent 5.1rem),
+        linear-gradient(112deg, hsl(var(--h) 73% 87%), hsl(var(--h) 75% 96%) 68%, hsl(var(--h) 71% 91%));
+    }
+  }
+
+  /* Keep operational cards compact enough to scan alongside their numbers and charts. */
+  :where(.console-page, .report-body, #read-result, .guide-page) { --band-height: clamp(3.5rem, 6vw, 5rem); }
+  :is(.read-kpi, .c-metric, .live-metric, .decision-metric, .public-read-metric, .kpi-cell, .ai-metric, .c-platform-metric, .os-stat) {
+    --band-height: clamp(2.75rem, 4.5vw, 3.5rem); --band-gap: .65rem;
+  }
+  :is(.vh-path-steps, .guide-stages, .availability-list, .loop, .levers) { --band-height: 3.5rem; }
+  :is(.error-page main, .legal-main, .pap-standalone, .report-gate) { --band-height: clamp(5rem, 9vw, 7.5rem); }
+  .v-podium-card > .v-rank { top: var(--band-height); }
+  .v-section-heading { --band-height: clamp(3rem, 5vw, 4.5rem); }
+  .journey-filters [data-stage], .vh-disclosure > summary > span:first-child {
+    display: inline-flex; align-items: center; gap: .45rem;
+  }
+  .journey-filters [data-stage]::before, .vh-disclosure > summary > span:first-child::before {
+    content: ""; flex: none; width: 2rem; height: 1.65rem; border-radius: 4px;
+    background: var(--card-picture) center / contain no-repeat, hsl(var(--feature-hue) 75% 94%);
+  }
+  .legal-main::after, .error-page main::after { border-radius: 12px; }
+  .vh-path-steps li::after, .guide-stages li::after { border-radius: 7px; }
+}

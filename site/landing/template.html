@@ -16,6 +16,7 @@
 
 <meta content="https://gtm.kayroslab.com" name="gg-api"><link href="/styles.css" rel="stylesheet"><link href="/sitemap-map.css" rel="stylesheet"><link href="{{landing_styles_url}}" rel="stylesheet"><link href="/reading-guides.css" rel="stylesheet"><link href="/local-seo.css" rel="stylesheet"><link type="image/png" href="/fr/assets/logo-rocket.png" rel="icon"><link rel="stylesheet" href="/crm-public.css">
 <link rel="stylesheet" href="{{visual_styles_url}}">
+<link rel="stylesheet" href="{{card_styles_url}}">
 </head>
 <body class="shared-landing growth-home"><a href="#main" class="skip-link">{{t002}}</a>
 
@@ -57,22 +58,22 @@
   <h2 class="title">{{t382}}</h2>
   <p class="lede">{{t383}}</p>
   <div class="trust-grid">
-    <div class="trust-card">
+    <div class="trust-card" data-card-art="apply_mode">
       <span class="trust-picto" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="3.5" y="4.5" width="17" height="6.5" rx="2" /><path d="M6.8 7.8h.01" /><path d="M3.5 15.5h5M3.5 18.5h5" /><path d="M11.5 15.5h9M11.5 18.5h9" /><path d="M6 13v7M18 13v7" /></svg></span>
       <h3>{{t384}}</h3>
       <p>{{t385}}</p>
     </div>
-    <div class="trust-card">
+    <div class="trust-card" data-card-art="audit">
       <span class="trust-picto" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="10.5" cy="10.5" r="6.5" /><path d="M15.5 15.5 21 21" /><path d="M7.5 10.5l2 2 4-4.5" /></svg></span>
       <h3>{{t386}}</h3>
       <p>{{t387}}</p>
     </div>
-    <div class="trust-card">
+    <div class="trust-card" data-card-art="catalog">
       <span class="trust-picto" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="3.5" y="4.5" width="17" height="15" rx="2.5" /><path d="M7.5 9.5l3 3-3 3" /><path d="M13 15.5h4" /></svg></span>
       <h3>{{t388}}</h3>
       <p>{{t389}}</p>
     </div>
-    <div class="trust-card">
+    <div class="trust-card" data-card-art="agents">
       <span class="trust-picto" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3.5 5 6v5.2c0 4.5 3 7.7 7 9.3 4-1.6 7-4.8 7-9.3V6z" /><path d="M9 12l2 2 4-4.5" /></svg></span>
       <h3>{{t390}}</h3>
       <p>{{t391}}</p>
@@ -85,7 +86,7 @@
   <h2 class="title">{{t275}}</h2>
   <p class="lede">{{t276}}</p>
   <div class="pricing-grid">
-    <div class="plan">
+    <div class="plan" data-card-art="apply_mode">
       <div class="pl-name">{{t277}}</div>
       <span class="pl-flag">{{t393}}</span>
       <div class="pl-price">0&#160;€</div>
@@ -97,7 +98,7 @@
       </ul>
       <a class="btn-primary btn" href="#url-form">{{t288}}</a>
     </div>
-    <div class="plan hot">
+    <div class="plan hot" data-card-art="billing">
       <div class="pl-name">{{t289}}</div>
       <span class="pl-flag">{{t394}}</span>
       <div class="pl-price">39&#160;€ <small>{{t290}}</small></div>
@@ -109,7 +110,7 @@
       </ul>
       <a class="btn-primary btn" href="#contact">{{t296}}</a>
     </div>
-    <div class="plan">
+    <div class="plan" data-card-art="overview">
       <div class="pl-name">{{t297}}</div>
       <span class="pl-flag">{{t395}}</span>
       <div class="pl-price">149&#160;€ <small>{{t290}}</small></div>
@@ -121,7 +122,7 @@
       </ul>
       <a class="btn-ghost btn" href="#contact">{{t303}}</a>
     </div>
-    <div class="plan">
+    <div class="plan" data-card-art="assistant">
       <div class="pl-name">{{t304}}</div>
       <span class="pl-flag">{{t396}}</span>
       <div class="pl-price">{{t305}}</div>
@@ -145,7 +146,7 @@
 
   <figure class="journey-audit-image"><img loading="lazy" src="/assets/screens/geo-board-{{locale}}.svg" width="1400" height="880" alt="{{t047}}"><figcaption>{{t048}}</figcaption></figure><div class="audit-grid">
     <!-- gauge panel -->
-    <div class="panel">
+    <div class="panel" data-card-art="geo">
       <h4>{{t071}}</h4>
       <div class="gauge-wrap">
         <div class="gauge" role="img" aria-label="{{t072}}">
@@ -169,7 +170,7 @@
     </div>
 
     <!-- categories panel -->
-    <div class="panel">
+    <div class="panel" data-card-art="overview">
       <h4>{{t076}}</h4>
       <div class="cat-row"><span class="cat-name">{{t077}}</span><span class="cat-track"><span class="cat-fill" style="width:83%"></span></span><span class="cat-val">15/18</span></div>
       <div class="cat-row"><span class="cat-name">{{t078}}</span><span class="cat-track"><span class="cat-fill" style="width:67%"></span></span><span class="cat-val">12/18</span></div>
@@ -211,7 +212,7 @@
 
   <!-- before / after -->
   <div class="ba-grid">
-    <div class="panel">
+    <div class="panel" data-card-art="audit">
       <h4>{{t089}}</h4>
       <div class="ba-row"><span class="ba-name">{{t077}}</span><span class="ba-track"><span class="ba-before" style="width:2%"></span></span><span class="ba-val">0/18</span></div>
       <div class="ba-row"><span class="ba-name">{{t078}}</span><span class="ba-track"><span class="ba-before" style="width:2%"></span></span><span class="ba-val">0/18</span></div>
@@ -221,7 +222,7 @@
       <div class="ba-row"><span class="ba-name">{{t081}}</span><span class="ba-track"><span class="ba-before" style="width:20%"></span></span><span class="ba-val">2/10</span></div>
       <div class="ba-total"><span class="lab">{{t092}}</span><span class="nums">9 <span style="color:var(--faint)">/100</span></span></div>
     </div>
-    <div class="panel">
+    <div class="panel" data-card-art="performance">
       <h4>{{t093}}</h4>
       <div class="ba-row"><span class="ba-name">{{t077}}</span><span class="ba-track"><span class="ba-after" style="width:100%"></span></span><span class="ba-val">18/18</span></div>
       <div class="ba-row"><span class="ba-name">{{t078}}</span><span class="ba-track"><span class="ba-after" style="width:78%"></span></span><span class="ba-val">14/18</span></div>
@@ -240,22 +241,22 @@
   <span class="kicker">{{t009}}</span>
   <h2 class="title">{{t110}}</h2>
   <div class="grid-4">
-    <div class="tool-card">
+    <div class="tool-card" data-card-art="search">
       <div class="n">01</div>
       <h3>{{t111}}</h3>
       <p>{{t112}}</p>
     </div>
-    <div class="tool-card">
+    <div class="tool-card" data-card-art="gtm">
       <div class="n">02</div>
       <h3>{{t113}}</h3>
       <p>{{t114}}</p>
     </div>
-    <div class="tool-card">
+    <div class="tool-card" data-card-art="indexnow">
       <div class="n">03</div>
       <h3>{{t115}} &amp; {{t116}}</h3>
       <p>{{t117}}</p>
     </div>
-    <div class="tool-card">
+    <div class="tool-card" data-card-art="sitemap">
       <div class="n">04</div>
       <h3>{{t118}}</h3>
       <p>{{t119}}</p>
@@ -270,37 +271,37 @@
   <p class="lede">{{t122}} <b>{{t123}}</b> {{t124}}</p>
 
   <div class="loop">
-    <div class="loop-node">
+    <div class="loop-node" data-card-art="prompts">
       <span class="tag">{{t125}}</span>
       <h3>{{t126}}</h3>
       <p>{{t127}}</p>
       <p class="who">{{t128}}</p>
     </div>
-    <div class="loop-node">
+    <div class="loop-node" data-card-art="ai_visibility">
       <span class="tag">{{t013}}</span>
       <h3>{{t129}}</h3>
       <p>{{t130}}</p>
       <p class="who">{{t131}}</p>
     </div>
-    <div class="loop-node human">
+    <div class="loop-node human" data-card-art="audit">
       <span class="tag">{{t132}}</span>
       <h3>{{t133}}</h3>
       <p>{{t134}}</p>
       <p class="who">{{t135}}</p>
     </div>
-    <div class="loop-node">
+    <div class="loop-node" data-card-art="rank">
       <span class="tag">{{t136}}</span>
       <h3>{{t137}}</h3>
       <p>{{t138}}</p>
       <p class="who">{{t139}}</p>
     </div>
-    <div class="loop-node gate">
+    <div class="loop-node gate" data-card-art="articles">
       <span class="tag">{{t140}}</span>
       <h3>{{t141}}</h3>
       <p>{{t142}}</p>
       <p class="who">{{t143}}</p>
     </div>
-    <div class="loop-node">
+    <div class="loop-node" data-card-art="indexnow">
       <span class="tag">{{t144}}</span>
       <h3>{{t145}}</h3>
       <p>{{t146}} <b>{{t147}}</b>{{t148}}</p>
@@ -348,13 +349,13 @@
   <span class="kicker">{{t010}}</span>
   <h2 class="title">{{t235}}</h2>
   <div class="levers">
-    <div class="lever"><span class="n">01</span><div><h3>{{t236}}</h3><p>{{t237}}</p></div></div>
-    <div class="lever"><span class="n">02</span><div><h3>{{t238}}</h3><p>{{t239}}</p></div></div>
-    <div class="lever"><span class="n">03</span><div><h3>{{t240}}</h3><p>{{t241}}</p></div></div>
-    <div class="lever"><span class="n">04</span><div><h3>{{t242}}</h3><p>{{t243}}</p></div></div>
-    <div class="lever"><span class="n">05</span><div><h3>{{t244}}</h3><p>{{t245}}</p></div></div>
-    <div class="lever"><span class="n">06</span><div><h3>{{t246}} &amp; {{t181}}</h3><p>{{t247}}</p></div></div>
-    <div class="lever"><span class="n">07</span><div><h3>{{t248}}</h3><p>{{t249}}</p></div></div>
+    <div class="lever" data-card-art="geo"><span class="n">01</span><div><h3>{{t236}}</h3><p>{{t237}}</p></div></div>
+    <div class="lever" data-card-art="citability"><span class="n">02</span><div><h3>{{t238}}</h3><p>{{t239}}</p></div></div>
+    <div class="lever" data-card-art="overview"><span class="n">03</span><div><h3>{{t240}}</h3><p>{{t241}}</p></div></div>
+    <div class="lever" data-card-art="gsc"><span class="n">04</span><div><h3>{{t242}}</h3><p>{{t243}}</p></div></div>
+    <div class="lever" data-card-art="gtm"><span class="n">05</span><div><h3>{{t244}}</h3><p>{{t245}}</p></div></div>
+    <div class="lever" data-card-art="bing"><span class="n">06</span><div><h3>{{t246}} &amp; {{t181}}</h3><p>{{t247}}</p></div></div>
+    <div class="lever" data-card-art="ai_visibility"><span class="n">07</span><div><h3>{{t248}}</h3><p>{{t249}}</p></div></div>
   </div>
 </div></section>
 
@@ -364,17 +365,17 @@
   <h2 class="title">{{t250}}</h2>
   <p class="lede">{{t251}}</p>
   <div class="gtm-grid">
-    <div class="gtm-card">
+    <div class="gtm-card" data-card-art="audit">
       <span class="verb">{{t252}}</span>
       <h3>{{t253}}</h3>
       <p>{{t254}}</p>
     </div>
-    <div class="gtm-card">
+    <div class="gtm-card" data-card-art="gtm">
       <span class="verb">{{t255}}</span>
       <h3>{{t256}}</h3>
       <p>{{t257}}</p>
     </div>
-    <div class="gtm-card">
+    <div class="gtm-card" data-card-art="ga4">
       <span class="verb">{{t258}}</span>
       <h3>{{t259}}</h3>
       <p>{{t260}}</p>
@@ -396,12 +397,12 @@
   <h2 class="title">{{t267}}</h2>
   <p class="lede">{{t268}}</p>
   <div class="os-stats">
-    <div class="os-stat"><div class="n grad-text">96</div><div class="l">{{t050}}</div></div>
-    <div class="os-stat"><div class="n grad-text">{{t051}}</div><div class="l">{{t052}}</div></div>
-    <div class="os-stat"><div class="n grad-text">42</div><div class="l">{{t269}}</div></div>
-    <div class="os-stat"><div class="n grad-text">22</div><div class="l">{{t270}}</div></div>
-    <div class="os-stat"><div class="n grad-text">5</div><div class="l">{{t271}}</div></div>
-    <div class="os-stat"><div class="n grad-text">{{t272}}</div><div class="l">{{t273}}</div></div>
+    <div class="os-stat" data-card-art="catalog"><div class="n grad-text">96</div><div class="l">{{t050}}</div></div>
+    <div class="os-stat" data-card-art="audit"><div class="n grad-text">{{t051}}</div><div class="l">{{t052}}</div></div>
+    <div class="os-stat" data-card-art="geo"><div class="n grad-text">42</div><div class="l">{{t269}}</div></div>
+    <div class="os-stat" data-card-art="gtm"><div class="n grad-text">22</div><div class="l">{{t270}}</div></div>
+    <div class="os-stat" data-card-art="overview"><div class="n grad-text">5</div><div class="l">{{t271}}</div></div>
+    <div class="os-stat" data-card-art="agents"><div class="n grad-text">{{t272}}</div><div class="l">{{t273}}</div></div>
   </div>
   <p class="note-inline">{{t274}}</p>
 </div></section>
@@ -413,17 +414,17 @@
   <h2 class="title">{{t058}}</h2>
   <p class="lede">{{t059}}</p>
   <div class="grid-3">
-    <div class="pain">
+    <div class="pain" data-card-art="indexnow">
       <div class="picto" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="#c084fc" stroke-width="1.8" stroke-linecap="round"><rect x="4" y="7" width="16" height="12" rx="3" /><circle cx="9" cy="13" r="1.4" fill="#c084fc" stroke="none" /><circle cx="15" cy="13" r="1.4" fill="#c084fc" stroke="none" /><path d="M12 7V4" /><circle cx="12" cy="3" r="1.2" fill="#c084fc" stroke="none" /><path d="M4 16h16" opacity=".4" /></svg></div>
       <h3>{{t060}}</h3>
       <p>{{t061}}</p>
     </div>
-    <div class="pain">
+    <div class="pain" data-card-art="articles">
       <div class="picto" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="#c084fc" stroke-width="1.8" stroke-linecap="round"><path d="M4 9v6h4l5 4V5L8 9H4z" /><path d="M17 9l4 6M21 9l-4 6" /></svg></div>
       <h3>{{t062}}</h3>
       <p>{{t063}}</p>
     </div>
-    <div class="pain">
+    <div class="pain" data-card-art="tracking">
       <div class="picto" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="#c084fc" stroke-width="1.8" stroke-linecap="round"><path d="M4 19V5" /><path d="M4 19h16" /><path d="M8 15l4-5 3 3 4-6" /><circle cx="19" cy="7" r="1.3" fill="#c084fc" stroke="none" /></svg></div>
       <h3>{{t064}}</h3>
       <p>{{t065}}</p>
@@ -438,7 +439,7 @@
   <p class="lede">{{t202}}</p>
 
   <div class="phases">
-    <div class="phase a">
+    <div class="phase a" data-card-art="audit">
       <span class="ph-tag">{{t203}}</span>
       <h3>{{t204}}</h3>
       <p class="ph-sub">{{t205}}</p>
@@ -449,7 +450,7 @@
       </ul>
       <p class="foot"><b>{{t212}}</b> {{t213}}</p>
     </div>
-    <div class="phase b">
+    <div class="phase b" data-card-art="ops">
       <span class="ph-tag">{{t214}}</span>
       <h3>{{t215}}</h3>
       <p class="ph-sub">{{t216}}</p>
@@ -460,7 +461,7 @@
       </ul>
       <p class="foot"><b>{{t212}}</b> {{t223}}</p>
     </div>
-    <div class="phase c">
+    <div class="phase c" data-card-art="billing">
       <span class="ph-tag">{{t224}}</span>
       <h3>{{t225}}</h3>
       <p class="ph-sub">{{t226}}</p>
@@ -476,7 +477,7 @@
 </div></section>
 
 </details><section class="block section" id="credit"><div class="wrap">
-  <div class="credit">
+  <div class="credit" data-card-art="apply_mode">
     <p><b>{{t354}}</b> {{t355}}</p>
   </div>
 </div></section></details></section>
@@ -524,7 +525,7 @@
   <span class="kicker">{{t313}}</span>
   <h2 class="title">{{t314}}</h2>
   <p class="lede">{{t315}}</p>
-  <div class="lead-card">
+  <div class="lead-card" data-card-art="assistant">
     <form class="lead-form" id="lead-form" novalidate>
       <div class="field">
         <label for="lead-name">{{t316}}</label>

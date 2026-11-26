@@ -199,13 +199,13 @@ function renderResult(box, data, url, lang) {
   else scoring.append(el("strong", "", `${done}/42`), el("small", "", copy.scoreProgress));
   summary.append(identity, scoring);
   const metrics = el("div", "public-read-metrics");
-  for (const [num, caption] of [
-    [v2?.controls?.filter(c => c.status === "measured").length, copy.v2Observed],
-    [v2?.unmeasuredControls?.length, copy.v2Unknown],
-    [data.report360?.pillars?.find(p => p.id === "geo")?.needsAttention, copy.v2Needs],
+  for (const [art, num, caption] of [
+    ["audit", v2?.controls?.filter(c => c.status === "measured").length, copy.v2Observed],
+    ["search", v2?.unmeasuredControls?.length, copy.v2Unknown],
+    ["apply_mode", data.report360?.pillars?.find(p => p.id === "geo")?.needsAttention, copy.v2Needs],
   ]) {
     if (safeNumber(num, 200) === null) continue;
-    const metric = el("div", "public-read-metric"); metric.append(el("strong", "", safeNumber(num, 200)), el("span", "", caption)); metrics.append(metric);
+    const metric = el("div", "public-read-metric"); metric.dataset.cardArt = art; metric.append(el("strong", "", safeNumber(num, 200)), el("span", "", caption)); metrics.append(metric);
   }
   box.replaceChildren(summary);
   if (data.httpStatus && (data.httpStatus < 200 || data.httpStatus >= 400)) {
