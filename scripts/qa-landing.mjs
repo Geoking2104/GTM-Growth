@@ -34,6 +34,33 @@ async function ready() {
   throw new Error("Static preview server did not start");
 }
 
+async function verifyCarousel(browser, locale, viewport) {
+  const page = await browser.newPage({ viewport, reducedMotion: 'reduce' });
+  await page.clock.install();
+  await page.goto(`${origin}/${locale === 'fr' ? 'fr/' : ''}#console`);
+  await page.getByRole('button', { name: locale === 'fr' ? 'Refuser' : 'Reject', exact: true }).click();
+  const reel = page.locator('[data-product-demo]');
+  const selected = reel.locator('[role="tab"][aria-selected="true"]');
+  await reel.scrollIntoViewIfNeeded();
+  await page.clock.fastForward(7000);
+  assert.equal(await selected.getAttribute('id'), 'tab-search', 'reduced motion keeps the first scene still');
+
+  await page.emulateMedia({ reducedMotion: 'no-preference' });
+  await page.locator('[data-product-demo].vh-playing').waitFor();
+  await reel.hover();
+  await page.clock.fastForward(7000);
+  assert.equal(await selected.getAttribute('id'), 'tab-ai', 'the visible reel advances automatically');
+
+  const manual = reel.locator('#tab-local');
+  await manual.click();
+  await manual.blur();
+  await page.mouse.move(0, 0);
+  await page.clock.fastForward(14000);
+  assert.equal(await selected.getAttribute('id'), 'tab-local', 'manual selection holds after focus and pointer leave');
+  assert.equal(await page.locator('#demo-local').isVisible(), true);
+  await page.close();
+}
+
 async function visit(browserContext, locale, label, viewport) {
   const page = await browserContext.newPage();
   const errors = [];
@@ -78,7 +105,6 @@ async function visit(browserContext, locale, label, viewport) {
     await page.locator(`#tab-${id}`).click();
     assert.equal(await page.locator('[role="tabpanel"]:visible').count(), 1);
     assert.equal(await page.locator(`#tab-${id}`).getAttribute('aria-selected'), 'true');
-    assert.equal(await page.locator('#demo-motion').getAttribute('aria-pressed'), 'false', 'manual selection stops rotation');
     const href = await page.locator(`#demo-${id} .vh-action`).getAttribute('href');
     const target = new URL(href, origin);
     assert.equal(target.origin, origin);
@@ -94,7 +120,6 @@ async function visit(browserContext, locale, label, viewport) {
   await page.locator('#tab-ai').press('End');
   assert.equal(await page.locator('#tab-decide').getAttribute('aria-selected'), 'true');
   await page.emulateMedia({ reducedMotion: 'reduce' });
-  assert.equal(await page.locator('#demo-motion').getAttribute('aria-pressed'), 'false');
   await page.locator('#tab-search').click();
   await page.locator('#console').screenshot({ path: path.join(outputDir, `${label}-product.png`) });
   await page.goto(`${origin}/${locale === 'fr' ? 'fr/' : ''}#features`);
@@ -394,6 +419,8 @@ try {
 
   const desktop = { width: 1440, height: 900 };
   const mobile = { width: 390, height: 844 };
+  await verifyCarousel(browser, 'en', desktop);
+  await verifyCarousel(browser, 'fr', mobile);
   const en = await visit(context, "en", "en-desktop", desktop);
   const fr = await visit(context, "fr", "fr-desktop", desktop);
   await verifySharedLanding(en, fr);
