@@ -16,7 +16,8 @@ const trusted = (process.env.MCP_DCR_TRUSTED_HOSTS || (test
   : "callback.mistral.ai,chat.mistral.ai,console.mistral.ai"))
   .split(",").map((s) => s.trim()).filter(Boolean);
 
-if (url.includes("auth.kayroslab.com") && process.env.ALLOW_PROD_KEYCLOAK !== "yes") {
+const isProdTarget = url.includes("auth.kayroslab.com") || (realm === "gtm-growth" && !test);
+if (isProdTarget && process.env.ALLOW_PROD_KEYCLOAK !== "yes") {
   console.error("Refusing to change the production realm. Re-run with ALLOW_PROD_KEYCLOAK=yes after review.");
   process.exit(2);
 }
