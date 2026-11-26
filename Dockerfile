@@ -30,6 +30,7 @@ RUN apk add --no-cache libstdc++ \
     && apk del .build-deps
 
 COPY --from=builder /app/dist ./dist
+COPY assets/logo-128.png ./assets/logo-128.png
 COPY site/console/customer-journey-model.js ./site/console/customer-journey-model.js
 
 # Create directory for secrets (optional volume)
