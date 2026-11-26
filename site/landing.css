@@ -309,41 +309,6 @@ html { scroll-padding-top: 82px; }
   border: 1px solid #e1dce9; background: white; border-radius: 14px; padding: var(--feature-padding);
   display: flex; flex-direction: column; min-width: 0; overflow: hidden; scroll-margin-top: 110px;
 }
-[data-feature="billing"] { --feature-hue: 30; }
-[data-feature="agents"] { --feature-hue: 258; }
-[data-feature="crm"] { --feature-hue: 182; }
-[data-feature="social"] { --feature-hue: 338; }
-[data-feature="public"] { --feature-hue: 267; }
-[data-feature="geo"] { --feature-hue: 213; }
-[data-feature="audit"] { --feature-hue: 161; }
-[data-feature="sitemap"] { --feature-hue: 189; }
-[data-feature="performance"] { --feature-hue: 20; }
-[data-feature="journey"] { --feature-hue: 352; }
-[data-feature="catalog"] { --feature-hue: 145; }
-[data-feature="citability"] { --feature-hue: 241; }
-[data-feature="search"] { --feature-hue: 205; }
-[data-feature="keywords"] { --feature-hue: 293; }
-[data-feature="generators"] { --feature-hue: 277; }
-[data-feature="apply_mode"] { --feature-hue: 166; }
-[data-feature="articles"] { --feature-hue: 23; }
-[data-feature="indexnow"] { --feature-hue: 211; }
-[data-feature="commerce"] { --feature-hue: 139; }
-[data-feature="tracking"] { --feature-hue: 194; }
-[data-feature="gsc"] { --feature-hue: 221; }
-[data-feature="ga4"] { --feature-hue: 38; }
-[data-feature="gtm"] { --feature-hue: 228; }
-[data-feature="bing"] { --feature-hue: 174; }
-[data-feature="ai_visibility"] { --feature-hue: 250; }
-[data-feature="competition"] { --feature-hue: 330; }
-[data-feature="prompts"] { --feature-hue: 305; }
-[data-feature="rank"] { --feature-hue: 40; }
-[data-feature="overview"] { --feature-hue: 199; }
-[data-feature="local_seo"] { --feature-hue: 152; }
-[data-feature="report"] { --feature-hue: 215; }
-[data-feature="calculators"] { --feature-hue: 44; }
-[data-feature="ops"] { --feature-hue: 12; }
-[data-feature="assistant"] { --feature-hue: 275; }
-[data-feature="slack"] { --feature-hue: 321; }
 
 .feature-banner {
   position: relative; isolation: isolate; display: grid; place-items: center; overflow: hidden;

@@ -23,6 +23,7 @@ function assetUrl(file) {
 }
 const assets = {
   landing_styles_url: assetUrl("landing.css"),
+  card_styles_url: assetUrl("card-illustrations.css"),
   visual_styles_url: assetUrl("visual-home.css"),
   visual_script_url: assetUrl("visual-home.js"),
   landing_script_url: assetUrl("landing.js"),

@@ -108,6 +108,7 @@
     body { background:#fff; }
   }
 </style>
+<link rel="stylesheet" href="/card-illustrations.css">
 </head>
 <body>
 <header class="site-header">
@@ -161,7 +162,7 @@
   </div>
 
   <div class="wrap dash">
-    <section class="panel wide">
+    <section class="panel wide" data-card-art="rank">
       <h2>Score trajectory</h2>
       <p class="sub">Each recommended fix added in the order the engine ranks it — not an estimate, the audited point value of every check.</p>
       <figure class="figure">
@@ -199,7 +200,7 @@
       </figure>
     </section>
 
-    <section class="panel half">
+    <section class="panel half" data-card-art="ai_visibility">
       <h2>Platform radar</h2>
       <p class="sub">The five engines, as a shape.</p>
       <figure class="figure">
@@ -234,7 +235,7 @@
       </figure>
     </section>
 
-    <section class="panel third">
+    <section class="panel third" data-card-art="audit">
       <h2>Where the points are</h2>
       <p class="sub">Eight categories. Green ≥80 %, amber ≥60 %, red below.</p>
       <figure class="figure">
@@ -279,7 +280,7 @@
       </figure>
     </section>
 
-    <section class="panel third">
+    <section class="panel third" data-card-art="citability">
       <h2>Citability</h2>
       <p class="sub">Twelve methods, each scored 0–3. Half the zeroes are structural, not editorial.</p>
       <figure class="figure">
@@ -341,7 +342,7 @@
       <p class="note" style="margin-top:.6rem">Citability 53/100. The four zeroes — quotations, outbound citations, authorship, freshness — are the fastest to fix and the ones assistants quote most.</p>
     </section>
 
-    <section class="panel full">
+    <section class="panel full" data-card-art="overview">
       <h2>Band ladder</h2>
       <p class="sub">Where 71 sits today, and where the fixes land it.</p>
       <figure class="figure narrow">
@@ -369,7 +370,7 @@
 
   <div class="wrap report-grid">
     <div>
-      <section class="panel">
+      <section class="panel" data-card-art="audit">
         <h2>What the audit found</h2>
         <p class="sub">A French DPE-verification tool with a clear offer and solid on-page basics. The losses are concentrated in entity signals, AI discovery and llms.txt depth — not in the page copy.</p>
         <table class="report">
@@ -387,7 +388,7 @@
         </table>
       </section>
 
-      <section class="panel">
+      <section class="panel" data-card-art="competition">
         <h2>Platform readiness</h2>
         <p class="sub">The same evidence, mapped to the five engines buyers ask about. A platform score weighs only the signals that engine actually uses — it is not a second opinion on the overall score.</p>
         <table class="report">
@@ -403,7 +404,7 @@
         <p class="note">Scores derive from robots rules, llms.txt, schema types, structure and freshness — the signals each engine relies on. They do not claim the engine cites the page.</p>
       </section>
 
-      <section class="panel">
+      <section class="panel" data-card-art="geo">
         <h2>Entity graph — what an engine can resolve</h2>
         <p class="sub">Four schema nodes exist, three are missing, and no <code>sameAs</code> link anchors the brand to the Knowledge Graph. Green is present, red is missing, dashed edges are the links that do not exist yet.</p>
         <figure class="figure">
@@ -447,7 +448,7 @@
         <p class="note">An assistant that cannot resolve the entity quotes the idea and drops the brand. <code>sameAs</code> plus Article schema is the cheapest seven points in this audit.</p>
       </section>
 
-      <section class="panel">
+      <section class="panel" data-card-art="overview">
         <h2>How to read the console</h2>
         <p class="sub">The same payload the console renders, explained once. Every number points back to a check in this report.</p>
         <ul class="tick-list">
@@ -459,22 +460,22 @@
         <p class="note">Start with Overview, then GEO. The other three tabs answer the follow-up questions: demand, speed, and whether the measurement itself can be trusted.</p>
       </section>
 
-      <section class="panel">
+      <section class="panel" data-card-art="ops">
         <h2>Three plays this audit unlocks</h2>
         <p class="sub">Each play is anchored to a check below it — no revenue projection, just the points it moves and the signal to watch.</p>
-        <div class="play">
+        <div class="play" data-card-art="geo">
           <h3>1. Be the brand, not the page <span class="band partial">+7 GEO · +3 citability</span></h3>
           <p>Entity signals sit at 3/10: <code>sameAs</code> has 0/4 pillars, the name differs between title, H1 and Organization schema, and there is no about link.</p>
           <p><strong>Do:</strong> one name everywhere, <code>sameAs</code> to Wikidata, LinkedIn and Crunchbase, a real about page, a Person author with a URL.</p>
           <p><strong>Watch:</strong> branded queries in Search Console, and whether an assistant repeats “OpenDPE” when asked who verifies a DPE.</p>
         </div>
-        <div class="play">
+        <div class="play" data-card-art="articles">
           <h3>2. Publish the answer, not the brochure <span class="band partial">+12 citability</span></h3>
           <p>Citability is 53/100: 0/3 on quotations, outbound citations, authorship and freshness. The page states numbers but sources none of them.</p>
           <p><strong>Do:</strong> quote the official DPE method with a link, turn one comparison into a table, name an author, add <code>dateModified</code>, and put a sourced figure above the fold.</p>
           <p><strong>Watch:</strong> the four zeroed methods, re-run monthly, then AI referral sessions in GA4.</p>
         </div>
-        <div class="play">
+        <div class="play" data-card-art="indexnow">
           <h3>3. Own the launch window <span class="band partial">+45 IndexNow · +6 discovery</span></h3>
           <p>IndexNow is 35/100 — no key file — and AI discovery is 0/6: no <code>/.well-known/ai.txt</code>, no <code>/ai/*.json</code>. New pages wait for a crawl nobody announced.</p>
           <p><strong>Do:</strong> publish the key file, verify it, announce each release in one POST, and ship the machine-readable summary, FAQ and service files.</p>
@@ -482,7 +483,7 @@
         </div>
       </section>
 
-      <section class="panel">
+      <section class="panel" data-card-art="citability">
         <h2>Citability — would the passage be quoted?</h2>
         <p class="sub">12 methods, each scored 0–3. Green is full credit, amber partial, red missing. Evidence is taken from the page itself.</p>
         <div class="cit-row"><span class="cit-label">Concrete statistics</span><span class="bar2"><span class="complete" style="width:100%"></span></span><span class="pts" style="color:#0f6b4a">3/3</span><span class="cit-evidence">17 numeric token(s), 1.88 per 100 words</span></div>
@@ -500,10 +501,10 @@
         <p class="note" style="margin-top:1rem">Citability 53/100. The four zeroes — quotations, outbound citations, authorship, freshness — are the fastest to fix and the most quoted by assistants.</p>
       </section>
 
-      <section class="panel">
+      <section class="panel" data-card-art="public">
         <h2>Critical findings</h2>
 
-        <div class="finding">
+        <div class="finding" data-card-art="geo">
           <span class="f-icon"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="7"/><circle cx="12" cy="12" r="2.5"/></svg></span>
           <h3>1. The entity layer is the weakest category: 3/10</h3>
           <p>An AI engine has to decide that “OpenDPE”, the title, the H1 and the Organization record are the same thing. Today they are not aligned.</p>
@@ -511,7 +512,7 @@
           <p class="fix"><strong>Fix:</strong> one brand name across title, og:title, H1 and schema; add <code>sameAs</code> to LinkedIn/Wikidata; link a real about page; reuse the meta description as the Organization description.</p>
         </div>
 
-        <div class="finding">
+        <div class="finding" data-card-art="ai_visibility">
           <span class="f-icon"><svg viewBox="0 0 24 24"><path d="M12 4l8 15H4z"/><path d="M12 10v4"/><circle cx="12" cy="17" r=".7"/></svg></span>
           <h3>2. No AI discovery endpoints: 0/6</h3>
           <p>None of the four discovery files exist, so an agent has no machine-readable summary, FAQ or capability statement to route on.</p>
@@ -519,7 +520,7 @@
           <p class="fix"><strong>Fix:</strong> publish the four files (the generator emits valid shapes); they are static JSON and take minutes.</p>
         </div>
 
-        <div class="finding">
+        <div class="finding" data-card-art="public">
           <span class="f-icon"><svg viewBox="0 0 24 24"><path d="M7 4h7l4 4v12H7z"/><path d="M14 4v5h4"/></svg></span>
           <h3>3. llms.txt is valid but thin: 12/18</h3>
           <p>Twenty links all resolve, so drift is clean — but the file carries fewer than 1,000 words and has no expanded companion.</p>
@@ -527,7 +528,7 @@
           <p class="fix"><strong>Fix:</strong> generate with the sitemap, then add product, documentation and company sections; ship <code>/llms-full.txt</code> for depth.</p>
         </div>
 
-        <div class="finding">
+        <div class="finding" data-card-art="indexnow">
           <span class="f-icon"><svg viewBox="0 0 24 24"><rect x="5" y="9" width="14" height="10" rx="3"/><path d="M12 9V6"/><circle cx="12" cy="5" r="1"/><circle cx="9" cy="14" r=".8"/><circle cx="15" cy="14" r=".8"/></svg></span>
           <h3>4. Crawler access is one wildcard edit away</h3>
           <p>All 27 bots are allowed — via <code>*</code>. A single change to that block would silently remove every AI crawler, and the citation bots have no rule of their own.</p>
@@ -535,7 +536,7 @@
           <p class="fix"><strong>Fix:</strong> add explicit <code>Allow</code> groups for OAI-SearchBot, Claude-SearchBot, PerplexityBot, Googlebot and Applebot.</p>
         </div>
 
-        <div class="finding">
+        <div class="finding" data-card-art="citability">
           <span class="f-icon"><svg viewBox="0 0 24 24"><path d="M9 7H5v6h4v4H5"/><path d="M19 7h-4v6h4v4h-4"/></svg></span>
           <h3>5. Citability 53/100: the copy is not quotable yet</h3>
           <p>No quotations, no lists or tables in the inspected page, no question-shaped headings, no outbound citations, no author and no freshness date.</p>
@@ -544,7 +545,7 @@
         </div>
       </section>
 
-      <section class="panel">
+      <section class="panel" data-card-art="apply_mode">
         <h2>Action plan</h2>
         <p class="sub">Ordered by the server's own logic: priority bucket, then recoverable points. Points are exact — they are the difference between what a check awards today and its maximum.</p>
         <table class="report">
@@ -567,7 +568,7 @@
     </div>
 
     <aside>
-      <section class="panel">
+      <section class="panel" data-card-art="report">
         <h2>At a glance</h2>
         <div class="kpis">
           <div class="kpi"><strong>71</strong><span>GEO score</span></div>
@@ -579,7 +580,7 @@
         </div>
       </section>
 
-      <section class="panel">
+      <section class="panel" data-card-art="tracking">
         <h2>What was checked</h2>
         <ul class="tick-list">
           <li>Homepage HTML, metadata and JSON-LD</li>
@@ -592,7 +593,7 @@
         <p class="note">Read-only: public URLs only, no credentials, nothing written to the site.</p>
       </section>
 
-      <section class="report-cta">
+      <section class="report-cta" data-card-art="search">
         <h2>Run it on your site</h2>
         <p class="sub">The same engine, the same evidence, your URL.</p>
         <p><a class="btn" href="../index.html#talk">Get the full report</a></p>

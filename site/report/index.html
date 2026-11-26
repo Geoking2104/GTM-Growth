@@ -12,6 +12,7 @@
   <link rel="stylesheet" href="../brand.css">
   <link rel="stylesheet" href="../console/shell.css">
   <link rel="stylesheet" href="access.css">
+<link rel="stylesheet" href="/card-illustrations.css">
 </head>
 <body class="console-page report-page">
   <div class="public-console">
@@ -30,7 +31,7 @@
         <h1 id="report-title">Accédez à votre rapport 360°</h1>
         <p id="report-subtitle">Un code à usage unique protège votre rapport. Retrouvez-le dans l'e-mail reçu après votre demande.</p>
       </div>
-      <section class="report-gate public-panel" id="report-gate" aria-labelledby="report-gate-title">
+      <section class="report-gate public-panel" data-card-art="agents" id="report-gate" aria-labelledby="report-gate-title">
         <div class="report-gate-symbol" aria-hidden="true">✉</div>
         <h2 id="report-gate-title">Vérifiez votre adresse e-mail</h2>
         <form id="report-code-form" class="report-code-form">
@@ -42,7 +43,7 @@
         <p id="report-code-hint" class="public-micro">Le code expire après 15 minutes. Il n'est pas inclus dans le lien e-mail.</p>
       </section>
       <section id="report-ready" hidden>
-        <div class="report-downloads">
+        <div class="report-downloads" data-card-art="report">
           <div><p class="public-eyebrow" id="report-ready-label">RAPPORT DÉBLOQUÉ</p><h2 id="report-ready-title">Votre rapport est prêt</h2><p id="report-ready-desc">Consultez-le ici ou conservez les fichiers.</p></div>
           <div class="report-download-buttons">
             <a id="report-download-pdf" class="public-url-button" href="#">Télécharger le PDF</a>

@@ -433,6 +433,7 @@ async function show(sectionId, tabId, initialFilters) {
   const panel = el("section", "app-panel c-panel"); panel.setAttribute("role", "tabpanel");
   $("#c-panels").replaceChildren(panel);
   const feature = consoleFeature(section.id, tab.id, LANG);
+  panel.dataset.artScope = feature?.id || section.id;
   const area = DECISION_AREAS.find(a => a.id === decision.area);
   const isHub = tab.decision || section.id === 'overview';
   panel.append(sectionHeading(isHub ? (section.id === 'overview' && tab.id === 'board' ? decisionLabel('overview', LANG) : tab.label) : screenTitle, isHub ? (area?.description[LANG === 'fr' ? 0 : 1] || (LANG === 'fr' ? 'Coordonnez vos espaces clients.' : 'Coordinate customer workspaces.')) : feature?.benefit || def.intro || (LANG === 'fr' ? 'Comprendre les résultats, leurs sources et la prochaine action.' : 'Understand results, their sources and the next action.'), isHub ? (tab.icon || section.icon) : section.icon));

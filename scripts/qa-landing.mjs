@@ -35,6 +35,42 @@ async function ready() {
 }
 
 // Fragment navigation and input focus must never scroll the hero independently of the page.
+// Verify the visible artwork, its local asset and its reserved space on each public surface.
+async function verifyCardIllustrations(browser) {
+  const page = await browser.newPage({ reducedMotion: 'reduce' });
+  const routes = [
+    ['/fr/#offres', '.pricing-grid .plan', ['apply_mode', 'billing', 'overview', 'assistant']],
+    ['/#platform', '.vh-depth-grid > a', ['catalog', 'apply_mode', 'tracking']],
+    ['/guides/marketing/', '.evidence-lanes article', ['prompts', 'ga4', 'crm']],
+    ['/fr/guides/technical/', '.availability-list article', ['public', 'tracking', 'apply_mode']],
+    ['/console/', '.public-login-card', ['agents']],
+    ['/report/', '.report-gate', ['agents']],
+    ['/reports/opendpe.html', '.dash > .panel', ['rank', 'ai_visibility', 'audit', 'citability', 'overview']],
+  ];
+  for (const [width, height] of [[375,812], [1440,900]]) {
+    await page.setViewportSize({width, height});
+    for (const [route, selector, topics] of routes) {
+      await page.goto(origin + route);
+      const cards = page.locator(selector);
+      await cards.first().waitFor();
+      const rendered = await cards.evaluateAll(async nodes => Promise.all(nodes.map(async card => {
+        const band = getComputedStyle(card, '::after');
+        const file = band.backgroundImage.match(/url\("([^"]+\.webp)"\)/)?.[1];
+        if (!file) throw new Error('Missing illustration on ' + card.className);
+        const img = new Image(); img.src = file; await img.decode();
+        return {
+          topic: new URL(file).pathname.split('/').pop().replace('.webp',''),
+          fits: parseFloat(getComputedStyle(card).paddingTop) >= parseFloat(band.height) && parseFloat(band.height) > 0,
+          local: new URL(file).origin === location.origin,
+        };
+      })));
+      assert.deepEqual(rendered.map(item => item.topic), topics, route + ' artwork');
+      assert.ok(rendered.every(item => item.local && item.fits), route + ' art stays above content');
+    }
+  }
+  await page.close();
+}
+
 const auditViewports = [[320,568], [390,844], [650,900], [651,900], [768,1024], [844,390], [1024,768], [1440,900], [2048,1152]];
 
 async function verifyAuditPlacement(browser, locale, viewports = auditViewports, device = {}) {
@@ -467,6 +503,7 @@ try {
   await ready();
   const browserExecutable = process.env.CHROMIUM_BIN || (existsSync(chromium.executablePath()) ? chromium.executablePath() : "/usr/bin/chromium");
   browser = await chromium.launch({ executablePath: browserExecutable, headless: true, args: ["--no-sandbox", "--disable-dev-shm-usage"] });
+  await verifyCardIllustrations(browser);
   await verifyAuditPlacement(browser, "fr");
   await verifyAuditPlacement(browser, "en");
   await verifyAuditPlacement(browser, 'fr', [[412,839], [839,412]], devices['Pixel 7']);
