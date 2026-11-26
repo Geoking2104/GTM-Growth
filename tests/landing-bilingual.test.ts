@@ -16,7 +16,7 @@ describe("French and English landing pages", () => {
       expect(html).toMatch(/href="\/landing\.css\?v=[a-f0-9]{12}"/);
       expect(html).toMatch(/href="\/visual-home\.css\?v=[a-f0-9]{12}"/);
       expect(html).toMatch(/src="\/visual-home\.js\?v=[a-f0-9]{12}"/);
-      expect(html).toContain('src="/landing.js"');
+      expect(html).toMatch(/src="\/landing\.js\?v=[a-f0-9]{12}"/);
       expect(html).toContain('src="/privacy.js"');
       expect(html).toContain('src="/locale-links.js"');
       expect(html).toContain('id="read-result"');
