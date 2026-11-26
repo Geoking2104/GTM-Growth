@@ -1,3 +1,13 @@
+const header = document.querySelector('.site-header');
+if (header) {
+  const syncHeaderHeight = () => {
+    document.documentElement.style.setProperty('--home-header-height', header.getBoundingClientRect().height + 'px');
+  };
+  syncHeaderHeight();
+  if ('ResizeObserver' in window) new ResizeObserver(syncHeaderHeight).observe(header);
+  else window.addEventListener('resize', syncHeaderHeight);
+}
+
 /** Lightweight product reel. No network requests, tracking, or third-party player. */
 const demo = document.querySelector('[data-product-demo]');
 if (demo) {
