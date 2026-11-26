@@ -1,6 +1,7 @@
 #!/usr/bin/env node
 /** One static layout, two complete dictionaries. Generated HTML stays deployable without a build server. */
 import fs from "node:fs";
+import { createHash } from "node:crypto";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 import { parseHTML } from "linkedom";
@@ -15,6 +16,16 @@ const template = fs.readFileSync(path.join(root, "site/landing/template.html"), 
 const keys = [...new Set([...template.matchAll(/\{\{(t\d+)\}\}/g)].map(match => match[1]))].sort();
 const escape = value => String(value).replaceAll("&", "&amp;").replaceAll("<", "&lt;").replaceAll(">", "&gt;").replaceAll('"', "&quot;");
 const check = process.argv.includes("--check");
+function assetUrl(file) {
+  const content = fs.readFileSync(path.join(root, "site", file));
+  const revision = createHash("sha256").update(content).digest("hex").slice(0, 12);
+  return `/${file}?v=${revision}`;
+}
+const assets = {
+  landing_styles_url: assetUrl("landing.css"),
+  visual_styles_url: assetUrl("visual-home.css"),
+  visual_script_url: assetUrl("visual-home.js"),
+};
 for (const locale of ["en", "fr"]) {
   const copy = JSON.parse(fs.readFileSync(path.join(root, `site/landing/${locale}.json`), "utf8"));
   if (JSON.stringify(Object.keys(copy).sort()) !== JSON.stringify(keys)) throw new Error(`${locale}: translation keys differ from the template`);
@@ -22,7 +33,7 @@ for (const locale of ["en", "fr"]) {
   const canonical = `https://gtm.kayroslab.com/${locale === "fr" ? "fr/" : ""}`;
   const guides = guideContent(locale);
   const guideLinks = ['marketing', 'technical'].map(track => `<a href="${guidePath(locale, track)}">${escape(guides[track].label)}</a>`).join('');
-  const config = { ...visualHomeMarkup(locale), reading_tracks: readingTracks(locale), guide_links: guideLinks, crm_global: crmMarkup(locale), ...journeyMarkup(locale), locale, canonical, privacy: locale === "fr" ? "/fr/confidentialite.html" : "/privacy.html", active_en: locale === "en" ? 'aria-current="page"' : "", active_fr: locale === "fr" ? 'aria-current="page"' : "" };
+  const config = { ...assets, ...visualHomeMarkup(locale), reading_tracks: readingTracks(locale), guide_links: guideLinks, crm_global: crmMarkup(locale), ...journeyMarkup(locale), locale, canonical, privacy: locale === "fr" ? "/fr/confidentialite.html" : "/privacy.html", active_en: locale === "en" ? 'aria-current="page"' : "", active_fr: locale === "fr" ? 'aria-current="page"' : "" };
   let html = template.replace(/\{\{(\w+)\}\}/g, (_, key) => {
     if (key in copy) return escape(copy[key]);
     if (key in config) return config[key];

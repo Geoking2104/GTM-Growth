@@ -18,7 +18,6 @@ function structure(document) {
 assert.deepEqual(structure(documents[0]), structure(documents[1]), 'EN/FR structure, actions and assets must match');
 for (const [i, document] of documents.entries()) {
   const locale = i ? 'fr' : 'en';
-  const base = i ? 'fr' : '';
   const canonical = `https://gtm.kayroslab.com/${i ? 'fr/' : ''}`;
   assert.equal(document.documentElement.lang, locale);
   assert.equal(document.querySelector('link[rel="canonical"]').href, canonical);
@@ -34,7 +33,7 @@ for (const [i, document] of documents.entries()) {
     if (!value || /^(https?:|data:)/.test(value)) continue;
     if (value.startsWith('#')) { assert.ok(document.getElementById(value.slice(1)), `${locale}: missing anchor ${value}`); continue; }
     if (value.startsWith('/console/')) { assert.ok(value.includes(`lang=${locale}`), `${locale}: console language lost`); continue; }
-    const file = path.resolve(root, value.startsWith('/') ? '.' + value : path.join(base, value));
+    const file = path.resolve(root, '.' + new URL(value, canonical).pathname);
     assert.ok(file.startsWith(root + path.sep) || file === root, `Path outside site: ${value}`);
     assert.ok(fs.existsSync(file), `${locale}: missing asset ${value}`);
   }
