@@ -22,8 +22,8 @@ describe("French and English landing pages", () => {
     }
   });
   it("leads with outcomes and keeps detailed bilingual resources accessible", () => {
-    expect(fr).toContain("Attirez. Convainquez.");
-    expect(en).toContain("Get seen. Get chosen.");
+    expect(fr).toContain('<h1>Soyez visibles de vos clients<br><span class="grad-text">là où ils vous cherchent</span></h1>');
+    expect(en).toContain('<h1>Be visible to your customers<br><span class="grad-text">where they’re looking for you</span></h1>');
     for (const id of ["audit", "fonctionnement", "outils", "ops", "console", "roadmap", "toolkit", "mesure", "preuve", "offres", "contact", "faq", "credit"]) {
       for (const html of [en, fr]) expect(html).toContain(`id="${id}"`);
     }
