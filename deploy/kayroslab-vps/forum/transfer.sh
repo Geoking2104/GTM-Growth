@@ -1,6 +1,10 @@
 #!/usr/bin/env bash
 set -euo pipefail
 cd "$(dirname "$0")"
+if [[ ${1:-} == local-admin ]]; then
+    owner_password=${FORUM_BOOTSTRAP_PASSWORD:?The production bootstrap password has not been set}
+    unset FORUM_BOOTSTRAP_PASSWORD
+fi
 ssh_dir=$(mktemp -d)
 trap 'rm -rf "$ssh_dir"' EXIT
 for attempt in 1 2 3; do
@@ -19,6 +23,11 @@ remote() {
 }
 installer='sudo -n bash /opt/gtm-growth-forum/install.sh'
 case "${1:?mode required}" in
+    local-admin)
+        remote 'sudo -n docker inspect -f "{{index .Config.Labels \"com.kayroslab.service\"}}" gtmgrowth-forum | grep -Fxq gtmgrowth-forum'
+        tar cf - bootstrap-local-admin.rb | remote 'sudo -n docker cp - gtmgrowth-forum:/var/www/discourse/script/'
+        printf '%s' "$owner_password" | remote 'sudo -n docker exec -i --user discourse --workdir /var/www/discourse gtmgrowth-forum bundle exec rails runner /var/www/discourse/script/bootstrap-local-admin.rb && sudo -n touch /var/discourse/shared/gtmgrowth-forum/.gtmgrowth-local-admin'
+        ;;
     mail-check)
         remote 'cd /opt/gtm-growth/deploy/kayroslab-vps && sudo -n docker compose --env-file .env.local -f docker-compose.prod.yml exec -T gtm-growth node --input-type=module' < check-mail.mjs
         remote 'sudo -n bash -s' < check-local-mail.sh
