@@ -59,6 +59,7 @@
   function startGoogle() {
     window.dataLayer = window.dataLayer || [];
     function gtag() { window.dataLayer.push(arguments); }
+    window.gtag = gtag;
     gtag("consent", "default", { analytics_storage: "granted", ad_storage: "denied", ad_user_data: "denied", ad_personalization: "denied" });
     gtag("set", {
       page_location: location.origin + location.pathname,
@@ -66,8 +67,8 @@
       cookie_domain: host, cookie_expires: lifetime / 1000, cookie_update: false,
       allow_google_signals: false, allow_ad_personalization_signals: false
     });
-    window.dataLayer.push({ "gtm.start": Date.now(), event: "gtm.js" });
-    script("https://www.googletagmanager.com/gtm.js?id=GTM-MTLJ6WSM");
+    gtag("js", new Date());
+    script("https://www.googletagmanager.com/gtm.js?id=GTM-TPWQ545M");
   }
 
   function startClarity() {

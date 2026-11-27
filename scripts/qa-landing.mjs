@@ -132,7 +132,8 @@ async function verifyCarousel(browser, locale, viewport) {
   await page.getByRole('button', { name: locale === 'fr' ? 'Refuser' : 'Reject', exact: true }).click();
   const reel = page.locator('[data-product-demo]');
   const selected = reel.locator('[role="tab"][aria-selected="true"]');
-  await reel.scrollIntoViewIfNeeded();
+  await reel.evaluate(element => element.scrollIntoView({ block: "center", behavior: "instant" }));
+  await page.clock.runFor(100);
   await page.clock.fastForward(7000);
   assert.equal(await selected.getAttribute('id'), 'tab-search', 'reduced motion keeps the first scene still');
 
@@ -157,7 +158,8 @@ async function visit(browserContext, locale, label, viewport) {
   const errors = [];
   page.on("pageerror", (error) => errors.push(error.message));
   // Check the first-visit consent journey independently for every locale.
-  await page.addInitScript(() => localStorage.removeItem("gtm-growth-privacy-v2"));
+  await page.goto(origin + "/robots.txt");
+  await page.evaluate(() => localStorage.removeItem("gtm-growth-privacy-v2"));
   await page.setViewportSize(viewport);
   const response = await page.goto(`${origin}/${locale === "fr" ? "fr/" : ""}`, { waitUntil: "networkidle" });
   assert.equal(response?.status(), 200, `${label} homepage loaded`);
@@ -215,7 +217,7 @@ async function visit(browserContext, locale, label, viewport) {
   await page.locator('#console').screenshot({ path: path.join(outputDir, `${label}-product.png`) });
   await page.goto(`${origin}/${locale === 'fr' ? 'fr/' : ''}#features`);
   // A fragment-only navigation keeps the existing consent decision.
-  if (await page.locator('.privacy-banner').isVisible()) await page.getByRole('button', { name: locale === 'fr' ? 'Refuser' : 'Reject', exact: true }).click();
+  assert.equal(await page.locator('.privacy-banner').isVisible(), false);
   assert.equal(await page.locator('#tool-explorer').evaluate(node => node.open), true, 'bookmarked catalogue opens its disclosure');
   await page.locator('#tool-explorer > summary').click();
   const plans = page.locator("#offres");
@@ -242,7 +244,8 @@ async function visit(browserContext, locale, label, viewport) {
   await page.locator('#features').screenshot({ path: path.join(outputDir, `${label}-feature-explorer.png`) });
   assert.ok(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth + 2), `${label}: explorer has no overflow`);
   await page.goto(`${origin}/${locale === 'fr' ? 'fr/' : ''}`);
-  await page.getByRole('button', { name: locale === 'fr' ? 'Refuser' : 'Reject', exact: true }).click();
+  await page.locator('.privacy-settings').waitFor();
+  assert.equal(await page.locator('.privacy-banner').isVisible(), false, 'a new page honours the saved refusal');
   assert.deepEqual(errors, [], `${label}: no JS runtime exceptions`);
   return page;
 }
@@ -533,7 +536,7 @@ try {
   for (const [page, locale] of [[en, 'en'], [fr, 'fr']]) {
     await page.locator('.vh-technical > summary').click();
     await page.locator('#reading-guides').screenshot({ path: path.join(outputDir, `${locale}-reading-tracks.png`) });
-    // Keep the homepage's consent-test page intact; its init script resets consent on reload.
+    // Exercise guide navigation without losing the homepage used by later checks.
     const entry = await context.newPage();
     await entry.goto(`${origin}/${locale === 'fr' ? 'fr/' : ''}`);
     await entry.locator('.vh-technical > summary').click();

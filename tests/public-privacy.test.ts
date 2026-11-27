@@ -8,7 +8,7 @@ const current = "gtm-growth-privacy-v2";
 const legacy = "gtm-growth-privacy-v1";
 const day = 86400000;
 const host = "https://gtm.kayroslab.com";
-const google = "https://www.googletagmanager.com/gtm.js?id=GTM-MTLJ6WSM";
+const google = "https://www.googletagmanager.com/gtm.js?id=GTM-TPWQ545M";
 const clarity = "https://www.clarity.ms/tag/z8ln1th2sn";
 
 function visit(url = host + "/", records: Record<string, unknown> = {}, referrer = "") {
