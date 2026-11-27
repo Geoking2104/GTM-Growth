@@ -4,8 +4,7 @@ set -euo pipefail
 # on every socket activation, so DNS and the provider's address family can change.
 peer=$(curl --noproxy '*' -fsS --connect-timeout 5 --max-time 10 --output /dev/null \
     --write-out '%{remote_ip}' https://id.discourse.com/)
-case "$peer" in
-    *:*) peer="[$peer]" ;;
-    '') exit 1 ;;
-esac
+# Ubuntu 24.04 socket-proxyd splits at the final colon and passes the
+# preceding text straight to getaddrinfo, including for an IPv6 literal.
+test -n "$peer"
 exec /usr/lib/systemd/systemd-socket-proxyd --connections-max=32 --exit-idle-time=3min "$peer:443"

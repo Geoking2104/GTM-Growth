@@ -33,6 +33,10 @@ systemctl daemon-reload
 if "$service_changed" && systemctl is-active --quiet "$relay.service"; then systemctl stop "$relay.service"; fi
 systemctl reset-failed "$relay.service" "$relay.socket" || true
 systemctl enable --now "$relay.socket"
+if ! "${probe[@]}" --unix-socket "$socket_dir/provider.sock" "$provider"; then
+    # A prior activation may still have the old, unreachable provider address.
+    systemctl try-restart "$relay.service"
+fi
 if ! "${probe[@]}" --retry 2 --retry-all-errors --unix-socket "$socket_dir/provider.sock" "$provider"; then
     systemctl show "$relay.service" -p Result -p ExecMainStatus
     journalctl --no-pager -n 12 -u "$relay.service"
