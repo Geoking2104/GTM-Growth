@@ -1,0 +1,12 @@
+# Managed by the GTM Growth forum installer.
+[Unit]
+Description=Private GTM forum socket for Discourse ID
+
+[Socket]
+ListenStream=/var/lib/gtmgrowth-forum-id/provider.sock
+SocketGroup=gtmgrowth-forum-id
+SocketMode=0660
+RemoveOnStop=yes
+
+[Install]
+WantedBy=sockets.target
