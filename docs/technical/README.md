@@ -33,7 +33,8 @@ the operator pays the partner costs and every answer keeps provenance
 tenant selection, available with the bridge off.
 
 The [AI-crawler analytics](AI-CRAWLERS.md) (R6) parse tenant-supplied access logs
-into per-crawler and per-section crawl coverage, and produce Apply-Mode dry-run
+into per-crawler and per-section crawl coverage, and produce Apply
+-Mode dry-run
 drafts of the AI-bot robots policy and an llms.txt skeleton: free, stateless,
 nothing invented, no writer wired.
 
@@ -62,10 +63,28 @@ coverage with evidence, citability audit as the base, unevaluated stays null),
 and uncovered prompts get local title/outline drafts with a review note. Free,
 local, nothing stored.
 
+The [native AI tracker](../product/AI-TRACKER-NATIVE.md) is a dedicated module
+(`src/ai-tracker/`, own SQLite tables) that measures brand visibility in real
+AI-engine answers: official-API collectors (mode `api-approximation`) and an
+optional per-engine Playwright scraper (mode `consumer-ui`). Scrapers are off
+by default per tenant: a tenant admin activates one only after accepting the
+versioned GTM Growth disclaimer, recorded in `ai_engine_settings` (who, when,
+accepted version); the worker re-checks the current version before each
+collection and `AI_TRACKER_SCRAPER_<ENGINE>_ENABLED=false` locks an engine on
+the deployment. A local Ollama judge stores its version per judgement,
+read-time metrics never mix collection modes, opportunity rules never conclude
+from a single run, the worker is idempotent (one run/day/prompt/engine, pause
+after two consecutive failures) and MCP tools `ai_tracker.*` are read-only by
+default. Console routes: `src/console/ai-tracker.ts`; bilingual front:
+`site/console/ai-tracker.js` (`#ai_tracker`). Everything is fail-closed
+behind `AI_TRACKER_ENABLED=false`; the deploy kit is
+`deploy/ai-tracker-native` (app, ai-worker, loopback Ollama).
+
 The [trust pack](../trust/README.md) (R10) carries the GDPR posture and data
 map, the customer DPA template, the OVH hosting page, the security and status
 page content, and the fail-closed Mollie activation runbook with the final
-quotas: each states what the code enforces and what stays an explicit operator
+quotas: each states what the code enforces and what stays an explicit opera
+tor
 act.
 
 The [console decision refit](../journey/CONSOLE-DECISION-REFIT.md) includes five
@@ -92,16 +111,18 @@ are not implemented by this release.
 
 ## Implementation by journey stage
 
-| Stage | Main code | Handoff | Relevant validation |
+| Stage | Main code | Ha
+ndoff | Relevant validation |
 | --- | --- | --- | --- |
 | Diagnose | [Public read](../../src/freeread/index.ts), [360° contract](../../src/freeread/report360.ts), [fetch guard](../../src/http/public-fetch.ts), [GEO](../../src/geo/audit.ts), [email-code API](../../src/report-access/router.ts), [PDF/MD export](../../src/report-access/export.ts) | Source-labelled findings, five-pillar unknown-state contract, FR/EN guides, optional saved public snapshot behind single-use email code; live email depends on OVH TLS SMTP activation | `free-read`, `free-report360`, `report360-ui`, `report-access`, `report-access-router`, `public-fetch`, `geo` tests |
 | Understand | [Context extraction](../../src/freeread/journey-context.ts), [journey model](../../site/console/customer-journey-model.js), [journey API](../../src/console/journey.ts) | Confirmed context → hypotheses → explicit prompt save | `customer-journey`, `customer-journey-ui`, `website-journey` tests |
 | Prepare | [Apply preview](../../src/apply/preview.ts), [content ops](../../src/console/content-ops.ts), [Social service](../../src/social/service.ts), [GBP publication](../../src/local-seo/publication.ts) | Adapter-specific draft, approval and execution semantics | `apply-*`, `console-ops`, `social*`, `local-seo-publication` tests |
-| Measure | [Google](../../src/google/), [AI collection](../../src/console/ai-visibility-providers.ts), [commerce](../../src/ecommerce/), [CRM](../../src/crm/) | Scoped observations; commerce outbox → CRM events | Analytics, provider, ecommerce and CRM tests |
+| Measure | [Google](../../src/google/), [AI collection](../../src/console/ai-visibility-providers.ts), [native AI tracker](../../src/ai-tracker/), [commerce](../../src/ecommerce/), [CRM](../../src/crm/) | Scoped observations; AI-engine runs with verbatim answers and mode-separated series; commerce outbox → CRM events | Analytics, provider, ai-tracker-native and ai-tracker-native-ui, ecommerce and CRM tests |
 | Coordinate | [Data agent](../../src/data-agent/), [local SEO](../../src/local-seo/), [reports](../../src/report/), [Ops](../../src/console/ops-routes.ts) | Curated reads, roles, scoped exports and next decisions | Data-agent, tenant-isolation, local network and PDF tests |
 
 Names in the last column refer to files under [tests](../../tests/), not separate
 production services. [Integration map](INTEGRATION-MAP.md) expands the boundaries.
+
 
 ## Local setup
 
@@ -146,7 +167,8 @@ Full command reference: [CLI](../CLI.md). The canonical agent package is
 2. Tenant domain/property/container checks remain server-side. A user's business
    profile and a saved navigation destination cannot expand access.
 3. CRM and Social add explicit module roles. Local SEO/CRM/Social reject global
-   platform-admin or machine sessions where their module contract requires a
+   platform-admin or machine sessions where their module contract
+ requires a
    client human account. Do not generalise platform administration into all data access.
 4. The general MCP registry is an **operator interface**. Its bearer token is shared
    server access; tools such as commerce accept a `tenantId` argument. It is not an
@@ -175,7 +197,8 @@ Do not replace these distinct rules with a blanket “all writes require confirm
 
 ## Source layout
 
-| Path | What belongs here |
+| Path | What belongs here 
+|
 | --- | --- |
 | [src/console](../../src/console/) | Console API adapters and orchestration |
 | [src/google](../../src/google/), [src/geo](../../src/geo/), [src/indexnow](../../src/indexnow/) | Source adapters, audits and protocol-specific operations |
@@ -210,4 +233,5 @@ separate from fixture/CI success.
 
 ## PAP 1.0 read pilot
 
-[PAP authorization, activation and rollback](PAP-RUNBOOK.md). Implemented behind a disabled feature flag; production and real-agent interoperability require staging evidence.
+[PAP authorization, activation and rollback](PAP-RUNBOOK.md). Implemented behind a disabled feature flag; production and real-agent interoperability require staging evi
+dence.
