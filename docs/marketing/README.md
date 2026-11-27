@@ -34,6 +34,7 @@ budgets are not delivery or performance receipts.
 
 | User | First useful result | Typical next connection | Responsibility |
 | --- | --- | --- | --- |
+
 | Website owner | A visible page issue and a first fix | GSC or GA4 | Confirm business context and authorise the site scope |
 | Marketing team | Reviewed buyer questions and content priorities | GSC, saved AI answers, optional Social accounts | Keep hypotheses, measurements and drafts distinguishable |
 | Agency | Repeatable evidence review for each client | Separate tenant sources | Maintain client isolation and name the reviewer |
@@ -58,7 +59,8 @@ technical readiness. Citability is a heuristic for editing. Neither proves that
 an AI engine cited the business. Any sample analytics in a public response are
 examples, not that website's private traffic.
 
-**Deliverable:** one issue, its evidence, the affected page and a proposed owner.
+**Deliverable:** one issue, its evidence, the affected page and a proposed 
+owner.
 **Next step:** use a specific product/service page to understand the offer.
 **Technical handoff:** [public fetch and evidence](../technical/INTEGRATION-MAP.md#integration-contracts).
 
@@ -87,7 +89,8 @@ priority. **Next step:** prepare the smallest useful improvement.
 | Article operations | Brief, draft and quality gates | Approved WordPress creation produces a draft, not a published article |
 | Social | Product-based variants, calendar, approvals | A separate administrator reviews the exact content/accounts/time; explicit schedule confirmation and configured worker/provider are required |
 | Local profile | Bounded phone or website change | Independent administrator approval, execution and official API readback |
-| IndexNow | Key verification and changed-URL submission | Explicit submission; a receipt does not prove indexing |
+| IndexNow | Key verification and changed-URL submission | Explicit submission; a receipt does not prove i
+ndexing |
 
 Social results preserve provider/source/date distinctions. Creator vetting is
 human and evidence-based. Outreach is an approved draft sent manually outside
@@ -108,15 +111,50 @@ outreach sequence. [Social implementation contract](../product/SOCIAL-TOOLKIT-SP
 | Which order has a channel signal? | Store order, UTM/referrer, attribution method/confidence | Correlation only; current aggregate limitations must be checked |
 | What happened for this contact? | Exact scoped identity link plus sourced CRM events | No automatic identity from GA4, Postiz, campaigns or IP addresses |
 | Is a local correction accepted? | Official GBP API readback | Acceptance is not proof of public Maps visibility or ranking |
+| Does the brand appear in AI answers over time? | Repeated dated runs per engine and collection mode, stored verbatim | A repeated sample shows a trend; it is not market share or causality |
 
 The CRM can be used natively or through a server plugin for a client's CRM.
 It provides contacts, identity links, manual activities and clickable timelines;
 it is not a full sales-pipeline CRM. Live web/social events require a real
-instrumented source. Shopify/PrestaShop observations can feed the timeline through
+instrumented sou
+rce. Shopify/PrestaShop observations can feed the timeline through
 the existing commerce bridge after CRM is enabled. Missing identities stay unlinked.
 
 **Deliverable:** a sourced comparison, its coverage, limitations and decision.
 Use the [measurement contract](MEASUREMENT.md) before publishing business claims.
+
+## Follow what AI engines actually answer
+
+The [native AI tracker](../product/AI-TRACKER-NATIVE.md), in the console under
+Impact → Visibility → Tracking IA natif, measures what ChatGPT, Gemini,
+Perplexity, Google AI Mode and Bing AI Mode really answer to the questions that
+matter for a brand. In plain terms:
+
+- You write down the real questions buyers ask. The tracker then asks each
+  enabled engine, keeps the **exact answer**, and shows it — a score is never
+  shown without the answer it came from.
+- Every score carries its proof: how many runs produced it, which engine, and
+  how the answer was collected. One answer is never a conclusion. The tool
+  repeats the measurement and shows a **trend**, with a standing warning that
+  a trend is not proof of causality.
+- Visibility (does the engine mention us?), share of voice (versus named
+  competitors), sentiment, position and citations are kept **separate** from
+  the GEO readiness audit: being well prepared does not prove an engine cites
+  you, and a repeated sample is not market share.
+- Two collection modes exist. Supported **official APIs** give an approximation
+  of real answers. For engines without a usable API, an optional browser-based
+  collector exists, and it is **off by default**: only the workspace
+  administrator can switch one on, after reading and accepting a dated GTM
+  Growth disclaimer that spells out the terms-of-service risk. Nothing is
+  collected before that explicit act, and the operator of the platform can lock
+  any engine off for the whole deployment.
+- Answers stay on the operator's own server. No answer is sent to a third
+  party, and nothing is ever deleted or truncated to make a score look better.
+
+Suggested improvements (a competitor now answering first, a visibility drop,
+a missing citation) are review suggestions only: never based on a single run,
+and turned into an action draft only after a human confirms.
+See the [product guide](../product/AI-TRACKER-NATIVE.md).
 
 ## 5. Coordinate — make the next review repeatable
 
@@ -139,7 +177,8 @@ This is an operating recommendation, not an implemented automatic 30/60/90-day p
 
 Use the [capability register](../journey/CAPABILITIES.md) for availability and the
 [operations guide](../technical/OPERATIONS.md) for release evidence. A merged feature,
-a successful deployment and a working customer connection are separate facts.
+a successful deploymen
+t and a working customer connection are separate facts.
 
 ## Example customer engagement
 
