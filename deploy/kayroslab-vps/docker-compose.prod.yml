@@ -38,6 +38,7 @@ services:
       REPORT_ACCESS_ENABLED: ${REPORT_ACCESS_ENABLED:-false}
       REPORT_ACCESS_SECRET: ${REPORT_ACCESS_SECRET:-}
       REPORT_ACCESS_DB_PATH: /data/report-access.sqlite3
+      AI_TRACKER_DB_PATH: ${AI_TRACKER_DB_PATH:-/data/ai-tracker.sqlite3}
       REPORT_PUBLIC_ORIGIN: ${REPORT_PUBLIC_ORIGIN:-https://gtm.kayroslab.com}
       PAP_ENABLED: ${PAP_ENABLED:-false}
       PAP_PUBLIC_ORIGIN: ${PAP_PUBLIC_ORIGIN:-https://gtm.kayroslab.com}

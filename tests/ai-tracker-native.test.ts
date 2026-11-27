@@ -1,10 +1,11 @@
 /** Native AI tracker — unit and integration tests (fixtures and fake transports only). */
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
 import fs from "node:fs";
+import Database from "better-sqlite3";
 import os from "node:os";
 import path from "node:path";
 import {
-  closeTrackerStores, database, insertMention, insertPrompt, insertRun, latestMentions, listBrands, listRuns,
+  closeTrackerStores, database, getEngineSetting, insertMention, insertPrompt, insertRun, latestMentions, listBrands, listRuns,
   normalizeDomain, promptHash, runIdFor, setEngineState, upsertBrand, getRun, mentionsForRun,
 } from "../src/ai-tracker/store.js";
 import { scraperEnabled, trackerEnabled, judgeVersion } from "../src/ai-tracker/config.js";
@@ -80,6 +81,19 @@ describe("deterministic match filter", () => {
 });
 
 describe("storage", () => {
+  it("requires fresh acceptance for pre-versioned engine settings and retains their audit fields", () => {
+    const legacy = new Database(process.env.AI_TRACKER_DB_PATH!);
+    legacy.exec(`CREATE TABLE ai_engine_settings (
+      tenant_id TEXT, engine TEXT, scraper_enabled INTEGER, disclaimer_accepted_at TEXT, accepted_by TEXT,
+      PRIMARY KEY (tenant_id, engine))`);
+    legacy.prepare("INSERT INTO ai_engine_settings VALUES (?, ?, 1, ?, ?)").run(TENANT, "chatgpt", "2026-01-01", "previous-admin");
+    legacy.close();
+    expect(getEngineSetting(TENANT, "chatgpt")).toMatchObject({
+      scraperEnabled: false, disclaimerVersion: "", acceptedBy: "previous-admin", disclaimerAcceptedAt: "2026-01-01",
+    });
+    closeTrackerStores();
+    expect(getEngineSetting(TENANT, "chatgpt").scraperEnabled).toBe(false);
+  });
   it("normalizes domains", () => {
     expect(normalizeDomain("https://WWW.Example.com/")).toBe("example.com");
   });

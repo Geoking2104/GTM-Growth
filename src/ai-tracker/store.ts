@@ -5,7 +5,7 @@ import { createHash } from "node:crypto";
 import Database from "better-sqlite3";
 import { validTenantId } from "../tenants/store.js";
 import type { Citation, EngineStatus, MentionJudgement, Opportunity, StoredRun, TrackedBrand, TrackedPrompt } from "./types.js";
-import { trackerConfig } from "./config.js";
+import { GTM_TRACKER_DISCLAIMER_VERSION, trackerConfig } from "./config.js";
 
 const connections = new Map<string, Database.Database>();
 type Row = Record<string, unknown>;
@@ -65,8 +65,19 @@ export function database(): Database.Database {
       tenant_id TEXT NOT NULL, engine TEXT NOT NULL, health TEXT NOT NULL DEFAULT 'disabled',
       consecutive_failures INTEGER NOT NULL DEFAULT 0, last_checked_at TEXT NOT NULL DEFAULT '',
       note TEXT NOT NULL DEFAULT '', PRIMARY KEY (tenant_id, engine));
+    CREATE TABLE IF NOT EXISTS ai_engine_settings (
+      tenant_id TEXT NOT NULL, engine TEXT NOT NULL,
+      scraper_enabled INTEGER NOT NULL DEFAULT 0,
+      disclaimer_accepted_at TEXT NOT NULL DEFAULT '', accepted_by TEXT NOT NULL DEFAULT '', disclaimer_version TEXT NOT NULL DEFAULT '',
+      PRIMARY KEY (tenant_id, engine));
     CREATE INDEX IF NOT EXISTS ai_runs_prompt ON ai_runs (tenant_id, brand_id, prompt_id, run_date);
     CREATE INDEX IF NOT EXISTS ai_mentions_run ON ai_mentions (run_id);`);
+  db.transaction(() => {
+    const columns = db.pragma("table_info(ai_engine_settings)") as Array<{ name: string }>;
+    if (!columns.some(column => column.name === "disclaimer_version")) {
+      db.exec("ALTER TABLE ai_engine_settings ADD COLUMN disclaimer_version TEXT NOT NULL DEFAULT ''");
+    }
+  }).immediate();
   connections.set(file, db);
   return db;
 }
@@ -317,4 +328,51 @@ export function listEngineStates(tenantId: string): EngineStatus[] {
     tenantId, engine: String(row.engine), health: String(row.health) as EngineStatus["health"],
     consecutiveFailures: Number(row.consecutive_failures), lastCheckedAt: String(row.last_checked_at), note: String(row.note),
   }));
+}
+
+// ---------------------------------------------------------------------------
+// Engine settings (per-tenant scraper activation, disclaimer-gated)
+// ---------------------------------------------------------------------------
+
+export interface EngineSetting {
+  engine: string;
+  scraperEnabled: boolean;
+  disclaimerAcceptedAt: string;
+  acceptedBy: string;
+  disclaimerVersion: string;
+}
+
+function engineSetting(engine: string, row?: Row): EngineSetting {
+  const disclaimerVersion = String(row?.disclaimer_version ?? "");
+  return {
+    engine, disclaimerVersion,
+    scraperEnabled: Number(row?.scraper_enabled) === 1 && disclaimerVersion === GTM_TRACKER_DISCLAIMER_VERSION,
+    disclaimerAcceptedAt: String(row?.disclaimer_accepted_at ?? ""), acceptedBy: String(row?.accepted_by ?? ""),
+  };
+}
+
+export function getEngineSetting(tenantId: string, engine: string): EngineSetting {
+  validateTenant(tenantId);
+  const row = database().prepare("SELECT * FROM ai_engine_settings WHERE tenant_id = ? AND engine = ?").get(tenantId, engine) as Row | undefined;
+  return engineSetting(engine, row);
+}
+
+export function listEngineSettings(tenantId: string): EngineSetting[] {
+  validateTenant(tenantId);
+  const rows = database().prepare("SELECT * FROM ai_engine_settings WHERE tenant_id = ?").all(tenantId) as Row[];
+  return rows.map(row => engineSetting(String(row.engine), row));
+}
+
+export function setEngineScraper(tenantId: string, engine: string, enabled: boolean, version: string | undefined, actor: string): EngineSetting {
+  validateTenant(tenantId);
+  if (enabled) {
+    if (version !== GTM_TRACKER_DISCLAIMER_VERSION || !actor) throw new Error("Current disclaimer and administrator identity required");
+    database().prepare(`INSERT INTO ai_engine_settings (tenant_id, engine, scraper_enabled, disclaimer_version, disclaimer_accepted_at, accepted_by)
+      VALUES (?, ?, 1, ?, ?, ?) ON CONFLICT(tenant_id, engine) DO UPDATE SET scraper_enabled = 1,
+      disclaimer_version = excluded.disclaimer_version, disclaimer_accepted_at = excluded.disclaimer_accepted_at, accepted_by = excluded.accepted_by`)
+      .run(tenantId, engine, version, new Date().toISOString(), actor);
+  } else {
+    database().prepare("UPDATE ai_engine_settings SET scraper_enabled = 0 WHERE tenant_id = ? AND engine = ?").run(tenantId, engine);
+  }
+  return getEngineSetting(tenantId, engine);
 }

@@ -72,6 +72,7 @@
 [data-feature="bing"], [data-card-art="bing"], [data-art-scope="bing"] {
   --feature-hue: 174; --card-picture: url("/assets/feature-art/bing.webp");
 }
+[data-feature="ai_tracker"], [data-card-art="ai_tracker"], [data-art-scope="ai_tracker"],
 [data-feature="ai_visibility"], [data-card-art="ai_visibility"], [data-art-scope="ai_visibility"], .public-engine-panel, .report360-pillar-ai, .report360-action-ai, .report360-connection-ai, .ai-metric {
   --feature-hue: 250; --card-picture: url("/assets/feature-art/ai_visibility.webp");
 }

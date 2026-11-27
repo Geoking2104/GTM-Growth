@@ -18,11 +18,12 @@ export interface RunResult { runId: string | null; status: "collected" | "duplic
 
 const inFlight = new Set<string>();
 
-/** API first; scraper only when no consumer API exists and its flag is on; otherwise no collection. */
-async function collect(engine: string, promptText: string): Promise<CollectedAnswer> {
+/** API first; scraper only when no consumer API exists and its flag is on; otherwise no collection.
+ * Scraping requires current consent for this tenant and engine. */
+async function collect(tenantId: string, engine: string, promptText: string): Promise<CollectedAnswer> {
   const apiProvider = apiProviderForEngine(engine);
   if (apiProvider) return collectViaApi(apiProvider as ApiProviderId, promptText);
-  const scraper = scraperFor(engine);
+  const scraper = scraperFor(tenantId, engine);
   if (scraper) {
     try { return await scraper.run(promptText); }
     finally { await scraper.close(); }
@@ -46,7 +47,7 @@ export async function executeRun(request: RunRequest): Promise<RunResult> {
   const runDate = today();
   inFlight.add(lock);
   try {
-    const answer = await collect(request.engine, prompt.promptText);
+    const answer = await collect(request.tenantId, request.engine, prompt.promptText);
     const finalRunId = runIdFor(request.tenantId, request.brandId, request.promptId, request.engine, answer.provider, runDate);
     const run: StoredRun = {
       runId: finalRunId, tenantId: request.tenantId, brandId: request.brandId, promptId: request.promptId,
@@ -116,7 +117,7 @@ export async function manualRun(request: RunRequest & { justification: string })
 export async function engineHealthCheck(tenantId: string, engine: string): Promise<"ok" | "degraded" | "paused" | "disabled"> {
   const state = getEngineState(tenantId, engine);
   if (state.health === "paused") return "paused";
-  const scraper = scraperFor(engine);
+  const scraper = scraperFor(tenantId, engine);
   if (!scraper) { setEngineState(tenantId, engine, { health: "disabled", lastCheckedAt: new Date().toISOString() }); return "disabled"; }
   await scraper.close();
   return "ok";
@@ -139,3 +140,4 @@ export async function rejudgeWindow(tenantId: string, brandId: string): Promise<
 
 /** Stable id helper for opportunities and other derived rows. */
 export function stableId(...parts: string[]): string { return createHash("sha256").update(parts.join("|")).digest("hex").slice(0, 24); }
+

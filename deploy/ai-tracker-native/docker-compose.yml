@@ -3,22 +3,30 @@
 services:
   app:
     build: ../..
+    env_file: .env
     environment:
-      - AI_TRACKER_ENABLED=false
+      AI_TRACKER_DB_PATH: /data/ai-tracker.sqlite3
+    volumes:
+      - tracker_data:/data
 
   ai-worker:
-    build: ../..
-    command: ["pnpm", "ai-tracker:worker"]
+    build:
+      context: ../..
+      dockerfile: deploy/geo-renderer/Dockerfile
+    user: "1001:1001"
+    env_file: .env
+    command: ["node", "dist/ai-tracker/scheduler.js"]
     environment:
-      - AI_TRACKER_ENABLED=true
+      - AI_TRACKER_DB_PATH=/data/ai-tracker.sqlite3
       - AI_TRACKER_TENANT_ID=${AI_TRACKER_TENANT_ID:?set the tenant id}
       - OLLAMA_URL=http://ollama:11434
       - OLLAMA_MODEL=${OLLAMA_MODEL:-qwen2.5:14b}
       - AI_TRACKER_SCRAPER_SESSION_DIR=/data/ai-tracker-sessions
-      - AI_TRACKER_CHROMIUM_PATH=/usr/bin/chromium
+      - HOME=/tmp
     volumes:
       - tracker_data:/data
     depends_on:
+      - app
       - ollama
 
   ollama:

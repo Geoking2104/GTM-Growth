@@ -11,12 +11,16 @@ export interface TrackerConfig {
   sessionDir: string;
 }
 
-const SCRAPER_ENGINES = ["chatgpt", "gemini", "google-ai-mode", "perplexity", "bing-ai-mode"] as const;
+export const GTM_TRACKER_DISCLAIMER_VERSION = "2026-11-27";
+export const SCRAPER_ENGINES: readonly string[] = ["chatgpt", "gemini", "google-ai-mode", "perplexity", "bing-ai-mode"] as const;
 const flag = (name: string) => String(process.env[name] ?? "").trim().toLowerCase() === "true";
 
 export function trackerConfig(): TrackerConfig {
   const scraperEngines: Record<string, boolean> = {};
-  for (const engine of SCRAPER_ENGINES) scraperEngines[engine] = flag(`AI_TRACKER_SCRAPER_${engine.toUpperCase().replace(/-/g, "_")}_ENABLED`);
+  for (const engine of SCRAPER_ENGINES) {
+    const key = `AI_TRACKER_SCRAPER_${engine.toUpperCase().replace(/-/g, "_")}_ENABLED`;
+    scraperEngines[engine] = process.env[key] === undefined || flag(key);
+  }
   return {
     enabled: flag("AI_TRACKER_ENABLED"),
     scraperEngines,
@@ -32,7 +36,7 @@ export function trackerConfig(): TrackerConfig {
 /** Global kill-switch: no collection, no scheduling, when disabled. */
 export function trackerEnabled(): boolean { return trackerConfig().enabled; }
 
-/** Per-engine scraper flag; also requires the global flag. */
+/** Host allowance only. The scraper registry also requires current tenant consent. */
 export function scraperEnabled(engine: string): boolean {
   const config = trackerConfig();
   return config.enabled && (config.scraperEngines[engine] ?? false);

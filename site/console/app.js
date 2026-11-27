@@ -19,6 +19,7 @@ import { DECISION_AREAS, DECISION_VIEWS, decisionLocation, decisionLabel } from 
 import { renderDecisionHub, renderDecisionPriorities } from './decision-workspace.js';
 import { renderCompetition } from "./competition.js";
 import { renderAiVisibility } from "./ai-visibility.js";
+import { renderAiTracker } from "./ai-tracker.js";
 import { renderAudienceOverview } from "./audience-overview.js";
 import { renderOverview, renderPlan, renderIndexNow } from "./overview.js";
 import { renderOnboarding } from "./onboarding.js";
@@ -286,6 +287,12 @@ const SECTIONS = {
     { id: "commerce", icon: "commerce", build: () => custom("commerce", [{ id: "connect", label: LANG === "fr" ? "Boutiques et revenus" : "Stores and revenue", needsDomain: false, async: async () => renderCommerce({ api, me: state.me }) }]) },
     { id: "competition", icon: "competition", build: () => custom("competition", [{ id: "board", label: LANG === "fr" ? "Concurrence" : "Competition", needsDomain: false, async: async () => renderCompetition({ api, me: state.me, property: state.property, days: state.days, onOpenCitations: (filters) => show("ai_visibility", undefined, filters) }) }]) },
     { id: "ai_visibility", icon: "eye", build: () => custom("ai_visibility", [{ id: "board", label: LANG === "fr" ? "Réponses IA" : "AI answers", needsDomain: false, async: async (initialFilters) => renderAiVisibility({ api, me: state.me, initialFilters }) }]) },
+    { id: "ai_tracker", icon: "tracking", build: () => custom("ai_tracker", [
+      { id: "board", label: LANG === "fr" ? "Visibilité mesurée" : "Measured visibility", needsDomain: false, async: async () => renderAiTracker({ api, me: state.me, tab: "board" }) },
+      { id: "prompts", label: LANG === "fr" ? "Prompts" : "Prompts", needsDomain: false, async: async () => renderAiTracker({ api, me: state.me, tab: "prompts" }) },
+      { id: "runs", label: LANG === "fr" ? "Runs" : "Runs", needsDomain: false, async: async () => renderAiTracker({ api, me: state.me, tab: "runs" }) },
+      { id: "opportunities", label: LANG === "fr" ? "Opportunités" : "Opportunities", needsDomain: false, async: async () => renderAiTracker({ api, me: state.me, tab: "opportunities" }) },
+      { id: "engines", label: LANG === "fr" ? "Moteurs" : "Engines", needsDomain: false, async: async () => renderAiTracker({ api, me: state.me, tab: "engines" }) }]) },
     { id: "gsc", icon: "google", build: () => custom("gsc", [
       { id: "performance", label: t("t_gscPerf"), ...live("/search/performance", renderSearchPerformance, { searchType: true }) },
       { id: "query-pages", label: t("t_queryPages"), ...live("/search/query-pages", renderQueryPages) },
@@ -655,3 +662,4 @@ async function start() {
 }
 window.addEventListener("hashchange", () => { const [a, b, filters] = routeFromHash(); if (a && ALL.some((x) => x.id === a)) show(a, b, filters); });
 start().catch((error) => { console.error(error); loginScreen(); $("#c-login-error").textContent = error.message; });
+
