@@ -128,6 +128,11 @@ case "${1:?mode required}" in
             fi
         fi
         # A healthy status endpoint can coexist with a broken first-login wizard.
+        if [[ -f "$share/.gtmgrowth-local-admin" ]]; then
+            docker exec --user discourse --workdir /var/www/discourse "$name" bundle exec rails runner \
+                'u = User.find_by_email("contact@kayroslab.com"); abort "Local administrator unavailable" unless u&.admin? && u.active? && u.has_password? && SiteSetting.enable_local_logins?'
+            exit 0
+        fi
         bash connect-provider.sh
         if ! python3 verify-registration.py; then
             curl --max-time 10 -sS -o /dev/null -w 'Host to Discourse ID: HTTP %{http_code}\n' https://id.discourse.com/ || true
