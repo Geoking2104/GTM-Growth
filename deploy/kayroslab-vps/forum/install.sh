@@ -129,23 +129,9 @@ case "${1:?mode required}" in
         fi
         # A healthy status endpoint can coexist with a broken first-login wizard.
         bash connect-provider.sh
-        if ! timeout 100 docker exec -i --user discourse --workdir /var/www/discourse "$name" bundle exec rails runner - < first-login.rb; then
+        if ! python3 verify-registration.py; then
             curl --max-time 10 -sS -o /dev/null -w 'Host to Discourse ID: HTTP %{http_code}\n' https://id.discourse.com/ || true
             docker exec "$name" curl --max-time 10 -sS -o /dev/null -w 'Container to Discourse ID: HTTP %{http_code}\n' https://id.discourse.com/ || true
-            # Print a limited classification, never arbitrary log lines or provider responses.
-            python3 - "$share/log/rails/production.log" <<'PYLOG'
-import re, sys
-from pathlib import Path
-with Path(sys.argv[1]).open('rb') as log:
-    log.seek(0, 2)
-    log.seek(max(0, log.tell() - 262144))
-    entries = log.read().decode(errors='replace').split('Discourse ID register failed at step')
-if len(entries) > 1:
-    entry = entries[-1][:700]
-    codes = re.findall(r"(?:/challenge|/register)' failed: ([0-9]{3})", entry)
-    reasons = re.findall(r"Redirect URI must use HTTPS|failed to connect|timed? ?out|connection refused|SSL_connect|certificate verify failed|getaddrinfo|invalid_parameters|challenge verification failed|already registered|Net::[A-Za-z]+Timeout|rate limit|domain verification|domain mismatch|invalid_redirect_uri|challenge_token|too many requests|Forbidden|Name or service not known|Network is unreachable|end of file reached", entry, re.I)
-    print("Provider response status:", codes, "diagnostics:", reasons)
-PYLOG
             exit 1
         fi
         ;;

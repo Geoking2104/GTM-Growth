@@ -24,7 +24,7 @@ case "${1:?mode required}" in
         remote 'sudo -n bash -s' < check-local-mail.sh
         ;;
     check)
-        tar czf - install.sh dns-auth.py first-login.rb connect-provider.sh run-id-proxy.sh gtmgrowth-forum-id.socket gtmgrowth-forum-id.service http.conf https.conf | remote 'set -e; sudo -n install -d -m 0755 /opt/gtm-growth-forum; sudo -n tar xzf - --no-same-owner -C /opt/gtm-growth-forum'
+        tar czf - install.sh dns-auth.py first-login.rb verify-registration.py connect-provider.sh run-id-proxy.sh gtmgrowth-forum-id.socket gtmgrowth-forum-id.service http.conf https.conf | remote 'set -e; sudo -n install -d -m 0755 /opt/gtm-growth-forum; sudo -n tar xzf - --no-same-owner -C /opt/gtm-growth-forum'
         result=$(remote "$installer check")
         printf '%s\n' "$result"
         case "$(tail -1 <<< "$result")" in
