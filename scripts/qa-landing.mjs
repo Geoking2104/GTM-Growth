@@ -157,7 +157,7 @@ async function visit(browserContext, locale, label, viewport) {
   const errors = [];
   page.on("pageerror", (error) => errors.push(error.message));
   // Check the first-visit consent journey independently for every locale.
-  await page.addInitScript(() => localStorage.removeItem("gtm-growth-privacy-v1"));
+  await page.addInitScript(() => localStorage.removeItem("gtm-growth-privacy-v2"));
   await page.setViewportSize(viewport);
   const response = await page.goto(`${origin}/${locale === "fr" ? "fr/" : ""}`, { waitUntil: "networkidle" });
   assert.equal(response?.status(), 200, `${label} homepage loaded`);

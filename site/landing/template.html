@@ -40,11 +40,11 @@
 <header class="hero vh-hero" id="top"><div class="wrap hero-inner"><div class="hero-copy">
 <span class="eyebrow">{{t034}}</span><h1>{{t035}}<br><span class="grad-text">{{t036}}</span></h1>
 <p class="lede hero-sub">{{t038}}</p>
-<form class="check-form" id="url-form" novalidate><label for="url-input" class="journey-url-label">{{t041}}</label><input id="url-input" aria-describedby="form-msg" aria-label="{{t041}}" type="text" inputmode="url" placeholder="{{t042}}" autocomplete="url"><button class="btn" type="submit">{{t043}} <span aria-hidden="true">↗</span></button></form>
-<p class="form-msg" id="form-msg" role="status" aria-live="polite"></p><p class="vh-free-note">{{t364}}</p>
+<form class="check-form" id="url-form" data-clarity-mask="true" novalidate><label for="url-input" class="journey-url-label">{{t041}}</label><input id="url-input" aria-describedby="form-msg" aria-label="{{t041}}" type="text" inputmode="url" placeholder="{{t042}}" autocomplete="url"><button class="btn" type="submit">{{t043}} <span aria-hidden="true">↗</span></button></form>
+<p class="form-msg" id="form-msg" data-clarity-mask="true" role="status" aria-live="polite"></p><p class="vh-free-note">{{t364}}</p>
 <a class="vh-text-link" href="#console">{{t044}} <span aria-hidden="true">↓</span></a>
 </div></div><span class="vh-hero-orbit" aria-hidden="true"></span></header>
-<div class="wrap"><section id="read-result" class="gg-free-result" aria-label="{{t049}}" aria-live="polite" hidden></section></div>
+<div class="wrap"><section id="read-result" data-clarity-mask="true" class="gg-free-result" aria-label="{{t049}}" aria-live="polite" hidden></section></div>
 {{visual_product}}
 {{visual_path}}
 {{visual_depth}}
@@ -526,7 +526,7 @@
   <h2 class="title">{{t314}}</h2>
   <p class="lede">{{t315}}</p>
   <div class="lead-card" data-card-art="assistant">
-    <form class="lead-form" id="lead-form" novalidate>
+    <form class="lead-form" id="lead-form" data-clarity-mask="true" novalidate>
       <div class="field">
         <label for="lead-name">{{t316}}</label>
         <input id="lead-name" aria-label="{{t316}}" type="text" placeholder="{{t316}}" autocomplete="name">
@@ -544,7 +544,7 @@
       </div>
 
       <button class="btn-primary btn" type="submit" style="border:none;cursor:pointer;font-family:inherit">{{t323}}</button>
-      <p class="form-msg" id="lead-msg-status" role="status" aria-live="polite"></p>
+      <p class="form-msg" id="lead-msg-status" data-clarity-mask="true" role="status" aria-live="polite"></p>
     </form>
     <p class="note-inline">{{t324}}</p>
   </div>
@@ -562,6 +562,8 @@
       <a href="/console/?lang={{locale}}" rel="noopener">{{t012}}</a>
       <a href="/console/?lang={{locale}}#indexnow">{{t246}}</a>
       {{guide_links}}
+      <a href="{{privacy}}#terms">{{t501}}</a>
+      <a href="{{privacy}}#legal">{{t502}}</a>
       <a href="{{privacy}}">{{t358}}</a>
       <button type="button" class="privacy-settings">{{t359}}</button>
       <a href="#top">{{t360}}</a>

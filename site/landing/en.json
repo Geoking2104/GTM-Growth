@@ -289,6 +289,8 @@
   "t355": "GeoSuite publishes a dependency-free GEO toolkit under MIT; two checks previously missing here are now native (poppy.json and a crawl-based sitemap generator), ported from TryGeoSuite/geo-toolkit and poppy-json — Matteo Perino and GeoSuite. The checks are theirs; the implementation runs here in the same server as the rest of the audit.",
   "t356": "GTM Growth — open source, Apache-2.0 · KayrosLab",
   "t357": "GitHub",
+  "t501": "Terms of use",
+  "t502": "Legal notice",
   "t358": "Privacy",
   "t359": "Privacy preferences",
   "t360": "Back to top",
