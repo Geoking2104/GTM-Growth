@@ -1,0 +1,12 @@
+# Managed by the GTM Growth forum installer.
+[Unit]
+Description=Forward the GTM forum's TLS connection to Discourse ID
+
+[Service]
+ExecStart=/usr/lib/systemd/systemd-socket-proxyd --connections-max=32 --exit-idle-time=3min id.discourse.com:443
+DynamicUser=yes
+NoNewPrivileges=yes
+PrivateTmp=yes
+ProtectSystem=strict
+ProtectHome=yes
+RestrictAddressFamilies=AF_UNIX AF_INET AF_INET6

@@ -125,6 +125,7 @@ case "${1:?mode required}" in
             fi
         fi
         # A healthy status endpoint can coexist with a broken first-login wizard.
+        bash connect-provider.sh
         if ! timeout 100 docker exec -i --user discourse --workdir /var/www/discourse "$name" bundle exec rails runner - < first-login.rb; then
             curl --max-time 10 -sS -o /dev/null -w 'Host to Discourse ID: HTTP %{http_code}\n' https://id.discourse.com/ || true
             docker exec "$name" curl --max-time 10 -sS -o /dev/null -w 'Container to Discourse ID: HTTP %{http_code}\n' https://id.discourse.com/ || true
