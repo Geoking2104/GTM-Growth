@@ -1,5 +1,6 @@
 # Configure this forum using Discourse's own models and branding uploads.
 require "cgi"
+require "tempfile"
 
 abort "Unexpected forum" unless Discourse.current_hostname == "forum.gtmgrowth.kayroslab.com"
 root = File.dirname(__FILE__)
@@ -7,7 +8,10 @@ actor = Discourse.system_user
 github = "https://github.com/Geoking2104/GTM-Growth/blob/main/docs"
 
 def upload_asset(path, options)
-  File.open(path, "rb") do |file|
+  Tempfile.create(["gtm-community-", File.extname(path)]) do |file|
+    file.binmode
+    IO.copy_stream(path, file)
+    file.rewind
     upload = UploadCreator.new(file, File.basename(path), options).create_for(Discourse.system_user.id)
     raise "Upload failed for #{File.basename(path)}: #{upload.errors.full_messages.join(', ')}" unless upload.persisted?
     upload
