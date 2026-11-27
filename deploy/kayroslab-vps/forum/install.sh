@@ -116,13 +116,33 @@ case "${1:?mode required}" in
             certbot certonly --webroot -w "$acme" --cert-name "$host" -d "$host" --non-interactive --keep-until-expiring --deploy-hook 'systemctl reload nginx'
         fi
         publish_nginx http.conf https.conf
-        test "$(curl -fsS --resolve "$host:443:127.0.0.1" "https://$host/srv/status")" = ok
+        test "$(curl --retry 6 --retry-all-errors --retry-delay 2 --max-time 10 -fsS --resolve "$host:443:127.0.0.1" "https://$host/srv/status")" = ok
         if [[ "$1" == start-dns ]]; then
-            if certbot reconfigure --non-interactive --cert-name "$host" --authenticator webroot --webroot-path "$acme"; then
+            if certbot reconfigure --non-interactive --cert-name "$host" --authenticator webroot --preferred-challenges http --webroot-path "$acme"; then
                 echo 'Unattended webroot renewal verified with the staging CA.'
             else
                 echo 'Certificate is installed. Renew through the DNS mode until unattended HTTP validation is available.'
             fi
+        fi
+        # A healthy status endpoint can coexist with a broken first-login wizard.
+        if ! timeout 100 docker exec -i --user discourse --workdir /var/www/discourse "$name" bundle exec rails runner - < first-login.rb; then
+            curl --max-time 10 -sS -o /dev/null -w 'Host to Discourse ID: HTTP %{http_code}\n' https://id.discourse.com/ || true
+            docker exec "$name" curl --max-time 10 -sS -o /dev/null -w 'Container to Discourse ID: HTTP %{http_code}\n' https://id.discourse.com/ || true
+            # Print a limited classification, never arbitrary log lines or provider responses.
+            python3 - "$share/log/rails/production.log" <<'PYLOG'
+import re, sys
+from pathlib import Path
+with Path(sys.argv[1]).open('rb') as log:
+    log.seek(0, 2)
+    log.seek(max(0, log.tell() - 262144))
+    entries = log.read().decode(errors='replace').split('Discourse ID register failed at step')
+if len(entries) > 1:
+    entry = entries[-1][:700]
+    codes = re.findall(r"(?:/challenge|/register)' failed: ([0-9]{3})", entry)
+    reasons = re.findall(r"Redirect URI must use HTTPS|failed to connect|timed? ?out|connection refused|SSL_connect|certificate verify failed|getaddrinfo|invalid_parameters|challenge verification failed|already registered|Net::[A-Za-z]+Timeout|rate limit|domain verification|domain mismatch|invalid_redirect_uri|challenge_token|too many requests|Forbidden|Name or service not known|Network is unreachable|end of file reached", entry, re.I)
+    print("Provider response status:", codes, "diagnostics:", reasons)
+PYLOG
+            exit 1
         fi
         ;;
     *) exit 2 ;;
