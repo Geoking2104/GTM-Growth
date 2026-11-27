@@ -18,16 +18,26 @@ if ! getent group "$relay" >/dev/null; then groupadd --system "$relay"; fi
 relay_gid=$(getent group "$relay" | cut -d: -f3)
 install -d -o root -g "$relay" -m 0750 "$socket_dir"
 
+service_changed=false
 for unit in "$relay.socket" "$relay.service"; do
     target="/etc/systemd/system/$unit"
     if [[ -e "$target" || -L "$target" ]]; then
         test ! -L "$target" && grep -Fxq '# Managed by the GTM Growth forum installer.' "$target"
     fi
-    if ! cmp -s "$unit" "$target"; then install -m 0644 "$unit" "$target"; fi
+    if ! cmp -s "$unit" "$target"; then
+        install -m 0644 "$unit" "$target"
+        service_changed=true
+    fi
 done
 systemctl daemon-reload
+if "$service_changed" && systemctl is-active --quiet "$relay.service"; then systemctl stop "$relay.service"; fi
+systemctl reset-failed "$relay.service" "$relay.socket" || true
 systemctl enable --now "$relay.socket"
-"${probe[@]}" --unix-socket "$socket_dir/provider.sock" "$provider"
+if ! "${probe[@]}" --retry 2 --retry-all-errors --unix-socket "$socket_dir/provider.sock" "$provider"; then
+    systemctl show "$relay.service" -p Result -p ExecMainStatus
+    journalctl --no-pager -n 12 -u "$relay.service"
+    exit 1
+fi
 
 if ! docker network inspect "$network" >/dev/null 2>&1; then
     docker network create --internal --label "com.kayroslab.service=$relay" "$network"
@@ -49,5 +59,10 @@ fi
 if ! docker network inspect -f '{{range .Containers}}{{println .Name}}{{end}}' "$network" | grep -Fx "$forum" >/dev/null; then
     docker network connect "$network" "$forum"
 fi
-docker exec "$forum" "${probe[@]}" --retry 2 --retry-all-errors "$provider"
+if ! docker exec "$forum" "${probe[@]}" --retry 2 --retry-all-errors "$provider"; then
+    docker inspect -f '{{.State.Status}} exit={{.State.ExitCode}}' "$relay"
+    docker exec "$forum" getent ahostsv4 id.discourse.com
+    docker logs --tail 8 "$relay" 2>&1
+    exit 1
+fi
 echo 'Forum verified the public TLS certificate of id.discourse.com over its private provider connection.'
