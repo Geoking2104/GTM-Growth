@@ -44,6 +44,7 @@ import { phase3Routes } from "./phase3.js";
 import { aiVisibilityRoutes } from "./ai-visibility.js";
 import { aiConnectionRoutes } from "./ai-connections.js";
 import { aiProviderRoutes } from "./ai-visibility-providers.js";
+import { aiTrackerRoutes } from "./ai-tracker.js";
 import { competitionRoutes } from "./competition.js";
 import { operationsRoutes } from "./ops-routes.js";
 import { marketRoutes } from "./market.js";
@@ -443,7 +444,7 @@ export function discoverTenant(store: TenantStore, query: { email?: string; host
 
 export function allConsoleRoutes(visibilityJobs?: VisibilityJobStore | null, cloud?: CloudAccess): ConsoleRoute[] {
   const meterPartnerCost = cloud ? (tenantId: string, costUsd: number) => cloud!.meterPartnerCost(tenantId, costUsd) : undefined;
-  return [...phase1Routes, ...phase2Routes, ...phase3Routes, ...analyticsRoutes, ...gtmRoutes, ...aiVisibilityRoutes, ...aiProviderRoutes, ...aiConnectionRoutes, ...competitionRoutes, ...operationsRoutes, ...(meterPartnerCost ? marketRoutes(marketDataConfig(), { meterPartnerCost }) : marketRoutes()), ...aiCrawlerRoutes(), ...actionRoutes(), ...aeoWriterRoutes(), ...visibilityScheduleRoutes(visibilityJobs), ...applyPreviewRoutes, ...applyWriteRoutes, ...localSeoRoutes, ...socialRoutes, ...crmRoutes, ...visualCatalogRoutes, ...dataAgentRoutes, ...journeyRoutes, ...commerceRoutes, ...decisionInboxRoutes, ...decisionIntentRoutes, ...decisionEditorialRoutes, ...decisionPortfolioRoutes, ...measurementRoutes, ...scenarioRoutes];
+  return [...phase1Routes, ...phase2Routes, ...phase3Routes, ...analyticsRoutes, ...gtmRoutes, ...aiVisibilityRoutes, ...aiProviderRoutes, ...aiConnectionRoutes, ...aiTrackerRoutes, ...competitionRoutes, ...operationsRoutes, ...(meterPartnerCost ? marketRoutes(marketDataConfig(), { meterPartnerCost }) : marketRoutes()), ...aiCrawlerRoutes(), ...actionRoutes(), ...aeoWriterRoutes(), ...visibilityScheduleRoutes(visibilityJobs), ...applyPreviewRoutes, ...applyWriteRoutes, ...localSeoRoutes, ...socialRoutes, ...crmRoutes, ...visualCatalogRoutes, ...dataAgentRoutes, ...journeyRoutes, ...commerceRoutes, ...decisionInboxRoutes, ...decisionIntentRoutes, ...decisionEditorialRoutes, ...decisionPortfolioRoutes, ...measurementRoutes, ...scenarioRoutes];
 }
 
 export function mountConsoleApi(app: Express, options: ConsoleOptions = {}): void {
@@ -462,3 +463,4 @@ export function mountConsoleApi(app: Express, options: ConsoleOptions = {}): voi
   app.use("/api/platform", buildPlatformRouter(opts));
   app.use("/api/console", buildConsoleRouter(options.routes ?? allConsoleRoutes(options.visibilityJobs, options.cloud), opts));
 }
+
