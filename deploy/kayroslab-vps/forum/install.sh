@@ -117,6 +117,9 @@ case "${1:?mode required}" in
         fi
         publish_nginx http.conf https.conf
         test "$(curl --retry 6 --retry-all-errors --retry-delay 2 --max-time 10 -fsS --resolve "$host:443:127.0.0.1" "https://$host/srv/status")" = ok
+        # Validate the OVH allocation with the actual TLS hostname before publishing AAAA.
+        test "$(curl --noproxy '*' --fail --silent --show-error --max-time 10 --resolve "$host:443:[2001:41d0:404:200::147b]" "https://$host/srv/status")" = ok
+        echo 'Forum TLS and health verified on the assigned public IPv6 from the VPS.'
         if [[ "$1" == start-dns ]]; then
             if certbot reconfigure --non-interactive --cert-name "$host" --authenticator webroot --preferred-challenges http --webroot-path "$acme"; then
                 echo 'Unattended webroot renewal verified with the staging CA.'
