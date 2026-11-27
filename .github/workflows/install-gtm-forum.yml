@@ -1,0 +1,60 @@
+name: Install GTM Growth forum on OVH
+on:
+  workflow_dispatch:
+    inputs:
+      admin_email:
+        description: Email allowed to register the first Discourse administrator
+        required: true
+        type: string
+
+permissions:
+  contents: read
+
+concurrency:
+  group: production-gtmgrowth-forum
+  cancel-in-progress: false
+
+jobs:
+  forum:
+    if: github.ref == 'refs/heads/main'
+    runs-on: ubuntu-24.04
+    environment: production
+    timeout-minutes: 95
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+
+      - name: Check VPS and installed forum
+        id: preflight
+        env:
+          FORUM_SSH_USER: ${{ secrets.VPS_SSH_USER }}
+          FORUM_SSH_KEY: ${{ secrets.VPS_SSH_KEY }}
+        run: bash deploy/kayroslab-vps/forum/transfer.sh check
+
+      - name: Bootstrap official Discourse image on the runner
+        if: steps.preflight.outputs.build == 'true'
+        run: |
+          set -euo pipefail
+          git init "$RUNNER_TEMP/discourse-docker"
+          git -C "$RUNNER_TEMP/discourse-docker" fetch --depth=1 https://github.com/discourse/discourse_docker.git e00572d3e3de9768dd609c1a35ee93cd40e7c8e5
+          git -C "$RUNNER_TEMP/discourse-docker" checkout --detach FETCH_HEAD
+          install -m 0600 deploy/kayroslab-vps/forum/app.yml "$RUNNER_TEMP/discourse-docker/containers/gtmgrowth-forum.yml"
+          cd "$RUNNER_TEMP/discourse-docker"
+          ./launcher bootstrap gtmgrowth-forum
+          docker tag local_discourse/gtmgrowth-forum local_discourse/gtmgrowth-forum:965da71ac4a3
+          sudo test -s /var/discourse/shared/gtmgrowth-forum/postgres_data/PG_VERSION
+
+      - name: Install isolated container and enable HTTPS
+        env:
+          FORUM_SSH_USER: ${{ secrets.VPS_SSH_USER }}
+          FORUM_SSH_KEY: ${{ secrets.VPS_SSH_KEY }}
+          ADMIN_EMAIL: ${{ inputs.admin_email }}
+          BUILD_REQUIRED: ${{ steps.preflight.outputs.build }}
+        run: bash deploy/kayroslab-vps/forum/transfer.sh install
+
+      - name: Verify public services
+        run: |
+          test "$(curl -fsS --retry 4 https://forum.gtmgrowth.kayroslab.com/srv/status)" = ok
+          curl -fsS --retry 2 https://gtm.kayroslab.com/health >/dev/null
+          curl -fsSL --retry 2 https://www.opendpe.net/ >/dev/null

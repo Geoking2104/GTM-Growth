@@ -1,0 +1,24 @@
+templates:
+  - templates/postgres.template.yml
+  - templates/redis.template.yml
+  - templates/web.template.yml
+  - templates/web.ratelimited.template.yml
+  - templates/web.socketed.template.yml
+expose: []
+params:
+  version: 965da71ac4a33200355c52c34e562da9ea282569
+  db_shared_buffers: 128MB
+env:
+  LANG: en_US.UTF-8
+  LC_ALL: en_US.UTF-8
+  UNICORN_WORKERS: 2
+  DISCOURSE_HOSTNAME: forum.gtmgrowth.kayroslab.com
+  DISCOURSE_FORCE_HTTPS: "true"
+  DISCOURSE_SKIP_EMAIL_SETUP: "1"
+volumes:
+  - volume:
+      host: /var/discourse/shared/gtmgrowth-forum
+      guest: /shared
+  - volume:
+      host: /var/discourse/shared/gtmgrowth-forum/log/var-log
+      guest: /var/log
