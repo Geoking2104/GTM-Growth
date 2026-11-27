@@ -75,7 +75,7 @@ case "${1:?mode required}" in
         chmod 0755 "$stage"
         mv -T "$stage" "$share"
         ;;
-    start)
+    start|start-dns)
         preflight
         IFS= read -r admin
         [[ "$admin" =~ ^[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,}$ ]]
@@ -98,12 +98,32 @@ case "${1:?mode required}" in
         done
         if ! "$ready"; then docker inspect -f 'state={{.State.Status}} oom={{.State.OOMKilled}} restarts={{.RestartCount}}' "$name"; exit 1; fi
         install -d -m 0755 "$acme"
-        if [[ ! -s "$cert" ]]; then
-            publish_nginx http.conf
+        if [[ ! -s "$cert" ]]; then publish_nginx http.conf; fi
+        if [[ "$1" == start-dns ]]; then
+            install -d -m 0700 /run/gtmgrowth-forum-acme
+            proof=/run/gtmgrowth-forum-acme/proof
+            rm -f "$proof"
+            trap 'rm -f "$proof"' EXIT
+            FORUM_DNS_SESSION=1 certbot certonly --manual --preferred-challenges dns \
+                --manual-auth-hook 'python3 /opt/gtm-growth-forum/dns-auth.py' \
+                --cert-name "$host" -d "$host" --non-interactive --keep-until-expiring \
+                --deploy-hook 'systemctl reload nginx' &
+            certbot_pid=$!
+            while kill -0 "$certbot_pid" 2>/dev/null && [[ ! -s "$proof" ]]; do sleep 2; done
+            if [[ -s "$proof" ]]; then printf 'DNS TXT _acme-challenge.%s = %s\n' "$host" "$(cat "$proof")"; fi
+            wait "$certbot_pid"
+        elif [[ ! -s "$cert" ]]; then
             certbot certonly --webroot -w "$acme" --cert-name "$host" -d "$host" --non-interactive --keep-until-expiring --deploy-hook 'systemctl reload nginx'
         fi
         publish_nginx http.conf https.conf
         test "$(curl -fsS --resolve "$host:443:127.0.0.1" "https://$host/srv/status")" = ok
+        if [[ "$1" == start-dns ]]; then
+            if certbot reconfigure --non-interactive --cert-name "$host" --authenticator webroot --webroot-path "$acme"; then
+                echo 'Unattended webroot renewal verified with the staging CA.'
+            else
+                echo 'Certificate is installed. Renew through the DNS mode until unattended HTTP validation is available.'
+            fi
+        fi
         ;;
     *) exit 2 ;;
 esac

@@ -6,6 +6,10 @@ on:
         description: Email allowed to register the first Discourse administrator
         required: true
         type: string
+      dns_validation:
+        description: Verify through a DNS TXT record if HTTP validation is unavailable
+        type: boolean
+        default: false
 
 permissions:
   contents: read
@@ -50,6 +54,7 @@ jobs:
           FORUM_SSH_USER: ${{ secrets.VPS_SSH_USER }}
           FORUM_SSH_KEY: ${{ secrets.VPS_SSH_KEY }}
           ADMIN_EMAIL: ${{ inputs.admin_email }}
+          DNS_VALIDATION: ${{ inputs.dns_validation }}
           BUILD_REQUIRED: ${{ steps.preflight.outputs.build }}
         run: bash deploy/kayroslab-vps/forum/transfer.sh install
 
