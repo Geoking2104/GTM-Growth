@@ -31,6 +31,7 @@ export const MCP_WRITE_TOOLS = new Set([
   "publish_url_notification",
   "publish_url_notifications",
   "indexnow_submit",
+  "ai_tracker.create_prompt",
 ]);
 
 export interface McpAuthContext {

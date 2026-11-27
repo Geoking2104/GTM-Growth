@@ -9,7 +9,6 @@ import { trackerConfig } from "./config.js";
 
 const connections = new Map<string, Database.Database>();
 type Row = Record<string, unknown>;
-const parse = <T>(row: Row | undefined): T | undefined => (row ? row as unknown as T : undefined);
 const json = <T>(value: unknown, fallback: T): T => { if (typeof value !== "string" || !value) return fallback; try { return JSON.parse(value) as T; } catch { return fallback; } };
 
 function validateTenant(id: string) { if (!validTenantId(id)) throw new Error("Invalid tenant"); }
@@ -93,7 +92,8 @@ export function listBrands(tenantId: string): TrackedBrand[] {
 }
 export function getBrand(tenantId: string, brandId: string): TrackedBrand | undefined {
   validateTenant(tenantId);
-  return parse<TrackedBrand>(database().prepare("SELECT * FROM ai_brands WHERE tenant_id = ? AND brand_id = ?").get(tenantId, brandId) as Row | undefined);
+  const row = database().prepare("SELECT * FROM ai_brands WHERE tenant_id = ? AND brand_id = ?").get(tenantId, brandId) as Row | undefined;
+  return row ? brandFromRow(row) : undefined;
 }
 export function upsertBrand(tenantId: string, brand: Omit<TrackedBrand, "tenantId">): void {
   validateTenant(tenantId);
@@ -131,7 +131,8 @@ export function listPrompts(tenantId: string, brandId?: string): TrackedPrompt[]
 }
 export function getPrompt(tenantId: string, brandId: string, promptId: string): TrackedPrompt | undefined {
   validateTenant(tenantId);
-  return parse<TrackedPrompt>(database().prepare("SELECT * FROM ai_prompts WHERE tenant_id = ? AND brand_id = ? AND prompt_id = ?").get(tenantId, brandId, promptId) as Row | undefined);
+  const row = database().prepare("SELECT * FROM ai_prompts WHERE tenant_id = ? AND brand_id = ? AND prompt_id = ?").get(tenantId, brandId, promptId) as Row | undefined;
+  return row ? promptFromRow(row) : undefined;
 }
 export function insertPrompt(tenantId: string, prompt: Omit<TrackedPrompt, "tenantId">): { reused: boolean } {
   validateTenant(tenantId);
@@ -196,7 +197,8 @@ export function listRuns(tenantId: string, filters: { brandId?: string; promptId
 }
 export function getRun(tenantId: string, runId: string): StoredRun | undefined {
   validateTenant(tenantId);
-  return parse<StoredRun>(database().prepare("SELECT * FROM ai_runs WHERE tenant_id = ? AND run_id = ?").get(tenantId, runId) as Row | undefined);
+  const row = database().prepare("SELECT * FROM ai_runs WHERE tenant_id = ? AND run_id = ?").get(tenantId, runId) as Row | undefined;
+  return row ? runFromRow(row) : undefined;
 }
 export function runsForWindow(tenantId: string, brandId: string, promptId: string | undefined, engine: string | undefined, from: string, to: string, mode?: string): StoredRun[] {
   validateTenant(tenantId);

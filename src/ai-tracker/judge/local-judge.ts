@@ -9,7 +9,7 @@ const MAX_RAW = 8000;
 const MAX_PASSAGE = 300;
 
 interface JudgeResult {
-  companies: Array<{ companyId: string; counted: boolean; sentiment?: string; position?: number; passage?: string; reason?: string }>;
+  companies: Array<{ companyId: string; counted: boolean; sentiment: Sentiment | null; position: number | null; passage?: string; reason?: string }>;
 }
 
 function buildJudgePrompt(rawText: string, companies: TrackedCompany[]): string {
@@ -101,7 +101,7 @@ function parseJudgeResult(payload: unknown, companies: TrackedCompany[]): JudgeR
   return (data.companies as Array<Record<string, unknown>>).flatMap(entry => {
     const companyId = typeof entry.companyId === "string" && valid.has(entry.companyId) ? entry.companyId : null;
     if (!companyId || typeof entry.counted !== "boolean") return [];
-    const sentiment = SENTIMENTS.find(s => entry.sentiment === s);
+    const sentiment = SENTIMENTS.find(s => entry.sentiment === s) ?? null;
     const position = Number.isInteger(entry.position) && (entry.position as number) >= 1 && (entry.position as number) <= 20 ? entry.position as number : null;
     return [{ companyId, counted: entry.counted, sentiment, position, passage: typeof entry.passage === "string" ? entry.passage : undefined, reason: typeof entry.reason === "string" ? entry.reason : undefined }];
   });

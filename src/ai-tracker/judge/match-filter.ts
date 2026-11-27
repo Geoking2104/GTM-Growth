@@ -1,6 +1,6 @@
 /** Native AI tracker — deterministic match filter. Whole words, case-insensitive.
  * A match only means "candidate mention": the local judge confirms brand vs homonym. */
-import type { TrackedCompany } from "./types.js";
+import type { TrackedCompany } from "../types.js";
 
 export interface MatchCandidate { companyId: string; companyType: "brand" | "competitor"; matchedTerms: string[] }
 

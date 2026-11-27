@@ -4,12 +4,13 @@
 import fs from "node:fs";
 import path from "node:path";
 import { chromium, type Browser, type BrowserContext, type Page } from "playwright-core";
-import { scraperEnabled, trackerConfig } from "./config.js";
-import type { CollectedAnswer } from "./types.js";
+import { scraperEnabled, trackerConfig } from "../config.js";
+import type { CollectedAnswer } from "../types.js";
 
 export interface NativeScraper {
   engine: string;
   run(prompt: string): Promise<CollectedAnswer>;
+  close(): Promise<void>;
 }
 
 export class BlockStopError extends Error {
@@ -20,6 +21,7 @@ const VERIFY_MARKERS = ["captcha", "unusual activity", "verify you are", "verify
 
 export abstract class BaseScraper implements NativeScraper {
   abstract engine: string;
+  abstract run(prompt: string): Promise<CollectedAnswer>;
   protected browser: Browser | null = null;
   protected ctx: BrowserContext | null = null;
 
@@ -78,7 +80,10 @@ export abstract class BaseScraper implements NativeScraper {
 
   protected async extractCitations(page: Page, scope: string): Promise<Array<{ url: string; title?: string }>> {
     return page.locator(`${scope} a[href^="http"]`).evaluateAll(els =>
-      els.map(a => ({ url: (a as HTMLAnchorElement).href, title: (a as HTMLAnchorElement).textContent ?? undefined })).filter(c => /^https?:\/\//.test(c.url)));
+      els.map(element => {
+        const anchor = element as { href: string; textContent: string | null };
+        return { url: anchor.href, title: anchor.textContent ?? undefined };
+      }).filter(c => /^https?:\/\//.test(c.url)));
   }
 
   async close(): Promise<void> {

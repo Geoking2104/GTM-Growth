@@ -26,7 +26,7 @@ export class GoogleAiModeScraper extends BaseScraper {
       const rawText = await this.waitForStabilisation(page, "[data-attrid], [id^='AiOverview'], div[class*='ai-overview']", 30000);
       await this.guard(page);
       const citations = await aiBlock.locator("a[href^='http']").evaluateAll(els =>
-        els.map(a => ({ url: (a as HTMLAnchorElement).href })).filter(c => /^https?:\/\//.test(c.url) && !c.url.includes("google."));
+        els.map(a => ({ url: (a as { href: string }).href })).filter(c => /^https?:\/\//.test(c.url) && !c.url.includes("google.")));
       return { engine: this.engine, provider: "native-scraper", collectionMode: "consumer-ui", rawText, citations, fanOut: [], model: null, startedAt, finishedAt: new Date().toISOString() };
     } catch (error) {
       await this.screenshotOnFailure(page);

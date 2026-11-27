@@ -4,8 +4,9 @@ import { z } from "zod";
 import { strict } from "./schema.js";
 import { success, fail } from "./response.js";
 import type { ToolDefinition } from "./index.js";
+import { currentMcpAuth, hasScope, MCP_WRITE_SCOPES } from "../mcp/context.js";
 import { validTenantId } from "../tenants/store.js";
-import { getRun, listBrands, listOpportunities, listPrompts, listRuns, mentionsForRun, runsForWindow } from "../ai-tracker/store.js";
+import { getRun, listBrands, listOpportunities, listPrompts, mentionsForRun, runsForWindow } from "../ai-tracker/store.js";
 import { trackerEnabled } from "../ai-tracker/config.js";
 import { validatePromptText, validateEngines, validateTags } from "../ai-tracker/prompt-validation.js";
 import { brandMetrics, citationAggregates, trend } from "../ai-tracker/metrics.js";
@@ -18,6 +19,10 @@ const tenantArg = z.string().min(1).max(64);
 const requireTenant = (args: { tenantId?: string }): string => {
   const id = args.tenantId ?? "";
   if (!validTenantId(id)) throw new Error("A valid tenantId is required and must match the scoped token");
+  const auth = currentMcpAuth();
+  if (auth?.mode === "oauth" && (!auth.platformAdmin || auth.tenant) && auth.tenant?.id !== id) {
+    throw new Error("The tracker tenant must match the selected tenant");
+  }
   return id;
 };
 const logCall = (tool: string, args: Record<string, unknown>, outcome: string) =>
@@ -42,6 +47,10 @@ export const aiTrackerTools: ToolDefinition[] = [
     handler: async args => {
       try {
         const tenantId = requireTenant(args);
+        const auth = currentMcpAuth();
+        if (auth?.mode === "oauth" && (!hasScope(auth, MCP_WRITE_SCOPES) || (!auth.platformAdmin && auth.role !== "tenant-admin"))) {
+          return fail("Creating a tracker prompt requires administrator access and write scope");
+        }
         if (!trackerEnabled()) return fail("AI_TRACKER_ENABLED is false: the tracker is disabled");
         if (args.confirmed !== true) return fail("Explicit admin confirmation (confirmed: true) is required");
         const validation = validatePromptText(args.promptText);

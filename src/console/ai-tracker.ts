@@ -1,18 +1,18 @@
 /** Console routes for the native AI tracker — /api/console/ai-tracker/*.
  * Tenant-scoped by the console middleware; admin routes marked adminOnly. */
-import type { ConsoleRoute } from "./util.js";
+import type { ConsoleRoute, HandlerContext } from "./util.js";
 import { str } from "./util.js";
 import { validTenantId } from "../tenants/store.js";
-import { getBrand, getPrompt, getRun, insertPrompt, listBrands, listEngineStates, listOpportunities, listPrompts, listRuns, mentionsForRun, normalizeDomain, runsForWindow, setBrandActive, setOpportunityStatus, setPromptActive, upsertBrand } from "../ai-tracker/store.js";
+import { getBrand, getRun, latestMentions, insertPrompt, listBrands, listEngineStates, listOpportunities, listPrompts, listRuns, mentionsForRun, normalizeDomain, runsForWindow, setBrandActive, setOpportunityStatus, setPromptActive, upsertBrand } from "../ai-tracker/store.js";
 import { judgeVersion, trackerConfig, trackerEnabled } from "../ai-tracker/config.js";
 import { validateEngines, validatePromptText, validateTags } from "../ai-tracker/prompt-validation.js";
-import { manualRun, runDailyQueue, rejudgeWindow, today } from "../ai-tracker/worker.js";
+import { manualRun, runDailyQueue, rejudgeWindow } from "../ai-tracker/worker.js";
 import { consoleBrandMetrics, generateOpportunities, opportunitiesFor, resolveOpportunity, windowSince } from "../ai-tracker/opportunities.js";
-import { brandMetrics, citationAggregates, latestMentions, trend } from "../ai-tracker/metrics.js";
+import { brandMetrics, citationAggregates, trend } from "../ai-tracker/metrics.js";
 import type { TrackedBrand, TrackedCompany } from "../ai-tracker/types.js";
 import { logger } from "../utils/logger.js";
 
-const tenantOf = (ctx: { tenancy?: { tenant?: { id: string } } }): string => {
+const tenantOf = (ctx: HandlerContext): string => {
   const id = ctx.tenancy?.tenant?.id ?? "";
   if (!validTenantId(id)) throw new Error("Select a tenant");
   return id;

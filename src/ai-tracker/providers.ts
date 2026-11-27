@@ -61,7 +61,11 @@ function extractAnswer(provider: ApiProviderId, raw: ObjectValue): ExtractedAnsw
   if (provider === "openai") {
     if (raw.status !== "completed") throw new Error("Incomplete answer");
     for (const item of array(raw.output)) {
-      if (item.type === "web_search_call") { if (text(item.action?.query)) result.fanOut.push(text(item.action.query)); if (item.status !== "completed") throw new Error("Search failed"); }
+      if (item.type === "web_search_call") {
+        if (item.status !== "completed") throw new Error("Search failed");
+        const query = text(object(item.action).query);
+        if (query) result.fanOut.push(query);
+      }
       if (item.type !== "message") continue;
       for (const part of array(item.content)) {
         if (part.type !== "output_text") continue;
@@ -80,11 +84,12 @@ function extractAnswer(provider: ApiProviderId, raw: ObjectValue): ExtractedAnsw
   } else if (provider === "gemini") {
     const candidates = array(raw.candidates);
     if (!candidates.length) throw new Error("Incomplete answer");
-    for (const part of array(array(candidates[0].content).parts)) {
+    for (const part of array(object(candidates[0].content).parts)) {
       if (typeof part.text === "string") result.rawText += part.text;
-      const grounding = object(object(part.groundingMetadata).groundingChunks) ?? {};
-      for (const chunk of array(grounding)) pushUrl(object(chunk.web).uri, object(chunk.web).title);
     }
+    const grounding = object(candidates[0].groundingMetadata);
+    for (const chunk of array(grounding.groundingChunks)) pushUrl(object(chunk.web).uri, object(chunk.web).title);
+    if (Array.isArray(grounding.webSearchQueries)) result.fanOut.push(...grounding.webSearchQueries.map(text).filter(Boolean));
   } else if (provider === "mistral") {
     const outputs = array(raw.outputs);
     if (outputs.at(-1)?.type !== "message.output" || outputs.some(o => o.type === "tool.execution" && (o.error || o.status === "failed"))) throw new Error("Incomplete answer");
@@ -95,8 +100,9 @@ function extractAnswer(provider: ApiProviderId, raw: ObjectValue): ExtractedAnsw
   } else {
     const message = array(raw.choices)[0];
     if (raw.status === "failed" || !message) throw new Error("Incomplete answer");
-    result.rawText = text(message.message?.content ?? message.delta?.content);
-    for (const citation of array(raw.search_results ?? message.message?.search_results)) pushUrl(citation.url, citation.title);
+    const content = object(message.message);
+    result.rawText = text(content.content ?? object(message.delta).content);
+    for (const citation of array(raw.search_results ?? content.search_results)) pushUrl(citation.url, citation.title);
   }
   return result;
 }

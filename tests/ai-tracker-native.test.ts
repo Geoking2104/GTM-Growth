@@ -115,7 +115,10 @@ describe("storage", () => {
   });
   it("isolates tenants", () => {
     upsertBrand(TENANT, brand());
-    expect(() => listBrands("other-tenant")).toThrow();
+    expect(listBrands("other-tenant")).toEqual([]);
+    upsertBrand("other-tenant", brand("Other brand"));
+    expect(listBrands(TENANT).map(b => b.name)).toEqual(["GTM Growth"]);
+    expect(listBrands("other-tenant").map(b => b.name)).toEqual(["Other brand"]);
   });
 });
 
@@ -144,8 +147,8 @@ describe("metrics", () => {
   });
   it("computes citation aggregates without double counting", () => {
     const aggregates = citationAggregates(runs);
-    expect(aggregates.find(a => a.domain === "gtm-growth.com")!.citingRuns).toBe(1);
-    expect(aggregates.find(a => a.domain === "example.fr")!.citingRuns).toBe(1);
+    expect(aggregates.find(a => a.domain === "gtm-growth.com")!.citingRuns).toBe(2);
+    expect(aggregates.find(a => a.domain === "example.fr")!.citingRuns).toBe(2);
     expect(aggregates).toHaveLength(2);
   });
   it("computes trend points", () => {
@@ -181,6 +184,14 @@ describe("local judge", () => {
 });
 
 describe("runner", () => {
+  beforeEach(() => {
+    upsertBrand(TENANT, brand());
+    insertPrompt(TENANT, {
+      promptId: "p1", brandId: BRAND, promptText: "Which tool?", promptHash: promptHash("Which tool?"),
+      tags: [], locale: "en", engines: ["chatgpt"], active: true,
+      createdAt: new Date().toISOString(), createdBy: "test", source: "manual",
+    });
+  });
   it("fails closed when the tracker is disabled", async () => {
     process.env.AI_TRACKER_ENABLED = "false";
     const result = await executeRun({ tenantId: TENANT, brandId: BRAND, promptId: "p1", engine: "chatgpt" });
