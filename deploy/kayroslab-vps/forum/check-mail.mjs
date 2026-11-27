@@ -62,14 +62,16 @@ try {
     } else {
       const relay = nodemailer.createTransport({
         host, port, secure, requireTLS: starttls,
+        ignoreTLS: !secure && !starttls && host === '172.22.0.1',
         tls: { minVersion: 'TLSv1.2', rejectUnauthorized: true },
         connectionTimeout: 8000, greetingTimeout: 8000, socketTimeout: 12000,
       });
       try {
         await relay.verify();
         console.log('GTM identity SMTP: relay handshake succeeded from GTM Growth.');
-      } catch {
-        console.log('GTM identity SMTP: relay handshake failed from GTM Growth.');
+      } catch (error) {
+        const code = ['ECONNREFUSED', 'ETIMEDOUT', 'ECONNECTION', 'ESOCKET', 'EDNS', 'EPROTOCOL'].includes(error.code) ? error.code : 'SMTP_ERROR';
+        console.log(`GTM identity SMTP: relay handshake failed from GTM Growth (${code}).`);
       } finally {
         relay.close();
       }
