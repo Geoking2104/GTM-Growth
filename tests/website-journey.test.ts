@@ -13,7 +13,7 @@ it('covers every customer console section with a real destination and bilingual 
   for (const language of ['en', 'fr']) {
     const { features, stages } = journeyContent(language);
     const page = parseHTML(readFileSync(language === 'fr' ? 'site/fr/index.html' : 'site/index.html', 'utf8')).document;
-    expect(features).toHaveLength(35);
+    expect(features).toHaveLength(36);
     for (const section of sections) expect(consoleFeature(section, '', language), section).toBeTruthy();
     for (const f of features) {
       expect(stages.some(s => s.id === f.stage)).toBe(true);
@@ -40,7 +40,7 @@ it.each(['en', 'fr'])('filters, searches, recovers and recommends without hiding
   search.value = 'nonexistent-feature-xyz'; search.dispatchEvent(new window.Event('input'));
   expect(visible()).toHaveLength(0);
   expect(document.getElementById('feature-count')?.textContent).toMatch(language === 'fr' ? /Aucune/ : /No matching/);
-  document.getElementById('feature-reset')!.click(); expect(visible()).toHaveLength(35);
+  document.getElementById('feature-reset')!.click(); expect(visible()).toHaveLength(36);
   search.value = 'Slack'; search.dispatchEvent(new window.Event('input'));
   expect(visible()).toHaveLength(1); expect(visible()[0].id).toBe('feature-slack');
   expect(fetcher).not.toHaveBeenCalled();
@@ -52,7 +52,7 @@ it('restores a selected function through sign-in without tenant selection or arb
   const value = featureHandoff({ hash: '#local_seo/network', search: '?lang=fr' }, storage, 1000);
   expect(value).toEqual({ hash: '#local_seo/network', expires: 601000 });
   expect(featureHandoff({ hash: '', search: '?code=callback' }, storage, 2000)).toEqual(value);
-  for (const hash of ['#overview/scenarios', '#diagnose/intent', '#ops/inbox', '#impact/analytics', '#settings/agents']) {
+  for (const hash of ['#ai_tracker/runs', '#overview/scenarios', '#diagnose/intent', '#ops/inbox', '#impact/analytics', '#settings/agents']) {
     const selected = featureHandoff({ hash, search: '?lang=fr' }, storage, 2000);
     expect(featureHandoff({ hash: '', search: '?code=callback' }, storage, 2500)).toEqual(selected);
     expect(selected?.hash).toBe(hash);
