@@ -173,6 +173,30 @@ describe("MCP bearer auth", () => {
     expect(await r.json()).toMatchObject({ error: expect.stringMatching(/mcp:write/) });
   });
 
+  it("scopes AI tracker reads to the selected organization", async () => {
+    const response = await mcp(jwt({}), {
+      jsonrpc: "2.0", id: 1, method: "tools/call",
+      params: { name: "ai_tracker.list_brands", arguments: { tenantId: "beta" } },
+    });
+    expect(parseBody(await response.text())).toMatchObject({
+      result: { isError: true, content: [{ text: expect.stringContaining("selected tenant") }] },
+    });
+  });
+
+  it("requires write scope and administrator access to create a tracker prompt", async () => {
+    const call = {
+      jsonrpc: "2.0", id: 1, method: "tools/call",
+      params: { name: "ai_tracker.create_prompt", arguments: {
+        tenantId: "acme", brandId: "acme", engines: ["chatgpt"], promptText: "Which tool?", confirmed: true,
+      } },
+    };
+    expect((await mcp(jwt({}), call)).status).toBe(403);
+    const response = await mcp(jwt({ scope: "mcp:read mcp:write" }), call);
+    expect(parseBody(await response.text())).toMatchObject({
+      result: { isError: true, content: [{ text: expect.stringContaining("administrator") }] },
+    });
+  });
+
   it("does not require mcp:write for a dry configure_measurement_protocol", async () => {
     expect(isWriteToolCall("configure_measurement_protocol", { confirm: true })).toBe(true);
     expect(isWriteToolCall("configure_measurement_protocol", {})).toBe(false);

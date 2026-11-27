@@ -22,6 +22,7 @@ import { geoTools } from "./geo.js";
 import { indexNowTools } from "./indexnow.js";
 import { geoSuiteTools } from "./geosuite.js";
 import { ecommerceTools } from "./ecommerce.js";
+import { aiTrackerTools } from "./ai-tracker.js";
 import { success, fail } from "./response.js";
 import {
   accountId,
@@ -207,6 +208,7 @@ export const tools: ToolDefinition[] = [
   ...indexNowTools,
   ...geoSuiteTools,
   ...ecommerceTools,
+  ...aiTrackerTools,
 ];
 
 export async function handleToolCall(name: string, args: Record<string, any>) {
@@ -235,3 +237,4 @@ export async function handleToolCall(name: string, args: Record<string, any>) {
     return fail(err);
   }
 }
+

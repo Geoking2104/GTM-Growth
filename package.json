@@ -50,6 +50,7 @@
     "site:check": "node scripts/check-site.mjs",
     "docs:check": "node scripts/check-docs.mjs",
     "start:audit-worker": "node dist/audit-jobs/worker.js",
+    "ai-tracker:worker": "tsx src/ai-tracker/scheduler.ts",
     "vendor:joint": "node scripts/vendor-joint.mjs",
     "vendor:check": "node scripts/vendor-joint.mjs --check",
     "qa:scenarios": "node --import tsx scripts/qa-scenarios.mjs",
