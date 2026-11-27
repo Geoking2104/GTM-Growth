@@ -21,6 +21,7 @@ installer='sudo -n bash /opt/gtm-growth-forum/install.sh'
 case "${1:?mode required}" in
     mail-check)
         remote 'cd /opt/gtm-growth/deploy/kayroslab-vps && sudo -n docker compose --env-file .env.local -f docker-compose.prod.yml exec -T gtm-growth node --input-type=module' < check-mail.mjs
+        remote 'sudo -n bash -s' < check-local-mail.sh
         ;;
     check)
         tar czf - install.sh dns-auth.py first-login.rb connect-provider.sh run-id-proxy.sh gtmgrowth-forum-id.socket gtmgrowth-forum-id.service http.conf https.conf | remote 'set -e; sudo -n install -d -m 0755 /opt/gtm-growth-forum; sudo -n tar xzf - --no-same-owner -C /opt/gtm-growth-forum'
