@@ -10,6 +10,10 @@ on:
         description: Verify through a DNS TXT record if HTTP validation is unavailable
         type: boolean
         default: false
+      check_mail:
+        description: Check the existing GTM Growth SMTP relay without installing or sending email
+        type: boolean
+        default: false
 
 permissions:
   contents: read
@@ -31,10 +35,18 @@ jobs:
 
       - name: Check VPS and installed forum
         id: preflight
+        if: ${{ !inputs.check_mail }}
         env:
           FORUM_SSH_USER: ${{ secrets.VPS_SSH_USER }}
           FORUM_SSH_KEY: ${{ secrets.VPS_SSH_KEY }}
         run: bash deploy/kayroslab-vps/forum/transfer.sh check
+
+      - name: Check the existing KayrosLab mail relay
+        if: inputs.check_mail
+        env:
+          FORUM_SSH_USER: ${{ secrets.VPS_SSH_USER }}
+          FORUM_SSH_KEY: ${{ secrets.VPS_SSH_KEY }}
+        run: bash deploy/kayroslab-vps/forum/transfer.sh mail-check
 
       - name: Bootstrap official Discourse image on the runner
         if: steps.preflight.outputs.build == 'true'
@@ -50,6 +62,7 @@ jobs:
           sudo test -s /var/discourse/shared/gtmgrowth-forum/postgres_data/PG_VERSION
 
       - name: Install isolated container and enable HTTPS
+        if: ${{ !inputs.check_mail }}
         env:
           FORUM_SSH_USER: ${{ secrets.VPS_SSH_USER }}
           FORUM_SSH_KEY: ${{ secrets.VPS_SSH_KEY }}
@@ -59,6 +72,7 @@ jobs:
         run: bash deploy/kayroslab-vps/forum/transfer.sh install
 
       - name: Verify public services
+        if: ${{ !inputs.check_mail }}
         run: |
           test "$(curl -fsS --retry 4 https://forum.gtmgrowth.kayroslab.com/srv/status)" = ok
           curl -fsS --retry 2 https://gtm.kayroslab.com/health >/dev/null
