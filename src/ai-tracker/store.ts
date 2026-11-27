@@ -65,6 +65,11 @@ export function database(): Database.Database {
       tenant_id TEXT NOT NULL, engine TEXT NOT NULL, health TEXT NOT NULL DEFAULT 'disabled',
       consecutive_failures INTEGER NOT NULL DEFAULT 0, last_checked_at TEXT NOT NULL DEFAULT '',
       note TEXT NOT NULL DEFAULT '', PRIMARY KEY (tenant_id, engine));
+    CREATE TABLE IF NOT EXISTS ai_engine_settings (
+      tenant_id TEXT NOT NULL, engine TEXT NOT NULL,
+      scraper_enabled INTEGER NOT NULL DEFAULT 0,
+      disclaimer_accepted_at TEXT NOT NULL DEFAULT '', accepted_by TEXT NOT NULL DEFAULT '',
+      PRIMARY KEY (tenant_id, engine));
     CREATE INDEX IF NOT EXISTS ai_runs_prompt ON ai_runs (tenant_id, brand_id, prompt_id, run_date);
     CREATE INDEX IF NOT EXISTS ai_mentions_run ON ai_mentions (run_id);`);
   connections.set(file, db);
@@ -318,3 +323,36 @@ export function listEngineStates(tenantId: string): EngineStatus[] {
     consecutiveFailures: Number(row.consecutive_failures), lastCheckedAt: String(row.last_checked_at), note: String(row.note),
   }));
 }
+
+// ---------------------------------------------------------------------------
+// Engine settings (per-tenant scraper activation, disclaimer-gated)
+// ---------------------------------------------------------------------------
+
+export interface EngineSetting { engine: string; scraperEnabled: boolean; disclaimerAcceptedAt: string; acceptedBy: string }
+
+export function getEngineSetting(tenantId: string, engine: string): EngineSetting {
+  validateTenant(tenantId);
+  const row = database().prepare("SELECT * FROM ai_engine_settings WHERE tenant_id = ? AND engine = ?").get(tenantId, engine) as Row | undefined;
+  return { engine, scraperEnabled: row ? Number(row.scraper_enabled) === 1 : false, disclaimerAcceptedAt: row ? String(row.disclaimer_accepted_at) : "", acceptedBy: row ? String(row.accepted_by) : "" };
+}
+export function listEngineSettings(tenantId: string): EngineSetting[] {
+  validateTenant(tenantId);
+  return (database().prepare("SELECT * FROM ai_engine_settings WHERE tenant_id = ?").all(tenantId) as Row[]).map(row => ({
+    engine: String(row.engine), scraperEnabled: Number(row.scraper_enabled) === 1,
+    disclaimerAcceptedAt: String(row.disclaimer_accepted_at), acceptedBy: String(row.accepted_by),
+  }));
+}
+/** Enabling requires an accepted disclaimer, recorded with user and timestamp. Disabling is always allowed. */
+export function setEngineScraper(tenantId: string, engine: string, enabled: boolean, disclaimerAccepted: boolean, acceptedBy: string): EngineSetting {
+  validateTenant(tenantId);
+  if (enabled && !disclaimerAccepted) throw new Error("Activating a scraper requires explicit acceptance of the GTM Growth ToS disclaimer");
+  const now = new Date().toISOString();
+  const current = getEngineSetting(tenantId, engine);
+  database().prepare(`INSERT INTO ai_engine_settings (tenant_id, engine, scraper_enabled, disclaimer_accepted_at, accepted_by)
+    VALUES (?, ?, ?, ?, ?) ON CONFLICT(tenant_id, engine) DO UPDATE SET scraper_enabled = excluded.scraper_enabled,
+      disclaimer_accepted_at = CASE WHEN excluded.scraper_enabled = 1 THEN excluded.disclaimer_accepted_at ELSE '' END,
+      accepted_by = CASE WHEN excluded.scraper_enabled = 1 THEN excluded.accepted_by ELSE '' END`)
+    .run(tenantId, engine, enabled ? 1 : 0, current.disclaimerAcceptedAt || (enabled ? now : ""), enabled ? (current.acceptedBy || acceptedBy) : "");
+  return getEngineSetting(tenantId, engine);
+}
+

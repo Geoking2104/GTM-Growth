@@ -4,6 +4,7 @@ export const TAB_ICONS = {
   local_seo: { website: 'globe', network: 'store', planning: 'pin' },
   catalog: { library: 'products' }, commerce: { connect: 'commerce' },
   competition: { board: 'competition' }, ai_visibility: { board: 'eye' },
+  ai_tracker: { board: 'eye', prompts: 'message', runs: 'window', opportunities: 'checklist', engines: 'robot' },
   gsc: { performance: 'overview', 'query-pages': 'links', sitemaps: 'sitemap' },
   ga4: { overview: 'audience', ecommerce: 'commerce', technology: 'devices', realtime: 'realtime' },
   bing: { performance: 'bing' }, geo: { llms: 'filecode', robots: 'robot', schema: 'code' },
@@ -23,3 +24,4 @@ export const TAB_ICONS = {
   platform: { clients: 'building', setup: 'operations' },
 };
 export const tabIcon = (section, tab) => TAB_ICONS[section]?.[tab] || 'page';
+

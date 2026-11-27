@@ -83,6 +83,7 @@ export const DECISION_VIEWS = {
       item('#gsc','google','Mesurer la visibilité Google','Measure Google visibility','Comparez les clics, impressions et requêtes de recherche.','Compare search clicks, impressions and queries.','gsc'),
       item('#bing','bing','Mesurer la visibilité Bing','Measure Bing visibility','Comparez les résultats de la période sélectionnée.','Compare results for the selected period.','bing'),
       item('#ai_visibility','eye','Examiner les réponses IA','Inspect AI answers','Consultez les réponses collectées ou importées et leurs limites.','Read collected or imported answers and their limitations.','ai'),
+      item('#ai_tracker','robot','Tracking IA natif','Native AI tracking','Suivi natif des moteurs IA (ChatGPT, Gemini, Perplexity, Copilot, AI Overviews).','Native AI engine tracking (ChatGPT, Gemini, Perplexity, Copilot, AI Overviews).','ai'),
       item('#social/analytics','social','Lire les résultats sociaux','Read social results','Connectez Postiz ou ouvrez les observations importées manuellement.','Connect Postiz or open manually imported observations.','social'),
     ] },
     { id: 'analytics', icon: 'ga4', fr: 'Conversions & Analytics', en: 'Conversions & Analytics', items: [
@@ -129,7 +130,7 @@ export function decisionLocation(section, tab = '') {
     'tracking/tags': ['diagnose','tracking'], 'tracking/access': ['settings','access'],
     'gsc/query-pages': ['diagnose','intent'],
   };
-  const defaults = { local_seo: ['diagnose','local'], catalog: ['diagnose','technical'], commerce: ['settings','sources'], competition: ['diagnose','intent'], ai_visibility: ['impact','visibility'], gsc: ['impact','visibility'], ga4: ['impact','analytics'], bing: ['impact','visibility'], geo: ['diagnose','technical'], citability: ['diagnose','technical'], indexnow: ['ops','indexing'], sitemap: ['diagnose','technical'], performance: ['diagnose','technical'], journey: ['diagnose','intent'], crm: ['impact','crm'], social: ['ops','social'], apply_mode: ['ops','diffs'], search: ['diagnose','intent'], keywords: ['diagnose','intent'], tracking: ['settings','sources'], billing: ['settings','access'], agents: ['settings','agents'], gtm: ['diagnose','tracking'], audit: ['diagnose','technical'], generators: ['ops','content'], calculators: ['overview','scenarios'], report: ['overview','reports'], platform: ['settings','access'] };
+  const defaults = { local_seo: ['diagnose','local'], catalog: ['diagnose','technical'], commerce: ['settings','sources'], competition: ['diagnose','intent'], ai_visibility: ['impact','visibility'], ai_tracker: ['impact','visibility'], gsc: ['impact','visibility'], ga4: ['impact','analytics'], bing: ['impact','visibility'], geo: ['diagnose','technical'], citability: ['diagnose','technical'], indexnow: ['ops','indexing'], sitemap: ['diagnose','technical'], performance: ['diagnose','technical'], journey: ['diagnose','intent'], crm: ['impact','crm'], social: ['ops','social'], apply_mode: ['ops','diffs'], search: ['diagnose','intent'], keywords: ['diagnose','intent'], tracking: ['settings','sources'], billing: ['settings','access'], agents: ['settings','agents'], gtm: ['diagnose','tracking'], audit: ['diagnose','technical'], generators: ['ops','content'], calculators: ['overview','scenarios'], report: ['overview','reports'], platform: ['settings','access'] };
   const key = `${section}/${tab}`;
   const [area, view] = Object.hasOwn(overrides, key) ? overrides[key] : Object.hasOwn(defaults, section) ? defaults[section] : ['overview','board'];
   return { area, view };
@@ -138,3 +139,4 @@ export function decisionLabel(id, language) {
   const a = DECISION_AREAS.find(a => a.id === id);
   return a ? a[language === 'fr' ? 'fr' : 'en'] : (language === 'fr' ? 'Portfolio' : 'Portfolio');
 }
+

@@ -3,7 +3,7 @@
 import type { ConsoleRoute, HandlerContext } from "./util.js";
 import { str } from "./util.js";
 import { validTenantId } from "../tenants/store.js";
-import { getBrand, getRun, latestMentions, insertPrompt, listBrands, listEngineStates, listOpportunities, listPrompts, listRuns, mentionsForRun, normalizeDomain, runsForWindow, setBrandActive, setOpportunityStatus, setPromptActive, upsertBrand } from "../ai-tracker/store.js";
+import { getBrand, getEngineSetting, getRun, latestMentions, insertPrompt, listBrands, listEngineSettings, listEngineStates, listOpportunities, listPrompts, listRuns, mentionsForRun, normalizeDomain, runsForWindow, setBrandActive, setEngineScraper, setOpportunityStatus, setPromptActive, upsertBrand } from "../ai-tracker/store.js";
 import { judgeVersion, trackerConfig, trackerEnabled } from "../ai-tracker/config.js";
 import { validateEngines, validatePromptText, validateTags } from "../ai-tracker/prompt-validation.js";
 import { manualRun, runDailyQueue, rejudgeWindow } from "../ai-tracker/worker.js";
@@ -11,6 +11,10 @@ import { consoleBrandMetrics, generateOpportunities, opportunitiesFor, resolveOp
 import { brandMetrics, citationAggregates, trend } from "../ai-tracker/metrics.js";
 import type { TrackedBrand, TrackedCompany } from "../ai-tracker/types.js";
 import { logger } from "../utils/logger.js";
+
+/** ToS disclaimer shown before any scraper activation. Bump the version when the terms change. */
+export const GTM_TRACKER_DISCLAIMER_VERSION = "2026-11-27";
+export const GTM_TRACKER_DISCLAIMER = `Avertissement GTM Growth : la plupart des surfaces cibles (ChatGPT, Gemini, Perplexity, Bing) interdisent l'accès automatisé dans leurs conditions d'utilisation. Ce module privilégie toujours l'API officielle quand elle existe. Le scraper natif utilise uniquement vos propres comptes, à cadence basse, et s'arrête proprement en cas de vérification ou de blocage : aucun contournement de CAPTCHA, aucun plugin stealth, aucune rotation de proxy. L'activation est une décision explicite de l'administrateur de cet espace, qui en assume la responsabilité vis-à-vis des conditions d'utilisation des services ciblés. Version ${GTM_TRACKER_DISCLAIMER_VERSION}.`;
 
 const tenantOf = (ctx: HandlerContext): string => {
   const id = ctx.tenancy?.tenant?.id ?? "";
@@ -36,6 +40,37 @@ export const aiTrackerRoutes: ConsoleRoute[] = [
     return { enabled: trackerEnabled(), config: { runHour: trackerConfig().runHour, defaultLocale: trackerConfig().defaultLocale, scraperEngines: trackerConfig().scraperEngines, ollamaModel: trackerConfig().ollamaModel }, judgeVersion: judgeVersion(), engines: listEngineStates(tenant), warning: "Scores are sampled measurements, not causal proof. Every score shows its run count and collection mode." };
   } },
   { path: "/ai-tracker/health", needsUrl: false, handler: async ctx => ({ engines: listEngineStates(tenantOf(ctx)) }) },
+
+  // Engine settings: per-tenant scraper activation, gated by the GTM Growth ToS disclaimer.
+  { path: "/ai-tracker/engine-settings", needsUrl: false, handler: async ctx => {
+    const tenant = tenantOf(ctx);
+    const states = new Map(listEngineStates(tenant).map(s => [s.engine, s]));
+    const settings = listEngineSettings(tenant);
+    const known = new Set([...states.keys(), ...settings.map(s => s.engine)]);
+    const scrapers = ["chatgpt", "gemini", "google-ai-mode", "perplexity", "bing-ai-mode"];
+    const rows = [...new Set([...scrapers, ...known])].map(engine => {
+      const setting = settings.find(s => s.engine === engine);
+      const state = states.get(engine);
+      return {
+        engine, scraperEnabled: setting?.scraperEnabled ?? false,
+        disclaimerAcceptedAt: setting?.disclaimerAcceptedAt ?? "", acceptedBy: setting?.acceptedBy ?? "",
+        envEnabled: trackerConfig().scraperEngines[engine] ?? false,
+        health: state?.health ?? "disabled", consecutiveFailures: state?.consecutiveFailures ?? 0, note: state?.note ?? "",
+      };
+    });
+    return { engines: rows, disclaimer: GTM_TRACKER_DISCLAIMER, disclaimerVersion: GTM_TRACKER_DISCLAIMER_VERSION };
+  } },
+  { path: "/ai-tracker/engine/activate", needsUrl: false, adminOnly: true, handler: async ctx => {
+    const tenant = tenantOf(ctx);
+    const engine = str(ctx.body.engine);
+    if (!["chatgpt", "gemini", "google-ai-mode", "perplexity", "bing-ai-mode"].includes(engine ?? "")) throw new Error("Unknown scraper engine");
+    const enable = ctx.body.enable !== false;
+    if (enable && ctx.body.disclaimerAccepted !== true) throw new Error("Read and accept the GTM Growth ToS disclaimer before enabling a scraper");
+    if (enable && (str(ctx.body.disclaimerVersion ?? "") !== GTM_TRACKER_DISCLAIMER_VERSION)) throw new Error("Disclaimer version mismatch: reload the page and accept the current disclaimer");
+    const setting = setEngineScraper(tenant, engine!, enable, ctx.body.disclaimerAccepted === true, ctx.user?.preferred_username ?? ctx.user?.sub ?? "unknown");
+    logger.info(`[ai-tracker] scraper ${enable ? "enabled" : "disabled"} for tenant ${tenant}: ${engine} by ${setting.acceptedBy}`);
+    return { engine, scraperEnabled: setting.scraperEnabled };
+  } },
 
   // Brands (CU-01)
   { path: "/ai-tracker/brand", needsUrl: false, adminOnly: true, handler: async ctx => {
@@ -185,3 +220,4 @@ export const aiTrackerRoutes: ConsoleRoute[] = [
     return { ok: true };
   } },
 ];
+

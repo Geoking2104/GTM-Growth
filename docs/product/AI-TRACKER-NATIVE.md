@@ -26,7 +26,7 @@ tiers payant, sans juge externe payant, sans envoi de données vers un tiers.
 
 | Fichier | Rôle |
 | --- | --- |
-| `src/ai-tracker/store.ts` | SQLite dédié : `ai_brands`, `ai_prompts`, `ai_runs`, `ai_mentions`, `ai_opportunities`, `ai_engine_state` |
+| `src/ai-tracker/store.ts` | SQLite dédié : `ai_brands`, `ai_prompts`, `ai_runs`, `ai_mentions`, `ai_opportunities`, `ai_engine_state`, `ai_engine_settings` |
 | `src/ai-tracker/providers.ts` | API officielles (OpenAI, Anthropic, Gemini, Mistral, Perplexity) : mode `api-approximation` |
 | `src/ai-tracker/scrapers/` | Scraper Playwright natif, un fichier par moteur : mode `consumer-ui` |
 | `src/ai-tracker/judge/` | Filtre déterministe + juge local Ollama (JSON strict, versionné) |
@@ -72,3 +72,28 @@ docker compose exec ollama ollama pull qwen2.5:14b
 
 Volumes POC : 8 Go RAM minimum (16 Go recommandés pour Ollama + Playwright),
 20 Go de disque pour 90 jours de réponses brutes.
+
+## Activation par tenant et disclaimer GTM Growth
+
+Les scrapers (`chatgpt`, `gemini`, `perplexity`, `copilot`, `ai_overviews`) sont **désactivés
+par défaut** pour chaque tenant. Un administrateur du tenant peut activer un moteur
+depuis la console (onglet « Moteurs ») **après avoir accepté le disclaimer GTM Growth**
+(versionné, `GTM_TRACKER_DISCLAIMER_VERSION`). Le refus est fail-closed :
+
+- le serveur refuse toute activation sans `disclaimerAccepted: true` et sans la version
+  courante du disclaimer (`POST /ai-tracker/engine/activate`, admin uniquement) ;
+- l'acceptation est journalisée (`accepted_by`, `disclaimer_accepted_at`) dans la table
+  `ai_engine_settings` (par tenant et par moteur) ;
+- le worker ne collecte pour un moteur que si le flag global env **ou** l'activation
+  tenant est présente (les deux restent contrôlés par `AI_TRACKER_ENABLED` globalement).
+
+Les API officielles (mode `api-approximation`) et l'import manuel restent disponibles
+sans acceptation du disclaimer : seules les surfaces scrapées en `consumer-ui` sont
+concernées.
+
+## Console front
+
+Nouvelle section `#ai_tracker` dans la console (menu Impact > Visibilité), avec cinq
+onglets : Board (visibilité, part de voix, sentiment, citations), Prompts, Runs
+(avec pagination), Opportunities et Moteurs (état + activation sous disclaimer).
+Module front : `site/console/ai-tracker.js` ; routes : `src/console/ai-tracker.ts`.

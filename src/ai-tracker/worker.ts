@@ -2,8 +2,8 @@
  * One run per day per active prompt per engine, single concurrency per engine,
  * 8–20s jitter between runs, automatic pause after 2 consecutive failures. */
 import { createHash } from "node:crypto";
-import { getBrand, getEngineState, getPrompt, insertMention, insertRun, latestMentions, listBrands, listPrompts, runIdFor, runsForWindow, setEngineState } from "./store.js";
-import { trackerConfig } from "./config.js";
+import { getBrand, getEngineSetting, getEngineState, getPrompt, insertMention, insertRun, latestMentions, listBrands, listPrompts, runIdFor, runsForWindow, setEngineState } from "./store.js";
+import { scraperEnabled, trackerConfig } from "./config.js";
 import { apiProviderForEngine, collectViaApi, type ApiProviderId } from "./providers.js";
 import { scraperFor } from "./scrapers/index.js";
 import { judgeRunAsync } from "./judge/local-judge.js";
@@ -18,12 +18,13 @@ export interface RunResult { runId: string | null; status: "collected" | "duplic
 
 const inFlight = new Set<string>();
 
-/** API first; scraper only when no consumer API exists and its flag is on; otherwise no collection. */
-async function collect(engine: string, promptText: string): Promise<CollectedAnswer> {
+/** API first; scraper only when no consumer API exists and its flag is on; otherwise no collection.
+ * Scraper availability is deployment-wide (env flag) or per-tenant (explicit activation after the ToS disclaimer). */
+async function collect(tenantId: string, engine: string, promptText: string): Promise<CollectedAnswer> {
   const apiProvider = apiProviderForEngine(engine);
   if (apiProvider) return collectViaApi(apiProvider as ApiProviderId, promptText);
   const scraper = scraperFor(engine);
-  if (scraper) {
+  if (scraper && (scraperEnabled(engine) || getEngineSetting(tenantId, engine).scraperEnabled)) {
     try { return await scraper.run(promptText); }
     finally { await scraper.close(); }
   }
@@ -46,7 +47,7 @@ export async function executeRun(request: RunRequest): Promise<RunResult> {
   const runDate = today();
   inFlight.add(lock);
   try {
-    const answer = await collect(request.engine, prompt.promptText);
+    const answer = await collect(request.tenantId, request.engine, prompt.promptText);
     const finalRunId = runIdFor(request.tenantId, request.brandId, request.promptId, request.engine, answer.provider, runDate);
     const run: StoredRun = {
       runId: finalRunId, tenantId: request.tenantId, brandId: request.brandId, promptId: request.promptId,
@@ -117,7 +118,7 @@ export async function engineHealthCheck(tenantId: string, engine: string): Promi
   const state = getEngineState(tenantId, engine);
   if (state.health === "paused") return "paused";
   const scraper = scraperFor(engine);
-  if (!scraper) { setEngineState(tenantId, engine, { health: "disabled", lastCheckedAt: new Date().toISOString() }); return "disabled"; }
+  if (!scraper || !(scraperEnabled(engine) || getEngineSetting(tenantId, engine).scraperEnabled)) { setEngineState(tenantId, engine, { health: "disabled", lastCheckedAt: new Date().toISOString() }); return "disabled"; }
   await scraper.close();
   return "ok";
 }
@@ -139,3 +140,4 @@ export async function rejudgeWindow(tenantId: string, brandId: string): Promise<
 
 /** Stable id helper for opportunities and other derived rows. */
 export function stableId(...parts: string[]): string { return createHash("sha256").update(parts.join("|")).digest("hex").slice(0, 24); }
+

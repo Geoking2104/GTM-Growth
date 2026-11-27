@@ -1,16 +1,16 @@
 /** Native AI tracker — clean Playwright scraper base.
  * No stealth plugin, no fingerprint spoofing, no proxy rotation, no CAPTCHA solving,
- * no auth bypass. A real browser, the client's own session, a low cadence, a clean stop. */
+ * no auth bypass. A real browser, the client's own session, a low cadence, a clean stop.
+ * Availability gating (env flag or tenant activation) is decided by the worker, not here. */
 import fs from "node:fs";
 import path from "node:path";
 import { chromium, type Browser, type BrowserContext, type Page } from "playwright-core";
-import { scraperEnabled, trackerConfig } from "../config.js";
-import type { CollectedAnswer } from "../types.js";
+import { trackerConfig } from "./config.js";
+import type { CollectedAnswer } from "./types.js";
 
 export interface NativeScraper {
   engine: string;
   run(prompt: string): Promise<CollectedAnswer>;
-  close(): Promise<void>;
 }
 
 export class BlockStopError extends Error {
@@ -21,7 +21,6 @@ const VERIFY_MARKERS = ["captcha", "unusual activity", "verify you are", "verify
 
 export abstract class BaseScraper implements NativeScraper {
   abstract engine: string;
-  abstract run(prompt: string): Promise<CollectedAnswer>;
   protected browser: Browser | null = null;
   protected ctx: BrowserContext | null = null;
 
@@ -30,7 +29,6 @@ export abstract class BaseScraper implements NativeScraper {
 
   protected async context(): Promise<BrowserContext> {
     if (this.ctx) return this.ctx;
-    if (!scraperEnabled(this.engine)) throw new Error(`Scraper for ${this.engine} is disabled`);
     const session = this.sessionFile();
     if (!fs.existsSync(session)) throw new Error(`No session file for ${this.engine}: run the session bootstrap first`);
     this.browser = await chromium.launch({ headless: true, executablePath: process.env.AI_TRACKER_CHROMIUM_PATH || undefined });
@@ -80,10 +78,7 @@ export abstract class BaseScraper implements NativeScraper {
 
   protected async extractCitations(page: Page, scope: string): Promise<Array<{ url: string; title?: string }>> {
     return page.locator(`${scope} a[href^="http"]`).evaluateAll(els =>
-      els.map(element => {
-        const anchor = element as { href: string; textContent: string | null };
-        return { url: anchor.href, title: anchor.textContent ?? undefined };
-      }).filter(c => /^https?:\/\//.test(c.url)));
+      els.map(a => ({ url: (a as HTMLAnchorElement).href, title: (a as HTMLAnchorElement).textContent ?? undefined })).filter(c => /^https?:\/\//.test(c.url)));
   }
 
   async close(): Promise<void> {
