@@ -3,10 +3,11 @@
 Description=Forward the GTM forum's TLS connection to Discourse ID
 
 [Service]
-ExecStart=/usr/lib/systemd/systemd-socket-proxyd --connections-max=32 --exit-idle-time=3min id.discourse.com:443
+ExecStart=/bin/bash /opt/gtm-growth-forum/run-id-proxy.sh
 DynamicUser=yes
+User=gtm-forum-id-proxy
 NoNewPrivileges=yes
 PrivateTmp=yes
 ProtectSystem=strict
 ProtectHome=yes
-RestrictAddressFamilies=AF_UNIX AF_INET AF_INET6
+RestrictAddressFamilies=AF_UNIX AF_INET AF_INET6 AF_NETLINK
