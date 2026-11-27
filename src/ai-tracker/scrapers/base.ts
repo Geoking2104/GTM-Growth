@@ -1,16 +1,16 @@
 /** Native AI tracker — clean Playwright scraper base.
  * No stealth plugin, no fingerprint spoofing, no proxy rotation, no CAPTCHA solving,
- * no auth bypass. A real browser, the client's own session, a low cadence, a clean stop.
- * Availability gating (env flag or tenant activation) is decided by the worker, not here. */
+ * no auth bypass. A real browser, the client's own session, a low cadence, a clean stop. */
 import fs from "node:fs";
 import path from "node:path";
 import { chromium, type Browser, type BrowserContext, type Page } from "playwright-core";
-import { trackerConfig } from "./config.js";
-import type { CollectedAnswer } from "./types.js";
+import { trackerConfig } from "../config.js";
+import type { CollectedAnswer } from "../types.js";
 
 export interface NativeScraper {
   engine: string;
   run(prompt: string): Promise<CollectedAnswer>;
+  close(): Promise<void>;
 }
 
 export class BlockStopError extends Error {
@@ -20,12 +20,20 @@ export class BlockStopError extends Error {
 const VERIFY_MARKERS = ["captcha", "unusual activity", "verify you are", "verify that you're", "are you a robot", "access denied", "sign in to continue"];
 
 export abstract class BaseScraper implements NativeScraper {
+  constructor(private readonly tenantId: string) {}
   abstract engine: string;
+  abstract run(prompt: string): Promise<CollectedAnswer>;
   protected browser: Browser | null = null;
   protected ctx: BrowserContext | null = null;
 
   /** Session is a storageState file on disk, outside the repo. Never a password in code. */
-  protected sessionFile(): string { return path.join(trackerConfig().sessionDir, `${this.engine}.json`); }
+  protected sessionFile(): string {
+    const { sessionDir } = trackerConfig();
+    const scoped = path.join(sessionDir, this.tenantId, `${this.engine}.json`);
+    if (fs.existsSync(scoped) || this.tenantId !== process.env.AI_TRACKER_TENANT_ID) return scoped;
+    // Legacy single-tenant deployments explicitly identify the session owner.
+    return path.join(sessionDir, `${this.engine}.json`);
+  }
 
   protected async context(): Promise<BrowserContext> {
     if (this.ctx) return this.ctx;
@@ -65,7 +73,7 @@ export abstract class BaseScraper implements NativeScraper {
   /** Screenshot only on failure, for diagnosis, short retention. */
   protected async screenshotOnFailure(page: Page): Promise<string | undefined> {
     try {
-      const dir = path.join(trackerConfig().sessionDir, "failures");
+      const dir = path.join(trackerConfig().sessionDir, this.tenantId, "failures");
       fs.mkdirSync(dir, { recursive: true });
       const file = path.join(dir, `${this.engine}-${Date.now()}.png`);
       await page.screenshot({ path: file, fullPage: false });
@@ -78,7 +86,10 @@ export abstract class BaseScraper implements NativeScraper {
 
   protected async extractCitations(page: Page, scope: string): Promise<Array<{ url: string; title?: string }>> {
     return page.locator(`${scope} a[href^="http"]`).evaluateAll(els =>
-      els.map(a => ({ url: (a as HTMLAnchorElement).href, title: (a as HTMLAnchorElement).textContent ?? undefined })).filter(c => /^https?:\/\//.test(c.url)));
+      els.map(element => {
+        const anchor = element as { href: string; textContent: string | null };
+        return { url: anchor.href, title: anchor.textContent ?? undefined };
+      }).filter(c => /^https?:\/\//.test(c.url)));
   }
 
   async close(): Promise<void> {

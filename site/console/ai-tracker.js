@@ -108,7 +108,27 @@ async function promptsView(api, me) {
   root.append(sampledWarning());
   const brands = await api("/ai-tracker/brands");
   const prompts = await api("/ai-tracker/prompts");
-  if (isAdmin(me)) {
+  if (isAdmin(me) && !brands.brands?.length) {
+    const form = el("form", "c-form");
+    const label = el("label", "c-field", L("Nom de la marque", "Brand name"));
+    const input = el("input");
+    input.required = true;
+    input.maxLength = 100;
+    label.append(input);
+    const submit = button(L("Créer une marque", "Create a brand"));
+    submit.type = "submit";
+    const result = el("p", "c-note");
+    result.setAttribute("role", "status");
+    form.append(label, submit, result);
+    form.onsubmit = async event => {
+      event.preventDefault();
+      try {
+        await api("/ai-tracker/brand", { name: input.value.trim(), competitors: [] });
+        root.replaceWith(await promptsView(api, me));
+      } catch (error) { result.textContent = error.message; }
+    };
+    root.append(form);
+  } else if (isAdmin(me)) {
     const create = el("form", "c-form");
     const brand = el("select");
     for (const b of brands.brands ?? []) { const option = el("option", "", b.name); option.value = b.brandId; brand.append(option); }
@@ -121,12 +141,16 @@ async function promptsView(api, me) {
     const brandField = el("label", "c-field"); brandField.append(el("span", "", L("Marque", "Brand")), brand);
     const textField = el("label", "c-field"); textField.append(el("span", "", L("Texte du prompt", "Prompt text")), text);
     const enginesField = el("label", "c-field"); enginesField.append(el("span", "", L("Moteurs", "Engines")), engines);
-    create.append(brandField, textField, enginesField, button(L("Créer le prompt", "Create prompt"), "btn btn-small"));
+    const submit = button(L("Créer le prompt", "Create prompt"));
+    submit.type = "submit";
+    text.required = true;
+    engines.required = true;
+    create.append(brandField, textField, enginesField, submit);
     create.onsubmit = async (event) => {
       event.preventDefault();
       result.textContent = L("Création…", "Creating…");
       try {
-        const outcome = await api("/ai-tracker/prompt", { brandId: brand.value, promptText: text.value, engines: [...engines.selectedOptions].map(o => o.value) });
+        const outcome = await api("/ai-tracker/prompt", { brandId: brand.value, promptText: text.value, engines: [...engines.options].filter(o => o.selected).map(o => o.value) });
         result.textContent = outcome.reused ? L("Ce prompt existe déjà (hash identique).", "This prompt already exists (same hash).") : L("Prompt créé.", "Prompt created.");
         root.replaceWith(await promptsView(api, me));
       } catch (error) { result.textContent = error.message; }
@@ -158,10 +182,11 @@ async function runsView(api, me) {
   const detail = el("div");
   const list = el("div");
   let nextCursor = null;
+  const rows = [];
   const load = async () => {
     const page = await api("/ai-tracker/runs", { cursor: nextCursor, limit: 25 });
     nextCursor = page.nextCursor;
-    const rows = page.runs.map(run => ({
+    rows.push(...page.runs.map(run => ({
       date: run.runDate, engineLabel: engineName(run.engine), mode: run.collectionMode,
       excerpt: run.rawText.slice(0, 120) + (run.rawText.length > 120 ? "…" : ""),
       actions: (() => {
@@ -193,12 +218,19 @@ async function runsView(api, me) {
         }));
         return cell;
       })(),
-    }));
+    })));
     list.replaceChildren(el("h4", "", L("Runs collectés", "Collected runs")), table(rows, [["date", L("Date", "Date")], ["engineLabel", L("Moteur", "Engine")], ["mode", L("Mode", "Mode")], ["excerpt", L("Extrait", "Excerpt")], ["actions", ""]]));
     more.hidden = !nextCursor;
   };
-  const more = button(L("Charger plus", "Load more"), "btn btn-small", load);
-  root.append(list, more, detail);
+  const status = el("p", "c-note");
+  status.setAttribute("role", "status");
+  const more = button(L("Charger plus", "Load more"), "btn btn-small", async () => {
+    more.disabled = true;
+    status.textContent = "";
+    try { await load(); } catch (error) { status.textContent = error.message; }
+    finally { more.disabled = false; }
+  });
+  root.append(list, more, status, detail);
   await load();
   return root;
 }
@@ -211,12 +243,22 @@ async function opportunitiesView(api, me) {
   root.append(el("p", "c-note", L("Une opportunité n'est jamais générée à partir d'un seul run. Le brouillon passe ensuite par le circuit d'approbation GEO existant.", "An opportunity is never generated from a single run. The draft then flows through the existing GEO approval workflow.")));
   const result = el("p", "c-note"); result.setAttribute("role", "status");
   if (isAdmin(me)) {
+    const { brands } = await api("/ai-tracker/brands");
+    const field = el("label", "c-field", L("Marque à analyser", "Brand to scan"));
+    const brand = el("select");
+    for (const item of brands) {
+      const option = el("option", "", item.name);
+      option.value = item.brandId;
+      brand.append(option);
+    }
+    field.append(brand);
     const generate = button(L("Analyser les opportunités", "Scan for opportunities"), "btn btn-small", async () => {
       result.textContent = L("Analyse…", "Scanning…");
-      try { const outcome = await api("/ai-tracker/opportunities/generate", {}); result.textContent = L(`${outcome.generated} opportunité(s) mise(s) à jour.`, `${outcome.generated} opportunity(ies) updated.`); root.replaceWith(await opportunitiesView(api, me)); }
+      try { const outcome = await api("/ai-tracker/opportunities/generate", { brandId: brand.value }); result.textContent = L(`${outcome.generated} opportunité(s) mise(s) à jour.`, `${outcome.generated} opportunity(ies) updated.`); root.replaceWith(await opportunitiesView(api, me)); }
       catch (error) { result.textContent = error.message; }
     });
-    root.append(generate, result);
+    generate.disabled = !brands.length;
+    root.append(field, generate, result);
   }
   const data = await api("/ai-tracker/opportunities");
   const rows = (data.opportunities ?? []).map(o => ({
@@ -253,10 +295,14 @@ async function enginesView(api, me) {
     if (engine.note) body.append(el("p", "c-note", engine.note));
     if (engine.consecutiveFailures > 0) body.append(el("p", "c-note", L(`Échecs consécutifs : ${engine.consecutiveFailures}. Pause automatique à 2.`, `Consecutive failures: ${engine.consecutiveFailures}. Automatic pause at 2.`)));
     if (engine.scraperEnabled) body.append(el("p", "c-note", L(`Scraper activé par ${engine.acceptedBy || "admin"}, acceptation du disclaimer le ${engine.disclaimerAcceptedAt.slice(0, 10)}.`, `Scraper enabled by ${engine.acceptedBy || "admin"}, disclaimer accepted on ${engine.disclaimerAcceptedAt.slice(0, 10)}.`)));
-    if (isAdmin(me)) {
+    const tenantAdmin = me?.role === "tenant-admin" || me?.memberships?.some(m => m.id === me?.tenant?.id && m.role === "tenant-admin");
+    if (engine.supportsScraper && !engine.envEnabled) {
+      body.append(el("p", "c-note", L("Scraper bloqué par la configuration du serveur.", "Scraper blocked by server configuration.")));
+    }
+    if (tenantAdmin && engine.supportsScraper && (engine.envEnabled || engine.scraperEnabled)) {
       const result = el("p", "c-note"); result.setAttribute("role", "status");
       if (!engine.scraperEnabled) {
-        const disclaimer = el("p", "c-note", data.disclaimer);
+        const disclaimer = el("p", "c-note", L(data.disclaimer, data.disclaimerEn ?? data.disclaimer));
         const accept = el("label", "c-field");
         const checkbox = el("input"); checkbox.type = "checkbox";
         accept.append(checkbox, document.createTextNode(L(" J'ai lu et j'accepte le disclaimer GTM Growth", " I have read and accept the GTM Growth disclaimer")));

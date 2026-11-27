@@ -2,9 +2,10 @@
  * Tenant-scoped by the console middleware; admin routes marked adminOnly. */
 import type { ConsoleRoute, HandlerContext } from "./util.js";
 import { str } from "./util.js";
+import { TenantAccessError } from "../tenants/context.js";
 import { validTenantId } from "../tenants/store.js";
-import { getBrand, getEngineSetting, getRun, latestMentions, insertPrompt, listBrands, listEngineSettings, listEngineStates, listOpportunities, listPrompts, listRuns, mentionsForRun, normalizeDomain, runsForWindow, setBrandActive, setEngineScraper, setOpportunityStatus, setPromptActive, upsertBrand } from "../ai-tracker/store.js";
-import { judgeVersion, trackerConfig, trackerEnabled } from "../ai-tracker/config.js";
+import { getBrand, getRun, latestMentions, insertPrompt, listBrands, listEngineSettings, listEngineStates, listOpportunities, listPrompts, listRuns, mentionsForRun, normalizeDomain, runsForWindow, setBrandActive, setEngineScraper, setOpportunityStatus, setPromptActive, upsertBrand } from "../ai-tracker/store.js";
+import { GTM_TRACKER_DISCLAIMER_VERSION, SCRAPER_ENGINES, judgeVersion, trackerConfig, trackerEnabled } from "../ai-tracker/config.js";
 import { validateEngines, validatePromptText, validateTags } from "../ai-tracker/prompt-validation.js";
 import { manualRun, runDailyQueue, rejudgeWindow } from "../ai-tracker/worker.js";
 import { consoleBrandMetrics, generateOpportunities, opportunitiesFor, resolveOpportunity, windowSince } from "../ai-tracker/opportunities.js";
@@ -13,8 +14,10 @@ import type { TrackedBrand, TrackedCompany } from "../ai-tracker/types.js";
 import { logger } from "../utils/logger.js";
 
 /** ToS disclaimer shown before any scraper activation. Bump the version when the terms change. */
-export const GTM_TRACKER_DISCLAIMER_VERSION = "2026-11-27";
+export { GTM_TRACKER_DISCLAIMER_VERSION };
 export const GTM_TRACKER_DISCLAIMER = `Avertissement GTM Growth : la plupart des surfaces cibles (ChatGPT, Gemini, Perplexity, Bing) interdisent l'accès automatisé dans leurs conditions d'utilisation. Ce module privilégie toujours l'API officielle quand elle existe. Le scraper natif utilise uniquement vos propres comptes, à cadence basse, et s'arrête proprement en cas de vérification ou de blocage : aucun contournement de CAPTCHA, aucun plugin stealth, aucune rotation de proxy. L'activation est une décision explicite de l'administrateur de cet espace, qui en assume la responsabilité vis-à-vis des conditions d'utilisation des services ciblés. Version ${GTM_TRACKER_DISCLAIMER_VERSION}.`;
+
+const DISCLAIMER_EN = `GTM Growth notice: most target services (ChatGPT, Gemini, Perplexity, Bing) prohibit automated access under their terms. This module uses the official API first when available. The native scraper uses only your own accounts at a low frequency and stops on verification or blocking. It does not bypass CAPTCHAs, use stealth plugins or rotate proxies. The administrator enabling this engine for this workspace accepts responsibility for complying with the target service’s terms. Version ${GTM_TRACKER_DISCLAIMER_VERSION}.`;
 
 const tenantOf = (ctx: HandlerContext): string => {
   const id = ctx.tenancy?.tenant?.id ?? "";
@@ -47,28 +50,35 @@ export const aiTrackerRoutes: ConsoleRoute[] = [
     const states = new Map(listEngineStates(tenant).map(s => [s.engine, s]));
     const settings = listEngineSettings(tenant);
     const known = new Set([...states.keys(), ...settings.map(s => s.engine)]);
-    const scrapers = ["chatgpt", "gemini", "google-ai-mode", "perplexity", "bing-ai-mode"];
-    const rows = [...new Set([...scrapers, ...known])].map(engine => {
+    const config = trackerConfig();
+    const rows = [...new Set([...SCRAPER_ENGINES, ...known])].map(engine => {
       const setting = settings.find(s => s.engine === engine);
       const state = states.get(engine);
       return {
         engine, scraperEnabled: setting?.scraperEnabled ?? false,
         disclaimerAcceptedAt: setting?.disclaimerAcceptedAt ?? "", acceptedBy: setting?.acceptedBy ?? "",
-        envEnabled: trackerConfig().scraperEngines[engine] ?? false,
+        supportsScraper: SCRAPER_ENGINES.includes(engine), envEnabled: config.scraperEngines[engine] ?? false,
         health: state?.health ?? "disabled", consecutiveFailures: state?.consecutiveFailures ?? 0, note: state?.note ?? "",
       };
     });
-    return { engines: rows, disclaimer: GTM_TRACKER_DISCLAIMER, disclaimerVersion: GTM_TRACKER_DISCLAIMER_VERSION };
+    return { engines: rows, disclaimer: GTM_TRACKER_DISCLAIMER, disclaimerEn: DISCLAIMER_EN, disclaimerVersion: GTM_TRACKER_DISCLAIMER_VERSION };
   } },
   { path: "/ai-tracker/engine/activate", needsUrl: false, adminOnly: true, handler: async ctx => {
     const tenant = tenantOf(ctx);
     const engine = str(ctx.body.engine);
-    if (!["chatgpt", "gemini", "google-ai-mode", "perplexity", "bing-ai-mode"].includes(engine ?? "")) throw new Error("Unknown scraper engine");
-    const enable = ctx.body.enable !== false;
-    if (enable && ctx.body.disclaimerAccepted !== true) throw new Error("Read and accept the GTM Growth ToS disclaimer before enabling a scraper");
-    if (enable && (str(ctx.body.disclaimerVersion ?? "") !== GTM_TRACKER_DISCLAIMER_VERSION)) throw new Error("Disclaimer version mismatch: reload the page and accept the current disclaimer");
-    const setting = setEngineScraper(tenant, engine!, enable, ctx.body.disclaimerAccepted === true, ctx.user?.preferred_username ?? ctx.user?.sub ?? "unknown");
-    logger.info(`[ai-tracker] scraper ${enable ? "enabled" : "disabled"} for tenant ${tenant}: ${engine} by ${setting.acceptedBy}`);
+    if (!ctx.tenancy?.memberships.some(m => m.id === tenant && m.role === "tenant-admin")) {
+      throw new TenantAccessError("Only an administrator of this tenant can change scraper activation");
+    }
+    if (!engine || !SCRAPER_ENGINES.includes(engine)) throw new TenantAccessError("Unknown scraper engine", 400);
+    const enable = ctx.body.enable;
+    if (typeof enable !== "boolean") throw new TenantAccessError("Enable must be a boolean", 400);
+    const version = str(ctx.body.disclaimerVersion);
+    if (enable && ctx.body.disclaimerAccepted !== true) throw new TenantAccessError("Read and accept the GTM Growth disclaimer first", 400);
+    if (enable && version !== GTM_TRACKER_DISCLAIMER_VERSION) throw new TenantAccessError("Reload and accept the current disclaimer version", 409);
+    const actor = ctx.user?.preferred_username ?? ctx.user?.sub;
+    if (!actor) throw new TenantAccessError("Administrator identity required");
+    const setting = setEngineScraper(tenant, engine, enable, version, actor);
+    logger.info(`[ai-tracker] scraper ${enable ? "enabled" : "disabled"} for tenant ${tenant}: ${engine} by ${actor}`);
     return { engine, scraperEnabled: setting.scraperEnabled };
   } },
 

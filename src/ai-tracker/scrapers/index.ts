@@ -1,13 +1,14 @@
-/** Native AI tracker — scraper registry. One file per engine, one interface.
- * Availability is decided by the worker (env flag or tenant activation after the ToS disclaimer). */
-import { ChatGPTScraper } from "./scrapers/chatgpt-scraper.js";
-import { GeminiScraper } from "./scrapers/gemini-scraper.js";
-import { GoogleAiModeScraper } from "./scrapers/google-ai-mode-scraper.js";
-import { PerplexityScraper } from "./scrapers/perplexity-scraper.js";
-import { BingAiModeScraper } from "./scrapers/bing-ai-mode-scraper.js";
-import type { NativeScraper } from "./scrapers/base.js";
+/** Native AI tracker — scraper registry. One file per engine, one interface. */
+import { ChatGPTScraper } from "./chatgpt-scraper.js";
+import { GeminiScraper } from "./gemini-scraper.js";
+import { GoogleAiModeScraper } from "./google-ai-mode-scraper.js";
+import { PerplexityScraper } from "./perplexity-scraper.js";
+import { BingAiModeScraper } from "./bing-ai-mode-scraper.js";
+import type { NativeScraper } from "./base.js";
+import { scraperEnabled } from "../config.js";
+import { getEngineSetting } from "../store.js";
 
-const SCRAPERS: Record<string, new () => NativeScraper> = {
+const SCRAPERS: Record<string, new (tenantId: string) => NativeScraper> = {
   "chatgpt": ChatGPTScraper,
   "gemini": GeminiScraper,
   "google-ai-mode": GoogleAiModeScraper,
@@ -15,10 +16,11 @@ const SCRAPERS: Record<string, new () => NativeScraper> = {
   "bing-ai-mode": BingAiModeScraper,
 };
 
-export function scraperFor(engine: string): NativeScraper | null {
+export function scraperFor(tenantId: string, engine: string): NativeScraper | null {
+  if (!scraperEnabled(engine) || !getEngineSetting(tenantId, engine).scraperEnabled) return null;
   const Scraper = SCRAPERS[engine];
-  return Scraper ? new Scraper() : null;
+  return Scraper ? new Scraper(tenantId) : null;
 }
 
-export { BaseScraper, BlockStopError } from "./scrapers/base.js";
-export type { NativeScraper } from "./scrapers/base.js";
+export { BaseScraper, BlockStopError } from "./base.js";
+export type { NativeScraper } from "./base.js";

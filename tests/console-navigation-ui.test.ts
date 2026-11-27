@@ -35,6 +35,12 @@ it.each(["fr", "en"])("opens every navigation entry with content or recovery ste
     if (url.endsWith("/rank/keywords")) return json({ board: [] });
     if (url.endsWith("/ops/alerts")) return json({ alerts: [] });
     if (url.endsWith("/platform/tenants")) return json({ tenants: [] });
+    if (url.endsWith("/ai-tracker/status")) return json({ enabled: true, engines: [] });
+    if (url.endsWith("/ai-tracker/brands")) return json({ brands: [] });
+    if (url.endsWith("/ai-tracker/prompts")) return json({ prompts: [] });
+    if (url.endsWith("/ai-tracker/runs")) return json({ runs: [], nextCursor: null });
+    if (url.endsWith("/ai-tracker/opportunities")) return json({ opportunities: [] });
+    if (url.endsWith("/ai-tracker/engine-settings")) return json({ engines: [] });
     if (url.endsWith("/tracking/status")) return json({ serviceAccount: {}, gsc: {}, ga4: {}, bing: {}, gtm: {} });
     if (url.endsWith("/geo/llms")) return json({ validation: { checks: [] }, drift: { error: "Fixture: no sitemap" } });
     return json({ error: "Fixture: source unavailable" }, false, 503);
@@ -74,6 +80,21 @@ it.each(["fr", "en"])("opens every navigation entry with content or recovery ste
       expect(panel?.querySelector('.c-loading')).toBeNull();
       expect(document.querySelectorAll('.app-nav [aria-current="true"]'), route).toHaveLength(1);
     });
+  }
+  location.hash = "#ai_tracker";
+  window.dispatchEvent(new window.Event("hashchange"));
+  const trackerTabs = () => [...document.querySelectorAll<HTMLButtonElement>('#c-tabs [role="tab"]')];
+  const ids = ["board", "prompts", "runs", "opportunities", "engines"];
+  await vi.waitFor(() => expect(trackerTabs().map(b => b.dataset.coachTab)).toEqual(ids));
+  const icons = trackerTabs().map(tab => tab.querySelector("svg")?.innerHTML);
+  expect(icons.every(Boolean)).toBe(true);
+  expect(new Set(icons).size).toBe(5);
+  for (const [i, text] of (lang === "fr"
+    ? ["Aucune marque suivie", "Prompts suivis", "Runs collectés", "Analyser les opportunités", "Santé et activation"]
+    : ["No tracked brand", "Tracked prompts", "Collected runs", "Scan for opportunities", "Engine health and activation"]).entries()) {
+    trackerTabs()[i].click();
+    await vi.waitFor(() => expect(document.querySelector('[role="tabpanel"]')?.textContent).toContain(text));
+    expect(trackerTabs()[i].getAttribute("aria-selected")).toBe("true");
   }
   const search = document.querySelector<HTMLInputElement>('#c-search')!;
   search.value = 'ga4'; search.dispatchEvent(new window.Event('input'));

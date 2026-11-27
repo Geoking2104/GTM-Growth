@@ -2,8 +2,8 @@
  * One run per day per active prompt per engine, single concurrency per engine,
  * 8–20s jitter between runs, automatic pause after 2 consecutive failures. */
 import { createHash } from "node:crypto";
-import { getBrand, getEngineSetting, getEngineState, getPrompt, insertMention, insertRun, latestMentions, listBrands, listPrompts, runIdFor, runsForWindow, setEngineState } from "./store.js";
-import { scraperEnabled, trackerConfig } from "./config.js";
+import { getBrand, getEngineState, getPrompt, insertMention, insertRun, latestMentions, listBrands, listPrompts, runIdFor, runsForWindow, setEngineState } from "./store.js";
+import { trackerConfig } from "./config.js";
 import { apiProviderForEngine, collectViaApi, type ApiProviderId } from "./providers.js";
 import { scraperFor } from "./scrapers/index.js";
 import { judgeRunAsync } from "./judge/local-judge.js";
@@ -19,12 +19,12 @@ export interface RunResult { runId: string | null; status: "collected" | "duplic
 const inFlight = new Set<string>();
 
 /** API first; scraper only when no consumer API exists and its flag is on; otherwise no collection.
- * Scraper availability is deployment-wide (env flag) or per-tenant (explicit activation after the ToS disclaimer). */
+ * Scraping requires current consent for this tenant and engine. */
 async function collect(tenantId: string, engine: string, promptText: string): Promise<CollectedAnswer> {
   const apiProvider = apiProviderForEngine(engine);
   if (apiProvider) return collectViaApi(apiProvider as ApiProviderId, promptText);
-  const scraper = scraperFor(engine);
-  if (scraper && (scraperEnabled(engine) || getEngineSetting(tenantId, engine).scraperEnabled)) {
+  const scraper = scraperFor(tenantId, engine);
+  if (scraper) {
     try { return await scraper.run(promptText); }
     finally { await scraper.close(); }
   }
@@ -117,8 +117,8 @@ export async function manualRun(request: RunRequest & { justification: string })
 export async function engineHealthCheck(tenantId: string, engine: string): Promise<"ok" | "degraded" | "paused" | "disabled"> {
   const state = getEngineState(tenantId, engine);
   if (state.health === "paused") return "paused";
-  const scraper = scraperFor(engine);
-  if (!scraper || !(scraperEnabled(engine) || getEngineSetting(tenantId, engine).scraperEnabled)) { setEngineState(tenantId, engine, { health: "disabled", lastCheckedAt: new Date().toISOString() }); return "disabled"; }
+  const scraper = scraperFor(tenantId, engine);
+  if (!scraper) { setEngineState(tenantId, engine, { health: "disabled", lastCheckedAt: new Date().toISOString() }); return "disabled"; }
   await scraper.close();
   return "ok";
 }

@@ -18,7 +18,7 @@ tiers payant, sans juge externe payant, sans envoi de données vers un tiers.
 1. **Preuve avant score** : un score sans réponse brute et sans passage jugé n'est pas affiché.
 2. **Tendance, pas instantané** : 1 run par jour et par prompt et par moteur ; jamais de conclusion sur un seul run.
 3. **Séparation stricte** : GEO readiness (déterministe) et visibilité mesurée (probabiliste) sont affichés séparément.
-4. **Fail-closed** : flag global et par moteur à `false` par défaut ; au moindre doute (tenant, quota, session, santé), on ne collecte pas.
+4. **Fail-closed** : tracker global arrêté et scrapers désactivés par tenant par défaut ; au moindre doute (tenant, quota, session, santé), on ne collecte pas.
 5. **Jamais d'écrasement** : un re-jugement ajoute une ligne avec une nouvelle version de juge.
 6. **Aucune donnée personnelle** dans les prompts (validation serveur : PII, secrets, injection refusés).
 
@@ -45,10 +45,10 @@ tiers payant, sans juge externe payant, sans envoi de données vers un tiers.
 
 ## Sessions scraper
 
-La session est un fichier `storageState` par moteur dans
+La session est un fichier `storageState` par tenant et moteur (`<tenant>/<moteur>.json`) dans
 `AI_TRACKER_SCRAPER_SESSION_DIR` (hors repo, accès restreint au worker,
 rotation manuelle). Aucun mot de passe dans le code, les journaux ou les
-captures. Les captures d'écran ne sont prises qu'en cas d'échec, rétention 48 h.
+captures. Les anciens fichiers à la racine sont réservés au tenant explicitement identifié par `AI_TRACKER_TENANT_ID`. Les captures d'écran ne sont prises qu'en cas d'échec, rétention 48 h.
 
 ## Outils MCP
 
@@ -75,17 +75,16 @@ Volumes POC : 8 Go RAM minimum (16 Go recommandés pour Ollama + Playwright),
 
 ## Activation par tenant et disclaimer GTM Growth
 
-Les scrapers (`chatgpt`, `gemini`, `perplexity`, `copilot`, `ai_overviews`) sont **désactivés
+Les scrapers (`chatgpt`, `gemini`, `perplexity`, `bing-ai-mode`, `google-ai-mode`) sont **désactivés
 par défaut** pour chaque tenant. Un administrateur du tenant peut activer un moteur
 depuis la console (onglet « Moteurs ») **après avoir accepté le disclaimer GTM Growth**
 (versionné, `GTM_TRACKER_DISCLAIMER_VERSION`). Le refus est fail-closed :
 
 - le serveur refuse toute activation sans `disclaimerAccepted: true` et sans la version
   courante du disclaimer (`POST /ai-tracker/engine/activate`, admin uniquement) ;
-- l'acceptation est journalisée (`accepted_by`, `disclaimer_accepted_at`) dans la table
+- l'acceptation est journalisée (`accepted_by`, `disclaimer_accepted_at`, `disclaimer_version`) dans la table
   `ai_engine_settings` (par tenant et par moteur) ;
-- le worker ne collecte pour un moteur que si le flag global env **ou** l'activation
-  tenant est présente (les deux restent contrôlés par `AI_TRACKER_ENABLED` globalement).
+- le worker exige `AI_TRACKER_ENABLED=true` et une acceptation de la version courante pour ce tenant et ce moteur. Une nouvelle version exige un nouvel accord. Le réglage facultatif `AI_TRACKER_SCRAPER_<MOTEUR>_ENABLED=false` bloque le moteur sur ce déploiement, même après acceptation. La désactivation conserve la trace du dernier accord.
 
 Les API officielles (mode `api-approximation`) et l'import manuel restent disponibles
 sans acceptation du disclaimer : seules les surfaces scrapées en `consumer-ui` sont
