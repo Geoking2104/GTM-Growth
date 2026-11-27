@@ -1064,3 +1064,9 @@ code { overflow-wrap: anywhere; }
 .plans .btn, .step-link .btn { align-self: flex-start; }
 .btn { padding: .62rem 1.05rem; box-shadow: none; }
 .btn-small { padding: .42rem .8rem; }
+
+.privacy-banner label { display: block; margin-top: .4rem; }
+.privacy-banner { max-height: calc(100vh - 2rem); overflow-y: auto; }
+.legal-main section { margin-block: 2.5rem; }
+.legal-main h3 { margin-block: 1.1rem .4rem; }
+.legal-main nav a { display: inline-block; margin: .3rem 1rem .3rem 0; }
