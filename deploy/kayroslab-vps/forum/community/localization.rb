@@ -23,6 +23,44 @@ module CommunityLocalization
     end
   end
 
+  # Only localize stock content while the English copy is still system-managed.
+  def self.translate_default_content(actor)
+    { "general" => SiteSetting.general_category_id, "meta" => SiteSetting.meta_category_id }.each do |key, id|
+      category = Category.find_by(id: id)
+      next unless category && category.name == I18n.t("#{key}_category_name", locale: :en)
+      next unless system_topic?(category.topic, actor)
+
+      name = I18n.t!("#{key}_category_name", locale: :fr)
+      description = I18n.t!("#{key}_category_description", locale: :fr)
+      category.update!(locale: "en") if category.locale.blank?
+      CategoryLocalization.find_or_create_by!(category: category, locale: "fr") do |translation|
+        translation.name = name
+        translation.description = description
+      end
+      translate_topic(category.topic, actor, "À propos de la rubrique « #{name} »", description)
+    end
+
+    welcome = Topic.find_by(id: SiteSetting.welcome_topic_id)
+    return unless system_topic?(welcome, actor)
+
+    title = SiteSettingLocalization.value_for("title", locale: :fr)
+    description = SiteSettingLocalization.value_for("site_description", locale: :fr)
+    feedback = Category.find_by(id: SiteSetting.meta_category_id)
+    body = I18n.t!("discourse_welcome_topic.body", locale: :fr, base_path: Discourse.base_path,
+      site_title: title, site_description: description, feedback_category: "##{feedback&.slug || 'site-feedback'}",
+      site_info_quote: "> ## #{title}\n>\n> #{description}\n")
+    translate_topic(welcome, actor, "Bienvenue dans la communauté GTM Growth !", body)
+  end
+
+  def self.system_topic?(topic, actor)
+    post = topic&.first_post
+    return false unless post && post.user_id == actor.id && [nil, actor.id].include?(post.last_editor_id)
+
+    [topic, post].none? do |record|
+      record.localizations.where(locale: "fr").where.not(localizer_user_id: actor.id).exists?
+    end
+  end
+
   def self.translate_tag(tag)
     name, description = TAGS.fetch(tag.name)
     tag.update!(locale: "en") if tag.locale.blank?

@@ -51,6 +51,7 @@ ActiveRecord::Base.transaction do
 
   SiteSetting.tagging_enabled = true unless SiteSetting.tagging_enabled?
   CommunityLocalization.configure_site
+  CommunityLocalization.translate_default_content(actor)
   tags.each do |name, description|
     tag = Tag.find_or_create_by!(name: name) { |record| record.description = description }
     CommunityLocalization.translate_tag(tag)
