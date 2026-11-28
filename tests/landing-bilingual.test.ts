@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 import { readFileSync } from "node:fs";
 import { join } from "node:path";
+import { parseHTML } from "linkedom";
 import { translateLiveTables } from "../site/fr/server-tables.js";
 
 const siteFile = (name: string): string => readFileSync(join(process.cwd(), "site", name), "utf8");
@@ -52,6 +53,18 @@ describe("French and English landing pages", () => {
     expect(en).toContain('href="/privacy.html"');
     expect(siteFile("console/index.html")).toContain('src="locale-shell.js"');
   });
+  it("carries the page language into the forum from the menu and footer", () => {
+    for (const [html, locale, label] of [[en, "en", "Community"], [fr, "fr", "Communauté"]]) {
+      const { document } = parseHTML(html);
+      for (const region of ["nav", "footer"]) {
+        const links = document.querySelectorAll(`${region} a[href^="https://forum.gtmgrowth.kayroslab.com/"]`);
+        expect(links).toHaveLength(1);
+        expect(links[0].getAttribute("href")).toBe(`https://forum.gtmgrowth.kayroslab.com/latest?tl=${locale}`);
+        expect(links[0].textContent).toBe(label);
+      }
+    }
+  });
+
   it("keeps pilot prices and payment disclosures equivalent", () => {
     for (const html of [fr,en]) { expect(html).toMatch(/39.*€/); expect(html).toMatch(/149.*€/); expect(html).toContain("Mollie"); }
     expect(fr).toContain("HT/TTC"); expect(en).toContain("VAT");

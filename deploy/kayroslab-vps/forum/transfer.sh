@@ -25,7 +25,7 @@ installer='sudo -n bash /opt/gtm-growth-forum/install.sh'
 case "${1:?mode required}" in
     community)
         remote 'sudo -n docker inspect -f "{{index .Config.Labels \"com.kayroslab.service\"}}" gtmgrowth-forum | grep -Fxq gtmgrowth-forum && sudo -n docker exec gtmgrowth-forum mkdir -p /var/www/discourse/script/gtm-community'
-        tar cf - -C community apply.rb community.scss -C "../../../../site/fr/assets" logo-rocket.png InterVariable.woff2 |
+        tar cf - -C community apply.rb localization.rb navigation.gjs community.scss -C "../../../../site/fr/assets" logo-rocket.png InterVariable.woff2 |
             remote 'sudo -n docker cp - gtmgrowth-forum:/var/www/discourse/script/gtm-community/'
         remote 'sudo -n docker exec --user discourse --workdir /var/www/discourse gtmgrowth-forum bundle exec rails runner /var/www/discourse/script/gtm-community/apply.rb'
         ;;

@@ -1,5 +1,5 @@
 # Configure this forum using Discourse's own models and branding uploads.
-require "cgi"
+require_relative "localization"
 require "tempfile"
 
 abort "Unexpected forum" unless Discourse.current_hostname == "forum.gtmgrowth.kayroslab.com"
@@ -50,7 +50,11 @@ ActiveRecord::Base.transaction do
   end
 
   SiteSetting.tagging_enabled = true unless SiteSetting.tagging_enabled?
-  tags.each { |name, description| Tag.find_or_create_by!(name: name) { |tag| tag.description = description } }
+  CommunityLocalization.configure_site
+  tags.each do |name, description|
+    tag = Tag.find_or_create_by!(name: name) { |record| record.description = description }
+    CommunityLocalization.translate_tag(tag)
+  end
   records = categories.map do |attrs|
     category = Category.find_by(parent_category_id: nil, slug: attrs.fetch(:slug))
     if category
@@ -59,6 +63,7 @@ ActiveRecord::Base.transaction do
       category = CategoryCreator.create(Guardian.new(actor), attrs.merge(text_color: "FFFFFF", permissions: { everyone: :full }))
       raise "Category creation failed: #{category.errors.full_messages.join(', ')}" unless category.persisted?
     end
+    CommunityLocalization.translate_category(category, attrs, actor, github)
     category
   end
   kb, _, ideas = records
@@ -69,7 +74,8 @@ ActiveRecord::Base.transaction do
   sidebar = SiteSetting.default_navigation_menu_categories.to_s.split("|")
   SiteSetting.default_navigation_menu_categories = (sidebar | records.map { |c| c.id.to_s }).join("|")
   guide_key = "gtm_growth_documentation_index"
-  unless TopicCustomField.exists?(name: guide_key, value: "1")
+  guide_topic = TopicCustomField.find_by(name: guide_key, value: "1")&.topic
+  unless guide_topic
     guide = PostCreator.create!(actor, title: "Find the right GTM Growth guide", category: kb.id,
       tags: tags.keys, raw: <<~MD)
       Start with the [documentation hub](#{github}/README.md), or jump to the guide that matches your task.
@@ -85,18 +91,19 @@ ActiveRecord::Base.transaction do
     guide.topic.update_pinned(true, false)
     guide.topic.custom_fields[guide_key] = "1"
     guide.topic.save_custom_fields
+    guide_topic = guide.topic
   end
+  CommunityLocalization.translate_guide(guide_topic, actor, github)
 
   component = Theme.find_or_initialize_by(name: "GTM Growth Community", component: true)
   component.user_id ||= actor.id
   component.save! if component.new_record?
   component.set_field(target: :common, name: "gtm_inter", type: :theme_upload_var, upload_id: font.id)
   component.set_field(target: :common, name: :scss, value: File.read(File.join(root, "community.scss")))
-  links = records.map do |c|
-    %(<a class="gtm-#{c.slug}" href="#{CGI.escapeHTML(c.url)}">#{CGI.escapeHTML(c.name)}</a>)
-  end
-  component.set_field(target: :common, name: :after_header, value:
-    %(<nav class="gtm-community-links" aria-label="Community categories"><div class="wrap">#{links.join}</div></nav>))
+  component.set_field(target: :common, name: :after_header, value: "")
+  component.set_field(target: :extra_js, type: :js,
+    name: "discourse/api-initializers/community-navigation.gjs",
+    value: File.read(File.join(root, "navigation.gjs")))
   component.save!
   Theme.user_selectable.where(component: false, enabled: true).each do |parent|
     parent.add_relative_theme!(:child, component) unless parent.child_themes.exists?(component.id)
