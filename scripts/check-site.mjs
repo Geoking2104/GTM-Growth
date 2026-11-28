@@ -13,7 +13,7 @@ const translatedAttributes = new Set(['lang', 'aria-label', 'alt', 'title', 'pla
 function structure(document) {
   return [...document.body.querySelectorAll('*')].map(node => [node.localName, [...node.attributes]
     .filter(a => !translatedAttributes.has(a.name))
-    .map(a => [a.name, a.value.replace(/lang=(en|fr)/g, 'lang=LOCALE').replace(/geo-board-(en|fr)\.svg/g, 'geo-board-LOCALE.svg').replace('/fr/confidentialite.html', '/privacy.html').replace(/^\/fr\/(?=guides\/|$|#)/, '/')])]);
+    .map(a => [a.name, a.value.replace(/([?&](?:lang|tl)=)(?:en|fr)(?=&|#|$)/g, '$1LOCALE').replace(/geo-board-(en|fr)\.svg/g, 'geo-board-LOCALE.svg').replace('/fr/confidentialite.html', '/privacy.html').replace(/^\/fr\/(?=guides\/|$|#)/, '/')])]);
 }
 assert.deepEqual(structure(documents[0]), structure(documents[1]), 'EN/FR structure, actions and assets must match');
 for (const [i, document] of documents.entries()) {
