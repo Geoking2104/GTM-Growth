@@ -23,7 +23,7 @@ jobs:
           FORUM_SSH_USER: ${{ secrets.VPS_SSH_USER }}
           FORUM_SSH_KEY: ${{ secrets.VPS_SSH_KEY }}
         run: bash deploy/kayroslab-vps/forum/transfer.sh community
-      - name: Check public branding and category navigation
+      - name: Check public branding and bilingual category navigation
         run: |
           set -euo pipefail
           host=https://forum.gtmgrowth.kayroslab.com
@@ -31,4 +31,12 @@ jobs:
           curl -fsS --retry 3 "$host/categories.json" | jq -e '
             [.category_list.categories[] | select(.read_restricted != true) | .slug] as $slugs |
             (["knowledge-base", "troubleshooting", "ideas-board"] - $slugs | length) == 0'
-          curl -fsS --retry 3 "$host/latest" -o /dev/null
+          for locale in en fr; do
+            curl -fsS --retry 3 "$host/latest?tl=$locale" -o "$RUNNER_TEMP/forum.html"
+            grep -Fq "<html lang=\"$locale\"" "$RUNNER_TEMP/forum.html"
+            curl -fsS --retry 3 "$host/site.json?tl=$locale" | jq -e --arg locale "$locale" '
+              (.categories | map({key: .slug, value: .name}) | from_entries) as $names |
+              [$names["knowledge-base"], $names.troubleshooting, $names["ideas-board"]] ==
+                (if $locale == "fr" then ["Base de connaissances", "Entraide", "Boîte à idées"]
+                 else ["Knowledge Base", "Troubleshooting", "Ideas Board"] end)'
+          done
